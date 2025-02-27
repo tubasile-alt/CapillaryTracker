@@ -1,0 +1,80 @@
+Crie um **sistema interativo em Python** usando `tkinter` para registrar e analisar cirurgias capilares. O sistema deve conter **três telas principais**, com navegação entre elas e **validação obrigatória** antes de avançar.  
+
+---
+
+## 🔹 **Tela 1 - Lançamento de Dados (Cadastro da Cirurgia)**  
+Nesta tela, o usuário registrará os detalhes da cirurgia.  
+
+✅ **Campos Obrigatórios:**  
+- **Data (DD/MM/AAAA)** → O sistema **sugere automaticamente a data do dia**, mas o usuário pode editá-la através de um **seletor de calendário**.  
+- **Paciente** *(Campo de texto livre)*  
+- **Unidade** *(Combobox com opções: "Ribeirão Preto" e "Campinas")*  
+  - **Se "Ribeirão Preto" for selecionado**, exibe um **segundo Combobox** com os médicos:  
+    - Dr. Arthur  
+    - Dr. Daniel  
+  - **Se "Campinas" for selecionado**, exibe os médicos:  
+    - Dra. Isadora  
+    - Dra. Adriana  
+- **Equipe** *(Exibe automaticamente opções de equipe com base na unidade selecionada)*  
+  - **Ribeirão Preto:**  
+    - Aline  
+    - Natália  
+    - Ana  
+  - **Campinas:**  
+    - Juliana  
+    - Gabriela  
+- **Hora da Cirurgia (HH:MM)**  
+- **Tempo de Cirurgia (horas)**  
+
+🎯 **Funcionalidades Extras:**  
+- **Médico e equipe só aparecem após escolher a unidade.**  
+- Botão "Próximo" **só libera se todos os campos estiverem preenchidos**.  
+- Os dados devem ser armazenados em um arquivo **Excel** (`cirurgias.xlsx`), adicionando novas entradas sem sobrescrever as antigas.  
+
+---
+
+## 📊 **Tela 2 - Dashboard (Análises e Relatórios)**  
+Esta tela exibe um **painel interativo** com gráficos e métricas das cirurgias.  
+
+✅ **Indicadores:**  
+- **Total de cirurgias por mês** *(Gráfico de barras)*  
+- **Média de fios implantados por cirurgia** *(Gráfico de linha)*  
+- **Filtro por unidade e mês** → O usuário pode **selecionar uma unidade específica** e um período para análise.  
+
+🎯 **Funcionalidades Extras:**  
+- O sistema carrega os dados do arquivo **`cirurgias.xlsx`** e gera gráficos usando `matplotlib`.  
+- O usuário pode **atualizar os filtros** e os gráficos se ajustam automaticamente.  
+
+---
+
+## 🚨 **Tela 3 - Necrose (Registro e Acompanhamento)**  
+Uma seção para monitoramento de casos de necrose pós-operatória.  
+
+✅ **Campos de Registro:**  
+- **Paciente** *(Escolher da lista de pacientes cadastrados no sistema)*  
+- **Data de Identificação** *(Seletor de calendário)*  
+- **Área Afetada** *(Campo de texto para descrever a região da necrose)*  
+- **Grau de Necrose** *(Combobox: Leve, Moderada, Grave)*  
+- **Tratamento Aplicado** *(Campo de texto livre para descrever o procedimento realizado)*  
+- **Evolução** *(Comentários sobre recuperação ou piora do caso)*  
+
+🎯 **Funcionalidades Extras:**  
+- Todos os registros devem ser **armazenados no mesmo arquivo Excel (`cirurgias.xlsx`)**, mas em uma aba separada chamada **"Necrose"**.  
+- O usuário pode **visualizar casos anteriores e filtrar por paciente**.  
+
+---
+
+## 🔧 **Requisitos Técnicos**  
+- O sistema deve ser criado em **Python** utilizando `tkinter` para a interface gráfica.  
+- **Campos Sim/Não** devem ser `ttk.Combobox` para facilitar o preenchimento.  
+- As telas devem ser **separadas em Frames**, permitindo a navegação entre elas sem fechar a aplicação.  
+- **Médico e equipe são selecionados automaticamente com base na unidade escolhida.**  
+- Os dados devem ser armazenados e lidos de um arquivo **Excel** (`pandas` + `openpyxl`).  
+- O **dashboard deve ser interativo**, atualizado dinamicamente conforme os filtros são aplicados.  
+
+---
+
+## 🎯 **Objetivo**  
+Este sistema tornará o cadastro de cirurgias **mais eficiente**, com **preenchimento automático**, **análises detalhadas** e **monitoramento de necrose**.
+
+**Crie este projeto no Replit e forneça o código pronto para ser executado.**  
