@@ -2,24 +2,40 @@
 
 {% block content %}
 <div class="dashboard-container">
-    <h2>Dashboard de Pacientes por Unidade</h2>
+    <h2>Dashboard de Cirurgias Capilares</h2>
 
     {% if error %}
     <div class="alert alert-error">{{ error }}</div>
     {% endif %}
 
     {% if data %}
-    <div class="chart-container">
-        <canvas id="monthlyChart"></canvas>
+    <div class="dashboard-section">
+        <h3>Estatísticas de Cirurgias</h3>
+        <div class="chart-container">
+            <h4>Cirurgias por Mês</h4>
+            <canvas id="monthlyChart"></canvas>
+        </div>
     </div>
 
     {% if data.has_follicle_data %}
-    <div class="chart-container">
-        <canvas id="folliclesChart"></canvas>
-    </div>
+    <div class="dashboard-section">
+        <h3>Estatísticas de Folículos</h3>
+        <div class="chart-grid">
+            <div class="chart-container">
+                <h4>Média de Folículos por Mês</h4>
+                <canvas id="folliclesChart"></canvas>
+            </div>
 
-    <div class="chart-container">
-        <canvas id="densityChart"></canvas>
+            <div class="chart-container">
+                <h4>Densidade Média por Mês</h4>
+                <canvas id="densityChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-footer">
+        <p>📊 Dados extraídos da planilha de cirurgias. Última atualização: {{ data.update_time }}</p>
+        <a href="#" class="btn btn-primary" onclick="window.print()">Exportar Dashboard</a>
     </div>
     {% else %}
     <div class="alert alert-info">

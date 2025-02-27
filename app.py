@@ -187,29 +187,70 @@ def dashboard():
         if os.path.exists(filename):
             df = pd.read_excel(filename)
             # Processar dados para o dashboard
-            # Exemplo simples - contar cirurgias por mês
             if not df.empty and 'data' in df.columns:
-                df['mes_ano'] = pd.to_datetime(df['data']).dt.strftime('%m/%Y')
+                # Lidar com diferentes formatos de data
+                df['mes_ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.strftime('%m/%Y')
+
+                # 1. Cirurgias por mês (total)
                 cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
+
+                # 2. Cirurgias por mês por unidade
+                if 'unidade' in df.columns:
+                    cirurgias_por_mes_unidade = df.groupby(['mes_ano', 'unidade']).size().reset_index(name='count')
+
+                    # Preparar datasets por unidade
+                    unidades = df['unidade'].unique()
+                    datasets_unidades = []
+
+                    for unidade in unidades:
+                        dados_unidade = cirurgias_por_mes_unidade[cirurgias_por_mes_unidade['unidade'] == unidade]
+                        # Mapa para todas as datas possíveis
+                        dados_completos = pd.DataFrame({
+                            'mes_ano': cirurgias_por_mes['mes_ano'].unique()
+                        })
+                        # Juntar com dados existentes
+                        merged = dados_completos.merge(dados_unidade, on='mes_ano', how='left').fillna(0)
+
+                        datasets_unidades.append({
+                            'label': f'Cirurgias - {unidade}',
+                            'data': merged['count'].astype(int).tolist()
+                        })
+                else:
+                    datasets_unidades = []
 
                 dashboard_data = {
                     'labels': cirurgias_por_mes['mes_ano'].tolist(),
                     'datasets': [
                         {
-                            'label': 'Cirurgias',
+                            'label': 'Total de Cirurgias',
                             'data': cirurgias_por_mes['count'].tolist()
                         }
-                    ],
+                    ] + datasets_unidades,
                     'has_follicle_data': 'total_foliculos' in df.columns
                 }
 
-                # Se temos dados de folículos, adicionar ao dashboard
+                # Se temos dados de folículos, criar análises adicionais
                 if dashboard_data['has_follicle_data']:
+                    # Média de folículos por mês
                     folliculo_medio = df.groupby('mes_ano')['total_foliculos'].mean().reset_index()
-                    dashboard_data['datasets'].append({
-                        'label': 'Média de Folículos',
-                        'data': folliculo_medio['total_foliculos'].tolist()
-                    })
+
+                    # Média de folículos por unidade por mês (se aplicável)
+                    follicle_data = {
+                        'labels': folliculo_medio['mes_ano'].tolist(),
+                        'averages': folliculo_medio['total_foliculos'].round(0).astype(int).tolist(),
+                        'le_density': []  # Placeholder para densidade LE
+                    }
+
+                    # Se tiver dado de densidade, calcular média
+                    if 'densidade_scketh' in df.columns:
+                        densidade_media = df.groupby('mes_ano')['densidade_scketh'].mean().reset_index()
+                        follicle_data['le_density'] = densidade_media['densidade_scketh'].round(0).astype(int).tolist()
+
+                    # Adicionar ao dashboard_data
+                    dashboard_data['follicles_data'] = follicle_data
+
+                    # Adicionar timestamp de atualização
+                    dashboard_data['update_time'] = datetime.now().strftime('%d/%m/%Y %H:%M')
             else:
                 dashboard_data = {
                     'labels': [],
