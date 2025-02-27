@@ -72,16 +72,16 @@ FORMS = {
         "title": "Procedimentos e Ferramentas",
         "fields": [
             {"name": "safira", "label": "Safira?", "type": "select", "options": ["Sim", "Não"], "required": False},
-            {"name": "punch", "label": "Punch", "type": "number", "required": True},
-            {"name": "solucao_frente", "label": "Solução Frente (ml)", "type": "number", "required": False},
-            {"name": "solucao_coroa", "label": "Solução Coroa (ml)", "type": "number", "required": False},
-            {"name": "solucao_xilo_frente", "label": "Solução Xilo Frente (ml)", "type": "number", "required": False}
+            {"name": "punch", "label": "Punch (mm)", "type": "select", "options": ["0.75", "0.85", "0.95"], "required": True},
+            {"name": "solucao_frente", "label": "Solução Frente (seringas)", "type": "number", "required": False},
+            {"name": "solucao_coroa", "label": "Solução Coroa (seringas)", "type": "number", "required": False},
+            {"name": "solucao_xilo_frente", "label": "Solução Xilo Frente (seringas)", "type": "number", "required": False}
         ],
         "next": "distribuicao",
         "prev": "implante"
     },
     "distribuicao": {
-        "title": "Distribuição dos Implantes",
+        "title": "Densidades de Extração",
         "fields": [
             {"name": "le", "label": "LE", "type": "number", "required": True},
             {"name": "me", "label": "ME", "type": "number", "required": True},
