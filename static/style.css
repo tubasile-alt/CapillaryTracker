@@ -16,6 +16,20 @@ body {
     padding: 20px;
 }
 
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.company-logo {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+}
+
 h1 {
     text-align: center;
     color: #333;

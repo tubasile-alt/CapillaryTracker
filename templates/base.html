@@ -8,7 +8,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Formulário de Cirurgia Capilar</h1>
+        <div class="header">
+            <img src="{{ url_for('static', filename='img/generated-icon.svg') }}" alt="Logo da Empresa" class="company-logo">
+            <h1>Formulário de Cirurgia Capilar</h1>
+        </div>
         <nav class="main-nav">
             <a href="{{ url_for('index') }}" class="nav-link">Novo Cadastro</a>
             <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
