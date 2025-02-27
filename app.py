@@ -229,18 +229,28 @@ def dashboard():
         # Convert data to datetime
         df['data'] = pd.to_datetime(df['data'], format='%d/%m/%Y')
 
-        # Group by month and unidade
+        # Prepare data for patients per month/unit
         monthly_data = df.groupby([pd.Grouper(key='data', freq='M'), 'unidade']).size().reset_index()
         monthly_data.columns = ['data', 'unidade', 'total']
-
-        # Convert data to more readable format
         monthly_data['mes_ano'] = monthly_data['data'].dt.strftime('%m/%Y')
 
-        # Create a dictionary with the aggregated data
+        # Calculate average follicles per month
+        monthly_follicles = df.groupby(pd.Grouper(key='data', freq='M')).agg({
+            'total_foliculos': 'mean',
+            'le': 'mean'  # LE density
+        }).reset_index()
+        monthly_follicles['mes_ano'] = monthly_follicles['data'].dt.strftime('%m/%Y')
+
+        # Create dashboard data dictionary
         dashboard_data = {
             'labels': sorted(monthly_data['mes_ano'].unique().tolist()),
             'unidades': sorted(monthly_data['unidade'].unique().tolist()),
-            'datasets': []
+            'datasets': [],
+            'follicles_data': {
+                'labels': sorted(monthly_follicles['mes_ano'].tolist()),
+                'averages': monthly_follicles['total_foliculos'].round(2).tolist(),
+                'le_density': monthly_follicles['le'].round(2).tolist()
+            }
         }
 
         # Prepare data for each unidade
@@ -257,16 +267,23 @@ def dashboard():
         logger.info("Dashboard data prepared successfully")
         return render_template('dashboard.html', data=dashboard_data)
     except Exception as e:
-        logger.error(f"Error preparing dashboard data: {str(e)}")
+        logger.error(f"Error preparing dashboard data: {str(e)}\n{traceback.format_exc()}")
         return render_template('dashboard.html', data={}, error="Erro ao carregar dados do dashboard")
 
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000)) #Try to get port from environment variable, default to 5000
     try:
-        logger.info("Starting Flask server on port 5000...")
+        logger.info(f"Starting Flask server on port {port}...")
         logger.debug("Debug mode is enabled")
         logger.debug("Current working directory: %s", os.getcwd())
         logger.debug("Environment variables: %s", str(dict(os.environ)))
-        app.run(host='0.0.0.0', port=5000, debug=True)
+        app.run(host='0.0.0.0', port=port, debug=True)
+    except OSError as e:
+        if e.errno == 98: #Address already in use error
+            logger.critical(f"Failed to start Flask server: Port {port} is already in use. \n{traceback.format_exc()}")
+        else:
+            logger.error(f"Failed to start Flask server: {str(e)}\n{traceback.format_exc()}")
+        raise
     except Exception as e:
-        logger.error("Failed to start Flask server: %s\n%s", str(e), traceback.format_exc())
+        logger.error(f"Failed to start Flask server: {str(e)}\n{traceback.format_exc()}")
         raise

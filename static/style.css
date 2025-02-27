@@ -144,6 +144,10 @@ textarea {
     height: 400px;
     width: 100%;
     margin-top: 20px;
+    margin-bottom: 40px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
 }
 
 .no-data {
