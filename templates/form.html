@@ -22,10 +22,15 @@
                         {% endfor %}
                     </select>
                 {% elif field.type == 'select_dynamic' %}
-                    <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}
-                            {% if field.name == 'equipe' %}multiple{% endif %}>
-                        <option value="">Selecione a unidade primeiro...</option>
-                    </select>
+                    {% if field.name == 'equipe' %}
+                        <div id="{{ field.name }}_container" class="checkbox-group">
+                            <p class="select-message">Selecione a unidade primeiro...</p>
+                        </div>
+                    {% else %}
+                        <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                            <option value="">Selecione a unidade primeiro...</option>
+                        </select>
+                    {% endif %}
                 {% elif field.type == 'textarea' %}
                     <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
                         {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
@@ -85,18 +90,17 @@
             document.getElementById('data_formatted').value = dd + '/' + mm + '/' + yyyy;
         }
 
-        // Get selected equipe values
-        var equipeSelect = document.getElementById('equipe');
-        if (equipeSelect && equipeSelect.multiple) {
-            var selectedEquipe = Array.from(equipeSelect.selectedOptions).map(option => option.value);
-            if (selectedEquipe.length > 0) {
-                // Create a hidden input to store the comma-separated values
-                var hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = 'equipe';
-                hiddenInput.value = selectedEquipe.join(', ');
-                document.querySelector('form').appendChild(hiddenInput);
-            }
+        // Get selected equipe values from checkboxes
+        var checkboxes = document.querySelectorAll('input[name="equipe"]:checked');
+        if (checkboxes.length > 0) {
+            var selectedEquipe = Array.from(checkboxes).map(checkbox => checkbox.value);
+            
+            // Create a hidden input to store the comma-separated values
+            var hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'equipe_values';
+            hiddenInput.value = selectedEquipe.join(', ');
+            document.querySelector('form').appendChild(hiddenInput);
         }
     });
 
@@ -125,13 +129,34 @@
         fetch('/get_equipe/' + unidade)
             .then(response => response.json())
             .then(data => {
-                var equipeSelect = document.getElementById('equipe');
-                equipeSelect.innerHTML = '';
+                var equipeContainer = document.getElementById('equipe_container');
+                equipeContainer.innerHTML = '';
+                
+                if (data.equipe.length === 0) {
+                    var message = document.createElement('p');
+                    message.className = 'select-message';
+                    message.textContent = 'Nenhuma equipe disponível para esta unidade';
+                    equipeContainer.appendChild(message);
+                    return;
+                }
+                
                 data.equipe.forEach(membro => {
-                    var option = document.createElement('option');
-                    option.value = membro;
-                    option.textContent = membro;
-                    equipeSelect.appendChild(option);
+                    var checkboxDiv = document.createElement('div');
+                    checkboxDiv.className = 'checkbox-item';
+                    
+                    var checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'equipe';
+                    checkbox.value = membro;
+                    checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
+                    
+                    var label = document.createElement('label');
+                    label.htmlFor = checkbox.id;
+                    label.textContent = membro;
+                    
+                    checkboxDiv.appendChild(checkbox);
+                    checkboxDiv.appendChild(label);
+                    equipeContainer.appendChild(checkboxDiv);
                 });
             });
     }

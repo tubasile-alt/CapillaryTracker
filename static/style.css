@@ -60,14 +60,6 @@ label {
     color: #555;
 }
 
-/* Adiciona texto de instrução para seleção múltipla */
-label[for="equipe"]::after {
-    content: " (Pressione Ctrl/Cmd para selecionar múltiplos)";
-    font-size: 0.9em;
-    color: #666;
-    font-style: italic;
-}
-
 input, select, textarea {
     width: 100%;
     padding: 8px;
@@ -76,20 +68,37 @@ input, select, textarea {
     font-size: 16px;
 }
 
-/* Melhorar aparência da seleção múltipla */
-select[multiple] {
-    height: auto;
-    min-height: 120px;
-    padding: 8px;
+/* Estilos para o grupo de checkboxes */
+.checkbox-group {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: #fff;
 }
 
-select[multiple] option {
-    padding: 8px;
-    border-bottom: 1px solid #eee;
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
 }
 
-select[multiple] option:hover {
-    background-color: #f0f0f0;
+.checkbox-item input[type="checkbox"] {
+    width: auto;
+    margin-right: 10px;
+}
+
+.checkbox-item label {
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.select-message {
+    color: #666;
+    font-style: italic;
+    margin: 5px 0;
+} #f0f0f0;
 }
 
 select[multiple] option:checked {
