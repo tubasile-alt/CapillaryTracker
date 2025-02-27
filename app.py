@@ -6,13 +6,21 @@ from utils import validate_date, validate_time, validate_numeric, validate_range
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
+UNIDADES_MEDICOS = {
+    "Ribeirão": ["Dr. Arthur", "Dr. Daniel"],
+    "Campinas": ["Dra. Isadora", "Dra. Adriana"],
+    "Sorocaba": ["Dra. Adriana"]
+}
+
 FORMS = {
     "dados_gerais": {
         "title": "Dados Gerais",
         "fields": [
             {"name": "data", "label": "Data (DD/MM/AAAA)", "type": "text", "required": True},
+            {"name": "unidade", "label": "Unidade", "type": "select", 
+             "options": ["Ribeirão", "Campinas", "Sorocaba"], "required": True},
+            {"name": "medico", "label": "Médico", "type": "select_dynamic", "required": True},
             {"name": "paciente", "label": "Paciente", "type": "text", "required": True},
-            {"name": "medico", "label": "Médico", "type": "text", "required": True},
             {"name": "equipe", "label": "Equipe", "type": "text", "required": True},
             {"name": "hora_cirurgia", "label": "Hora da Cirurgia (HH:MM)", "type": "text", "required": True},
             {"name": "tempo_cirurgia", "label": "Tempo de Cirurgia (horas)", "type": "number", "required": True}
@@ -169,6 +177,10 @@ def save():
     session.clear()
     flash('Dados salvos com sucesso!', 'success')
     return redirect(url_for('index'))
+
+@app.route('/get_medicos/<unidade>')
+def get_medicos(unidade):
+    return {"medicos": UNIDADES_MEDICOS.get(unidade, [])}
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -12,13 +12,18 @@
                 </label>
 
                 {% if field.type == 'select' %}
-                    <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                    <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}
+                            {% if field.name == 'unidade' %}onchange="updateMedicos(this.value)"{% endif %}>
                         <option value="">Selecione...</option>
                         {% for option in field.options %}
                             <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
                                 {{ option }}
                             </option>
                         {% endfor %}
+                    </select>
+                {% elif field.type == 'select_dynamic' %}
+                    <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                        <option value="">Selecione a unidade primeiro...</option>
                     </select>
                 {% elif field.type == 'textarea' %}
                     <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
@@ -59,6 +64,12 @@
             var yyyy = today.getFullYear();
             dateInput.value = yyyy + '-' + mm + '-' + dd;
         }
+
+        // If unidade is already selected, update medicos
+        var unidadeSelect = document.getElementById('unidade');
+        if (unidadeSelect && unidadeSelect.value) {
+            updateMedicos(unidadeSelect.value);
+        }
     });
 
     // Format date before form submission
@@ -72,5 +83,23 @@
             document.getElementById('data_formatted').value = dd + '/' + mm + '/' + yyyy;
         }
     });
+
+    // Update medicos based on selected unidade
+    function updateMedicos(unidade) {
+        if (!unidade) return;
+
+        fetch('/get_medicos/' + unidade)
+            .then(response => response.json())
+            .then(data => {
+                var medicoSelect = document.getElementById('medico');
+                medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
+                data.medicos.forEach(medico => {
+                    var option = document.createElement('option');
+                    option.value = medico;
+                    option.textContent = medico;
+                    medicoSelect.appendChild(option);
+                });
+            });
+    }
 </script>
 {% endblock %}
