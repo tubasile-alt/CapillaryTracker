@@ -307,11 +307,11 @@ def dashboard():
 
 if __name__ == '__main__':
     try:
-        logger.info("Starting Flask server on port 5000...")
+        logger.info("Starting Flask server on port 8080...")
         logger.debug("Debug mode is enabled")
         logger.debug("Current working directory: %s", os.getcwd())
         logger.debug("Environment variables: %s", str(dict(os.environ)))
-        app.run(host='0.0.0.0', port=5000, debug=True)
+        app.run(host='0.0.0.0', port=8080, debug=True)
     except Exception as e:
         logger.error(f"Failed to start Flask server: {str(e)}\n{traceback.format_exc()}")
         raise
