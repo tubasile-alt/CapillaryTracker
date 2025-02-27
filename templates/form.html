@@ -87,10 +87,15 @@
 
         // Get selected equipe values
         var equipeSelect = document.getElementById('equipe');
-        if (equipeSelect) {
+        if (equipeSelect && equipeSelect.multiple) {
             var selectedEquipe = Array.from(equipeSelect.selectedOptions).map(option => option.value);
             if (selectedEquipe.length > 0) {
-                equipeSelect.value = selectedEquipe.join(', ');
+                // Create a hidden input to store the comma-separated values
+                var hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'equipe';
+                hiddenInput.value = selectedEquipe.join(', ');
+                document.querySelector('form').appendChild(hiddenInput);
             }
         }
     });
