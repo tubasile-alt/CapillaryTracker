@@ -250,17 +250,24 @@ def dashboard():
             logger.debug("First few rows of the DataFrame:")
             logger.debug(df.head().to_string())
 
+            # Check if required columns exist for follicle and density charts
+            has_follicle_data = all(col in df.columns for col in ['total_foliculos', 'le'])
+
             # Prepare data for patients per month/unit
             monthly_data = df.groupby([pd.Grouper(key='data', freq='M'), 'unidade']).size().reset_index()
             monthly_data.columns = ['data', 'unidade', 'total']
             monthly_data['mes_ano'] = monthly_data['data'].dt.strftime('%m/%Y')
 
-            # Calculate average follicles per month and LE density
-            monthly_follicles = df.groupby(pd.Grouper(key='data', freq='M')).agg({
-                'total_foliculos': 'mean',
-                'le': 'mean'  # LE density (primeira faixa)
-            }).reset_index()
-            monthly_follicles['mes_ano'] = monthly_follicles['data'].dt.strftime('%m/%Y')
+            # Calculate average follicles per month and LE density if data exists
+            if has_follicle_data:
+                monthly_follicles = df.groupby(pd.Grouper(key='data', freq='M')).agg({
+                    'total_foliculos': 'mean',
+                    'le': 'mean'  # LE density (primeira faixa)
+                }).reset_index()
+                monthly_follicles['mes_ano'] = monthly_follicles['data'].dt.strftime('%m/%Y')
+            else:
+                # Create empty structure when data isn't available
+                monthly_follicles = pd.DataFrame({'data': [], 'mes_ano': [], 'total_foliculos': [], 'le': []})
 
             # Create dashboard data dictionary
             dashboard_data = {

@@ -13,6 +13,7 @@
         <canvas id="monthlyChart"></canvas>
     </div>
 
+    {% if data.has_follicle_data %}
     <div class="chart-container">
         <canvas id="folliclesChart"></canvas>
     </div>
@@ -20,6 +21,11 @@
     <div class="chart-container">
         <canvas id="densityChart"></canvas>
     </div>
+    {% else %}
+    <div class="alert alert-info">
+        Dados de folículos e densidade não estão disponíveis. Complete todos os formulários para visualizar esses gráficos.
+    </div>
+    {% endif %}
     {% else %}
     <p class="no-data">Nenhum dado disponível para exibição.</p>
     {% endif %}
