@@ -98,10 +98,55 @@ input, select, textarea {
     color: #666;
     font-style: italic;
     margin: 5px 0;
-} #f0f0f0;
 }
 
-select[multiple] option:checked {
+/* Estilos para seções do formulário */
+.form-section {
+    background-color: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+h3 {
+    color: #333;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #007bff;
+}
+
+/* Estilos para o grid de quadrantes */
+.quadrante-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+/* Estilo para resultados calculados */
+.results-container {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.result-grid p {
+    margin: 5px 0;
+}
+
+.result-grid span {
+    font-weight: bold;
+    color: #007bff;
+}
     background-color: #e3f2fd;
     color: #1976d2;
 }
