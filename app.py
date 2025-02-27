@@ -91,14 +91,14 @@ FORMS = {
 def validate_form_data(form_id, data):
     form = FORMS[form_id]
     errors = []
-    
+
     for field in form["fields"]:
         value = data.get(field["name"], "").strip()
-        
+
         if field["required"] and not value:
             errors.append(f"O campo {field['label']} é obrigatório")
             continue
-            
+
         if value:
             if field["name"] == "data" and not validate_date(value):
                 errors.append("Data inválida. Use o formato DD/MM/AAAA")
@@ -108,7 +108,7 @@ def validate_form_data(form_id, data):
                 errors.append(f"O campo {field['label']} deve ser numérico")
             elif "1-3" in field["label"] and not validate_range(value, 1, 3):
                 errors.append(f"O campo {field['label']} deve estar entre 1 e 3")
-    
+
     return errors
 
 @app.route('/')
@@ -120,27 +120,32 @@ def index():
 def form(form_id):
     if form_id not in FORMS:
         return redirect(url_for('index'))
-        
+
     if request.method == 'POST':
         form_data = request.form.to_dict()
+
+        # Use formatted date if available
+        if 'data_formatted' in form_data and form_data['data_formatted']:
+            form_data['data'] = form_data['data_formatted']
+
         errors = validate_form_data(form_id, form_data)
-        
+
         if errors:
             for error in errors:
                 flash(error, 'error')
             return render_template('form.html', form=FORMS[form_id], data=form_data)
-            
+
         # Store form data in session
         if 'form_data' not in session:
             session['form_data'] = {}
         session['form_data'].update(form_data)
-        
+
         # If there's a next form, go to it
         if 'next' in FORMS[form_id]:
             return redirect(url_for('form', form_id=FORMS[form_id]['next']))
         else:
             return redirect(url_for('save'))
-            
+
     # GET request
     form_data = session.get('form_data', {})
     return render_template('form.html', form=FORMS[form_id], data=form_data)
@@ -149,10 +154,10 @@ def form(form_id):
 def save():
     if 'form_data' not in session:
         return redirect(url_for('index'))
-        
+
     data = session['form_data']
     df_new = pd.DataFrame([data])
-    
+
     filename = 'cirurgias.xlsx'
     if os.path.exists(filename):
         df_existing = pd.read_excel(filename)
@@ -160,7 +165,7 @@ def save():
         df_combined.to_excel(filename, index=False)
     else:
         df_new.to_excel(filename, index=False)
-    
+
     session.clear()
     flash('Dados salvos com sucesso!', 'success')
     return redirect(url_for('index'))

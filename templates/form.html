@@ -10,7 +10,7 @@
                     {{ field.label }}
                     {% if field.required %}*{% endif %}
                 </label>
-                
+
                 {% if field.type == 'select' %}
                     <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
                         <option value="">Selecione...</option>
@@ -23,6 +23,11 @@
                 {% elif field.type == 'textarea' %}
                     <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
                         {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                {% elif field.name == 'data' %}
+                    <input type="date" name="{{ field.name }}" id="{{ field.name }}"
+                        value="{{ data.get(field.name, '') }}"
+                        {% if field.required %}required{% endif %}>
+                    <input type="hidden" name="data_formatted" id="data_formatted">
                 {% else %}
                     <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
                         value="{{ data.get(field.name, '') }}"
@@ -30,16 +35,42 @@
                 {% endif %}
             </div>
         {% endfor %}
-        
+
         <div class="button-group">
             {% if form.prev %}
                 <a href="{{ url_for('form', form_id=form.prev) }}" class="btn btn-secondary">Anterior</a>
             {% endif %}
-            
+
             <button type="submit" class="btn btn-primary">
                 {% if form.next %}Próximo{% else %}Finalizar{% endif %}
             </button>
         </div>
     </form>
 </div>
+
+<script>
+    // Set today's date as default
+    window.addEventListener('load', function() {
+        var dateInput = document.getElementById('data');
+        if (dateInput) {
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0');
+            var yyyy = today.getFullYear();
+            dateInput.value = yyyy + '-' + mm + '-' + dd;
+        }
+    });
+
+    // Format date before form submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        var dateInput = document.getElementById('data');
+        if (dateInput) {
+            var date = new Date(dateInput.value);
+            var dd = String(date.getDate()).padStart(2, '0');
+            var mm = String(date.getMonth() + 1).padStart(2, '0');
+            var yyyy = date.getFullYear();
+            document.getElementById('data_formatted').value = dd + '/' + mm + '/' + yyyy;
+        }
+    });
+</script>
 {% endblock %}
