@@ -209,7 +209,9 @@ def dashboard():
                             'mes_ano': cirurgias_por_mes['mes_ano'].unique()
                         })
                         # Juntar com dados existentes
-                        merged = dados_completos.merge(dados_unidade, on='mes_ano', how='left').fillna(0)
+                        merged = dados_completos.merge(dados_unidade, on='mes_ano', how='left')
+                        # Tratar valores nulos corretamente
+                        merged['count'] = merged['count'].fillna(0).astype(int)
 
                         datasets_unidades.append({
                             'label': f'Cirurgias - {unidade}',
@@ -237,14 +239,14 @@ def dashboard():
                     # Média de folículos por unidade por mês (se aplicável)
                     follicle_data = {
                         'labels': folliculo_medio['mes_ano'].tolist(),
-                        'averages': folliculo_medio['total_foliculos'].round(0).astype(int).tolist(),
+                        'averages': folliculo_medio['total_foliculos'].fillna(0).round(0).astype(int).tolist(),
                         'le_density': []  # Placeholder para densidade LE
                     }
 
                     # Se tiver dado de densidade, calcular média
                     if 'densidade_scketh' in df.columns:
                         densidade_media = df.groupby('mes_ano')['densidade_scketh'].mean().reset_index()
-                        follicle_data['le_density'] = densidade_media['densidade_scketh'].round(0).astype(int).tolist()
+                        follicle_data['le_density'] = densidade_media['densidade_scketh'].fillna(0).round(0).astype(int).tolist()
 
                     # Adicionar ao dashboard_data
                     dashboard_data['follicles_data'] = follicle_data
