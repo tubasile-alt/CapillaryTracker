@@ -68,6 +68,34 @@ input, select, textarea {
     font-size: 16px;
 }
 
+/* Estilos para paginação do formulário */
+.form-pagination {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.pagination-step {
+    padding: 8px 15px;
+    margin: 0 5px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.pagination-step.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.pagination-step:hover:not(.active) {
+    background-color: #f0f0f0;
+}
+
 /* Estilos para o grupo de checkboxes */
 .checkbox-group {
     border: 1px solid #ddd;
@@ -117,11 +145,51 @@ h3 {
     border-bottom: 2px solid #007bff;
 }
 
+h4 {
+    color: #444;
+    margin: 10px 0;
+    font-size: 1.1em;
+}
+
 /* Estilos para o grid de quadrantes */
 .quadrante-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
+}
+
+/* Novo estilo para quadrantes */
+.quadrantes-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.quadrante-box {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.quadrante-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-group-compact {
+    margin-bottom: 8px;
+}
+
+.form-group-compact label {
+    font-size: 0.9em;
+    margin-bottom: 3px;
+}
+
+.form-group-compact input {
+    padding: 6px;
+    font-size: 0.9em;
 }
 
 /* Estilo para resultados calculados */
@@ -147,20 +215,19 @@ h3 {
     font-weight: bold;
     color: #007bff;
 }
-    background-color: #e3f2fd;
-    color: #1976d2;
-}
 
 textarea {
     resize: vertical;
     min-height: 100px;
 }
 
-.button-group {
-    margin-top: 20px;
+/* Estilos para botões de navegação */
+.nav-buttons {
     display: flex;
-    gap: 10px;
     justify-content: space-between;
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
 }
 
 .btn {
@@ -170,6 +237,7 @@ textarea {
     cursor: pointer;
     font-size: 16px;
     text-decoration: none;
+    transition: background-color 0.3s;
 }
 
 .btn-primary {
@@ -177,9 +245,17 @@ textarea {
     color: white;
 }
 
+.btn-primary:hover {
+    background-color: #0069d9;
+}
+
 .btn-secondary {
     background-color: #6c757d;
     color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
 }
 
 .alert {

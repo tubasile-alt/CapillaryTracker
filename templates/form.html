@@ -4,234 +4,318 @@
 {% block content %}
 <div class="form-container">
     <h2>{{ form.title }}</h2>
-    <form method="post">
-        <h3>Dados Gerais da Cirurgia</h3>
-        <div class="form-section">
-            {% for field in form.fields[:7] %}
-                <div class="form-group">
-                    <label for="{{ field.name }}">
-                        {{ field.label }}
-                        {% if field.required %}*{% endif %}
-                    </label>
-
-                    {% if field.type == 'select' %}
-                        <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}
-                                {% if field.name == 'unidade' %}onchange="updateMedicos(this.value); updateEquipe(this.value)"{% endif %}>
-                            <option value="">Selecione...</option>
-                            {% for option in field.options %}
-                                <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
-                                    {{ option }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    {% elif field.type == 'select_dynamic' %}
-                        {% if field.name == 'equipe' %}
-                            <div id="{{ field.name }}_container" class="checkbox-group">
-                                <p class="select-message">Selecione a unidade primeiro...</p>
-                            </div>
-                        {% else %}
-                            <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
-                                <option value="">Selecione a unidade primeiro...</option>
-                            </select>
-                        {% endif %}
-                    {% elif field.type == 'textarea' %}
-                        <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
-                            {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
-                    {% elif field.name == 'data' %}
-                        <input type="date" name="{{ field.name }}" id="{{ field.name }}"
-                            value="{{ data.get(field.name, '') }}"
-                            {% if field.required %}required{% endif %}>
-                        <input type="hidden" name="data_formatted" id="data_formatted">
-                    {% else %}
-                        <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                            value="{{ data.get(field.name, '') }}"
-                            {% if field.required %}required{% endif %}>
-                    {% endif %}
-                </div>
-            {% endfor %}
+    <form method="post" id="cirurgia-form">
+        <!-- Paginação -->
+        <div class="form-pagination">
+            <span class="pagination-step active" data-page="1">Página 1</span>
+            <span class="pagination-step" data-page="2">Página 2</span>
         </div>
 
-        <h3>Informações do Implante</h3>
-        <div class="form-section">
-            {% for field in form.fields[7:14] %}
-                <div class="form-group">
-                    <label for="{{ field.name }}">
-                        {{ field.label }}
-                        {% if field.required %}*{% endif %}
-                    </label>
-
-                    {% if field.type == 'select' %}
-                        <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
-                            <option value="">Selecione...</option>
-                            {% for option in field.options %}
-                                <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
-                                    {{ option }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    {% elif field.type == 'textarea' %}
-                        <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
-                            {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
-                    {% else %}
-                        <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                            value="{{ data.get(field.name, '') }}"
-                            {% if field.required %}required{% endif %}>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-
-        <h3>Procedimentos e Ferramentas</h3>
-        <div class="form-section">
-            {% for field in form.fields[14:19] %}
-                <div class="form-group">
-                    <label for="{{ field.name }}">
-                        {{ field.label }}
-                        {% if field.required %}*{% endif %}
-                    </label>
-
-                    {% if field.type == 'select' %}
-                        <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
-                            <option value="">Selecione...</option>
-                            {% for option in field.options %}
-                                <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
-                                    {{ option }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    {% elif field.type == 'textarea' %}
-                        <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
-                            {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
-                    {% else %}
-                        <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                            value="{{ data.get(field.name, '') }}"
-                            {% if field.required %}required{% endif %}>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-
-        <h3>Extração</h3>
-        <div class="form-section">
-            <div class="quadrante-grid">
-                {% for field in form.fields[19:31] %}
+        <!-- Página 1 -->
+        <div class="form-page" id="page-1">
+            <h3>Dados Gerais da Cirurgia</h3>
+            <div class="form-section">
+                {% for field in form.fields[:7] %}
                     <div class="form-group">
                         <label for="{{ field.name }}">
                             {{ field.label }}
                             {% if field.required %}*{% endif %}
                         </label>
-                        <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                            value="{{ data.get(field.name, '') }}"
-                            {% if field.required %}required{% endif %}>
+
+                        {% if field.type == 'select' %}
+                            <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}
+                                    {% if field.name == 'unidade' %}onchange="updateMedicos(this.value); updateEquipe(this.value)"{% endif %}>
+                                <option value="">Selecione...</option>
+                                {% for option in field.options %}
+                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                        {{ option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.type == 'select_dynamic' %}
+                            {% if field.name == 'equipe' %}
+                                <div id="{{ field.name }}_container" class="checkbox-group">
+                                    <p class="select-message">Selecione a unidade primeiro...</p>
+                                </div>
+                            {% else %}
+                                <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                                    <option value="">Selecione a unidade primeiro...</option>
+                                </select>
+                            {% endif %}
+                        {% elif field.type == 'textarea' %}
+                            <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
+                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                        {% elif field.name == 'data' %}
+                            <input type="date" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                            <input type="hidden" name="data_formatted" id="data_formatted">
+                        {% else %}
+                            <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>
-            <div class="results-container">
-                <h4>Resultados Calculados (serão salvos automaticamente)</h4>
-                <div class="result-grid">
-                    <div>
-                        <p>Densidade Q1: <span id="q1_densidade_result">-</span></p>
-                        <p>Taxa de Quebra Q1: <span id="q1_taxa_quebra_result">-</span>%</p>
+
+            <h3>Informações do Implante</h3>
+            <div class="form-section">
+                {% for field in form.fields[7:14] %}
+                    <div class="form-group">
+                        <label for="{{ field.name }}">
+                            {{ field.label }}
+                            {% if field.required %}*{% endif %}
+                        </label>
+
+                        {% if field.type == 'select' %}
+                            <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                                <option value="">Selecione...</option>
+                                {% for option in field.options %}
+                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                        {{ option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.type == 'textarea' %}
+                            <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
+                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                        {% else %}
+                            <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                        {% endif %}
                     </div>
-                    <div>
-                        <p>Densidade Q2: <span id="q2_densidade_result">-</span></p>
-                        <p>Taxa de Quebra Q2: <span id="q2_taxa_quebra_result">-</span>%</p>
+                {% endfor %}
+            </div>
+
+            <h3>Procedimentos e Ferramentas</h3>
+            <div class="form-section">
+                {% for field in form.fields[14:19] %}
+                    <div class="form-group">
+                        <label for="{{ field.name }}">
+                            {% if field.name == 'solucao_frente' %}
+                                Solução Frente (seringas)
+                            {% elif field.name == 'solucao_coroa' %}
+                                Solução Coroa (seringas)
+                            {% elif field.name == 'solucao_xilo_frente' %}
+                                Solução Xilo Frente (seringas)
+                            {% else %}
+                                {{ field.label }}
+                            {% endif %}
+                            {% if field.required %}*{% endif %}
+                        </label>
+
+                        {% if field.type == 'select' %}
+                            <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                                <option value="">Selecione...</option>
+                                {% for option in field.options %}
+                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                        {{ option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.type == 'textarea' %}
+                            <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
+                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                        {% else %}
+                            <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                        {% endif %}
                     </div>
-                    <div>
-                        <p>Densidade Q3: <span id="q3_densidade_result">-</span></p>
-                        <p>Taxa de Quebra Q3: <span id="q3_taxa_quebra_result">-</span>%</p>
-                    </div>
-                    <div>
-                        <p>Densidade Q4: <span id="q4_densidade_result">-</span></p>
-                        <p>Taxa de Quebra Q4: <span id="q4_taxa_quebra_result">-</span>%</p>
-                    </div>
-                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Botões de navegação da página 1 -->
+            <div class="nav-buttons">
+                <button type="button" class="btn btn-primary" onclick="goToPage(2)">Próximo</button>
             </div>
         </div>
 
-        <h3>Avaliação Intraoperatória</h3>
-        <div class="form-section">
-            {% for field in form.fields[31:34] %}
-                <div class="form-group">
-                    <label for="{{ field.name }}">
-                        {{ field.label }}
-                        {% if field.required %}*{% endif %}
-                    </label>
-
-                    {% if field.type == 'select' %}
-                        <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
-                            <option value="">Selecione...</option>
-                            {% for option in field.options %}
-                                <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
-                                    {{ option }}
-                                </option>
+        <!-- Página 2 -->
+        <div class="form-page" id="page-2" style="display: none;">
+            <h3>Extração</h3>
+            <div class="form-section">
+                <div class="quadrantes-container">
+                    <div class="quadrante-box">
+                        <h4>Quadrante 1</h4>
+                        <div class="quadrante-inputs">
+                            {% for field in form.fields[19:22] %}
+                                <div class="form-group-compact">
+                                    <label for="{{ field.name }}">
+                                        {{ field.label.replace('Quadrante 1 - ', '') }}
+                                        {% if field.required %}*{% endif %}
+                                    </label>
+                                    <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                        value="{{ data.get(field.name, '') }}"
+                                        {% if field.required %}required{% endif %}>
+                                </div>
                             {% endfor %}
-                        </select>
-                    {% elif field.type == 'textarea' %}
-                        <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
-                            {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
-                    {% else %}
-                        <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                            value="{{ data.get(field.name, '') }}"
-                            {% if field.required %}required{% endif %}>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-
-        <h3>Histórico do Paciente</h3>
-        <div class="form-section">
-            {% for field in form.fields[34:40] %}
-                <div class="form-group">
-                    <label for="{{ field.name }}">
-                        {{ field.label }}
-                        {% if field.required %}*{% endif %}
-                    </label>
-
-                    {% if field.type == 'select' %}
-                        <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
-                            <option value="">Selecione...</option>
-                            {% for option in field.options %}
-                                <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
-                                    {{ option }}
-                                </option>
+                        </div>
+                    </div>
+                    
+                    <div class="quadrante-box">
+                        <h4>Quadrante 2</h4>
+                        <div class="quadrante-inputs">
+                            {% for field in form.fields[22:25] %}
+                                <div class="form-group-compact">
+                                    <label for="{{ field.name }}">
+                                        {{ field.label.replace('Quadrante 2 - ', '') }}
+                                        {% if field.required %}*{% endif %}
+                                    </label>
+                                    <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                        value="{{ data.get(field.name, '') }}"
+                                        {% if field.required %}required{% endif %}>
+                                </div>
                             {% endfor %}
-                        </select>
-                    {% elif field.type == 'textarea' %}
-                        <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
-                            {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
-                    {% else %}
-                        <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                            value="{{ data.get(field.name, '') }}"
-                            {% if field.required %}required{% endif %}>
-                    {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="quadrante-box">
+                        <h4>Quadrante 3</h4>
+                        <div class="quadrante-inputs">
+                            {% for field in form.fields[25:28] %}
+                                <div class="form-group-compact">
+                                    <label for="{{ field.name }}">
+                                        {{ field.label.replace('Quadrante 3 - ', '') }}
+                                        {% if field.required %}*{% endif %}
+                                    </label>
+                                    <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                        value="{{ data.get(field.name, '') }}"
+                                        {% if field.required %}required{% endif %}>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="quadrante-box">
+                        <h4>Quadrante 4</h4>
+                        <div class="quadrante-inputs">
+                            {% for field in form.fields[28:31] %}
+                                <div class="form-group-compact">
+                                    <label for="{{ field.name }}">
+                                        {{ field.label.replace('Quadrante 4 - ', '') }}
+                                        {% if field.required %}*{% endif %}
+                                    </label>
+                                    <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                        value="{{ data.get(field.name, '') }}"
+                                        {% if field.required %}required{% endif %}>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
-            {% endfor %}
-        </div>
-
-        <h3>Comentários e Finalização</h3>
-        <div class="form-section">
-            {% for field in form.fields[40:] %}
-                <div class="form-group">
-                    <label for="{{ field.name }}">
-                        {{ field.label }}
-                        {% if field.required %}*{% endif %}
-                    </label>
-
-                    {% if field.type == 'textarea' %}
-                        <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
-                            {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
-                    {% else %}
-                        <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                            value="{{ data.get(field.name, '') }}"
-                            {% if field.required %}required{% endif %}>
-                    {% endif %}
+                
+                <div class="results-container">
+                    <h4>Resultados Calculados (serão salvos automaticamente)</h4>
+                    <div class="result-grid">
+                        <div>
+                            <p>Densidade Q1: <span id="q1_densidade_result">-</span></p>
+                            <p>Taxa de Quebra Q1: <span id="q1_taxa_quebra_result">-</span>%</p>
+                        </div>
+                        <div>
+                            <p>Densidade Q2: <span id="q2_densidade_result">-</span></p>
+                            <p>Taxa de Quebra Q2: <span id="q2_taxa_quebra_result">-</span>%</p>
+                        </div>
+                        <div>
+                            <p>Densidade Q3: <span id="q3_densidade_result">-</span></p>
+                            <p>Taxa de Quebra Q3: <span id="q3_taxa_quebra_result">-</span>%</p>
+                        </div>
+                        <div>
+                            <p>Densidade Q4: <span id="q4_densidade_result">-</span></p>
+                            <p>Taxa de Quebra Q4: <span id="q4_taxa_quebra_result">-</span>%</p>
+                        </div>
+                    </div>
                 </div>
-            {% endfor %}
-        </div>
+            </div>
 
-        <div class="button-group">
-            <button type="submit" class="btn btn-primary">Salvar Dados</button>
+            <h3>Avaliação Intraoperatória</h3>
+            <div class="form-section">
+                {% for field in form.fields[31:34] %}
+                    <div class="form-group">
+                        <label for="{{ field.name }}">
+                            {{ field.label }}
+                            {% if field.required %}*{% endif %}
+                        </label>
+
+                        {% if field.type == 'select' %}
+                            <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                                <option value="">Selecione...</option>
+                                {% for option in field.options %}
+                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                        {{ option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.type == 'textarea' %}
+                            <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
+                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                        {% else %}
+                            <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <h3>Histórico do Paciente</h3>
+            <div class="form-section">
+                {% for field in form.fields[34:40] %}
+                    <div class="form-group">
+                        <label for="{{ field.name }}">
+                            {{ field.label }}
+                            {% if field.required %}*{% endif %}
+                        </label>
+
+                        {% if field.type == 'select' %}
+                            <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                                <option value="">Selecione...</option>
+                                {% for option in field.options %}
+                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                        {{ option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.type == 'textarea' %}
+                            <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
+                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                        {% else %}
+                            <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <h3>Comentários e Finalização</h3>
+            <div class="form-section">
+                {% for field in form.fields[40:] %}
+                    <div class="form-group">
+                        <label for="{{ field.name }}">
+                            {{ field.label }}
+                            {% if field.required %}*{% endif %}
+                        </label>
+
+                        {% if field.type == 'textarea' %}
+                            <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
+                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                        {% else %}
+                            <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Botões de navegação da página 2 -->
+            <div class="nav-buttons">
+                <button type="button" class="btn btn-secondary" onclick="goToPage(1)">Anterior</button>
+                <button type="submit" class="btn btn-primary">Salvar Dados</button>
+            </div>
         </div>
     </form>
 </div>
@@ -260,7 +344,7 @@
     });
 
     // Format date before form submission
-    document.querySelector('form').addEventListener('submit', function(e) {
+    document.getElementById('cirurgia-form').addEventListener('submit', function(e) {
         var dateInput = document.getElementById('data');
         if (dateInput) {
             var date = new Date(dateInput.value);
@@ -280,7 +364,7 @@
             hiddenInput.type = 'hidden';
             hiddenInput.name = 'equipe_values';
             hiddenInput.value = selectedEquipe.join(', ');
-            document.querySelector('form').appendChild(hiddenInput);
+            document.getElementById('cirurgia-form').appendChild(hiddenInput);
         }
     });
 
@@ -370,6 +454,28 @@
                 fiosInput.addEventListener('input', updateCalculations);
             }
         });
+    }
+
+    // Função para navegar entre páginas
+    function goToPage(pageNumber) {
+        // Ocultar todas as páginas
+        document.querySelectorAll('.form-page').forEach(page => {
+            page.style.display = 'none';
+        });
+        
+        // Mostrar a página selecionada
+        document.getElementById('page-' + pageNumber).style.display = 'block';
+        
+        // Atualizar indicadores de paginação
+        document.querySelectorAll('.pagination-step').forEach(step => {
+            step.classList.remove('active');
+            if (parseInt(step.getAttribute('data-page')) === pageNumber) {
+                step.classList.add('active');
+            }
+        });
+        
+        // Rolar para o topo
+        window.scrollTo(0, 0);
     }
 </script>
 {% endblock %}
