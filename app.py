@@ -122,6 +122,11 @@ def novo_cadastro():
 
 def save_to_excel(data):
     """Salva os dados em um arquivo Excel."""
+    # Converter campos vazios para "0"
+    for key in data:
+        if data[key] == '' or data[key] is None:
+            data[key] = '0'
+    
     # Calcular dados adicionais
     if all(key in data for key in ['q1_area', 'q1_furos', 'q1_fios']):
         try:
@@ -194,9 +199,14 @@ def dashboard():
                 # 1. Cirurgias por mês (total)
                 cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
 
+                # Garantir que não existam valores NaN
+                cirurgias_por_mes['count'] = cirurgias_por_mes['count'].fillna(0).astype(int)
+
                 # 2. Cirurgias por mês por unidade
                 if 'unidade' in df.columns:
                     cirurgias_por_mes_unidade = df.groupby(['mes_ano', 'unidade']).size().reset_index(name='count')
+                    # Garantir que não existam valores NaN
+                    cirurgias_por_mes_unidade['count'] = cirurgias_por_mes_unidade['count'].fillna(0).astype(int)
 
                     # Preparar datasets por unidade
                     unidades = df['unidade'].unique()
@@ -257,7 +267,8 @@ def dashboard():
                 dashboard_data = {
                     'labels': [],
                     'datasets': [{'label': 'Cirurgias', 'data': []}],
-                    'has_follicle_data': False
+                    'has_follicle_data': False,
+                    'follicles_data': {'labels': [], 'averages': [], 'le_density': []}  # Dados vazios
                 }
         else:
             dashboard_data = {
