@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container">
+    <h2>{{ form.title }}</h2>
+    <form method="post">
+        {% for field in form.fields %}
+            <div class="form-group">
+                <label for="{{ field.name }}">
+                    {{ field.label }}
+                    {% if field.required %}*{% endif %}
+                </label>
+                
+                {% if field.type == 'select' %}
+                    <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                        <option value="">Selecione...</option>
+                        {% for option in field.options %}
+                            <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                {{ option }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                {% elif field.type == 'textarea' %}
+                    <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
+                        {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                {% else %}
+                    <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                        value="{{ data.get(field.name, '') }}"
+                        {% if field.required %}required{% endif %}>
+                {% endif %}
+            </div>
+        {% endfor %}
+        
+        <div class="button-group">
+            {% if form.prev %}
+                <a href="{{ url_for('form', form_id=form.prev) }}" class="btn btn-secondary">Anterior</a>
+            {% endif %}
+            
+            <button type="submit" class="btn btn-primary">
+                {% if form.next %}Próximo{% else %}Finalizar{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

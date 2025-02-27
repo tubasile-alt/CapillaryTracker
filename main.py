@@ -9,144 +9,225 @@ class HairSurgeryForm:
     def __init__(self, root):
         self.root = root
         self.root.title("Formulário de Cirurgia Capilar")
-        self.root.geometry("800x900")
+        self.root.geometry("800x600")
 
-        # Create main frame with scrollbar
-        self.main_frame = ttk.Frame(self.root)
-        self.main_frame.pack(fill=tk.BOTH, expand=True)
-
-        # Create canvas with scrollbar
-        self.canvas = tk.Canvas(self.main_frame)
-        self.scrollbar = ttk.Scrollbar(self.main_frame, orient=tk.VERTICAL, command=self.canvas.yview)
-        self.scrollable_frame = ttk.Frame(self.canvas)
-
-        self.scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-        )
-
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
-
-        # Pack scrollbar components
-        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        # Initialize form fields
-        self.initialize_form()
-
-    def initialize_form(self):
-        # Dictionary to store entry widgets
+        # Dictionary to store all entry widgets
         self.entries = {}
-        
-        # Basic information section
-        ttk.Label(self.scrollable_frame, text="Informações Básicas", font=('Helvetica', 12, 'bold')).grid(row=0, column=0, columnspan=2, pady=10)
-        
-        fields = [
-            ("Data (DD/MM/AAAA)", "date"),
-            ("Paciente", "text"),
-            ("Médico", "text"),
-            ("Equipe", "text"),
-            ("Hora da Cirurgia (HH:MM)", "time"),
-            ("Tempo de Cirurgia (horas)", "numeric"),
-            ("Total de Folículos", "numeric"),
-            ("Frente", "numeric"),
-            ("Densidade Scketh", "numeric"),
-            ("Coroa", "numeric"),
-            ("Scalpe", "numeric"),
-            ("Península Direita", "numeric"),
-            ("Península Esquerda", "numeric"),
-            ("Punch", "numeric"),
-            ("Solução Frente (ml)", "numeric"),
-            ("Solução Coroa (ml)", "numeric"),
-            ("Solução Xilo Frente (ml)", "numeric"),
-            ("LE", "numeric"),
-            ("ME", "numeric"),
-            ("MD", "numeric"),
-            ("LD", "numeric"),
-            ("Infiltração (1-3)", "range"),
-            ("Sedação (1-3)", "range"),
-            ("Sangramento (1-3)", "range")
-        ]
 
-        # Create entry fields
-        for idx, (field, field_type) in enumerate(fields):
-            ttk.Label(self.scrollable_frame, text=field).grid(row=idx+1, column=0, padx=5, pady=2, sticky="e")
-            entry = ttk.Entry(self.scrollable_frame, width=30)
-            entry.grid(row=idx+1, column=1, padx=5, pady=2)
-            self.entries[field] = entry
+        # Create and store all frames
+        self.frames = {}
+        self.current_frame = None
+        self.create_frames()
 
-        # Yes/No questions section
-        ttk.Label(self.scrollable_frame, text="Informações Adicionais", font=('Helvetica', 12, 'bold')).grid(row=len(fields)+1, column=0, columnspan=2, pady=10)
-        
-        yes_no_fields = [
-            "Safira?",
-            "Implante Secundário?",
-            "Transamin?",
-            "Tadalafila?",
-            "Diprospam/Beta 30?",
-            "Fumante?"
-        ]
+        # Show first frame
+        self.show_frame("Dados Gerais")
 
-        # Create comboboxes for Yes/No questions
-        for idx, field in enumerate(yes_no_fields):
-            ttk.Label(self.scrollable_frame, text=field).grid(row=len(fields)+idx+2, column=0, padx=5, pady=2, sticky="e")
-            combo = ttk.Combobox(self.scrollable_frame, values=["Sim", "Não"], width=27, state="readonly")
-            combo.set("Não")
-            combo.grid(row=len(fields)+idx+2, column=1, padx=5, pady=2)
-            self.entries[field] = combo
+    def create_frames(self):
+        # Create all frames but only show the first one
+        frame_configs = {
+            "Dados Gerais": {
+                "fields": [
+                    ("Data (DD/MM/AAAA)", "date"),
+                    ("Paciente", "text"),
+                    ("Médico", "text"),
+                    ("Equipe", "text"),
+                    ("Hora da Cirurgia (HH:MM)", "time"),
+                    ("Tempo de Cirurgia (horas)", "numeric")
+                ],
+                "required": ["Data (DD/MM/AAAA)", "Paciente", "Médico", "Equipe", 
+                           "Hora da Cirurgia (HH:MM)", "Tempo de Cirurgia (horas)"]
+            },
+            "Informações do Implante": {
+                "fields": [
+                    ("Total de Folículos", "numeric"),
+                    ("Frente", "numeric"),
+                    ("Densidade Scketh", "numeric"),
+                    ("Coroa", "numeric"),
+                    ("Scalpe", "numeric"),
+                    ("Península Direita", "numeric"),
+                    ("Península Esquerda", "numeric")
+                ],
+                "required": ["Total de Folículos"]
+            },
+            "Procedimentos": {
+                "fields": [
+                    ("Safira?", "yesno"),
+                    ("Punch", "numeric"),
+                    ("Solução Frente (ml)", "numeric"),
+                    ("Solução Coroa (ml)", "numeric"),
+                    ("Solução Xilo Frente (ml)", "numeric")
+                ],
+                "required": ["Punch"]
+            },
+            "Distribuição": {
+                "fields": [
+                    ("LE", "numeric"),
+                    ("ME", "numeric"),
+                    ("MD", "numeric"),
+                    ("LD", "numeric")
+                ],
+                "required": ["LE", "ME", "MD", "LD"]
+            },
+            "Avaliação": {
+                "fields": [
+                    ("Infiltração (1-3)", "range"),
+                    ("Sedação (1-3)", "range"),
+                    ("Sangramento (1-3)", "range")
+                ],
+                "required": ["Infiltração (1-3)", "Sedação (1-3)", "Sangramento (1-3)"]
+            },
+            "Histórico": {
+                "fields": [
+                    ("Implante Secundário?", "yesno"),
+                    ("Transamin?", "yesno"),
+                    ("Tadalafila?", "yesno"),
+                    ("Diprospam/Beta 30?", "yesno"),
+                    ("Fumante?", "yesno"),
+                    ("Antecedentes Pessoais", "text_area")
+                ],
+                "required": ["Implante Secundário?", "Fumante?"]
+            },
+            "Finalização": {
+                "fields": [
+                    ("Comentários", "text_area")
+                ],
+                "required": []
+            }
+        }
 
-        # Text areas for additional information
-        ttk.Label(self.scrollable_frame, text="Antecedentes Pessoais").grid(row=len(fields)+len(yes_no_fields)+2, column=0, padx=5, pady=2, sticky="e")
-        self.entries["Antecedentes Pessoais"] = tk.Text(self.scrollable_frame, height=3, width=30)
-        self.entries["Antecedentes Pessoais"].grid(row=len(fields)+len(yes_no_fields)+2, column=1, padx=5, pady=2)
+        for frame_name, config in frame_configs.items():
+            frame = ttk.Frame(self.root)
+            frame.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
 
-        ttk.Label(self.scrollable_frame, text="Comentários").grid(row=len(fields)+len(yes_no_fields)+3, column=0, padx=5, pady=2, sticky="e")
-        self.entries["Comentários"] = tk.Text(self.scrollable_frame, height=3, width=30)
-        self.entries["Comentários"].grid(row=len(fields)+len(yes_no_fields)+3, column=1, padx=5, pady=2)
+            # Title
+            ttk.Label(frame, text=frame_name, font=('Helvetica', 12, 'bold')).grid(
+                row=0, column=0, columnspan=2, pady=10)
 
-        # Save button
-        ttk.Button(self.scrollable_frame, text="Salvar Dados", command=self.save_data).grid(row=len(fields)+len(yes_no_fields)+4, column=0, columnspan=2, pady=20)
+            # Create fields
+            for idx, (field, field_type) in enumerate(config["fields"]):
+                ttk.Label(frame, text=field).grid(row=idx+1, column=0, padx=5, pady=2, sticky="e")
 
-    def validate_fields(self):
-        # Validate date
-        date_value = self.entries["Data (DD/MM/AAAA)"].get()
-        if not validate_date(date_value):
-            messagebox.showerror("Erro", "Data inválida. Use o formato DD/MM/AAAA")
-            return False
+                if field_type == "yesno":
+                    widget = ttk.Combobox(frame, values=["Sim", "Não"], width=27, state="readonly")
+                    widget.set("Não")
+                elif field_type == "text_area":
+                    widget = tk.Text(frame, height=3, width=30)
+                else:
+                    widget = ttk.Entry(frame, width=30)
 
-        # Validate time
-        time_value = self.entries["Hora da Cirurgia (HH:MM)"].get()
-        if not validate_time(time_value):
-            messagebox.showerror("Erro", "Hora inválida. Use o formato HH:MM")
-            return False
+                widget.grid(row=idx+1, column=1, padx=5, pady=2)
+                self.entries[field] = widget
 
-        # Validate numeric fields
-        numeric_fields = [
-            "Tempo de Cirurgia (horas)", "Total de Folículos", "Frente", "Densidade Scketh",
-            "Coroa", "Scalpe", "Península Direita", "Península Esquerda", "Punch",
-            "Solução Frente (ml)", "Solução Coroa (ml)", "Solução Xilo Frente (ml)",
-            "LE", "ME", "MD", "LD"
-        ]
-        
-        for field in numeric_fields:
-            value = self.entries[field].get()
-            if value and not validate_numeric(value):
+            # Navigation buttons
+            button_frame = ttk.Frame(frame)
+            button_frame.grid(row=len(config["fields"])+1, column=0, columnspan=2, pady=20)
+
+            if frame_name != "Dados Gerais":
+                ttk.Button(button_frame, text="Anterior", 
+                          command=lambda name=frame_name: self.previous_frame(name)).pack(side=tk.LEFT, padx=5)
+
+            if frame_name == "Finalização":
+                ttk.Button(button_frame, text="Salvar Dados", 
+                          command=self.save_data).pack(side=tk.LEFT, padx=5)
+            else:
+                ttk.Button(button_frame, text="Próximo", 
+                          command=lambda name=frame_name: self.next_frame(name)).pack(side=tk.LEFT, padx=5)
+
+            self.frames[frame_name] = {"frame": frame, "config": config}
+            frame.grid_remove()  # Hide frame initially
+
+    def show_frame(self, frame_name):
+        if self.current_frame:
+            self.frames[self.current_frame]["frame"].grid_remove()
+        self.frames[frame_name]["frame"].grid()
+        self.current_frame = frame_name
+
+    def validate_current_frame(self):
+        config = self.frames[self.current_frame]["config"]
+
+        for field in config["required"]:
+            widget = self.entries[field]
+            if isinstance(widget, tk.Text):
+                value = widget.get("1.0", tk.END).strip()
+            else:
+                value = widget.get()
+
+            if not value:
+                messagebox.showerror("Erro", f"O campo {field} é obrigatório!")
+                return False
+
+            # Validate specific field types
+            if field.endswith("(DD/MM/AAAA)") and not validate_date(value):
+                messagebox.showerror("Erro", "Data inválida. Use o formato DD/MM/AAAA")
+                return False
+            elif field.endswith("(HH:MM)") and not validate_time(value):
+                messagebox.showerror("Erro", "Hora inválida. Use o formato HH:MM")
+                return False
+            elif field.endswith("(1-3)") and not validate_range(value, 1, 3):
+                messagebox.showerror("Erro", f"O campo {field} deve estar entre 1 e 3")
+                return False
+            elif field.endswith(" (horas)") and not validate_numeric(value):
+                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                return False
+            elif field.endswith("(ml)") and not validate_numeric(value):
+                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                return False
+            elif field.endswith("Folículos") and not validate_numeric(value):
+                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                return False
+            elif field.endswith("Scketh") and not validate_numeric(value):
+                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                return False
+            elif field.endswith("Coroa") and not validate_numeric(value):
+                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                return False
+            elif field.endswith("Scalpe") and not validate_numeric(value):
+                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                return False
+            elif field.endswith("Direita") and not validate_numeric(value):
+                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                return False
+            elif field.endswith("Esquerda") and not validate_numeric(value):
+                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                return False
+            elif field.endswith("Punch") and not validate_numeric(value):
+                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                return False
+            elif field.endswith("LE") and not validate_numeric(value):
+                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                return False
+            elif field.endswith("ME") and not validate_numeric(value):
+                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                return False
+            elif field.endswith("MD") and not validate_numeric(value):
+                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                return False
+            elif field.endswith("LD") and not validate_numeric(value):
                 messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
                 return False
 
-        # Validate range fields (1-3)
-        range_fields = ["Infiltração (1-3)", "Sedação (1-3)", "Sangramento (1-3)"]
-        for field in range_fields:
-            value = self.entries[field].get()
-            if value and not validate_range(value, 1, 3):
-                messagebox.showerror("Erro", f"O campo {field} deve estar entre 1 e 3")
-                return False
+
+
 
         return True
 
+    def next_frame(self, current_frame):
+        if not self.validate_current_frame():
+            return
+
+        frame_order = list(self.frames.keys())
+        next_idx = frame_order.index(current_frame) + 1
+        if next_idx < len(frame_order):
+            self.show_frame(frame_order[next_idx])
+
+    def previous_frame(self, current_frame):
+        frame_order = list(self.frames.keys())
+        prev_idx = frame_order.index(current_frame) - 1
+        if prev_idx >= 0:
+            self.show_frame(frame_order[prev_idx])
+
     def save_data(self):
-        if not self.validate_fields():
+        if not self.validate_current_frame():
             return
 
         # Prepare data for saving
@@ -170,16 +251,7 @@ class HairSurgeryForm:
             df_new.to_excel(filename, index=False)
 
         messagebox.showinfo("Sucesso", "Dados salvos com sucesso!")
-        self.clear_form()
-
-    def clear_form(self):
-        for widget in self.entries.values():
-            if isinstance(widget, tk.Text):
-                widget.delete("1.0", tk.END)
-            elif isinstance(widget, ttk.Combobox):
-                widget.set("Não")
-            else:
-                widget.delete(0, tk.END)
+        self.root.destroy()
 
 if __name__ == "__main__":
     root = tk.Tk()
