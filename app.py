@@ -30,7 +30,7 @@ def novo_cadastro():
             {'name': 'nome', 'label': 'Nome do Paciente', 'type': 'text', 'required': True},
             {'name': 'data', 'label': 'Data da Cirurgia', 'type': 'date', 'required': True},
             {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True, 
-             'options': ['São Paulo', 'Rio de Janeiro', 'Belo Horizonte']},
+             'options': ['Ribeirão Preto', 'Campinas']},
             {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'required': True},
             {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'required': True},
             {'name': 'observacoes', 'label': 'Observações', 'type': 'textarea', 'required': False}
@@ -64,22 +64,20 @@ def dashboard():
 @app.route('/get_medicos/<unidade>')
 def get_medicos(unidade):
     logger.info(f"Retrieving doctors for unit: {unidade}")
-    # Simulando médicos por unidade
+    # Médicos por unidade conforme especificação
     medicos_por_unidade = {
-        'São Paulo': ['Dr. Silva', 'Dra. Oliveira', 'Dr. Santos'],
-        'Rio de Janeiro': ['Dr. Costa', 'Dra. Lima', 'Dr. Almeida'],
-        'Belo Horizonte': ['Dr. Pereira', 'Dra. Ferreira', 'Dr. Ribeiro']
+        'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
+        'Campinas': ['Dra. Isadora', 'Dra. Adriana']
     }
     return {'medicos': medicos_por_unidade.get(unidade, [])}
 
 @app.route('/get_equipe/<unidade>')
 def get_equipe(unidade):
     logger.info(f"Retrieving team for unit: {unidade}")
-    # Simulando equipe por unidade
+    # Equipe por unidade conforme especificação
     equipe_por_unidade = {
-        'São Paulo': ['Enfermeiro João', 'Técnico Pedro', 'Auxiliar Maria'],
-        'Rio de Janeiro': ['Enfermeira Ana', 'Técnico Carlos', 'Auxiliar Teresa'],
-        'Belo Horizonte': ['Enfermeiro Lucas', 'Técnica Amanda', 'Auxiliar Roberto']
+        'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
+        'Campinas': ['Juliana', 'Gabriela']
     }
     return {'equipe': equipe_por_unidade.get(unidade, [])}
 
