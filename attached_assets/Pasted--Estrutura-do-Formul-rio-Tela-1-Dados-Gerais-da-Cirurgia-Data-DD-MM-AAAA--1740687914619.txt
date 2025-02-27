@@ -1,0 +1,95 @@
+### **Estrutura do Formulário**
+
+🔹 **Tela 1 - Dados Gerais da Cirurgia**
+- Data (DD/MM/AAAA)  
+- Paciente  
+- Médico  
+- Equipe  
+- Hora da Cirurgia (HH:MM)  
+- Tempo de Cirurgia (horas)  
+
+✅ **Validação:** O botão "Próximo" só libera se todos os campos estiverem preenchidos.
+
+---
+
+🔹 **Tela 2 - Informações do Implante**
+- Total de Folículos  
+- Frente  
+- Densidade Scketh  
+- Coroa  
+- Scalpe  
+- Península Direita  
+- Península Esquerda  
+
+✅ **Validação:** Não pode avançar sem preencher o total de folículos.
+
+---
+
+🔹 **Tela 3 - Procedimentos e Ferramentas**
+- Safira? (Sim/Não) *(Combobox)*  
+- Punch (mm)  
+- Solução Frente (ml)  
+- Solução Coroa (ml)  
+- Solução Xilo Frente (ml)  
+
+✅ **Validação:** Punch e pelo menos uma solução precisam ser preenchidos.
+3 opcoes: 0,75, 0,85, 0,95
+---
+
+🔹 **Tela 4 - extração**
+- quadrante 1 solicitar a area, o  numero de furos feitos e o numero de fios retirados 
+- quadrante 2 solicitar a area, o  numero de furos feitos e o numero de fios retirados  
+- quadrante 3 solicitar a area, o  numero de furos feitos e o numero de fios retirados 
+- quadrante 4 solicitar a area, o  numero de furos feitos e o numero de fios retirados
+já realizar e entregar o valor de densidade de extração por quadrante e a taxa de quebra ( que seria a relação de quantos fios foram retirados sobre  o numero de fios extraídos em porcentagem
+
+
+✅ **Validação:** Todos os campos precisam ser preenchidos.
+
+---
+
+🔹 **Tela 5 - Avaliação Intraoperatória**
+- Infiltração (1-3) *(Combobox)*  
+- Sedação (1-3) *(Combobox)*  
+- Sangramento (1-3) *(Combobox)*  
+
+✅ **Validação:** Todos os campos são obrigatórios.
+
+---
+
+🔹 **Tela 6 - Histórico do Paciente**
+- Implante Secundário? (Sim/Não) *(Combobox)*  
+- Transamin? (Sim/Não) *(Combobox)*  
+- Tadalafila? (Sim/Não) *(Combobox)*  
+- Diprospam/Beta 30? (Sim/Não) *(Combobox)*  
+- Fumante? (Sim/Não) *(Combobox)*  
+- Antecedentes Pessoais  
+
+✅ **Validação:** O campo "Fumante" e "Implante Secundário" devem ser respondidos.
+
+---
+
+🔹 **Tela 7 - Comentários e Finalização**
+- Comentários  
+- Botão "Salvar e Exportar" que armazena os dados em um arquivo **Excel** (`cirurgias.xlsx`).
+
+✅ **Ao clicar em "Salvar e Exportar"**, o sistema deve:
+1. **Validar** se todas as telas anteriores foram preenchidas corretamente.
+2. **Salvar os dados em Excel** (`pandas` + `openpyxl`).
+3. **Fechar o formulário** e exibir uma mensagem de sucesso.
+
+---
+
+### **Requisitos Técnicos**
+- Criar a interface usando `tkinter`.  
+- Utilizar `ttk.Combobox` para perguntas de "Sim/Não" e escalas numéricas.  
+- **Cada tela deve ser uma nova janela** ou uma mudança de `Frame`.  
+- **Botão "Próximo"** só é ativado quando todos os campos obrigatórios da tela atual são preenchidos.  
+- **Os dados devem ser armazenados em um arquivo Excel (`cirurgias.xlsx`)**, adicionando novas entradas sem sobrescrever as antigas.  
+
+---
+
+### **Objetivo**
+Este sistema tornará o cadastro de cirurgias **mais organizado**, evitando omissões de informações importantes e garantindo que os dados sejam salvos corretamente.
+
+**Crie este projeto no Replit e forneça o código pronto para ser exec
