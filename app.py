@@ -69,7 +69,7 @@ def novo_cadastro():
             {'name': 'peninsula_esquerda', 'label': 'Península Esquerda', 'type': 'number', 'required': False},
             
             # Procedimentos e Ferramentas
-            {'name': 'safira', 'label': 'Safira?', 'type': 'select', 'required': False,
+            {'name': 'safira', 'label': 'Safira?', 'type': 'select', 'required': True,
              'options': ['Sim', 'Não']},
             {'name': 'punch', 'label': 'Punch (mm)', 'type': 'select', 'required': True,
              'options': ['0.75', '0.85', '0.95']},
@@ -105,11 +105,11 @@ def novo_cadastro():
             # Histórico do Paciente
             {'name': 'implante_secundario', 'label': 'Implante Secundário?', 'type': 'select', 'required': True,
              'options': ['Sim', 'Não']},
-            {'name': 'transamin', 'label': 'Transamin?', 'type': 'select', 'required': False,
+            {'name': 'transamin', 'label': 'Transamin?', 'type': 'select', 'required': True,
              'options': ['Sim', 'Não']},
-            {'name': 'tadalafila', 'label': 'Tadalafila?', 'type': 'select', 'required': False,
+            {'name': 'tadalafila', 'label': 'Tadalafila?', 'type': 'select', 'required': True,
              'options': ['Sim', 'Não']},
-            {'name': 'diprospam', 'label': 'Diprospam/Beta 30?', 'type': 'select', 'required': False,
+            {'name': 'diprospam', 'label': 'Diprospam/Beta 30?', 'type': 'select', 'required': True,
              'options': ['Sim', 'Não']},
             {'name': 'fumante', 'label': 'Fumante?', 'type': 'select', 'required': True,
              'options': ['Sim', 'Não']},

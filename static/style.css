@@ -285,6 +285,35 @@ textarea {
     border-radius: 4px;
 }
 
+/* Styles for form validation */
+.field-error {
+    border: 2px solid #dc3545 !important;
+    background-color: #fff8f8;
+}
+
+/* Success message styles */
+.success-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #d4edda;
+    color: #155724;
+    font-size: 1.5em;
+    padding: 20px 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    z-index: 1000;
+    font-weight: bold;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 /* Dashboard styles */
 .dashboard-container {
     background: white;

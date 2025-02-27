@@ -211,19 +211,19 @@
                     <h4>Resultados Calculados (serão salvos automaticamente)</h4>
                     <div class="result-grid">
                         <div>
-                            <p>Densidade Q1: <span id="q1_densidade_result">-</span></p>
+                            <p>Densidade de Extração Q1: <span id="q1_densidade_result">-</span> fios/cm²</p>
                             <p>Taxa de Quebra Q1: <span id="q1_taxa_quebra_result">-</span>%</p>
                         </div>
                         <div>
-                            <p>Densidade Q2: <span id="q2_densidade_result">-</span></p>
+                            <p>Densidade de Extração Q2: <span id="q2_densidade_result">-</span> fios/cm²</p>
                             <p>Taxa de Quebra Q2: <span id="q2_taxa_quebra_result">-</span>%</p>
                         </div>
                         <div>
-                            <p>Densidade Q3: <span id="q3_densidade_result">-</span></p>
+                            <p>Densidade de Extração Q3: <span id="q3_densidade_result">-</span> fios/cm²</p>
                             <p>Taxa de Quebra Q3: <span id="q3_taxa_quebra_result">-</span>%</p>
                         </div>
                         <div>
-                            <p>Densidade Q4: <span id="q4_densidade_result">-</span></p>
+                            <p>Densidade de Extração Q4: <span id="q4_densidade_result">-</span> fios/cm²</p>
                             <p>Taxa de Quebra Q4: <span id="q4_taxa_quebra_result">-</span>%</p>
                         </div>
                     </div>
@@ -343,8 +343,34 @@
         setupExtractionCalculations();
     });
 
-    // Format date before form submission
+    // Format date before form submission and validate required fields
     document.getElementById('cirurgia-form').addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent default submission to validate first
+        
+        // Validate all required fields
+        let isValid = true;
+        let missingFields = [];
+        
+        const allRequiredFields = document.querySelectorAll('[required]');
+        allRequiredFields.forEach(field => {
+            if (!field.value) {
+                isValid = false;
+                field.classList.add('field-error');
+                const label = document.querySelector(`label[for="${field.id}"]`);
+                if (label) {
+                    missingFields.push(label.textContent.replace('*', '').trim());
+                }
+            } else {
+                field.classList.remove('field-error');
+            }
+        });
+        
+        if (!isValid) {
+            alert(`Por favor, preencha os seguintes campos obrigatórios:\n- ${missingFields.join('\n- ')}`);
+            return;
+        }
+        
+        // Format date
         var dateInput = document.getElementById('data');
         if (dateInput) {
             var date = new Date(dateInput.value);
@@ -366,6 +392,17 @@
             hiddenInput.value = selectedEquipe.join(', ');
             document.getElementById('cirurgia-form').appendChild(hiddenInput);
         }
+        
+        // Show success message with emoji
+        const successMessage = document.createElement('div');
+        successMessage.className = 'success-message';
+        successMessage.innerHTML = '✅ Dados salvos com sucesso! 🎉';
+        document.body.appendChild(successMessage);
+        
+        // Submit the form after a short delay
+        setTimeout(() => {
+            this.submit();
+        }, 1000);
     });
 
     // Update medicos based on selected unidade
@@ -440,13 +477,13 @@
                     const furos = parseFloat(furosInput.value) || 0;
                     const fios = parseFloat(fiosInput.value) || 0;
                     
-                    // Calcular densidade (furos/área)
+                    // Calcular densidade (furos/área) e arredondar para baixo
                     const densidade = area > 0 ? furos / area : 0;
-                    document.getElementById(`${q}_densidade_result`).textContent = densidade.toFixed(2);
+                    document.getElementById(`${q}_densidade_result`).textContent = Math.floor(densidade);
                     
-                    // Calcular taxa de quebra ((furos-fios)/furos * 100)
+                    // Calcular taxa de quebra ((furos-fios)/furos * 100) e arredondar para baixo
                     const taxaQuebra = furos > 0 ? ((furos - fios) / furos) * 100 : 0;
-                    document.getElementById(`${q}_taxa_quebra_result`).textContent = taxaQuebra.toFixed(2);
+                    document.getElementById(`${q}_taxa_quebra_result`).textContent = Math.floor(taxaQuebra);
                 };
                 
                 areaInput.addEventListener('input', updateCalculations);
@@ -458,6 +495,32 @@
 
     // Função para navegar entre páginas
     function goToPage(pageNumber) {
+        // Se estiver indo para a página 2, validar campos obrigatórios da página 1
+        if (pageNumber === 2) {
+            let isValid = true;
+            let missingFields = [];
+            
+            // Verificar todos os campos obrigatórios da página 1
+            const requiredFields = document.querySelectorAll('#page-1 [required]');
+            requiredFields.forEach(field => {
+                if (!field.value) {
+                    isValid = false;
+                    field.classList.add('field-error');
+                    const label = document.querySelector(`label[for="${field.id}"]`);
+                    if (label) {
+                        missingFields.push(label.textContent.replace('*', '').trim());
+                    }
+                } else {
+                    field.classList.remove('field-error');
+                }
+            });
+            
+            if (!isValid) {
+                alert(`Por favor, preencha os seguintes campos obrigatórios:\n- ${missingFields.join('\n- ')}`);
+                return;
+            }
+        }
+        
         // Ocultar todas as páginas
         document.querySelectorAll('.form-page').forEach(page => {
             page.style.display = 'none';
