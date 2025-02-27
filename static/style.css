@@ -52,6 +52,11 @@ input, select, textarea {
     font-size: 16px;
 }
 
+select[multiple] {
+    height: auto;
+    min-height: 100px;
+}
+
 textarea {
     resize: vertical;
     min-height: 100px;

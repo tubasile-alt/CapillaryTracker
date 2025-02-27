@@ -13,7 +13,7 @@
 
                 {% if field.type == 'select' %}
                     <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}
-                            {% if field.name == 'unidade' %}onchange="updateMedicos(this.value)"{% endif %}>
+                            {% if field.name == 'unidade' %}onchange="updateMedicos(this.value); updateEquipe(this.value)"{% endif %}>
                         <option value="">Selecione...</option>
                         {% for option in field.options %}
                             <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
@@ -22,7 +22,8 @@
                         {% endfor %}
                     </select>
                 {% elif field.type == 'select_dynamic' %}
-                    <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                    <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}
+                            {% if field.name == 'equipe' %}multiple{% endif %}>
                         <option value="">Selecione a unidade primeiro...</option>
                     </select>
                 {% elif field.type == 'textarea' %}
@@ -65,10 +66,11 @@
             dateInput.value = yyyy + '-' + mm + '-' + dd;
         }
 
-        // If unidade is already selected, update medicos
+        // If unidade is already selected, update medicos and equipe
         var unidadeSelect = document.getElementById('unidade');
         if (unidadeSelect && unidadeSelect.value) {
             updateMedicos(unidadeSelect.value);
+            updateEquipe(unidadeSelect.value);
         }
     });
 
@@ -81,6 +83,15 @@
             var mm = String(date.getMonth() + 1).padStart(2, '0');
             var yyyy = date.getFullYear();
             document.getElementById('data_formatted').value = dd + '/' + mm + '/' + yyyy;
+        }
+
+        // Get selected equipe values
+        var equipeSelect = document.getElementById('equipe');
+        if (equipeSelect) {
+            var selectedEquipe = Array.from(equipeSelect.selectedOptions).map(option => option.value);
+            if (selectedEquipe.length > 0) {
+                equipeSelect.value = selectedEquipe.join(', ');
+            }
         }
     });
 
@@ -98,6 +109,24 @@
                     option.value = medico;
                     option.textContent = medico;
                     medicoSelect.appendChild(option);
+                });
+            });
+    }
+
+    // Update equipe based on selected unidade
+    function updateEquipe(unidade) {
+        if (!unidade) return;
+
+        fetch('/get_equipe/' + unidade)
+            .then(response => response.json())
+            .then(data => {
+                var equipeSelect = document.getElementById('equipe');
+                equipeSelect.innerHTML = '';
+                data.equipe.forEach(membro => {
+                    var option = document.createElement('option');
+                    option.value = membro;
+                    option.textContent = membro;
+                    equipeSelect.appendChild(option);
                 });
             });
     }
