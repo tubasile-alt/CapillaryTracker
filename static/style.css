@@ -25,11 +25,11 @@ body {
 }
 
 .company-logo {
-    max-width: 180px;
-    max-height: 80px;
-    margin: 10px 0;
-    display: block;
+    height: 60px;
+    width: auto;
+    margin-right: 20px;
     object-fit: contain;
+    display: block;
 }
 
 h1 {
