@@ -5,6 +5,17 @@ import pandas as pd
 from datetime import datetime
 from utils import validate_date, validate_time, validate_numeric, validate_range
 
+# Configuração das opções por unidade
+UNIDADES_MEDICOS = {
+    "Ribeirão Preto": ["Dr. Arthur", "Dr. Daniel"],
+    "Campinas": ["Dra. Isadora", "Dra. Adriana"]
+}
+
+UNIDADES_EQUIPES = {
+    "Ribeirão Preto": ["Aline", "Natália", "Ana"],
+    "Campinas": ["Juliana", "Gabriela"]
+}
+
 class HairSurgeryForm:
     def __init__(self, root):
         self.root = root
@@ -29,13 +40,14 @@ class HairSurgeryForm:
                 "fields": [
                     ("Data (DD/MM/AAAA)", "date"),
                     ("Paciente", "text"),
-                    ("Médico", "text"),
-                    ("Equipe", "text"),
+                    ("Unidade", "unit"),
+                    ("Médico", "doctor"),
+                    ("Equipe", "team"),
                     ("Hora da Cirurgia (HH:MM)", "time"),
                     ("Tempo de Cirurgia (horas)", "numeric")
                 ],
-                "required": ["Data (DD/MM/AAAA)", "Paciente", "Médico", "Equipe", 
-                           "Hora da Cirurgia (HH:MM)", "Tempo de Cirurgia (horas)"]
+                "required": ["Data (DD/MM/AAAA)", "Paciente", "Unidade", "Médico", 
+                           "Equipe", "Hora da Cirurgia (HH:MM)", "Tempo de Cirurgia (horas)"]
             },
             "Informações do Implante": {
                 "fields": [
@@ -107,11 +119,22 @@ class HairSurgeryForm:
             for idx, (field, field_type) in enumerate(config["fields"]):
                 ttk.Label(frame, text=field).grid(row=idx+1, column=0, padx=5, pady=2, sticky="e")
 
-                if field_type == "yesno":
+                if field_type == "unit":
+                    widget = ttk.Combobox(frame, values=list(UNIDADES_MEDICOS.keys()), 
+                                        width=27, state="readonly")
+                    widget.bind('<<ComboboxSelected>>', self.update_dependent_fields)
+                elif field_type == "doctor":
+                    widget = ttk.Combobox(frame, width=27, state="readonly")
+                elif field_type == "team":
+                    widget = tk.Listbox(frame, height=4, selectmode=tk.MULTIPLE)
+                elif field_type == "yesno":
                     widget = ttk.Combobox(frame, values=["Sim", "Não"], width=27, state="readonly")
                     widget.set("Não")
                 elif field_type == "text_area":
                     widget = tk.Text(frame, height=3, width=30)
+                elif field_type == "date":
+                    widget = ttk.Entry(frame, width=30)
+                    widget.insert(0, datetime.now().strftime("%d/%m/%Y"))
                 else:
                     widget = ttk.Entry(frame, width=30)
 
@@ -136,6 +159,20 @@ class HairSurgeryForm:
             self.frames[frame_name] = {"frame": frame, "config": config}
             frame.grid_remove()  # Hide frame initially
 
+    def update_dependent_fields(self, event=None):
+        unidade = self.entries["Unidade"].get()
+
+        # Update médicos
+        medicos_widget = self.entries["Médico"]
+        medicos_widget['values'] = UNIDADES_MEDICOS.get(unidade, [])
+        medicos_widget.set('')  # Clear current selection
+
+        # Update equipe
+        equipe_widget = self.entries["Equipe"]
+        equipe_widget.delete(0, tk.END)  # Clear current list
+        for equipe in UNIDADES_EQUIPES.get(unidade, []):
+            equipe_widget.insert(tk.END, equipe)
+
     def show_frame(self, frame_name):
         if self.current_frame:
             self.frames[self.current_frame]["frame"].grid_remove()
@@ -147,65 +184,68 @@ class HairSurgeryForm:
 
         for field in config["required"]:
             widget = self.entries[field]
-            if isinstance(widget, tk.Text):
-                value = widget.get("1.0", tk.END).strip()
+
+            if isinstance(widget, tk.Listbox):
+                value = [widget.get(idx) for idx in widget.curselection()]
+                if not value:
+                    messagebox.showerror("Erro", f"Selecione pelo menos um membro da {field}")
+                    return False
             else:
-                value = widget.get()
+                value = widget.get().strip()
 
-            if not value:
-                messagebox.showerror("Erro", f"O campo {field} é obrigatório!")
-                return False
+                if not value:
+                    messagebox.showerror("Erro", f"O campo {field} é obrigatório!")
+                    return False
 
-            # Validate specific field types
-            if field.endswith("(DD/MM/AAAA)") and not validate_date(value):
-                messagebox.showerror("Erro", "Data inválida. Use o formato DD/MM/AAAA")
-                return False
-            elif field.endswith("(HH:MM)") and not validate_time(value):
-                messagebox.showerror("Erro", "Hora inválida. Use o formato HH:MM")
-                return False
-            elif field.endswith("(1-3)") and not validate_range(value, 1, 3):
-                messagebox.showerror("Erro", f"O campo {field} deve estar entre 1 e 3")
-                return False
-            elif field.endswith(" (horas)") and not validate_numeric(value):
-                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
-                return False
-            elif field.endswith("(ml)") and not validate_numeric(value):
-                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
-                return False
-            elif field.endswith("Folículos") and not validate_numeric(value):
-                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
-                return False
-            elif field.endswith("Scketh") and not validate_numeric(value):
-                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
-                return False
-            elif field.endswith("Coroa") and not validate_numeric(value):
-                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
-                return False
-            elif field.endswith("Scalpe") and not validate_numeric(value):
-                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
-                return False
-            elif field.endswith("Direita") and not validate_numeric(value):
-                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
-                return False
-            elif field.endswith("Esquerda") and not validate_numeric(value):
-                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
-                return False
-            elif field.endswith("Punch") and not validate_numeric(value):
-                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
-                return False
-            elif field.endswith("LE") and not validate_numeric(value):
-                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
-                return False
-            elif field.endswith("ME") and not validate_numeric(value):
-                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
-                return False
-            elif field.endswith("MD") and not validate_numeric(value):
-                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
-                return False
-            elif field.endswith("LD") and not validate_numeric(value):
-                messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
-                return False
-
+                # Validate specific field types
+                if field.endswith("(DD/MM/AAAA)") and not validate_date(value):
+                    messagebox.showerror("Erro", "Data inválida. Use o formato DD/MM/AAAA")
+                    return False
+                elif field.endswith("(HH:MM)") and not validate_time(value):
+                    messagebox.showerror("Erro", "Hora inválida. Use o formato HH:MM")
+                    return False
+                elif field.endswith("(1-3)") and not validate_range(value, 1, 3):
+                    messagebox.showerror("Erro", f"O campo {field} deve estar entre 1 e 3")
+                    return False
+                elif field.endswith(" (horas)") and not validate_numeric(value):
+                    messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                    return False
+                elif field.endswith("(ml)") and not validate_numeric(value):
+                    messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                    return False
+                elif field.endswith("Folículos") and not validate_numeric(value):
+                    messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                    return False
+                elif field.endswith("Scketh") and not validate_numeric(value):
+                    messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                    return False
+                elif field.endswith("Coroa") and not validate_numeric(value):
+                    messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                    return False
+                elif field.endswith("Scalpe") and not validate_numeric(value):
+                    messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                    return False
+                elif field.endswith("Direita") and not validate_numeric(value):
+                    messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                    return False
+                elif field.endswith("Esquerda") and not validate_numeric(value):
+                    messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                    return False
+                elif field.endswith("Punch") and not validate_numeric(value):
+                    messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                    return False
+                elif field.endswith("LE") and not validate_numeric(value):
+                    messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                    return False
+                elif field.endswith("ME") and not validate_numeric(value):
+                    messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                    return False
+                elif field.endswith("MD") and not validate_numeric(value):
+                    messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                    return False
+                elif field.endswith("LD") and not validate_numeric(value):
+                    messagebox.showerror("Erro", f"O campo {field} deve ser numérico")
+                    return False
 
         return True
 
@@ -231,7 +271,9 @@ class HairSurgeryForm:
         # Prepare data for saving
         data = {}
         for field, widget in self.entries.items():
-            if isinstance(widget, tk.Text):
+            if isinstance(widget, tk.Listbox):
+                data[field] = ', '.join([widget.get(idx) for idx in widget.curselection()])
+            elif isinstance(widget, tk.Text):
                 data[field] = widget.get("1.0", tk.END).strip()
             else:
                 data[field] = widget.get()
