@@ -11,9 +11,35 @@ body {
 }
 
 .container {
+    width: 100%;
     max-width: 800px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 15px;
+}
+
+/* Media queries para dispositivos móveis */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    h2 {
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 8px;
+    }
+    
+    h1 {
+        font-size: 1.3rem;
+    }
 }
 
 .header {
@@ -22,6 +48,7 @@ body {
     justify-content: center;
     gap: 20px;
     margin-bottom: 20px;
+    flex-wrap: wrap;
 }
 
 .company-logo {
@@ -30,6 +57,19 @@ body {
     margin-right: 20px;
     object-fit: contain;
     display: block;
+}
+
+@media (max-width: 480px) {
+    .header {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .company-logo {
+        height: 50px;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
 }
 
 h1 {
@@ -163,6 +203,18 @@ h4 {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
+}
+
+/* Responsividade para quadrantes */
+@media (max-width: 600px) {
+    .quadrantes-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .quadrante-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .quadrante-box {
@@ -360,4 +412,18 @@ textarea {
 
 .nav-link:hover {
     background-color: #0056b3;
+}
+
+@media (max-width: 480px) {
+    .main-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin: 15px 0;
+    }
+    
+    .nav-link {
+        margin: 0;
+        width: 100%;
+    }
 }
