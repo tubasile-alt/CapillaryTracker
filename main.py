@@ -1,8 +1,8 @@
+import os
 import tkinter as tk
 from tkinter import ttk, messagebox
 import pandas as pd
 from datetime import datetime
-import os
 from utils import validate_date, validate_time, validate_numeric, validate_range
 
 class HairSurgeryForm:
@@ -207,8 +207,6 @@ class HairSurgeryForm:
                 return False
 
 
-
-
         return True
 
     def next_frame(self, current_frame):
@@ -253,7 +251,14 @@ class HairSurgeryForm:
         messagebox.showinfo("Sucesso", "Dados salvos com sucesso!")
         self.root.destroy()
 
-if __name__ == "__main__":
+def main():
     root = tk.Tk()
     app = HairSurgeryForm(root)
     root.mainloop()
+
+if __name__ == "__main__":
+    # Check if we're running in Replit environment
+    if not os.environ.get('REPL_ID'):
+        main()
+    else:
+        print("Running in Replit environment - Tkinter interface disabled")

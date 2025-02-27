@@ -129,3 +129,47 @@ textarea {
     color: #155724;
     border: 1px solid #c3e6cb;
 }
+
+/* Dashboard styles */
+.dashboard-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.no-data {
+    text-align: center;
+    color: #666;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Navigation styles */
+.main-nav {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.nav-link {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 0 10px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.nav-link:hover {
+    background-color: #0056b3;
+}

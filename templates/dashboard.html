@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h2>Dashboard de Pacientes por Unidade</h2>
+    
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+    
+    {% if data %}
+    <div class="chart-container">
+        <canvas id="monthlyChart"></canvas>
+    </div>
+    {% else %}
+    <p class="no-data">Nenhum dado disponível para exibição.</p>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    {% if data %}
+    const ctx = document.getElementById('monthlyChart').getContext('2d');
+    const colors = ['#FF6384', '#36A2EB', '#FFCE56'];
+    
+    const chartData = {
+        labels: {{ data.labels | tojson }},
+        datasets: {{ data.datasets | tojson }}.map((dataset, index) => ({
+            ...dataset,
+            backgroundColor: colors[index % colors.length],
+            borderColor: colors[index % colors.length],
+            borderWidth: 2,
+            fill: false
+        }))
+    };
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Pacientes por Mês/Unidade'
+                },
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %}

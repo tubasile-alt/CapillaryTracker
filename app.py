@@ -1,9 +1,7 @@
-import os
-import logging
+import os, logging, traceback
 from datetime import datetime
-import socket
 
-# Configure logging
+# Configure logging with more detailed format
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -16,10 +14,9 @@ try:
     from flask import Flask, render_template, request, redirect, url_for, flash, session
     import pandas as pd
     from utils import validate_date, validate_time, validate_numeric, validate_range
-
     logger.info("Successfully imported all required packages")
 except Exception as e:
-    logger.error(f"Failed to import required packages: {str(e)}")
+    logger.error(f"Failed to import required packages: {str(e)}\n{traceback.format_exc()}")
     raise
 
 app = Flask(__name__)
@@ -219,25 +216,57 @@ def get_equipe(unidade):
     logger.debug(f"Getting team for unit: {unidade}")
     return {"equipe": UNIDADES_EQUIPES.get(unidade, [])}
 
+@app.route('/dashboard')
+def dashboard():
+    logger.info("Accessing dashboard")
+    try:
+        if not os.path.exists('cirurgias.xlsx'):
+            logger.warning("No data file found for dashboard")
+            return render_template('dashboard.html', data={})
+
+        df = pd.read_excel('cirurgias.xlsx')
+
+        # Convert data to datetime
+        df['data'] = pd.to_datetime(df['data'], format='%d/%m/%Y')
+
+        # Group by month and unidade
+        monthly_data = df.groupby([pd.Grouper(key='data', freq='M'), 'unidade']).size().reset_index()
+        monthly_data.columns = ['data', 'unidade', 'total']
+
+        # Convert data to more readable format
+        monthly_data['mes_ano'] = monthly_data['data'].dt.strftime('%m/%Y')
+
+        # Create a dictionary with the aggregated data
+        dashboard_data = {
+            'labels': sorted(monthly_data['mes_ano'].unique().tolist()),
+            'unidades': sorted(monthly_data['unidade'].unique().tolist()),
+            'datasets': []
+        }
+
+        # Prepare data for each unidade
+        for unidade in dashboard_data['unidades']:
+            unidade_data = monthly_data[monthly_data['unidade'] == unidade]
+            dataset = {
+                'label': unidade,
+                'data': [int(unidade_data[unidade_data['mes_ano'] == mes]['total'].iloc[0]) 
+                        if not unidade_data[unidade_data['mes_ano'] == mes].empty else 0 
+                        for mes in dashboard_data['labels']]
+            }
+            dashboard_data['datasets'].append(dataset)
+
+        logger.info("Dashboard data prepared successfully")
+        return render_template('dashboard.html', data=dashboard_data)
+    except Exception as e:
+        logger.error(f"Error preparing dashboard data: {str(e)}")
+        return render_template('dashboard.html', data={}, error="Erro ao carregar dados do dashboard")
+
 if __name__ == '__main__':
     try:
-        # Check if port is available
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = sock.connect_ex(('0.0.0.0', 5000))
-        if result == 0:
-            logger.error("Port 5000 is already in use. Attempting to kill existing process...")
-            sock.close()
-            try:
-                os.system('fuser -k 5000/tcp')  # Try to kill any process using port 5000
-                logger.info("Killed process using port 5000")
-            except Exception as e:
-                logger.warning(f"Could not kill process on port 5000: {str(e)}")
-                # Continue anyway, the socket will be closed and the port might become available
-        else:
-            sock.close()
-
         logger.info("Starting Flask server on port 5000...")
+        logger.debug("Debug mode is enabled")
+        logger.debug("Current working directory: %s", os.getcwd())
+        logger.debug("Environment variables: %s", str(dict(os.environ)))
         app.run(host='0.0.0.0', port=5000, debug=True)
     except Exception as e:
-        logger.error(f"Failed to start Flask server: {str(e)}")
+        logger.error("Failed to start Flask server: %s\n%s", str(e), traceback.format_exc())
         raise
