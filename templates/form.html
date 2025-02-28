@@ -52,7 +52,7 @@
                         {% elif field.type == 'time' %}
                             <input type="time" id="{{ field.name }}" name="{{ field.name }}" 
                                    {% if field.required %}required{% endif %}
-                                   value="{{ data[field.name] if data and field.name in data else field.default if 'default' in field else '08:00' }}">
+                                   value="08:00">
                         {% else %}
                             <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
                                 value="{{ data.get(field.name, '') }}"

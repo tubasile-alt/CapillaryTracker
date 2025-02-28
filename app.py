@@ -53,9 +53,9 @@ def form():
             }
             
             # Ensure numeric fields have values
-            numeric_fields = ['area_total', 'area_recep', 'folioulos', 'fios', 'densidade', 'tempo_cirurgico']
+            numeric_fields = ['area_total', 'area_recep', 'folioulos', 'fios', 'densidade', 'tempo_cirurgico', 'idade']
             for field in numeric_fields:
-                if not data[field] or data[field].strip() == '':
+                if not data[field] or (isinstance(data[field], str) and data[field].strip() == ''):
                     data[field] = '0'
             
             # Save to Excel
