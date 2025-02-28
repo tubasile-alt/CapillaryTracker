@@ -1,0 +1,258 @@
+/* Base styles */
+:root {
+    --primary-color: #0097fb;
+    --secondary-color: #ff6384;
+    --dark-bg: #1f2937;
+    --darker-bg: #111827;
+    --light-text: #f3f4f6;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--dark-bg);
+    color: var(--light-text);
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+/* Navigation */
+.navbar {
+    background-color: var(--darker-bg);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--light-text);
+    text-decoration: none;
+}
+
+.navbar-nav {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-item {
+    margin-left: 1.5rem;
+}
+
+.nav-link {
+    color: var(--light-text);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.nav-link:hover {
+    color: var(--primary-color);
+}
+
+/* Forms */
+.form-container {
+    background-color: var(--darker-bg);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem auto;
+    max-width: 90%;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #374151;
+    border-radius: 4px;
+    background-color: #1f2937;
+    color: var(--light-text);
+    font-size: 1rem;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #4b5563;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0077cc;
+}
+
+.btn-secondary:hover {
+    background-color: #374151;
+}
+
+/* Dashboard */
+.dashboard-container {
+    padding: 1rem;
+}
+
+.dashboard-layout {
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-sidebar {
+    background-color: var(--darker-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.dashboard-main {
+    background-color: var(--darker-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    flex-grow: 1;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+.dashboard-card {
+    background-color: #111827;
+    border-radius: 8px;
+    padding: 1rem;
+    min-height: 300px;
+}
+
+/* Necrose page */
+.necrose-container {
+    background-color: var(--darker-bg);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem auto;
+    max-width: 90%;
+}
+
+.patient-search {
+    margin-bottom: 2rem;
+}
+
+.patient-details {
+    background-color: #111827;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* Dark theme */
+.dark-theme {
+    background-color: var(--dark-bg);
+    color: var(--light-text);
+}
+
+/* Media queries for mobile responsiveness */
+@media (min-width: 768px) {
+    .dashboard-layout {
+        flex-direction: row;
+    }
+
+    .dashboard-sidebar {
+        width: 250px;
+        margin-right: 1rem;
+        margin-bottom: 0;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .wide-card {
+        grid-column: span 2;
+    }
+
+    .form-container {
+        max-width: 800px;
+    }
+}
+
+@media (max-width: 767px) {
+    .navbar {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .navbar-nav {
+        margin-top: 1rem;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .nav-item {
+        margin: 0.5rem 0;
+        margin-left: 0;
+    }
+
+    input, select, textarea {
+        font-size: 16px; /* Prevents iOS zoom on focus */
+    }
+
+    .dashboard-card {
+        min-height: 250px;
+    }
+
+    .dashboard-container h2 {
+        font-size: 1.5rem;
+    }
+
+    .form-pagination {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .pagination-step {
+        padding: 0.5rem 1rem;
+        margin: 0 0.25rem;
+        background-color: #374151;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .pagination-step.active {
+        background-color: var(--primary-color);
+    }
+}
