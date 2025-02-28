@@ -431,10 +431,192 @@ textarea {
     margin-bottom: 15px;
 }
 
+/* Dark theme styles */
+.dark-theme {
+    background-color: #1e1e2f;
+    color: #ffffff;
+}
+
+.dark-theme .dashboard-container {
+    background-color: #1e1e2f;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.dark-theme .dashboard-layout {
+    display: flex;
+    flex-direction: row;
+}
+
+.dark-theme .dashboard-sidebar {
+    width: 250px;
+    padding: 20px;
+    background-color: #27293d;
+    border-radius: 10px;
+    margin-right: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .dashboard-main {
+    flex: 1;
+    padding: 20px;
+}
+
+.dark-theme .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.dark-theme .dashboard-card {
+    background-color: #27293d;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.dark-theme .wide-card {
+    grid-column: span 2;
+}
+
+.dark-theme .dashboard-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #eeeeee;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.dark-theme .filter-group {
+    margin-bottom: 15px;
+}
+
+.dark-theme .filter-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #aaaaaa;
+}
+
+.dark-theme .filter-select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 5px;
+    background-color: #1e1e2f;
+    color: #ffffff;
+    border: 1px solid #444444;
+}
+
+.dark-theme .btn {
+    padding: 8px 16px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    width: 100%;
+    margin-bottom: 10px;
+    transition: background-color 0.3s;
+}
+
+.dark-theme .btn-primary {
+    background-color: #3358ff;
+    color: white;
+}
+
+.dark-theme .btn-primary:hover {
+    background-color: #1a44ff;
+}
+
+.dark-theme .btn-secondary {
+    background-color: #555555;
+    color: white;
+}
+
+.dark-theme .btn-secondary:hover {
+    background-color: #666666;
+}
+
+.dark-theme .summary-stats {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #444444;
+}
+
+.dark-theme .summary-stats h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #eeeeee;
+}
+
+.dark-theme .stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.dark-theme .stat-label {
+    color: #aaaaaa;
+}
+
+.dark-theme .stat-value {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.dark-theme .dashboard-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.dark-theme .no-data {
+    background-color: #27293d;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    color: #aaaaaa;
+}
+
+.dark-theme .alert-error {
+    background-color: rgba(231, 76, 60, 0.2);
+    border-left: 4px solid #e74c3c;
+    color: #e74c3c;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+.dark-theme .alert-info {
+    background-color: rgba(52, 152, 219, 0.2);
+    border-left: 4px solid #3498db;
+    color: #3498db;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
 /* Estilos para impressão/exportação */
 @media print {
-    .main-nav, .header {
+    .main-nav, .header, .dashboard-sidebar {
         display: none;
+    }
+    
+    .dark-theme {
+        background-color: white;
+        color: black;
+    }
+    
+    .dark-theme .dashboard-card {
+        background-color: white;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+    
+    .dark-theme .dashboard-layout {
+        display: block;
     }
     
     .dashboard-container {
@@ -450,9 +632,25 @@ textarea {
     }
 }
 
+@media (max-width: 1024px) {
+    .dark-theme .dashboard-layout {
+        flex-direction: column;
+    }
+    
+    .dark-theme .dashboard-sidebar {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 20px;
+    }
+}
+
 @media (max-width: 768px) {
-    .chart-grid {
+    .dark-theme .dashboard-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .dark-theme .wide-card {
+        grid-column: span 1;
     }
     
     .chart-container {

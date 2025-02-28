@@ -216,6 +216,121 @@ def get_equipe(unidade):
     }
     return {'equipe': equipe_por_unidade.get(unidade, [])}
 
+def process_dashboard_data(df):
+    """Process dataframe into dashboard-ready data"""
+    # Lidar com valores vazios
+    df = df.fillna(0)
+    
+    # Estrutura para armazenar os dados do dashboard
+    dashboard_data = {
+        'labels': [],
+        'datasets': [],
+        'has_follicle_data': False,
+        'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+        'total_surgeries': 0,
+        'avg_follicles': 0,
+        'avg_density': 0
+    }
+    
+    if df.empty:
+        return dashboard_data
+    
+    # Processar datas e criar coluna mes_ano
+    try:
+        if 'data' in df.columns:
+            df['mes_ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.strftime('%m/%Y')
+            # Extrair ano e mês para filtragem
+            df['ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.year
+            df['mes'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.month
+        else:
+            # Se não houver coluna 'data', usar uma data padrão
+            df['mes_ano'] = datetime.now().strftime('%m/%Y')
+            df['ano'] = datetime.now().year
+            df['mes'] = datetime.now().month
+    except Exception as e:
+        logger.error(f"Error processing dates: {str(e)}")
+        df['mes_ano'] = datetime.now().strftime('%m/%Y')
+        df['ano'] = datetime.now().year
+        df['mes'] = datetime.now().month
+    
+    # Calcular estatísticas gerais
+    dashboard_data['total_surgeries'] = len(df)
+    
+    # 1. Cirurgias por mês (total)
+    cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
+    cirurgias_por_mes['count'] = cirurgias_por_mes['count'].fillna(0).astype(int)
+    
+    dashboard_data['labels'] = cirurgias_por_mes['mes_ano'].tolist()
+    
+    # Adicionar dataset principal
+    dashboard_data['datasets'].append({
+        'label': 'Total de Cirurgias',
+        'data': cirurgias_por_mes['count'].tolist()
+    })
+    
+    # 2. Cirurgias por mês por unidade
+    if 'unidade' in df.columns:
+        # Substituir valores vazios na coluna unidade
+        df['unidade'] = df['unidade'].fillna('Não especificada')
+        
+        cirurgias_por_mes_unidade = df.groupby(['mes_ano', 'unidade']).size().reset_index(name='count')
+        cirurgias_por_mes_unidade['count'] = cirurgias_por_mes_unidade['count'].fillna(0).astype(int)
+        
+        # Preparar datasets por unidade
+        unidades = df['unidade'].unique()
+        
+        for unidade in unidades:
+            dados_unidade = cirurgias_por_mes_unidade[cirurgias_por_mes_unidade['unidade'] == unidade]
+            # Mapa para todas as datas possíveis
+            dados_completos = pd.DataFrame({
+                'mes_ano': cirurgias_por_mes['mes_ano'].unique()
+            })
+            # Juntar com dados existentes
+            merged = dados_completos.merge(dados_unidade, on='mes_ano', how='left')
+            # Tratar valores nulos corretamente
+            merged['count'] = merged['count'].fillna(0).astype(int)
+            
+            dashboard_data['datasets'].append({
+                'label': f'Cirurgias - {unidade}',
+                'data': merged['count'].tolist()
+            })
+    
+    # 3. Verificar se existem dados de folículos
+    has_follicle_data = 'total_foliculos' in df.columns
+    
+    # Se temos dados de folículos, processar
+    if has_follicle_data:
+        # Converter coluna para numérico, tratando erros
+        df['total_foliculos'] = pd.to_numeric(df['total_foliculos'], errors='coerce').fillna(0)
+        
+        # Média geral de folículos
+        dashboard_data['avg_follicles'] = int(df['total_foliculos'].mean())
+        
+        # Média de folículos por mês
+        folliculo_medio = df.groupby('mes_ano')['total_foliculos'].mean().reset_index()
+        
+        # Preparar dados para gráficos
+        dashboard_data['follicles_data']['labels'] = folliculo_medio['mes_ano'].tolist()
+        dashboard_data['follicles_data']['averages'] = folliculo_medio['total_foliculos'].round(0).astype(int).tolist()
+        
+        # Se tiver dado de densidade, calcular média
+        if 'densidade_scketh' in df.columns:
+            # Converter coluna para numérico, tratando erros
+            df['densidade_scketh'] = pd.to_numeric(df['densidade_scketh'], errors='coerce').fillna(0)
+            
+            # Média geral de densidade
+            dashboard_data['avg_density'] = int(df['densidade_scketh'].mean())
+            
+            densidade_media = df.groupby('mes_ano')['densidade_scketh'].mean().reset_index()
+            dashboard_data['follicles_data']['le_density'] = densidade_media['densidade_scketh'].round(0).astype(int).tolist()
+        
+        dashboard_data['has_follicle_data'] = True
+    
+    # Adicionar timestamp de atualização
+    dashboard_data['update_time'] = datetime.now().strftime('%d/%m/%Y %H:%M')
+    
+    return dashboard_data
+
 @app.route('/dashboard')
 def dashboard():
     logger.info("Accessing dashboard route")
@@ -223,105 +338,18 @@ def dashboard():
         # Se o arquivo Excel existir, carregar os dados para o dashboard
         filename = "cirurgias.xlsx"
         if os.path.exists(filename):
-            # Carregar o dataframe e converter valores vazios para zeros
+            # Carregar o dataframe
             df = pd.read_excel(filename)
-            # Substituir valores NaN por zeros
-            df = df.fillna(0)
-
-            # Processar dados para o dashboard
-            if not df.empty:
-                # Lidar com diferentes formatos de data
-                if 'data' in df.columns:
-                    df['mes_ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.strftime('%m/%Y')
-                else:
-                    # Se não houver coluna 'data', usar uma data padrão
-                    df['mes_ano'] = datetime.now().strftime('%m/%Y')
-
-                # 1. Cirurgias por mês (total)
-                cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
-                cirurgias_por_mes['count'] = cirurgias_por_mes['count'].fillna(0).astype(int)
-
-                # 2. Cirurgias por mês por unidade
-                datasets_unidades = []
-                if 'unidade' in df.columns:
-                    # Substituir valores vazios na coluna unidade
-                    df['unidade'] = df['unidade'].fillna('Não especificada')
-
-                    cirurgias_por_mes_unidade = df.groupby(['mes_ano', 'unidade']).size().reset_index(name='count')
-                    cirurgias_por_mes_unidade['count'] = cirurgias_por_mes_unidade['count'].fillna(0).astype(int)
-
-                    # Preparar datasets por unidade
-                    unidades = df['unidade'].unique()
-
-                    for unidade in unidades:
-                        dados_unidade = cirurgias_por_mes_unidade[cirurgias_por_mes_unidade['unidade'] == unidade]
-                        # Mapa para todas as datas possíveis
-                        dados_completos = pd.DataFrame({
-                            'mes_ano': cirurgias_por_mes['mes_ano'].unique()
-                        })
-                        # Juntar com dados existentes
-                        merged = dados_completos.merge(dados_unidade, on='mes_ano', how='left')
-                        # Tratar valores nulos corretamente
-                        merged['count'] = merged['count'].fillna(0).astype(int)
-
-                        datasets_unidades.append({
-                            'label': f'Cirurgias - {unidade}',
-                            'data': merged['count'].tolist()
-                        })
-
-                has_follicle_data = 'total_foliculos' in df.columns and df['total_foliculos'].apply(lambda x: isinstance(x, (int, float))).all()
-
-                dashboard_data = {
-                    'labels': cirurgias_por_mes['mes_ano'].tolist(),
-                    'datasets': [
-                        {
-                            'label': 'Total de Cirurgias',
-                            'data': cirurgias_por_mes['count'].tolist()
-                        }
-                    ] + datasets_unidades,
-                    'has_follicle_data': has_follicle_data
-                }
-
-                # Se temos dados de folículos processados
-                if has_follicle_data:
-                    # Converter coluna para numérico, tratando erros
-                    df['total_foliculos'] = pd.to_numeric(df['total_foliculos'], errors='coerce').fillna(0)
-
-                    # Média de folículos por mês
-                    folliculo_medio = df.groupby('mes_ano')['total_foliculos'].mean().reset_index()
-
-                    # Preparar dados para gráficos
-                    follicle_data = {
-                        'labels': folliculo_medio['mes_ano'].tolist(),
-                        'averages': folliculo_medio['total_foliculos'].round(0).astype(int).tolist(),
-                        'le_density': []  # Placeholder para densidade LE
-                    }
-
-                    # Se tiver dado de densidade, calcular média
-                    if 'densidade_scketh' in df.columns:
-                        # Converter coluna para numérico, tratando erros
-                        df['densidade_scketh'] = pd.to_numeric(df['densidade_scketh'], errors='coerce').fillna(0)
-                        densidade_media = df.groupby('mes_ano')['densidade_scketh'].mean().reset_index()
-                        follicle_data['le_density'] = densidade_media['densidade_scketh'].round(0).astype(int).tolist()
-
-                    # Adicionar ao dashboard_data
-                    dashboard_data['follicles_data'] = follicle_data
-
-                # Adicionar timestamp de atualização
-                dashboard_data['update_time'] = datetime.now().strftime('%d/%m/%Y %H:%M')
-            else:
-                dashboard_data = {
-                    'labels': [],
-                    'datasets': [{'label': 'Cirurgias', 'data': []}],
-                    'has_follicle_data': False,
-                    'follicles_data': {'labels': [], 'averages': [], 'le_density': []}
-                }
+            dashboard_data = process_dashboard_data(df)
         else:
             dashboard_data = {
                 'labels': [],
                 'datasets': [{'label': 'Cirurgias', 'data': []}],
                 'has_follicle_data': False,
-                'follicles_data': {'labels': [], 'averages': [], 'le_density': []}
+                'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+                'total_surgeries': 0,
+                'avg_follicles': 0,
+                'avg_density': 0
             }
 
         return render_template('dashboard.html', data=dashboard_data)
@@ -332,8 +360,105 @@ def dashboard():
             'labels': [],
             'datasets': [{'label': 'Cirurgias', 'data': []}],
             'has_follicle_data': False,
-            'follicles_data': {'labels': [], 'averages': [], 'le_density': []}
+            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+            'total_surgeries': 0,
+            'avg_follicles': 0,
+            'avg_density': 0
         }, error=f"Erro ao carregar dashboard: {str(e)}")
+
+@app.route('/filter_dashboard')
+def filter_dashboard():
+    """Endpoint to get filtered dashboard data"""
+    logger.info("Filtering dashboard data")
+    try:
+        # Get filter parameters
+        year = request.args.get('year', 'all')
+        month = request.args.get('month', 'all')
+        unit = request.args.get('unit', 'all')
+        doctor = request.args.get('doctor', 'all')
+        technique = request.args.get('technique', 'all')
+        
+        # Load data
+        filename = "cirurgias.xlsx"
+        if not os.path.exists(filename):
+            return jsonify({
+                'labels': [],
+                'datasets': [{'label': 'Cirurgias', 'data': []}],
+                'has_follicle_data': False,
+                'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+                'total_surgeries': 0,
+                'avg_follicles': 0,
+                'avg_density': 0
+            })
+        
+        df = pd.read_excel(filename)
+        
+        # Apply filters
+        if year != 'all':
+            try:
+                df = df[df['ano'] == int(year)]
+            except:
+                # Process dates if not already done
+                if 'ano' not in df.columns:
+                    df['ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.year
+                df = df[df['ano'] == int(year)]
+        
+        if month != 'all':
+            try:
+                df = df[df['mes'] == int(month)]
+            except:
+                # Process dates if not already done
+                if 'mes' not in df.columns:
+                    df['mes'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.month
+                df = df[df['mes'] == int(month)]
+        
+        if unit != 'all' and 'unidade' in df.columns:
+            df = df[df['unidade'] == unit]
+        
+        if doctor != 'all' and 'medico' in df.columns:
+            df = df[df['medico'] == doctor]
+        
+        if technique != 'all' and 'safira' in df.columns:
+            df = df[df['safira'] == technique]
+        
+        # Process filtered data
+        dashboard_data = process_dashboard_data(df)
+        
+        return jsonify(dashboard_data)
+    
+    except Exception as e:
+        logger.error(f"Error filtering dashboard data: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({
+            'error': str(e),
+            'labels': [],
+            'datasets': [{'label': 'Cirurgias', 'data': []}],
+            'has_follicle_data': False,
+            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+            'total_surgeries': 0,
+            'avg_follicles': 0,
+            'avg_density': 0
+        })
+
+@app.route('/download_excel')
+def download_excel():
+    """Endpoint to download the Excel data file"""
+    logger.info("Downloading Excel file")
+    try:
+        filename = "cirurgias.xlsx"
+        if os.path.exists(filename):
+            # Return the file for download
+            from flask import send_file
+            return send_file(filename, 
+                             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                             as_attachment=True,
+                             download_name='relatorio_cirurgias.xlsx')
+        else:
+            flash("Arquivo de dados não encontrado.", "error")
+            return redirect(url_for('dashboard'))
+    except Exception as e:
+        logger.error(f"Error downloading Excel file: {str(e)}\n{traceback.format_exc()}")
+        flash(f"Erro ao baixar arquivo: {str(e)}", "error")
+        return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
     try:

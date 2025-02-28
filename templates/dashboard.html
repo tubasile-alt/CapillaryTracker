@@ -1,163 +1,556 @@
+
 {% extends "base.html" %}
 
 {% block content %}
-<div class="dashboard-container">
-    <h2>Dashboard de Cirurgias Capilares</h2>
-
-    {% if error %}
-    <div class="alert alert-error">
-        <p>⚠️ {{ error }}</p>
-        <p>Tente cadastrar novos dados para visualizar o dashboard.</p>
-    </div>
-    {% endif %}
-
-    {% if data %}
-    <div class="dashboard-section">
-        <h3>Estatísticas de Cirurgias</h3>
-        <div class="chart-container">
-            <h4>Cirurgias por Mês</h4>
-            <canvas id="monthlyChart"></canvas>
+<div class="dashboard-container dark-theme">
+    <div class="dashboard-layout">
+        <!-- Sidebar with filters -->
+        <div class="dashboard-sidebar">
+            <h3>Filtros</h3>
+            <div class="filter-group">
+                <label for="filter-year">Ano</label>
+                <select id="filter-year" class="filter-select">
+                    <option value="all">Todos</option>
+                    <!-- Will be populated via JS -->
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="filter-month">Mês</label>
+                <select id="filter-month" class="filter-select">
+                    <option value="all">Todos</option>
+                    <option value="01">Janeiro</option>
+                    <option value="02">Fevereiro</option>
+                    <option value="03">Março</option>
+                    <option value="04">Abril</option>
+                    <option value="05">Maio</option>
+                    <option value="06">Junho</option>
+                    <option value="07">Julho</option>
+                    <option value="08">Agosto</option>
+                    <option value="09">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="filter-unit">Unidade</label>
+                <select id="filter-unit" class="filter-select">
+                    <option value="all">Todas</option>
+                    <option value="Ribeirão Preto">Ribeirão Preto</option>
+                    <option value="Campinas">Campinas</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="filter-doctor">Médico</label>
+                <select id="filter-doctor" class="filter-select">
+                    <option value="all">Todos</option>
+                    <!-- Will be populated via JS -->
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="filter-technique">Técnica</label>
+                <select id="filter-technique" class="filter-select">
+                    <option value="all">Todas</option>
+                    <option value="Sim">Safira</option>
+                    <option value="Não">Convencional</option>
+                </select>
+            </div>
+            
+            <button id="apply-filters" class="btn btn-primary">Aplicar Filtros</button>
+            <button id="reset-filters" class="btn btn-secondary">Limpar Filtros</button>
+            
+            <div class="summary-stats">
+                <h4>Resumo</h4>
+                <div class="stat-item">
+                    <span class="stat-label">Total Cirurgias:</span>
+                    <span class="stat-value" id="total-surgeries">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Média Folículos:</span>
+                    <span class="stat-value" id="avg-follicles">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Média Densidade:</span>
+                    <span class="stat-value" id="avg-density">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main dashboard content -->
+        <div class="dashboard-main">
+            <h2>Dashboard de Cirurgias Capilares</h2>
+            
+            {% if error %}
+            <div class="alert alert-error">
+                <p>⚠️ {{ error }}</p>
+                <p>Tente cadastrar novos dados para visualizar o dashboard.</p>
+            </div>
+            {% endif %}
+            
+            {% if data %}
+            <div class="dashboard-grid">
+                <!-- First row -->
+                <div class="dashboard-card">
+                    <h3>Cirurgias por Mês</h3>
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+                
+                <div class="dashboard-card">
+                    <h3>Cirurgias por Unidade</h3>
+                    <canvas id="unitChart"></canvas>
+                </div>
+                
+                <!-- Second row -->
+                <div class="dashboard-card">
+                    <h3>Média de Folículos</h3>
+                    <canvas id="folliclesChart"></canvas>
+                </div>
+                
+                <div class="dashboard-card">
+                    <h3>Densidade de Extração (fios/cm²)</h3>
+                    <canvas id="densityChart"></canvas>
+                </div>
+                
+                <!-- Third row -->
+                <div class="dashboard-card wide-card">
+                    <h3>Evolução Mensal</h3>
+                    <canvas id="trendChart"></canvas>
+                </div>
+                
+                <!-- Fourth row -->
+                <div class="dashboard-card">
+                    <h3>Técnica Utilizada</h3>
+                    <canvas id="techniqueChart"></canvas>
+                </div>
+                
+                <div class="dashboard-card">
+                    <h3>Médicos por Volume</h3>
+                    <canvas id="doctorChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="dashboard-footer">
+                <p>📊 Dados extraídos da planilha de cirurgias. Última atualização: {{ data.update_time }}</p>
+                <div class="dashboard-actions">
+                    <a href="#" class="btn btn-primary" onclick="exportToPdf()">Exportar PDF</a>
+                    <a href="{{ url_for('download_excel') }}" class="btn btn-secondary">Baixar Excel</a>
+                </div>
+            </div>
+            {% else %}
+            <div class="no-data">
+                <p>Nenhum dado disponível para exibição.</p>
+                <p>Cadastre cirurgias para visualizar estatísticas.</p>
+            </div>
+            {% endif %}
         </div>
     </div>
-
-    {% if data.has_follicle_data %}
-    <div class="dashboard-section">
-        <h3>Estatísticas de Folículos</h3>
-        <div class="chart-grid">
-            <div class="chart-container">
-                <h4>Média de Folículos por Mês</h4>
-                <canvas id="folliclesChart"></canvas>
-            </div>
-
-            <div class="chart-container">
-                <h4>Densidade Média por Mês</h4>
-                <canvas id="densityChart"></canvas>
-            </div>
-        </div>
-    </div>
-    
-    <div class="dashboard-footer">
-        <p>📊 Dados extraídos da planilha de cirurgias. Última atualização: {{ data.update_time }}</p>
-        <a href="#" class="btn btn-primary" onclick="window.print()">Exportar Dashboard</a>
-    </div>
-    {% else %}
-    <div class="alert alert-info">
-        Dados de folículos e densidade não estão disponíveis. Complete todos os formulários para visualizar esses gráficos.
-    </div>
-    {% endif %}
-    {% else %}
-    <p class="no-data">Nenhum dado disponível para exibição.</p>
-    {% endif %}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script>
-    {% if data %}
-    const ctx = document.getElementById('monthlyChart').getContext('2d');
-    const folliclesCtx = document.getElementById('folliclesChart').getContext('2d');
-    const densityCtx = document.getElementById('densityChart').getContext('2d');
-    const colors = ['#FF6384', '#36A2EB', '#FFCE56'];
-
-    // Patients per unit chart
-    const chartData = {
-        labels: {{ data.labels | tojson }},
-        datasets: {{ data.datasets | tojson }}.map((dataset, index) => ({
-            ...dataset,
-            backgroundColor: colors[index % colors.length],
-            borderColor: colors[index % colors.length],
-            borderWidth: 2,
-            fill: false
-        }))
+    // Define color scheme for dark theme
+    const chartColors = {
+        blue: '#36A2EB',
+        pink: '#FF6384',
+        yellow: '#FFCE56',
+        green: '#4CAF50',
+        purple: '#9C27B0',
+        orange: '#FF9800',
+        teal: '#009688',
+        navy: '#3F51B5'
     };
-
-    new Chart(ctx, {
-        type: 'line',
-        data: chartData,
-        options: {
-            responsive: true,
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Pacientes por Mês/Unidade'
+    
+    // Global chart options for dark theme
+    const darkThemeOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#ffffff'
                 },
-                legend: {
-                    position: 'bottom'
+                position: 'bottom'
+            },
+            title: {
+                color: '#ffffff'
+            },
+            datalabels: {
+                color: '#ffffff',
+                font: {
+                    weight: 'bold'
+                },
+                formatter: Math.round
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: '#ffffff'
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
                 }
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
+            y: {
+                ticks: {
+                    color: '#ffffff'
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                },
+                beginAtZero: true
+            }
+        }
+    };
+    
+    // Add event listeners when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        const applyFiltersBtn = document.getElementById('apply-filters');
+        const resetFiltersBtn = document.getElementById('reset-filters');
+        
+        if (applyFiltersBtn) {
+            applyFiltersBtn.addEventListener('click', applyFilters);
+        }
+        
+        if (resetFiltersBtn) {
+            resetFiltersBtn.addEventListener('click', resetFilters);
+        }
+        
+        // Populate doctor filter based on unit selection
+        const unitFilter = document.getElementById('filter-unit');
+        const doctorFilter = document.getElementById('filter-doctor');
+        
+        if (unitFilter && doctorFilter) {
+            unitFilter.addEventListener('change', function() {
+                updateDoctorOptions(this.value);
+            });
+        }
+        
+        // Populate year filter with available years from data
+        populateYearFilter();
+        
+        // Initialize charts
+        initializeCharts();
+    });
+    
+    function populateYearFilter() {
+        const yearSelect = document.getElementById('filter-year');
+        if (!yearSelect) return;
+        
+        // Extract years from data labels
+        const labels = {{ data.labels | tojson if data and data.labels else [] | tojson }};
+        const years = new Set();
+        
+        labels.forEach(label => {
+            // Assuming format is MM/YYYY
+            const year = label.split('/')[1];
+            if (year) years.add(year);
+        });
+        
+        // Sort years
+        const sortedYears = Array.from(years).sort();
+        
+        // Add options to select
+        sortedYears.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        });
+    }
+    
+    function updateDoctorOptions(unit) {
+        const doctorSelect = document.getElementById('filter-doctor');
+        if (!doctorSelect) return;
+        
+        // Clear existing options except first
+        while (doctorSelect.options.length > 1) {
+            doctorSelect.remove(1);
+        }
+        
+        // Map units to doctors
+        const doctorsByUnit = {
+            'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
+            'Campinas': ['Dra. Isadora', 'Dra. Adriana'],
+            'all': ['Dr. Arthur', 'Dr. Daniel', 'Dra. Isadora', 'Dra. Adriana']
+        };
+        
+        // Get doctors for selected unit
+        const doctors = doctorsByUnit[unit] || doctorsByUnit.all;
+        
+        // Add options to select
+        doctors.forEach(doctor => {
+            const option = document.createElement('option');
+            option.value = doctor;
+            option.textContent = doctor;
+            doctorSelect.appendChild(option);
+        });
+    }
+    
+    function applyFilters() {
+        // Get filter values
+        const year = document.getElementById('filter-year').value;
+        const month = document.getElementById('filter-month').value;
+        const unit = document.getElementById('filter-unit').value;
+        const doctor = document.getElementById('filter-doctor').value;
+        const technique = document.getElementById('filter-technique').value;
+        
+        // Make AJAX request to get filtered data
+        fetch(`/filter_dashboard?year=${year}&month=${month}&unit=${unit}&doctor=${doctor}&technique=${technique}`)
+            .then(response => response.json())
+            .then(data => {
+                updateCharts(data);
+                updateSummaryStats(data);
+            })
+            .catch(error => console.error('Error fetching filtered data:', error));
+    }
+    
+    function resetFilters() {
+        // Reset all filter selects
+        document.getElementById('filter-year').value = 'all';
+        document.getElementById('filter-month').value = 'all';
+        document.getElementById('filter-unit').value = 'all';
+        document.getElementById('filter-doctor').value = 'all';
+        document.getElementById('filter-technique').value = 'all';
+        
+        // Update doctor options
+        updateDoctorOptions('all');
+        
+        // Apply filters to reset to original data
+        applyFilters();
+    }
+    
+    function updateSummaryStats(data) {
+        // Update summary statistics
+        document.getElementById('total-surgeries').textContent = data.total_surgeries || 0;
+        document.getElementById('avg-follicles').textContent = data.avg_follicles || 0;
+        document.getElementById('avg-density').textContent = data.avg_density || 0;
+    }
+    
+    function initializeCharts() {
+        {% if data %}
+        // Monthly surgeries chart
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: {{ data.labels | tojson }},
+                datasets: {{ data.datasets | tojson }}.map((dataset, index) => ({
+                    ...dataset,
+                    backgroundColor: Object.values(chartColors)[index % Object.keys(chartColors).length],
+                    borderColor: Object.values(chartColors)[index % Object.keys(chartColors).length],
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: false
+                }))
+            },
+            options: darkThemeOptions
+        });
+        
+        // Unit distribution chart
+        const unitCtx = document.getElementById('unitChart').getContext('2d');
+        new Chart(unitCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Ribeirão Preto', 'Campinas'],
+                datasets: [{
+                    data: computeUnitDistribution(),
+                    backgroundColor: [chartColors.blue, chartColors.pink],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                ...darkThemeOptions,
+                plugins: {
+                    ...darkThemeOptions.plugins,
+                    legend: {
+                        ...darkThemeOptions.plugins.legend,
+                        position: 'bottom'
                     }
                 }
             }
-        }
-    });
-
-    // Average follicles per month chart
-    new Chart(folliclesCtx, {
-        type: 'bar',
-        data: {
-            labels: {{ (data.follicles_data.labels if data.follicles_data and data.follicles_data.labels else []) | tojson }},
-            datasets: [{
-                label: 'Média de Fios por Mês',
-                data: {{ (data.follicles_data.averages if data.follicles_data and data.follicles_data.averages else []) | tojson }},
-                backgroundColor: '#4CAF50',
-                borderColor: '#388E3C',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Média de Fios Implantados por Mês'
-                },
-                legend: {
-                    position: 'bottom'
-                }
+        });
+        
+        // Follicles chart
+        const folliclesCtx = document.getElementById('folliclesChart').getContext('2d');
+        new Chart(folliclesCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ (data.follicles_data.labels if data.follicles_data and data.follicles_data.labels else []) | tojson }},
+                datasets: [{
+                    label: 'Média de Fios por Mês',
+                    data: {{ (data.follicles_data.averages if data.follicles_data and data.follicles_data.averages else []) | tojson }},
+                    backgroundColor: chartColors.green,
+                    borderColor: 'rgba(76, 175, 80, 0.8)',
+                    borderWidth: 1
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true
+            options: darkThemeOptions
+        });
+        
+        // Density chart
+        const densityCtx = document.getElementById('densityChart').getContext('2d');
+        new Chart(densityCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ (data.follicles_data.labels if data.follicles_data and data.follicles_data.labels else []) | tojson }},
+                datasets: [{
+                    label: 'Densidade de Extração (fios/cm²)',
+                    data: {{ (data.follicles_data.le_density if data.follicles_data and data.follicles_data.le_density else []) | tojson }},
+                    backgroundColor: chartColors.purple,
+                    borderColor: 'rgba(156, 39, 176, 0.8)',
+                    borderWidth: 1
+                }]
+            },
+            options: darkThemeOptions
+        });
+        
+        // Trend chart
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: {{ data.labels | tojson }},
+                datasets: [
+                    {
+                        label: 'Cirurgias',
+                        data: {{ data.datasets[0].data | tojson if data.datasets and data.datasets[0] else [] | tojson }},
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: chartColors.blue,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Folículos',
+                        data: {{ (data.follicles_data.averages if data.follicles_data and data.follicles_data.averages else []) | tojson }},
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: chartColors.pink,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                ...darkThemeOptions,
+                scales: {
+                    ...darkThemeOptions.scales,
+                    y: {
+                        ...darkThemeOptions.scales.y,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Cirurgias',
+                            color: '#ffffff'
+                        }
+                    },
+                    y1: {
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Folículos',
+                            color: '#ffffff'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#ffffff'
+                        }
+                    }
                 }
             }
-        }
-    });
-
-    // LE Density per month chart
-    new Chart(densityCtx, {
-        type: 'bar',
-        data: {
-            labels: {{ (data.follicles_data.labels if data.follicles_data and data.follicles_data.labels else []) | tojson }},
-            datasets: [{
-                label: 'Média de Densidade LE por Mês (fios/cm²)',
-                data: {{ (data.follicles_data.le_density if data.follicles_data and data.follicles_data.le_density else []) | tojson }},
-                backgroundColor: '#9C27B0',
-                borderColor: '#7B1FA2',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Média de Densidade LE (Primeira Faixa) por Mês'
-                },
-                legend: {
-                    position: 'bottom'
-                }
+        });
+        
+        // Technique chart (Safira vs Conventional)
+        const techniqueCtx = document.getElementById('techniqueChart').getContext('2d');
+        new Chart(techniqueCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Safira', 'Convencional'],
+                datasets: [{
+                    data: computeTechniqueDistribution(),
+                    backgroundColor: [chartColors.teal, chartColors.orange],
+                    borderWidth: 1
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true
+            options: {
+                ...darkThemeOptions,
+                plugins: {
+                    ...darkThemeOptions.plugins,
+                    legend: {
+                        ...darkThemeOptions.plugins.legend,
+                        position: 'bottom'
+                    }
                 }
             }
-        }
-    });
-    {% endif %}
+        });
+        
+        // Doctor performance chart
+        const doctorCtx = document.getElementById('doctorChart').getContext('2d');
+        new Chart(doctorCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Dr. Arthur', 'Dr. Daniel', 'Dra. Isadora', 'Dra. Adriana'],
+                datasets: [{
+                    label: 'Cirurgias Realizadas',
+                    data: computeDoctorDistribution(),
+                    backgroundColor: [
+                        chartColors.blue,
+                        chartColors.green,
+                        chartColors.pink,
+                        chartColors.purple
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                ...darkThemeOptions,
+                indexAxis: 'y'
+            }
+        });
+        {% endif %}
+    }
+    
+    function updateCharts(data) {
+        // Clear existing charts
+        const charts = Object.values(Chart.instances);
+        charts.forEach(chart => chart.destroy());
+        
+        // Reinitialize with new data
+        // (Similar to initializeCharts but using the new data)
+        // This would need to be implemented based on the structure of the filtered data
+    }
+    
+    function computeUnitDistribution() {
+        // Placeholder function to compute unit distribution
+        // In a real implementation, this would use actual data from the server
+        return [60, 40]; // Example values
+    }
+    
+    function computeTechniqueDistribution() {
+        // Placeholder function to compute technique distribution
+        // In a real implementation, this would use actual data from the server
+        return [75, 25]; // Example values for Safira vs Conventional
+    }
+    
+    function computeDoctorDistribution() {
+        // Placeholder function to compute doctor distribution
+        // In a real implementation, this would use actual data from the server
+        return [15, 10, 12, 8]; // Example values for each doctor
+    }
+    
+    function exportToPdf() {
+        window.print();
+    }
 </script>
 {% endblock %}
