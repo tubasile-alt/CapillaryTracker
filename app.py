@@ -97,7 +97,7 @@ def form():
         ]
     }
     
-    return render_template('form.html', form=form_data)
+    return render_template('form.html', form=form_data, data={})
 
 @app.route('/get_options', methods=['GET'])
 def get_options():

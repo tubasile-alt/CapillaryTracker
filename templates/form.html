@@ -26,7 +26,7 @@
                                     {% if field.name == 'unidade' %}onchange="updateMedicos(this.value); updateEquipe(this.value)"{% endif %}>
                                 <option value="">Selecione...</option>
                                 {% for option in field.options %}
-                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                    <option value="{{ option }}">
                                         {{ option }}
                                     </option>
                                 {% endfor %}
@@ -43,10 +43,10 @@
                             {% endif %}
                         {% elif field.type == 'textarea' %}
                             <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
-                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                                {% if field.required %}required{% endif %}></textarea>
                         {% elif field.name == 'data' %}
                             <input type="date" name="{{ field.name }}" id="{{ field.name }}"
-                                value="{{ data.get(field.name, '') }}"
+                                value=""
                                 {% if field.required %}required{% endif %}>
                             <input type="hidden" name="data_formatted" id="data_formatted">
                         {% elif field.type == 'time' %}
@@ -55,7 +55,7 @@
                                    value="08:00">
                         {% else %}
                             <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                                value="{{ data.get(field.name, '') }}"
+                                value=""
                                 {% if field.required %}required{% endif %}>
                         {% endif %}
                     </div>
@@ -75,17 +75,17 @@
                             <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
                                 <option value="">Selecione...</option>
                                 {% for option in field.options %}
-                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                    <option value="{{ option }}">
                                         {{ option }}
                                     </option>
                                 {% endfor %}
                             </select>
                         {% elif field.type == 'textarea' %}
                             <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
-                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                                {% if field.required %}required{% endif %}></textarea>
                         {% else %}
                             <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                                value="{{ data.get(field.name, '') }}"
+                                value=""
                                 {% if field.required %}required{% endif %}>
                         {% endif %}
                     </div>
@@ -113,17 +113,17 @@
                             <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
                                 <option value="">Selecione...</option>
                                 {% for option in field.options %}
-                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                    <option value="{{ option }}">
                                         {{ option }}
                                     </option>
                                 {% endfor %}
                             </select>
                         {% elif field.type == 'textarea' %}
                             <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
-                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                                {% if field.required %}required{% endif %}></textarea>
                         {% else %}
                             <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                                value="{{ data.get(field.name, '') }}"
+                                value=""
                                 {% if field.required %}required{% endif %}>
                         {% endif %}
                     </div>
@@ -151,7 +151,7 @@
                                         {% if field.required %}*{% endif %}
                                     </label>
                                     <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                                        value="{{ data.get(field.name, '') }}"
+                                        value=""
                                         {% if field.required %}required{% endif %}>
                                 </div>
                             {% endfor %}
@@ -168,7 +168,7 @@
                                         {% if field.required %}*{% endif %}
                                     </label>
                                     <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                                        value="{{ data.get(field.name, '') }}"
+                                        value=""
                                         {% if field.required %}required{% endif %}>
                                 </div>
                             {% endfor %}
@@ -185,7 +185,7 @@
                                         {% if field.required %}*{% endif %}
                                     </label>
                                     <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                                        value="{{ data.get(field.name, '') }}"
+                                        value=""
                                         {% if field.required %}required{% endif %}>
                                 </div>
                             {% endfor %}
@@ -202,7 +202,7 @@
                                         {% if field.required %}*{% endif %}
                                     </label>
                                     <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                                        value="{{ data.get(field.name, '') }}"
+                                        value=""
                                         {% if field.required %}required{% endif %}>
                                 </div>
                             {% endfor %}
@@ -246,17 +246,17 @@
                             <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
                                 <option value="">Selecione...</option>
                                 {% for option in field.options %}
-                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                    <option value="{{ option }}">
                                         {{ option }}
                                     </option>
                                 {% endfor %}
                             </select>
                         {% elif field.type == 'textarea' %}
                             <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
-                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                                {% if field.required %}required{% endif %}></textarea>
                         {% else %}
                             <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                                value="{{ data.get(field.name, '') }}"
+                                value=""
                                 {% if field.required %}required{% endif %}>
                         {% endif %}
                     </div>
@@ -276,17 +276,17 @@
                             <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
                                 <option value="">Selecione...</option>
                                 {% for option in field.options %}
-                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                    <option value="{{ option }}">
                                         {{ option }}
                                     </option>
                                 {% endfor %}
                             </select>
                         {% elif field.type == 'textarea' %}
                             <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
-                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                                {% if field.required %}required{% endif %}></textarea>
                         {% else %}
                             <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                                value="{{ data.get(field.name, '') }}"
+                                value=""
                                 {% if field.required %}required{% endif %}>
                         {% endif %}
                     </div>
@@ -304,10 +304,10 @@
 
                         {% if field.type == 'textarea' %}
                             <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
-                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                                {% if field.required %}required{% endif %}></textarea>
                         {% else %}
                             <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
-                                value="{{ data.get(field.name, '') }}"
+                                value=""
                                 {% if field.required %}required{% endif %}>
                         {% endif %}
                     </div>
@@ -334,7 +334,7 @@
             var yyyy = today.getFullYear();
             dateInput.value = yyyy + '-' + mm + '-' + dd;
         }
-        
+
         // Set default time as 08:00
         var timeInput = document.getElementById('hora');
         if (timeInput && !timeInput.value) {
