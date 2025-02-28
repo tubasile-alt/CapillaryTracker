@@ -123,12 +123,12 @@ def novo_cadastro():
 def save_to_excel(data):
     """Salva os dados em um arquivo Excel."""
     logger.info("Salvando dados na planilha Excel...")
-    
+
     # Converter campos vazios para "0"
     for key in data:
         if data[key] == '' or data[key] is None:
             data[key] = '0'
-    
+
     # Verificar se data é uma string de data válida, caso contrário usar a data atual
     try:
         if 'data' in data and data['data']:
@@ -137,7 +137,7 @@ def save_to_excel(data):
             data['data'] = datetime.now().strftime('%d/%m/%Y')
     except:
         data['data'] = datetime.now().strftime('%d/%m/%Y')
-    
+
     # Calcular dados adicionais
     if all(key in data for key in ['q1_area', 'q1_furos', 'q1_fios']):
         try:
@@ -150,7 +150,7 @@ def save_to_excel(data):
                             data[key] = float(data[key])
                         except (ValueError, TypeError):
                             data[key] = 0
-            
+
             # Calcular densidade de extração por quadrante (furos/área)
             data['q1_densidade'] = data['q1_furos'] / data['q1_area'] if data['q1_area'] > 0 else 0
             data['q2_densidade'] = data['q2_furos'] / data['q2_area'] if data['q2_area'] > 0 else 0
@@ -162,7 +162,7 @@ def save_to_excel(data):
             data['q2_taxa_quebra'] = (1 - data['q2_fios'] / data['q2_furos']) * 100 if data['q2_furos'] > 0 else 0
             data['q3_taxa_quebra'] = (1 - data['q3_fios'] / data['q3_furos']) * 100 if data['q3_furos'] > 0 else 0
             data['q4_taxa_quebra'] = (1 - data['q4_fios'] / data['q4_furos']) * 100 if data['q4_furos'] > 0 else 0
-            
+
             # Converter de volta para string para manter consistência de tipos no dataframe
             for key in data:
                 if isinstance(data[key], float):
@@ -227,7 +227,7 @@ def dashboard():
             df = pd.read_excel(filename)
             # Substituir valores NaN por zeros
             df = df.fillna(0)
-            
+
             # Processar dados para o dashboard
             if not df.empty:
                 # Lidar com diferentes formatos de data
@@ -236,7 +236,7 @@ def dashboard():
                 else:
                     # Se não houver coluna 'data', usar uma data padrão
                     df['mes_ano'] = datetime.now().strftime('%m/%Y')
-                
+
                 # 1. Cirurgias por mês (total)
                 cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
                 cirurgias_por_mes['count'] = cirurgias_por_mes['count'].fillna(0).astype(int)
@@ -246,13 +246,13 @@ def dashboard():
                 if 'unidade' in df.columns:
                     # Substituir valores vazios na coluna unidade
                     df['unidade'] = df['unidade'].fillna('Não especificada')
-                    
+
                     cirurgias_por_mes_unidade = df.groupby(['mes_ano', 'unidade']).size().reset_index(name='count')
                     cirurgias_por_mes_unidade['count'] = cirurgias_por_mes_unidade['count'].fillna(0).astype(int)
-                    
+
                     # Preparar datasets por unidade
                     unidades = df['unidade'].unique()
-                    
+
                     for unidade in unidades:
                         dados_unidade = cirurgias_por_mes_unidade[cirurgias_por_mes_unidade['unidade'] == unidade]
                         # Mapa para todas as datas possíveis
@@ -269,6 +269,8 @@ def dashboard():
                             'data': merged['count'].tolist()
                         })
 
+                has_follicle_data = 'total_foliculos' in df.columns and df['total_foliculos'].apply(lambda x: isinstance(x, (int, float))).all()
+
                 dashboard_data = {
                     'labels': cirurgias_por_mes['mes_ano'].tolist(),
                     'datasets': [
@@ -277,14 +279,14 @@ def dashboard():
                             'data': cirurgias_por_mes['count'].tolist()
                         }
                     ] + datasets_unidades,
-                    'has_follicle_data': 'total_foliculos' in df.columns
+                    'has_follicle_data': has_follicle_data
                 }
 
-                # Se temos dados de folículos, criar análises adicionais
-                if 'total_foliculos' in df.columns:
+                # Se temos dados de folículos processados
+                if has_follicle_data:
                     # Converter coluna para numérico, tratando erros
                     df['total_foliculos'] = pd.to_numeric(df['total_foliculos'], errors='coerce').fillna(0)
-                    
+
                     # Média de folículos por mês
                     folliculo_medio = df.groupby('mes_ano')['total_foliculos'].mean().reset_index()
 
