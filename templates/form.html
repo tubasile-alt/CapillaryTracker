@@ -334,6 +334,12 @@
             var yyyy = today.getFullYear();
             dateInput.value = yyyy + '-' + mm + '-' + dd;
         }
+        
+        // Set default time as 08:00
+        var timeInput = document.getElementById('hora');
+        if (timeInput && !timeInput.value) {
+            timeInput.value = '08:00';
+        }
 
         // If unidade is already selected, update medicos and equipe
         var unidadeSelect = document.getElementById('unidade');

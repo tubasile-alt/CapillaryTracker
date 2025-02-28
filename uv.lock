@@ -257,6 +257,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "flask" },
+    { name = "numpy" },
     { name = "openpyxl" },
     { name = "pandas" },
 ]
@@ -264,6 +265,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "flask", specifier = ">=3.1.0" },
+    { name = "numpy", specifier = ">=2.2.3" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=2.2.3" },
 ]
