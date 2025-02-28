@@ -55,7 +55,7 @@ def novo_cadastro():
              'options': ['Ribeirão Preto', 'Campinas']},
             {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'required': True},
             {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'required': True},
-            {'name': 'hora_cirurgia', 'label': 'Hora da Cirurgia (HH:MM)', 'type': 'time', 'required': True},
+            {'name': 'hora_cirurgia', 'label': 'Hora da Cirurgia (HH:MM)', 'type': 'time', 'required': True, 'default': '08:00'},
             {'name': 'tempo_cirurgia', 'label': 'Tempo de Cirurgia (horas)', 'type': 'number', 'required': True},
 
             # Informações do Implante
@@ -221,6 +221,11 @@ def process_dashboard_data(df):
     # Lidar com valores vazios
     df = df.fillna(0)
     
+    # Garantir que colunas numéricas tenham valores zerados quando vazios
+    numeric_columns = df.select_dtypes(include=['number']).columns
+    for col in numeric_columns:
+        df[col] = df[col].fillna(0).replace('', 0)
+    
     # Estrutura para armazenar os dados do dashboard
     dashboard_data = {
         'labels': [],
@@ -376,7 +381,7 @@ def filter_dashboard():
         month = request.args.get('month', 'all')
         unit = request.args.get('unit', 'all')
         doctor = request.args.get('doctor', 'all')
-        technique = request.args.get('technique', 'all')
+        equipe = request.args.get('equipe', 'all')
         
         # Load data
         filename = "cirurgias.xlsx"
@@ -392,6 +397,9 @@ def filter_dashboard():
             })
         
         df = pd.read_excel(filename)
+        
+        # Preencher valores nulos com zero para evitar erros de cálculo
+        df = df.fillna(0)
         
         # Apply filters
         if year != 'all':
@@ -418,8 +426,8 @@ def filter_dashboard():
         if doctor != 'all' and 'medico' in df.columns:
             df = df[df['medico'] == doctor]
         
-        if technique != 'all' and 'safira' in df.columns:
-            df = df[df['safira'] == technique]
+        if equipe != 'all' and 'equipe' in df.columns:
+            df = df[df['equipe'] == equipe]
         
         # Process filtered data
         dashboard_data = process_dashboard_data(df)

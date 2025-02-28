@@ -52,11 +52,10 @@
             </div>
             
             <div class="filter-group">
-                <label for="filter-technique">Técnica</label>
-                <select id="filter-technique" class="filter-select">
+                <label for="filter-equipe">Equipe</label>
+                <select id="filter-equipe" class="filter-select">
                     <option value="all">Todas</option>
-                    <option value="Sim">Safira</option>
-                    <option value="Não">Convencional</option>
+                    <!-- Será preenchido via JS -->
                 </select>
             </div>
             
@@ -123,8 +122,8 @@
                 
                 <!-- Fourth row -->
                 <div class="dashboard-card">
-                    <h3>Técnica Utilizada</h3>
-                    <canvas id="techniqueChart"></canvas>
+                    <h3>Equipe</h3>
+                    <canvas id="equipeChart"></canvas>
                 </div>
                 
                 <div class="dashboard-card">
@@ -221,13 +220,15 @@
             resetFiltersBtn.addEventListener('click', resetFilters);
         }
         
-        // Populate doctor filter based on unit selection
+        // Populate doctor and team filters based on unit selection
         const unitFilter = document.getElementById('filter-unit');
         const doctorFilter = document.getElementById('filter-doctor');
+        const equipeFilter = document.getElementById('filter-equipe');
         
         if (unitFilter && doctorFilter) {
             unitFilter.addEventListener('change', function() {
                 updateDoctorOptions(this.value);
+                updateEquipeOptions(this.value);
             });
         }
         
@@ -298,10 +299,10 @@
         const month = document.getElementById('filter-month').value;
         const unit = document.getElementById('filter-unit').value;
         const doctor = document.getElementById('filter-doctor').value;
-        const technique = document.getElementById('filter-technique').value;
+        const equipe = document.getElementById('filter-equipe').value;
         
         // Make AJAX request to get filtered data
-        fetch(`/filter_dashboard?year=${year}&month=${month}&unit=${unit}&doctor=${doctor}&technique=${technique}`)
+        fetch(`/filter_dashboard?year=${year}&month=${month}&unit=${unit}&doctor=${doctor}&equipe=${equipe}`)
             .then(response => response.json())
             .then(data => {
                 updateCharts(data);
@@ -310,16 +311,45 @@
             .catch(error => console.error('Error fetching filtered data:', error));
     }
     
+    function updateEquipeOptions(unit) {
+        const equipeSelect = document.getElementById('filter-equipe');
+        if (!equipeSelect) return;
+        
+        // Clear existing options except first
+        while (equipeSelect.options.length > 1) {
+            equipeSelect.remove(1);
+        }
+        
+        // Map units to equipes
+        const equipesByUnit = {
+            'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
+            'Campinas': ['Juliana', 'Gabriela'],
+            'all': ['Aline', 'Natália', 'Ana', 'Juliana', 'Gabriela']
+        };
+        
+        // Get equipes for selected unit
+        const equipes = equipesByUnit[unit] || equipesByUnit.all;
+        
+        // Add options to select
+        equipes.forEach(equipe => {
+            const option = document.createElement('option');
+            option.value = equipe;
+            option.textContent = equipe;
+            equipeSelect.appendChild(option);
+        });
+    }
+    
     function resetFilters() {
         // Reset all filter selects
         document.getElementById('filter-year').value = 'all';
         document.getElementById('filter-month').value = 'all';
         document.getElementById('filter-unit').value = 'all';
         document.getElementById('filter-doctor').value = 'all';
-        document.getElementById('filter-technique').value = 'all';
+        document.getElementById('filter-equipe').value = 'all';
         
-        // Update doctor options
+        // Update doctor and equipe options
         updateDoctorOptions('all');
+        updateEquipeOptions('all');
         
         // Apply filters to reset to original data
         applyFilters();
@@ -471,15 +501,15 @@
             }
         });
         
-        // Technique chart (Safira vs Conventional)
-        const techniqueCtx = document.getElementById('techniqueChart').getContext('2d');
-        new Chart(techniqueCtx, {
+        // Equipe chart
+        const equipeCtx = document.getElementById('equipeChart').getContext('2d');
+        new Chart(equipeCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Safira', 'Convencional'],
+                labels: ['Aline', 'Natália', 'Ana', 'Juliana', 'Gabriela'],
                 datasets: [{
-                    data: computeTechniqueDistribution(),
-                    backgroundColor: [chartColors.teal, chartColors.orange],
+                    data: computeEquipeDistribution(),
+                    backgroundColor: [chartColors.teal, chartColors.orange, chartColors.blue, chartColors.pink, chartColors.green],
                     borderWidth: 1
                 }]
             },
@@ -537,10 +567,10 @@
         return [60, 40]; // Example values
     }
     
-    function computeTechniqueDistribution() {
-        // Placeholder function to compute technique distribution
+    function computeEquipeDistribution() {
+        // Placeholder function to compute equipe distribution
         // In a real implementation, this would use actual data from the server
-        return [75, 25]; // Example values for Safira vs Conventional
+        return [30, 20, 10, 25, 15]; // Example values for each equipe member
     }
     
     function computeDoctorDistribution() {
