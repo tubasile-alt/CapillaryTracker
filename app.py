@@ -1,320 +1,478 @@
-
-from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
-import pandas as pd
 import os
-import json
+import logging
+import traceback
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+import pandas as pd
 from datetime import datetime
-import numpy as np
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+logger.info("Starting Flask application...")
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'
-
-# Ensure xlsx file exists
-def ensure_excel_file():
-    if not os.path.exists('cirurgias.xlsx'):
-        # Create empty DataFrame with columns
-        columns = [
-            'data', 'hora', 'unidade', 'medico', 'equipe', 'paciente', 'idade', 
-            'genero', 'tecnica', 'area_total', 'area_recep', 'incisao',
-            'infiltracao', 'anestesia', 'folioulos', 'fios', 'densidade', 
-            'tempo_cirurgico', 'observacoes'
-        ]
-        pd.DataFrame(columns=columns).to_excel('cirurgias.xlsx', index=False)
+app.secret_key = os.urandom(24)
 
 @app.route('/')
 def index():
-    return redirect(url_for('form'))
+    logger.info("Accessing index route")
+    return render_template('base.html')
 
-@app.route('/form', methods=['GET', 'POST'])
-def form():
+@app.route('/novo_cadastro', methods=['GET', 'POST'])
+def novo_cadastro():
+    logger.info("Accessing novo_cadastro route")
     if request.method == 'POST':
         try:
-            # Get form data
-            data = {
-                'data': request.form.get('data'),
-                'hora': request.form.get('hora') or '08:00',
-                'unidade': request.form.get('unidade'),
-                'medico': request.form.get('medico'),
-                'equipe': request.form.get('equipe'),
-                'paciente': request.form.get('paciente'),
-                'idade': request.form.get('idade'),
-                'genero': request.form.get('genero'),
-                'tecnica': request.form.get('tecnica'),
-                'area_total': request.form.get('area_total'),
-                'area_recep': request.form.get('area_recep'),
-                'incisao': request.form.get('incisao'),
-                'infiltracao': request.form.get('infiltracao'),
-                'anestesia': request.form.get('anestesia'),
-                'folioulos': request.form.get('folioulos'),
-                'fios': request.form.get('fios'),
-                'densidade': request.form.get('densidade'),
-                'tempo_cirurgico': request.form.get('tempo_cirurgico'),
-                'observacoes': request.form.get('observacoes')
-            }
-            
-            # Ensure numeric fields have values
-            numeric_fields = ['area_total', 'area_recep', 'folioulos', 'fios', 'densidade', 'tempo_cirurgico', 'idade']
-            for field in numeric_fields:
-                if not data[field] or (isinstance(data[field], str) and data[field].strip() == ''):
-                    data[field] = '0'
-            
-            # Save to Excel
-            ensure_excel_file()
-            df = pd.read_excel('cirurgias.xlsx')
-            df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
-            df.to_excel('cirurgias.xlsx', index=False)
-            
-            flash('Cirurgia registrada com sucesso!', 'success')
-            return redirect(url_for('form'))
+            # Processar os dados do formulário
+            form_data = request.form.to_dict()
+
+            # Processar checkboxes múltiplos
+            if 'equipe_values' in form_data:
+                form_data['equipe'] = form_data['equipe_values']
+                del form_data['equipe_values']
+
+            # Salvar no Excel
+            save_to_excel(form_data)
+
+            flash("Dados salvos com sucesso!", "success")
+            return redirect(url_for('index'))
         except Exception as e:
-            flash(f'Erro ao salvar dados: {str(e)}', 'error')
-            return redirect(url_for('form'))
-    
+            logger.error(f"Error saving data: {str(e)}\n{traceback.format_exc()}")
+            flash(f"Erro ao salvar dados: {str(e)}", "error")
+
+    # Estrutura do formulário completo
     form_data = {
         'title': 'Cadastro de Cirurgia Capilar',
         'fields': [
+            # Dados Gerais da Cirurgia
             {'name': 'data', 'label': 'Data da Cirurgia', 'type': 'date', 'required': True},
-            {'name': 'hora', 'label': 'Hora da Cirurgia (HH:MM)', 'type': 'time', 'required': True, 'value': '08:00'},
-            {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'options': ['Ribeirão Preto', 'Campinas'], 'required': True},
-            {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'options': [], 'required': True},
-            {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'options': [], 'required': True},
-            {'name': 'paciente', 'label': 'Nome do Paciente', 'type': 'text', 'required': True},
-            {'name': 'idade', 'label': 'Idade', 'type': 'number', 'required': True},
-            {'name': 'genero', 'label': 'Gênero', 'type': 'select', 'options': ['Masculino', 'Feminino', 'Outro'], 'required': True},
-            {'name': 'tecnica', 'label': 'Técnica', 'type': 'select', 'options': ['FUE', 'FUT', 'Híbrida'], 'required': True},
-            {'name': 'area_total', 'label': 'Área Total (cm²)', 'type': 'number', 'required': True},
-            {'name': 'area_recep', 'label': 'Área Receptora (cm²)', 'type': 'number', 'required': True},
-            {'name': 'incisao', 'label': 'Tipo de Incisão', 'type': 'select', 'options': ['Safira', 'Aço', 'Implanter'], 'required': True},
-            {'name': 'infiltracao', 'label': 'Infiltração', 'type': 'select', 'options': ['Tumescente', 'Klein'], 'required': True},
-            {'name': 'anestesia', 'label': 'Tipo de Anestesia', 'type': 'select', 'options': ['Local', 'Sedação'], 'required': True},
-            {'name': 'q1_area', 'label': 'Quadrante 1 - Área (cm²)', 'type': 'number', 'required': False},
-            {'name': 'q1_furos', 'label': 'Quadrante 1 - Furos', 'type': 'number', 'required': False},
-            {'name': 'q1_fios', 'label': 'Quadrante 1 - Fios', 'type': 'number', 'required': False},
-            {'name': 'q2_area', 'label': 'Quadrante 2 - Área (cm²)', 'type': 'number', 'required': False},
-            {'name': 'q2_furos', 'label': 'Quadrante 2 - Furos', 'type': 'number', 'required': False},
-            {'name': 'q2_fios', 'label': 'Quadrante 2 - Fios', 'type': 'number', 'required': False},
-            {'name': 'q3_area', 'label': 'Quadrante 3 - Área (cm²)', 'type': 'number', 'required': False},
-            {'name': 'q3_furos', 'label': 'Quadrante 3 - Furos', 'type': 'number', 'required': False},
-            {'name': 'q3_fios', 'label': 'Quadrante 3 - Fios', 'type': 'number', 'required': False},
-            {'name': 'q4_area', 'label': 'Quadrante 4 - Área (cm²)', 'type': 'number', 'required': False},
-            {'name': 'q4_furos', 'label': 'Quadrante 4 - Furos', 'type': 'number', 'required': False},
-            {'name': 'q4_fios', 'label': 'Quadrante 4 - Fios', 'type': 'number', 'required': False},
-            {'name': 'area_marcada', 'label': 'Área Total Marcada', 'type': 'select', 'options': ['Sim', 'Não'], 'required': False},
-            {'name': 'tensao_sutura', 'label': 'Tensão da Sutura', 'type': 'select', 'options': ['Baixa', 'Média', 'Alta'], 'required': False},
-            {'name': 'tipo_fechamento', 'label': 'Tipo de Fechamento', 'type': 'select', 'options': ['Triplo', 'Simples'], 'required': False},
-            {'name': 'microcoagulacao', 'label': 'Micro-coagulação', 'type': 'select', 'options': ['Sim', 'Não'], 'required': False},
-            {'name': 'solucao_frente', 'label': 'Solução Frente (seringas)', 'type': 'number', 'required': False},
-            {'name': 'solucao_coroa', 'label': 'Solução Coroa (seringas)', 'type': 'number', 'required': False},
-            {'name': 'solucao_xilo_frente', 'label': 'Solução Xilo Frente (seringas)', 'type': 'number', 'required': False},
-            {'name': 'calvicie_familiar', 'label': 'Calvície Familiar', 'type': 'select', 'options': ['Sim', 'Não'], 'required': False},
-            {'name': 'uso_finasterida', 'label': 'Uso de Finasterida', 'type': 'select', 'options': ['Sim', 'Não'], 'required': False},
-            {'name': 'uso_minoxidil', 'label': 'Uso de Minoxidil', 'type': 'select', 'options': ['Sim', 'Não'], 'required': False},
-            {'name': 'frequencia_lavagem', 'label': 'Frequência de Lavagem', 'type': 'select', 'options': ['Diária', '2-3 vezes/semana', 'Semanal'], 'required': False},
-            {'name': 'uso_capacete', 'label': 'Uso de Capacete', 'type': 'select', 'options': ['Sim', 'Não'], 'required': False},
-            {'name': 'exposicao_sol', 'label': 'Exposição ao Sol', 'type': 'select', 'options': ['Alta', 'Média', 'Baixa', 'Nenhuma'], 'required': False},
-            {'name': 'folioulos', 'label': 'Número Total de Folículos', 'type': 'number', 'required': True},
-            {'name': 'fios', 'label': 'Número Total de Fios', 'type': 'number', 'required': True},
-            {'name': 'densidade', 'label': 'Densidade (Fios/cm²)', 'type': 'number', 'required': False},
-            {'name': 'tempo_cirurgico', 'label': 'Tempo Cirúrgico (min)', 'type': 'number', 'required': True},
-            {'name': 'observacoes', 'label': 'Observações', 'type': 'textarea', 'required': False}
+            {'name': 'nome', 'label': 'Nome do Paciente', 'type': 'text', 'required': True},
+            {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True, 
+             'options': ['Ribeirão Preto', 'Campinas']},
+            {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'required': True},
+            {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'required': True},
+            {'name': 'hora_cirurgia', 'label': 'Hora da Cirurgia (HH:MM)', 'type': 'time', 'required': True, 'default': '08:00'},
+            {'name': 'tempo_cirurgia', 'label': 'Tempo de Cirurgia (horas)', 'type': 'number', 'required': True},
+
+            # Informações do Implante
+            {'name': 'total_foliculos', 'label': 'Total de Folículos', 'type': 'number', 'required': True},
+            {'name': 'frente', 'label': 'Frente', 'type': 'number', 'required': False},
+            {'name': 'densidade_scketh', 'label': 'Densidade Scketh', 'type': 'number', 'required': False},
+            {'name': 'coroa', 'label': 'Coroa', 'type': 'number', 'required': False},
+            {'name': 'scalpe', 'label': 'Scalpe', 'type': 'number', 'required': False},
+            {'name': 'peninsula_direita', 'label': 'Península Direita', 'type': 'number', 'required': False},
+            {'name': 'peninsula_esquerda', 'label': 'Península Esquerda', 'type': 'number', 'required': False},
+
+            # Procedimentos e Ferramentas
+            {'name': 'safira', 'label': 'Safira?', 'type': 'select', 'required': True,
+             'options': ['Sim', 'Não']},
+            {'name': 'punch', 'label': 'Punch (mm)', 'type': 'select', 'required': True,
+             'options': ['0.75', '0.85', '0.95']},
+            {'name': 'solucao_frente', 'label': 'Solução Frente (ml)', 'type': 'number', 'required': True},
+            {'name': 'solucao_coroa', 'label': 'Solução Coroa (ml)', 'type': 'number', 'required': False},
+            {'name': 'solucao_xilo_frente', 'label': 'Solução Xilo Frente (ml)', 'type': 'number', 'required': False},
+
+            # Extração
+            {'name': 'q1_area', 'label': 'Quadrante 1 - Área', 'type': 'number', 'required': True},
+            {'name': 'q1_furos', 'label': 'Quadrante 1 - Número de Furos', 'type': 'number', 'required': True},
+            {'name': 'q1_fios', 'label': 'Quadrante 1 - Número de Fios Retirados', 'type': 'number', 'required': True},
+
+            {'name': 'q2_area', 'label': 'Quadrante 2 - Área', 'type': 'number', 'required': True},
+            {'name': 'q2_furos', 'label': 'Quadrante 2 - Número de Furos', 'type': 'number', 'required': True},
+            {'name': 'q2_fios', 'label': 'Quadrante 2 - Número de Fios Retirados', 'type': 'number', 'required': True},
+
+            {'name': 'q3_area', 'label': 'Quadrante 3 - Área', 'type': 'number', 'required': True},
+            {'name': 'q3_furos', 'label': 'Quadrante 3 - Número de Furos', 'type': 'number', 'required': True},
+            {'name': 'q3_fios', 'label': 'Quadrante 3 - Número de Fios Retirados', 'type': 'number', 'required': True},
+
+            {'name': 'q4_area', 'label': 'Quadrante 4 - Área', 'type': 'number', 'required': True},
+            {'name': 'q4_furos', 'label': 'Quadrante 4 - Número de Furos', 'type': 'number', 'required': True},
+            {'name': 'q4_fios', 'label': 'Quadrante 4 - Número de Fios Retirados', 'type': 'number', 'required': True},
+
+            # Avaliação Intraoperatória
+            {'name': 'infiltracao', 'label': 'Infiltração (1-3)', 'type': 'select', 'required': True,
+             'options': ['1', '2', '3']},
+            {'name': 'sedacao', 'label': 'Sedação (1-3)', 'type': 'select', 'required': True,
+             'options': ['1', '2', '3']},
+            {'name': 'sangramento', 'label': 'Sangramento (1-3)', 'type': 'select', 'required': True,
+             'options': ['1', '2', '3']},
+
+            # Histórico do Paciente
+            {'name': 'implante_secundario', 'label': 'Implante Secundário?', 'type': 'select', 'required': True,
+             'options': ['Sim', 'Não']},
+            {'name': 'transamin', 'label': 'Transamin?', 'type': 'select', 'required': True,
+             'options': ['Sim', 'Não']},
+            {'name': 'tadalafila', 'label': 'Tadalafila?', 'type': 'select', 'required': True,
+             'options': ['Sim', 'Não']},
+            {'name': 'diprospam', 'label': 'Diprospam/Beta 30?', 'type': 'select', 'required': True,
+             'options': ['Sim', 'Não']},
+            {'name': 'fumante', 'label': 'Fumante?', 'type': 'select', 'required': True,
+             'options': ['Sim', 'Não']},
+            {'name': 'antecedentes', 'label': 'Antecedentes Pessoais', 'type': 'textarea', 'required': False},
+
+            # Comentários e Finalização
+            {'name': 'comentarios', 'label': 'Comentários', 'type': 'textarea', 'required': False}
         ]
     }
-    
     return render_template('form.html', form=form_data, data={})
 
-@app.route('/get_options', methods=['GET'])
-def get_options():
-    option_type = request.args.get('type')
-    unidade = request.args.get('unidade')
-    
-    if option_type == 'medicos':
-        if unidade == 'Ribeirão Preto':
-            return jsonify(['Dr. Silva', 'Dr. Costa', 'Dra. Oliveira'])
-        elif unidade == 'Campinas':
-            return jsonify(['Dr. Santos', 'Dra. Lima', 'Dr. Pereira'])
-    elif option_type == 'equipe':
-        if unidade == 'Ribeirão Preto':
-            return jsonify(['Equipe A', 'Equipe B', 'Equipe C'])
-        elif unidade == 'Campinas':
-            return jsonify(['Equipe X', 'Equipe Y', 'Equipe Z'])
-    
-    return jsonify([])
+def save_to_excel(data):
+    """Salva os dados em um arquivo Excel."""
+    logger.info("Salvando dados na planilha Excel...")
 
-@app.route('/get_medicos/<unidade>', methods=['GET'])
+    # Converter campos vazios para "0"
+    for key in data:
+        if data[key] == '' or data[key] is None:
+            data[key] = '0'
+
+    # Verificar se data é uma string de data válida, caso contrário usar a data atual
+    try:
+        if 'data' in data and data['data']:
+            pd.to_datetime(data['data'])
+        else:
+            data['data'] = datetime.now().strftime('%d/%m/%Y')
+    except:
+        data['data'] = datetime.now().strftime('%d/%m/%Y')
+
+    # Calcular dados adicionais
+    if all(key in data for key in ['q1_area', 'q1_furos', 'q1_fios']):
+        try:
+            # Converter strings para números
+            for quadrante in range(1, 5):
+                for campo in ['area', 'furos', 'fios']:
+                    key = f'q{quadrante}_{campo}'
+                    if key in data:
+                        try:
+                            data[key] = float(data[key])
+                        except (ValueError, TypeError):
+                            data[key] = 0
+
+            # Calcular densidade de extração por quadrante (furos/área)
+            data['q1_densidade'] = data['q1_furos'] / data['q1_area'] if data['q1_area'] > 0 else 0
+            data['q2_densidade'] = data['q2_furos'] / data['q2_area'] if data['q2_area'] > 0 else 0
+            data['q3_densidade'] = data['q3_furos'] / data['q3_area'] if data['q3_area'] > 0 else 0
+            data['q4_densidade'] = data['q4_furos'] / data['q4_area'] if data['q4_area'] > 0 else 0
+
+            # Calcular taxa de quebra (fios/furos em porcentagem)
+            data['q1_taxa_quebra'] = (1 - data['q1_fios'] / data['q1_furos']) * 100 if data['q1_furos'] > 0 else 0
+            data['q2_taxa_quebra'] = (1 - data['q2_fios'] / data['q2_furos']) * 100 if data['q2_furos'] > 0 else 0
+            data['q3_taxa_quebra'] = (1 - data['q3_fios'] / data['q3_furos']) * 100 if data['q3_furos'] > 0 else 0
+            data['q4_taxa_quebra'] = (1 - data['q4_fios'] / data['q4_furos']) * 100 if data['q4_furos'] > 0 else 0
+
+            # Converter de volta para string para manter consistência de tipos no dataframe
+            for key in data:
+                if isinstance(data[key], float):
+                    # Arredondar para baixo e sem casas decimais
+                    data[key] = str(int(data[key]))
+        except Exception as e:
+            logger.error(f"Error calculating derived values: {str(e)}")
+            logger.error(traceback.format_exc())
+
+    # Criar um DataFrame com os dados
+    df_new = pd.DataFrame([data])
+
+    # Nome do arquivo Excel
+    filename = "cirurgias.xlsx"
+
+    try:
+        # Verificar se o arquivo existe
+        if os.path.exists(filename):
+            # Append to existing file
+            df_existing = pd.read_excel(filename)
+            df_combined = pd.concat([df_existing, df_new], ignore_index=True)
+            df_combined.to_excel(filename, index=False)
+        else:
+            # Create new file
+            df_new.to_excel(filename, index=False)
+
+        logger.info(f"Dados salvos com sucesso em {filename}")
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao salvar dados no Excel: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise
+
+@app.route('/get_medicos/<unidade>')
 def get_medicos(unidade):
-    medicos = []
-    if unidade == 'Ribeirão Preto':
-        medicos = ['Dr. Silva', 'Dr. Costa', 'Dra. Oliveira']
-    elif unidade == 'Campinas':
-        medicos = ['Dr. Santos', 'Dra. Lima', 'Dr. Pereira']
-    return jsonify({'medicos': medicos})
+    logger.info(f"Retrieving doctors for unit: {unidade}")
+    # Médicos por unidade conforme especificação
+    medicos_por_unidade = {
+        'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
+        'Campinas': ['Dra. Isadora', 'Dra. Adriana']
+    }
+    return {'medicos': medicos_por_unidade.get(unidade, [])}
 
-@app.route('/get_equipe/<unidade>', methods=['GET'])
+@app.route('/get_equipe/<unidade>')
 def get_equipe(unidade):
-    equipe = []
-    if unidade == 'Ribeirão Preto':
-        equipe = ['Ana', 'Carlos', 'Mariana', 'Pedro']
-    elif unidade == 'Campinas':
-        equipe = ['Juliana', 'Roberto', 'Teresa', 'Vitor']
-    return jsonify({'equipe': equipe})
+    logger.info(f"Retrieving team for unit: {unidade}")
+    # Equipe por unidade conforme especificação
+    equipe_por_unidade = {
+        'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
+        'Campinas': ['Juliana', 'Gabriela']
+    }
+    return {'equipe': equipe_por_unidade.get(unidade, [])}
+
+def process_dashboard_data(df):
+    """Process dataframe into dashboard-ready data"""
+    # Lidar com valores vazios
+    df = df.fillna(0)
+    
+    # Garantir que colunas numéricas tenham valores zerados quando vazios
+    numeric_columns = df.select_dtypes(include=['number']).columns
+    for col in numeric_columns:
+        df[col] = df[col].fillna(0).replace('', 0)
+    
+    # Estrutura para armazenar os dados do dashboard
+    dashboard_data = {
+        'labels': [],
+        'datasets': [],
+        'has_follicle_data': False,
+        'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+        'total_surgeries': 0,
+        'avg_follicles': 0,
+        'avg_density': 0
+    }
+    
+    if df.empty:
+        return dashboard_data
+    
+    # Processar datas e criar coluna mes_ano
+    try:
+        if 'data' in df.columns:
+            df['mes_ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.strftime('%m/%Y')
+            # Extrair ano e mês para filtragem
+            df['ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.year
+            df['mes'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.month
+        else:
+            # Se não houver coluna 'data', usar uma data padrão
+            df['mes_ano'] = datetime.now().strftime('%m/%Y')
+            df['ano'] = datetime.now().year
+            df['mes'] = datetime.now().month
+    except Exception as e:
+        logger.error(f"Error processing dates: {str(e)}")
+        df['mes_ano'] = datetime.now().strftime('%m/%Y')
+        df['ano'] = datetime.now().year
+        df['mes'] = datetime.now().month
+    
+    # Calcular estatísticas gerais
+    dashboard_data['total_surgeries'] = len(df)
+    
+    # 1. Cirurgias por mês (total)
+    cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
+    cirurgias_por_mes['count'] = cirurgias_por_mes['count'].fillna(0).astype(int)
+    
+    dashboard_data['labels'] = cirurgias_por_mes['mes_ano'].tolist()
+    
+    # Adicionar dataset principal
+    dashboard_data['datasets'].append({
+        'label': 'Total de Cirurgias',
+        'data': cirurgias_por_mes['count'].tolist()
+    })
+    
+    # 2. Cirurgias por mês por unidade
+    if 'unidade' in df.columns:
+        # Substituir valores vazios na coluna unidade
+        df['unidade'] = df['unidade'].fillna('Não especificada')
+        
+        cirurgias_por_mes_unidade = df.groupby(['mes_ano', 'unidade']).size().reset_index(name='count')
+        cirurgias_por_mes_unidade['count'] = cirurgias_por_mes_unidade['count'].fillna(0).astype(int)
+        
+        # Preparar datasets por unidade
+        unidades = df['unidade'].unique()
+        
+        for unidade in unidades:
+            dados_unidade = cirurgias_por_mes_unidade[cirurgias_por_mes_unidade['unidade'] == unidade]
+            # Mapa para todas as datas possíveis
+            dados_completos = pd.DataFrame({
+                'mes_ano': cirurgias_por_mes['mes_ano'].unique()
+            })
+            # Juntar com dados existentes
+            merged = dados_completos.merge(dados_unidade, on='mes_ano', how='left')
+            # Tratar valores nulos corretamente
+            merged['count'] = merged['count'].fillna(0).astype(int)
+            
+            dashboard_data['datasets'].append({
+                'label': f'Cirurgias - {unidade}',
+                'data': merged['count'].tolist()
+            })
+    
+    # 3. Verificar se existem dados de folículos
+    has_follicle_data = 'total_foliculos' in df.columns
+    
+    # Se temos dados de folículos, processar
+    if has_follicle_data:
+        # Converter coluna para numérico, tratando erros
+        df['total_foliculos'] = pd.to_numeric(df['total_foliculos'], errors='coerce').fillna(0)
+        
+        # Média geral de folículos
+        dashboard_data['avg_follicles'] = int(df['total_foliculos'].mean())
+        
+        # Média de folículos por mês
+        folliculo_medio = df.groupby('mes_ano')['total_foliculos'].mean().reset_index()
+        
+        # Preparar dados para gráficos
+        dashboard_data['follicles_data']['labels'] = folliculo_medio['mes_ano'].tolist()
+        dashboard_data['follicles_data']['averages'] = folliculo_medio['total_foliculos'].round(0).astype(int).tolist()
+        
+        # Se tiver dado de densidade, calcular média
+        if 'densidade_scketh' in df.columns:
+            # Converter coluna para numérico, tratando erros
+            df['densidade_scketh'] = pd.to_numeric(df['densidade_scketh'], errors='coerce').fillna(0)
+            
+            # Média geral de densidade
+            dashboard_data['avg_density'] = int(df['densidade_scketh'].mean())
+            
+            densidade_media = df.groupby('mes_ano')['densidade_scketh'].mean().reset_index()
+            dashboard_data['follicles_data']['le_density'] = densidade_media['densidade_scketh'].round(0).astype(int).tolist()
+        
+        dashboard_data['has_follicle_data'] = True
+    
+    # Adicionar timestamp de atualização
+    dashboard_data['update_time'] = datetime.now().strftime('%d/%m/%Y %H:%M')
+    
+    return dashboard_data
 
 @app.route('/dashboard')
 def dashboard():
+    logger.info("Accessing dashboard route")
     try:
-        ensure_excel_file()
-        df = pd.read_excel('cirurgias.xlsx')
-        
-        if df.empty:
-            return render_template('dashboard.html', has_data=False)
-        
-        # Verificar quais colunas realmente existem no DataFrame
-        available_numeric_columns = [col for col in ['folioulos', 'fios', 'densidade', 'area_total', 'area_recep', 'tempo_cirurgico'] 
-                                   if col in df.columns]
-        
-        # Para campos numéricos vazios, substituir por 0
-        for col in available_numeric_columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-        
-        # Converter data para datetime
-        if 'data' in df.columns:
-            df['data'] = pd.to_datetime(df['data'], errors='coerce', dayfirst=True)
-        
-        # Dados para gráficos
-        data = {
-            'cirurgias_por_mes': {},
-            'cirurgias_por_unidade': {},
-            'media_foliculos': {},
-            'densidade_extracao': {},
-            'tempo_medio': {}
-        }
-        
-        # Cirurgias por mês
-        if 'data' in df.columns and not df['data'].isna().all():
-            df['mes'] = df['data'].dt.strftime('%m/%Y')
-            cirurgias_mes = df.groupby(['mes', 'unidade']).size().reset_index(name='count')
-            
-            for _, row in cirurgias_mes.iterrows():
-                mes = row['mes']
-                unidade = row['unidade']
-                count = row['count']
-                
-                if mes not in data['cirurgias_por_mes']:
-                    data['cirurgias_por_mes'][mes] = {}
-                
-                data['cirurgias_por_mes'][mes][unidade] = count
-                
-                if 'Total' not in data['cirurgias_por_mes'][mes]:
-                    data['cirurgias_por_mes'][mes]['Total'] = 0
-                data['cirurgias_por_mes'][mes]['Total'] += count
-        
-        # Cirurgias por unidade
-        if 'unidade' in df.columns:
-            unidades = df['unidade'].value_counts().to_dict()
-            data['cirurgias_por_unidade'] = unidades
-        
-        # Média de folículos por unidade
-        if 'folioulos' in df.columns and 'unidade' in df.columns:
-            media_foliculos = df.groupby('unidade')['folioulos'].mean().to_dict()
-            data['media_foliculos'] = {k: round(v, 2) for k, v in media_foliculos.items()}
+        # Se o arquivo Excel existir, carregar os dados para o dashboard
+        filename = "cirurgias.xlsx"
+        if os.path.exists(filename):
+            # Carregar o dataframe
+            df = pd.read_excel(filename)
+            dashboard_data = process_dashboard_data(df)
         else:
-            data['media_foliculos'] = {'Sem dados': 0}
-        
-        # Densidade média de extração (Fios/cm²)
-        if 'densidade' in df.columns and 'unidade' in df.columns:
-            densidade_media = df.groupby('unidade')['densidade'].mean().to_dict()
-            data['densidade_extracao'] = {k: round(v, 2) for k, v in densidade_media.items()}
-        else:
-            data['densidade_extracao'] = {'Sem dados': 0}
-        
-        # Tempo médio cirúrgico por unidade
-        if 'tempo_cirurgico' in df.columns and 'unidade' in df.columns:
-            tempo_medio = df.groupby('unidade')['tempo_cirurgico'].mean().to_dict()
-            data['tempo_medio'] = {k: round(v, 2) for k, v in tempo_medio.items()}
-        else:
-            data['tempo_medio'] = {'Sem dados': 0}
-        
-        return render_template('dashboard.html', has_data=True, data=data)
-    except Exception as e:
-        print(f"Erro no dashboard: {str(e)}")
-        return render_template('dashboard.html', has_data=False, error=str(e))
-
-@app.route('/necrose', methods=['GET', 'POST'])
-def necrose():
-    if request.method == 'POST':
-        try:
-            # Get form data
-            data = {
-                'paciente_id': request.form.get('paciente_id'),
-                'num_necroses': request.form.get('num_necroses') or '0',
-                'area_maior_necrose': request.form.get('area_maior_necrose') or '0',
-                'faixa_acometida': request.form.get('faixa_acometida')
+            dashboard_data = {
+                'labels': [],
+                'datasets': [{'label': 'Cirurgias', 'data': []}],
+                'has_follicle_data': False,
+                'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+                'total_surgeries': 0,
+                'avg_follicles': 0,
+                'avg_density': 0
             }
-            
-            # Save to necrose.xlsx or append to existing file
-            if os.path.exists('necroses.xlsx'):
-                df = pd.read_excel('necroses.xlsx')
-                df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
-            else:
-                df = pd.DataFrame([data])
-            
-            df.to_excel('necroses.xlsx', index=False)
-            
-            flash('Dados de necrose registrados com sucesso!', 'success')
-            return redirect(url_for('necrose'))
-        except Exception as e:
-            flash(f'Erro ao salvar dados: {str(e)}', 'error')
-            return redirect(url_for('necrose'))
-    
-    # Get patient list
-    patients = []
-    if os.path.exists('cirurgias.xlsx'):
-        df = pd.read_excel('cirurgias.xlsx')
-        if not df.empty and 'paciente' in df.columns:
-            # Get only columns that exist in the DataFrame
-            available_columns = ['paciente', 'unidade']
-            
-            for col in ['data', 'tempo_cirurgico', 'densidade', 'infiltracao', 'medico', 'equipe']:
-                if col in df.columns:
-                    available_columns.append(col)
-            
-            patients = df[available_columns].to_dict('records')
-    
-    return render_template('necrose.html', patients=patients)
 
-@app.route('/search_patients', methods=['GET'])
-def search_patients():
-    query = request.args.get('query', '').lower()
-    
-    if not os.path.exists('cirurgias.xlsx'):
-        return jsonify([])
-    
-    df = pd.read_excel('cirurgias.xlsx')
-    if df.empty or 'paciente' not in df.columns:
-        return jsonify([])
-    
-    filtered = df[df['paciente'].str.lower().str.contains(query, na=False)]
-    results = filtered[['paciente', 'unidade']].drop_duplicates().to_dict('records')
-    return jsonify(results)
+        return render_template('dashboard.html', data=dashboard_data)
 
-@app.route('/get_patient_details', methods=['GET'])
-def get_patient_details():
-    patient = request.args.get('patient')
+    except Exception as e:
+        logger.error(f"Error in dashboard route: {str(e)}\n{traceback.format_exc()}")
+        return render_template('dashboard.html', data={
+            'labels': [],
+            'datasets': [{'label': 'Cirurgias', 'data': []}],
+            'has_follicle_data': False,
+            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+            'total_surgeries': 0,
+            'avg_follicles': 0,
+            'avg_density': 0
+        }, error=f"Erro ao carregar dashboard: {str(e)}")
+
+@app.route('/filter_dashboard')
+def filter_dashboard():
+    """Endpoint to get filtered dashboard data"""
+    logger.info("Filtering dashboard data")
+    try:
+        # Get filter parameters
+        year = request.args.get('year', 'all')
+        month = request.args.get('month', 'all')
+        unit = request.args.get('unit', 'all')
+        doctor = request.args.get('doctor', 'all')
+        equipe = request.args.get('equipe', 'all')
+        
+        # Load data
+        filename = "cirurgias.xlsx"
+        if not os.path.exists(filename):
+            return jsonify({
+                'labels': [],
+                'datasets': [{'label': 'Cirurgias', 'data': []}],
+                'has_follicle_data': False,
+                'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+                'total_surgeries': 0,
+                'avg_follicles': 0,
+                'avg_density': 0
+            })
+        
+        df = pd.read_excel(filename)
+        
+        # Preencher valores nulos com zero para evitar erros de cálculo
+        df = df.fillna(0)
+        
+        # Apply filters
+        if year != 'all':
+            try:
+                df = df[df['ano'] == int(year)]
+            except:
+                # Process dates if not already done
+                if 'ano' not in df.columns:
+                    df['ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.year
+                df = df[df['ano'] == int(year)]
+        
+        if month != 'all':
+            try:
+                df = df[df['mes'] == int(month)]
+            except:
+                # Process dates if not already done
+                if 'mes' not in df.columns:
+                    df['mes'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.month
+                df = df[df['mes'] == int(month)]
+        
+        if unit != 'all' and 'unidade' in df.columns:
+            df = df[df['unidade'] == unit]
+        
+        if doctor != 'all' and 'medico' in df.columns:
+            df = df[df['medico'] == doctor]
+        
+        if equipe != 'all' and 'equipe' in df.columns:
+            df = df[df['equipe'] == equipe]
+        
+        # Process filtered data
+        dashboard_data = process_dashboard_data(df)
+        
+        return jsonify(dashboard_data)
     
-    if not os.path.exists('cirurgias.xlsx') or not patient:
-        return jsonify({})
-    
-    df = pd.read_excel('cirurgias.xlsx')
-    if df.empty or 'paciente' not in df.columns:
-        return jsonify({})
-    
-    patient_data = df[df['paciente'] == patient].iloc[-1].to_dict()
-    
-    # Convert NaN to None
-    for k, v in patient_data.items():
-        if pd.isna(v):
-            patient_data[k] = None
-    
-    return jsonify(patient_data)
+    except Exception as e:
+        logger.error(f"Error filtering dashboard data: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({
+            'error': str(e),
+            'labels': [],
+            'datasets': [{'label': 'Cirurgias', 'data': []}],
+            'has_follicle_data': False,
+            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+            'total_surgeries': 0,
+            'avg_follicles': 0,
+            'avg_density': 0
+        })
+
+@app.route('/download_excel')
+def download_excel():
+    """Endpoint to download the Excel data file"""
+    logger.info("Downloading Excel file")
+    try:
+        filename = "cirurgias.xlsx"
+        if os.path.exists(filename):
+            # Return the file for download
+            from flask import send_file
+            return send_file(filename, 
+                             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                             as_attachment=True,
+                             download_name='relatorio_cirurgias.xlsx')
+        else:
+            flash("Arquivo de dados não encontrado.", "error")
+            return redirect(url_for('dashboard'))
+    except Exception as e:
+        logger.error(f"Error downloading Excel file: {str(e)}\n{traceback.format_exc()}")
+        flash(f"Erro ao baixar arquivo: {str(e)}", "error")
+        return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    try:
+        port = 8080
+        logger.info(f"Starting Flask server on port {port}...")
+        app.run(host='0.0.0.0', port=port, debug=True)
+    except Exception as e:
+        logger.error(f"Failed to start Flask server: {str(e)}\n{traceback.format_exc()}")
+        raise

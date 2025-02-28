@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block content %}
@@ -13,7 +14,7 @@
                     <!-- Will be populated via JS -->
                 </select>
             </div>
-
+            
             <div class="filter-group">
                 <label for="filter-month">Mês</label>
                 <select id="filter-month" class="filter-select">
@@ -32,7 +33,7 @@
                     <option value="12">Dezembro</option>
                 </select>
             </div>
-
+            
             <div class="filter-group">
                 <label for="filter-unit">Unidade</label>
                 <select id="filter-unit" class="filter-select">
@@ -41,7 +42,7 @@
                     <option value="Campinas">Campinas</option>
                 </select>
             </div>
-
+            
             <div class="filter-group">
                 <label for="filter-doctor">Médico</label>
                 <select id="filter-doctor" class="filter-select">
@@ -49,7 +50,7 @@
                     <!-- Will be populated via JS -->
                 </select>
             </div>
-
+            
             <div class="filter-group">
                 <label for="filter-equipe">Equipe</label>
                 <select id="filter-equipe" class="filter-select">
@@ -57,10 +58,10 @@
                     <!-- Será preenchido via JS -->
                 </select>
             </div>
-
+            
             <button id="apply-filters" class="btn btn-primary">Aplicar Filtros</button>
             <button id="reset-filters" class="btn btn-secondary">Limpar Filtros</button>
-
+            
             <div class="summary-stats">
                 <h4>Resumo</h4>
                 <div class="stat-item">
@@ -77,18 +78,18 @@
                 </div>
             </div>
         </div>
-
+        
         <!-- Main dashboard content -->
         <div class="dashboard-main">
             <h2>Dashboard de Cirurgias Capilares</h2>
-
+            
             {% if error %}
             <div class="alert alert-error">
                 <p>⚠️ {{ error }}</p>
                 <p>Tente cadastrar novos dados para visualizar o dashboard.</p>
             </div>
             {% endif %}
-
+            
             {% if data %}
             <div class="dashboard-grid">
                 <!-- First row -->
@@ -96,41 +97,41 @@
                     <h3>Cirurgias por Mês</h3>
                     <canvas id="monthlyChart"></canvas>
                 </div>
-
+                
                 <div class="dashboard-card">
                     <h3>Cirurgias por Unidade</h3>
                     <canvas id="unitChart"></canvas>
                 </div>
-
+                
                 <!-- Second row -->
                 <div class="dashboard-card">
                     <h3>Média de Folículos</h3>
                     <canvas id="folliclesChart"></canvas>
                 </div>
-
+                
                 <div class="dashboard-card">
                     <h3>Densidade de Extração (fios/cm²)</h3>
                     <canvas id="densityChart"></canvas>
                 </div>
-
+                
                 <!-- Third row -->
                 <div class="dashboard-card wide-card">
                     <h3>Evolução Mensal</h3>
                     <canvas id="trendChart"></canvas>
                 </div>
-
+                
                 <!-- Fourth row -->
                 <div class="dashboard-card">
                     <h3>Equipe</h3>
                     <canvas id="equipeChart"></canvas>
                 </div>
-
+                
                 <div class="dashboard-card">
                     <h3>Médicos por Volume</h3>
                     <canvas id="doctorChart"></canvas>
                 </div>
             </div>
-
+            
             <div class="dashboard-footer">
                 <p>📊 Dados extraídos da planilha de cirurgias. Última atualização: {{ data.update_time }}</p>
                 <div class="dashboard-actions">
@@ -162,12 +163,11 @@
         teal: '#009688',
         navy: '#3F51B5'
     };
-
+    
     // Global chart options for dark theme
     const darkThemeOptions = {
         responsive: true,
         maintainAspectRatio: false,
-        devicePixelRatio: 2, // Sharper rendering on mobile
         plugins: {
             legend: {
                 labels: {
@@ -206,56 +206,56 @@
             }
         }
     };
-
+    
     // Add event listeners when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
         const applyFiltersBtn = document.getElementById('apply-filters');
         const resetFiltersBtn = document.getElementById('reset-filters');
-
+        
         if (applyFiltersBtn) {
             applyFiltersBtn.addEventListener('click', applyFilters);
         }
-
+        
         if (resetFiltersBtn) {
             resetFiltersBtn.addEventListener('click', resetFilters);
         }
-
+        
         // Populate doctor and team filters based on unit selection
         const unitFilter = document.getElementById('filter-unit');
         const doctorFilter = document.getElementById('filter-doctor');
         const equipeFilter = document.getElementById('filter-equipe');
-
+        
         if (unitFilter && doctorFilter) {
             unitFilter.addEventListener('change', function() {
                 updateDoctorOptions(this.value);
                 updateEquipeOptions(this.value);
             });
         }
-
+        
         // Populate year filter with available years from data
         populateYearFilter();
-
+        
         // Initialize charts
         initializeCharts();
     });
-
+    
     function populateYearFilter() {
         const yearSelect = document.getElementById('filter-year');
         if (!yearSelect) return;
-
+        
         // Extract years from data labels
         const labels = {{ data.labels | tojson if data and data.labels else [] | tojson }};
         const years = new Set();
-
+        
         labels.forEach(label => {
             // Assuming format is MM/YYYY
             const year = label.split('/')[1];
             if (year) years.add(year);
         });
-
+        
         // Sort years
         const sortedYears = Array.from(years).sort();
-
+        
         // Add options to select
         sortedYears.forEach(year => {
             const option = document.createElement('option');
@@ -264,26 +264,26 @@
             yearSelect.appendChild(option);
         });
     }
-
+    
     function updateDoctorOptions(unit) {
         const doctorSelect = document.getElementById('filter-doctor');
         if (!doctorSelect) return;
-
+        
         // Clear existing options except first
         while (doctorSelect.options.length > 1) {
             doctorSelect.remove(1);
         }
-
+        
         // Map units to doctors
         const doctorsByUnit = {
             'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
             'Campinas': ['Dra. Isadora', 'Dra. Adriana'],
             'all': ['Dr. Arthur', 'Dr. Daniel', 'Dra. Isadora', 'Dra. Adriana']
         };
-
+        
         // Get doctors for selected unit
         const doctors = doctorsByUnit[unit] || doctorsByUnit.all;
-
+        
         // Add options to select
         doctors.forEach(doctor => {
             const option = document.createElement('option');
@@ -292,7 +292,7 @@
             doctorSelect.appendChild(option);
         });
     }
-
+    
     function applyFilters() {
         // Get filter values
         const year = document.getElementById('filter-year').value;
@@ -300,7 +300,7 @@
         const unit = document.getElementById('filter-unit').value;
         const doctor = document.getElementById('filter-doctor').value;
         const equipe = document.getElementById('filter-equipe').value;
-
+        
         // Make AJAX request to get filtered data
         fetch(`/filter_dashboard?year=${year}&month=${month}&unit=${unit}&doctor=${doctor}&equipe=${equipe}`)
             .then(response => response.json())
@@ -310,26 +310,26 @@
             })
             .catch(error => console.error('Error fetching filtered data:', error));
     }
-
+    
     function updateEquipeOptions(unit) {
         const equipeSelect = document.getElementById('filter-equipe');
         if (!equipeSelect) return;
-
+        
         // Clear existing options except first
         while (equipeSelect.options.length > 1) {
             equipeSelect.remove(1);
         }
-
+        
         // Map units to equipes
         const equipesByUnit = {
             'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
             'Campinas': ['Juliana', 'Gabriela'],
             'all': ['Aline', 'Natália', 'Ana', 'Juliana', 'Gabriela']
         };
-
+        
         // Get equipes for selected unit
         const equipes = equipesByUnit[unit] || equipesByUnit.all;
-
+        
         // Add options to select
         equipes.forEach(equipe => {
             const option = document.createElement('option');
@@ -338,7 +338,7 @@
             equipeSelect.appendChild(option);
         });
     }
-
+    
     function resetFilters() {
         // Reset all filter selects
         document.getElementById('filter-year').value = 'all';
@@ -346,32 +346,31 @@
         document.getElementById('filter-unit').value = 'all';
         document.getElementById('filter-doctor').value = 'all';
         document.getElementById('filter-equipe').value = 'all';
-
+        
         // Update doctor and equipe options
         updateDoctorOptions('all');
         updateEquipeOptions('all');
-
+        
         // Apply filters to reset to original data
         applyFilters();
     }
-
+    
     function updateSummaryStats(data) {
         // Update summary statistics
         document.getElementById('total-surgeries').textContent = data.total_surgeries || 0;
         document.getElementById('avg-follicles').textContent = data.avg_follicles || 0;
         document.getElementById('avg-density').textContent = data.avg_density || 0;
     }
-
+    
     function initializeCharts() {
         {% if data %}
         // Monthly surgeries chart
-        var cirurgiasPorMes = {{ data.cirurgias_por_mes|default({})|tojson }};
         const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
         new Chart(monthlyCtx, {
             type: 'line',
             data: {
-                labels: Object.keys(cirurgiasPorMes),
-                datasets: Object.values(cirurgiasPorMes).map((dataset, index) => ({
+                labels: {{ data.labels | tojson }},
+                datasets: {{ data.datasets | tojson }}.map((dataset, index) => ({
                     ...dataset,
                     backgroundColor: Object.values(chartColors)[index % Object.keys(chartColors).length],
                     borderColor: Object.values(chartColors)[index % Object.keys(chartColors).length],
@@ -382,7 +381,7 @@
             },
             options: darkThemeOptions
         });
-
+        
         // Unit distribution chart
         const unitCtx = document.getElementById('unitChart').getContext('2d');
         new Chart(unitCtx, {
@@ -406,7 +405,7 @@
                 }
             }
         });
-
+        
         // Follicles chart
         const folliclesCtx = document.getElementById('folliclesChart').getContext('2d');
         new Chart(folliclesCtx, {
@@ -423,7 +422,7 @@
             },
             options: darkThemeOptions
         });
-
+        
         // Density chart
         const densityCtx = document.getElementById('densityChart').getContext('2d');
         new Chart(densityCtx, {
@@ -440,7 +439,7 @@
             },
             options: darkThemeOptions
         });
-
+        
         // Trend chart
         const trendCtx = document.getElementById('trendChart').getContext('2d');
         new Chart(trendCtx, {
@@ -501,7 +500,7 @@
                 }
             }
         });
-
+        
         // Equipe chart
         const equipeCtx = document.getElementById('equipeChart').getContext('2d');
         new Chart(equipeCtx, {
@@ -525,7 +524,7 @@
                 }
             }
         });
-
+        
         // Doctor performance chart
         const doctorCtx = document.getElementById('doctorChart').getContext('2d');
         new Chart(doctorCtx, {
@@ -551,35 +550,35 @@
         });
         {% endif %}
     }
-
+    
     function updateCharts(data) {
         // Clear existing charts
         const charts = Object.values(Chart.instances);
         charts.forEach(chart => chart.destroy());
-
+        
         // Reinitialize with new data
         // (Similar to initializeCharts but using the new data)
         // This would need to be implemented based on the structure of the filtered data
     }
-
+    
     function computeUnitDistribution() {
         // Placeholder function to compute unit distribution
         // In a real implementation, this would use actual data from the server
         return [60, 40]; // Example values
     }
-
+    
     function computeEquipeDistribution() {
         // Placeholder function to compute equipe distribution
         // In a real implementation, this would use actual data from the server
         return [30, 20, 10, 25, 15]; // Example values for each equipe member
     }
-
+    
     function computeDoctorDistribution() {
         // Placeholder function to compute doctor distribution
         // In a real implementation, this would use actual data from the server
         return [15, 10, 12, 8]; // Example values for each doctor
     }
-
+    
     function exportToPdf() {
         window.print();
     }

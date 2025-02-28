@@ -1,42 +1,29 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Cirurgias Capilares</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Formulário de Cirurgia Capilar</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <a class="navbar-brand" href="/">Sistema de Cirurgias</a>
-            <ul class="navbar-nav">
-                <li class="nav-item"><a class="nav-link" href="/form">Cadastro</a></li>
-                <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="/necrose">Necrose</a></li>
-            </ul>
-        </div>
-    </nav>
-
     <div class="container">
+        <div class="header">
+            <img src="{{ url_for('static', filename='img/icb_logo.png') }}" alt="Logo ICB" class="company-logo" onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/logo4_Logo - transplante.pdf') }}';">
+            <h1>Formulário de Cirurgia Capilar</h1>
+        </div>
+        <nav class="main-nav">
+            <a href="{{ url_for('novo_cadastro') }}" class="nav-link">Novo Cadastro</a>
+            <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
+        </nav>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ message }}
-                    </div>
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
-
         {% block content %}{% endblock %}
     </div>
-
-    <script>
-        // Check if we need to redirect from /novo_cadastro to /form
-        if (window.location.pathname === '/novo_cadastro') {
-            window.location.href = '/form';
-        }
-    </script>
 </body>
 </html>
