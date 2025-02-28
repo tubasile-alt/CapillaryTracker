@@ -99,10 +99,10 @@
     new Chart(folliclesCtx, {
         type: 'bar',
         data: {
-            labels: {{ data.follicles_data.labels | tojson if data.follicles_data and data.follicles_data.labels else [] | tojson }},
+            labels: {{ (data.follicles_data.labels if data.follicles_data and data.follicles_data.labels else []) | tojson }},
             datasets: [{
                 label: 'Média de Fios por Mês',
-                data: {{ data.follicles_data.averages | tojson if data.follicles_data and data.follicles_data.averages else [] | tojson }},
+                data: {{ (data.follicles_data.averages if data.follicles_data and data.follicles_data.averages else []) | tojson }},
                 backgroundColor: '#4CAF50',
                 borderColor: '#388E3C',
                 borderWidth: 1
@@ -131,10 +131,10 @@
     new Chart(densityCtx, {
         type: 'bar',
         data: {
-            labels: {{ data.follicles_data.labels | tojson if data.follicles_data and data.follicles_data.labels else [] | tojson }},
+            labels: {{ (data.follicles_data.labels if data.follicles_data and data.follicles_data.labels else []) | tojson }},
             datasets: [{
-                label: 'Média de Densidade LE por Mês',
-                data: {{ data.follicles_data.le_density | tojson if data.follicles_data and data.follicles_data.le_density else [] | tojson }},
+                label: 'Média de Densidade LE por Mês (fios/cm²)',
+                data: {{ (data.follicles_data.le_density if data.follicles_data and data.follicles_data.le_density else []) | tojson }},
                 backgroundColor: '#9C27B0',
                 borderColor: '#7B1FA2',
                 borderWidth: 1

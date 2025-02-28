@@ -122,27 +122,55 @@ def novo_cadastro():
 
 def save_to_excel(data):
     """Salva os dados em um arquivo Excel."""
+    logger.info("Salvando dados na planilha Excel...")
+    
     # Converter campos vazios para "0"
     for key in data:
         if data[key] == '' or data[key] is None:
             data[key] = '0'
     
+    # Verificar se data é uma string de data válida, caso contrário usar a data atual
+    try:
+        if 'data' in data and data['data']:
+            pd.to_datetime(data['data'])
+        else:
+            data['data'] = datetime.now().strftime('%d/%m/%Y')
+    except:
+        data['data'] = datetime.now().strftime('%d/%m/%Y')
+    
     # Calcular dados adicionais
     if all(key in data for key in ['q1_area', 'q1_furos', 'q1_fios']):
         try:
+            # Converter strings para números
+            for quadrante in range(1, 5):
+                for campo in ['area', 'furos', 'fios']:
+                    key = f'q{quadrante}_{campo}'
+                    if key in data:
+                        try:
+                            data[key] = float(data[key])
+                        except (ValueError, TypeError):
+                            data[key] = 0
+            
             # Calcular densidade de extração por quadrante (furos/área)
-            data['q1_densidade'] = float(data['q1_furos']) / float(data['q1_area']) if float(data['q1_area']) > 0 else 0
-            data['q2_densidade'] = float(data['q2_furos']) / float(data['q2_area']) if float(data['q2_area']) > 0 else 0
-            data['q3_densidade'] = float(data['q3_furos']) / float(data['q3_area']) if float(data['q3_area']) > 0 else 0
-            data['q4_densidade'] = float(data['q4_furos']) / float(data['q4_area']) if float(data['q4_area']) > 0 else 0
+            data['q1_densidade'] = data['q1_furos'] / data['q1_area'] if data['q1_area'] > 0 else 0
+            data['q2_densidade'] = data['q2_furos'] / data['q2_area'] if data['q2_area'] > 0 else 0
+            data['q3_densidade'] = data['q3_furos'] / data['q3_area'] if data['q3_area'] > 0 else 0
+            data['q4_densidade'] = data['q4_furos'] / data['q4_area'] if data['q4_area'] > 0 else 0
 
             # Calcular taxa de quebra (fios/furos em porcentagem)
-            data['q1_taxa_quebra'] = (1 - float(data['q1_fios']) / float(data['q1_furos'])) * 100 if float(data['q1_furos']) > 0 else 0
-            data['q2_taxa_quebra'] = (1 - float(data['q2_fios']) / float(data['q2_furos'])) * 100 if float(data['q2_furos']) > 0 else 0
-            data['q3_taxa_quebra'] = (1 - float(data['q3_fios']) / float(data['q3_furos'])) * 100 if float(data['q3_furos']) > 0 else 0
-            data['q4_taxa_quebra'] = (1 - float(data['q4_fios']) / float(data['q4_furos'])) * 100 if float(data['q4_furos']) > 0 else 0
-        except (ValueError, ZeroDivisionError) as e:
+            data['q1_taxa_quebra'] = (1 - data['q1_fios'] / data['q1_furos']) * 100 if data['q1_furos'] > 0 else 0
+            data['q2_taxa_quebra'] = (1 - data['q2_fios'] / data['q2_furos']) * 100 if data['q2_furos'] > 0 else 0
+            data['q3_taxa_quebra'] = (1 - data['q3_fios'] / data['q3_furos']) * 100 if data['q3_furos'] > 0 else 0
+            data['q4_taxa_quebra'] = (1 - data['q4_fios'] / data['q4_furos']) * 100 if data['q4_furos'] > 0 else 0
+            
+            # Converter de volta para string para manter consistência de tipos no dataframe
+            for key in data:
+                if isinstance(data[key], float):
+                    # Arredondar para baixo e sem casas decimais
+                    data[key] = str(int(data[key]))
+        except Exception as e:
             logger.error(f"Error calculating derived values: {str(e)}")
+            logger.error(traceback.format_exc())
 
     # Criar um DataFrame com os dados
     df_new = pd.DataFrame([data])
@@ -150,18 +178,23 @@ def save_to_excel(data):
     # Nome do arquivo Excel
     filename = "cirurgias.xlsx"
 
-    # Verificar se o arquivo existe
-    if os.path.exists(filename):
-        # Append to existing file
-        df_existing = pd.read_excel(filename)
-        df_combined = pd.concat([df_existing, df_new], ignore_index=True)
-        df_combined.to_excel(filename, index=False)
-    else:
-        # Create new file
-        df_new.to_excel(filename, index=False)
+    try:
+        # Verificar se o arquivo existe
+        if os.path.exists(filename):
+            # Append to existing file
+            df_existing = pd.read_excel(filename)
+            df_combined = pd.concat([df_existing, df_new], ignore_index=True)
+            df_combined.to_excel(filename, index=False)
+        else:
+            # Create new file
+            df_new.to_excel(filename, index=False)
 
-    logger.info(f"Data saved to {filename}")
-    return True
+        logger.info(f"Dados salvos com sucesso em {filename}")
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao salvar dados no Excel: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise
 
 @app.route('/get_medicos/<unidade>')
 def get_medicos(unidade):
@@ -190,28 +223,36 @@ def dashboard():
         # Se o arquivo Excel existir, carregar os dados para o dashboard
         filename = "cirurgias.xlsx"
         if os.path.exists(filename):
+            # Carregar o dataframe e converter valores vazios para zeros
             df = pd.read_excel(filename)
+            # Substituir valores NaN por zeros
+            df = df.fillna(0)
+            
             # Processar dados para o dashboard
-            if not df.empty and 'data' in df.columns:
+            if not df.empty:
                 # Lidar com diferentes formatos de data
-                df['mes_ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.strftime('%m/%Y')
-
+                if 'data' in df.columns:
+                    df['mes_ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.strftime('%m/%Y')
+                else:
+                    # Se não houver coluna 'data', usar uma data padrão
+                    df['mes_ano'] = datetime.now().strftime('%m/%Y')
+                
                 # 1. Cirurgias por mês (total)
                 cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
-
-                # Garantir que não existam valores NaN
                 cirurgias_por_mes['count'] = cirurgias_por_mes['count'].fillna(0).astype(int)
 
                 # 2. Cirurgias por mês por unidade
+                datasets_unidades = []
                 if 'unidade' in df.columns:
+                    # Substituir valores vazios na coluna unidade
+                    df['unidade'] = df['unidade'].fillna('Não especificada')
+                    
                     cirurgias_por_mes_unidade = df.groupby(['mes_ano', 'unidade']).size().reset_index(name='count')
-                    # Garantir que não existam valores NaN
                     cirurgias_por_mes_unidade['count'] = cirurgias_por_mes_unidade['count'].fillna(0).astype(int)
-
+                    
                     # Preparar datasets por unidade
                     unidades = df['unidade'].unique()
-                    datasets_unidades = []
-
+                    
                     for unidade in unidades:
                         dados_unidade = cirurgias_por_mes_unidade[cirurgias_por_mes_unidade['unidade'] == unidade]
                         # Mapa para todas as datas possíveis
@@ -225,10 +266,8 @@ def dashboard():
 
                         datasets_unidades.append({
                             'label': f'Cirurgias - {unidade}',
-                            'data': merged['count'].astype(int).tolist()
+                            'data': merged['count'].tolist()
                         })
-                else:
-                    datasets_unidades = []
 
                 dashboard_data = {
                     'labels': cirurgias_por_mes['mes_ano'].tolist(),
@@ -242,47 +281,57 @@ def dashboard():
                 }
 
                 # Se temos dados de folículos, criar análises adicionais
-                if dashboard_data['has_follicle_data']:
+                if 'total_foliculos' in df.columns:
+                    # Converter coluna para numérico, tratando erros
+                    df['total_foliculos'] = pd.to_numeric(df['total_foliculos'], errors='coerce').fillna(0)
+                    
                     # Média de folículos por mês
                     folliculo_medio = df.groupby('mes_ano')['total_foliculos'].mean().reset_index()
 
-                    # Média de folículos por unidade por mês (se aplicável)
+                    # Preparar dados para gráficos
                     follicle_data = {
                         'labels': folliculo_medio['mes_ano'].tolist(),
-                        'averages': folliculo_medio['total_foliculos'].fillna(0).round(0).astype(int).tolist(),
+                        'averages': folliculo_medio['total_foliculos'].round(0).astype(int).tolist(),
                         'le_density': []  # Placeholder para densidade LE
                     }
 
                     # Se tiver dado de densidade, calcular média
                     if 'densidade_scketh' in df.columns:
+                        # Converter coluna para numérico, tratando erros
+                        df['densidade_scketh'] = pd.to_numeric(df['densidade_scketh'], errors='coerce').fillna(0)
                         densidade_media = df.groupby('mes_ano')['densidade_scketh'].mean().reset_index()
-                        follicle_data['le_density'] = densidade_media['densidade_scketh'].fillna(0).round(0).astype(int).tolist()
+                        follicle_data['le_density'] = densidade_media['densidade_scketh'].round(0).astype(int).tolist()
 
                     # Adicionar ao dashboard_data
                     dashboard_data['follicles_data'] = follicle_data
 
-                    # Adicionar timestamp de atualização
-                    dashboard_data['update_time'] = datetime.now().strftime('%d/%m/%Y %H:%M')
+                # Adicionar timestamp de atualização
+                dashboard_data['update_time'] = datetime.now().strftime('%d/%m/%Y %H:%M')
             else:
                 dashboard_data = {
                     'labels': [],
                     'datasets': [{'label': 'Cirurgias', 'data': []}],
                     'has_follicle_data': False,
-                    'follicles_data': {'labels': [], 'averages': [], 'le_density': []}  # Dados vazios
+                    'follicles_data': {'labels': [], 'averages': [], 'le_density': []}
                 }
         else:
             dashboard_data = {
                 'labels': [],
                 'datasets': [{'label': 'Cirurgias', 'data': []}],
-                'has_follicle_data': False
+                'has_follicle_data': False,
+                'follicles_data': {'labels': [], 'averages': [], 'le_density': []}
             }
 
         return render_template('dashboard.html', data=dashboard_data)
 
     except Exception as e:
         logger.error(f"Error in dashboard route: {str(e)}\n{traceback.format_exc()}")
-        return render_template('dashboard.html', data={}, 
-                            error="Erro ao carregar dashboard")
+        return render_template('dashboard.html', data={
+            'labels': [],
+            'datasets': [{'label': 'Cirurgias', 'data': []}],
+            'has_follicle_data': False,
+            'follicles_data': {'labels': [], 'averages': [], 'le_density': []}
+        }, error=f"Erro ao carregar dashboard: {str(e)}")
 
 if __name__ == '__main__':
     try:
