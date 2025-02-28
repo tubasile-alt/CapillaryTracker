@@ -76,21 +76,44 @@ def form():
             {'name': 'data', 'label': 'Data da Cirurgia', 'type': 'date', 'required': True},
             {'name': 'hora', 'label': 'Hora da Cirurgia (HH:MM)', 'type': 'time', 'required': True, 'value': '08:00'},
             {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'options': ['Ribeirão Preto', 'Campinas'], 'required': True},
-            {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select', 'options': [], 'required': True},
-            {'name': 'equipe', 'label': 'Equipe', 'type': 'select', 'options': [], 'required': True},
+            {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'options': [], 'required': True},
+            {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'options': [], 'required': True},
             {'name': 'paciente', 'label': 'Nome do Paciente', 'type': 'text', 'required': True},
             {'name': 'idade', 'label': 'Idade', 'type': 'number', 'required': True},
             {'name': 'genero', 'label': 'Gênero', 'type': 'select', 'options': ['Masculino', 'Feminino', 'Outro'], 'required': True},
-            {'name': 'tecnica', 'label': 'Técnica', 'type': 'select', 'options': ['FUE', 'FUT', 'Híbrida'], 'required': True}
-        ],
-        'fields_page2': [
+            {'name': 'tecnica', 'label': 'Técnica', 'type': 'select', 'options': ['FUE', 'FUT', 'Híbrida'], 'required': True},
             {'name': 'area_total', 'label': 'Área Total (cm²)', 'type': 'number', 'required': True},
             {'name': 'area_recep', 'label': 'Área Receptora (cm²)', 'type': 'number', 'required': True},
             {'name': 'incisao', 'label': 'Tipo de Incisão', 'type': 'select', 'options': ['Safira', 'Aço', 'Implanter'], 'required': True},
             {'name': 'infiltracao', 'label': 'Infiltração', 'type': 'select', 'options': ['Tumescente', 'Klein'], 'required': True},
             {'name': 'anestesia', 'label': 'Tipo de Anestesia', 'type': 'select', 'options': ['Local', 'Sedação'], 'required': True},
-            {'name': 'folioulos', 'label': 'Número de Folículos', 'type': 'number', 'required': True},
-            {'name': 'fios', 'label': 'Número de Fios', 'type': 'number', 'required': True},
+            {'name': 'q1_area', 'label': 'Quadrante 1 - Área (cm²)', 'type': 'number', 'required': False},
+            {'name': 'q1_furos', 'label': 'Quadrante 1 - Furos', 'type': 'number', 'required': False},
+            {'name': 'q1_fios', 'label': 'Quadrante 1 - Fios', 'type': 'number', 'required': False},
+            {'name': 'q2_area', 'label': 'Quadrante 2 - Área (cm²)', 'type': 'number', 'required': False},
+            {'name': 'q2_furos', 'label': 'Quadrante 2 - Furos', 'type': 'number', 'required': False},
+            {'name': 'q2_fios', 'label': 'Quadrante 2 - Fios', 'type': 'number', 'required': False},
+            {'name': 'q3_area', 'label': 'Quadrante 3 - Área (cm²)', 'type': 'number', 'required': False},
+            {'name': 'q3_furos', 'label': 'Quadrante 3 - Furos', 'type': 'number', 'required': False},
+            {'name': 'q3_fios', 'label': 'Quadrante 3 - Fios', 'type': 'number', 'required': False},
+            {'name': 'q4_area', 'label': 'Quadrante 4 - Área (cm²)', 'type': 'number', 'required': False},
+            {'name': 'q4_furos', 'label': 'Quadrante 4 - Furos', 'type': 'number', 'required': False},
+            {'name': 'q4_fios', 'label': 'Quadrante 4 - Fios', 'type': 'number', 'required': False},
+            {'name': 'area_marcada', 'label': 'Área Total Marcada', 'type': 'select', 'options': ['Sim', 'Não'], 'required': False},
+            {'name': 'tensao_sutura', 'label': 'Tensão da Sutura', 'type': 'select', 'options': ['Baixa', 'Média', 'Alta'], 'required': False},
+            {'name': 'tipo_fechamento', 'label': 'Tipo de Fechamento', 'type': 'select', 'options': ['Triplo', 'Simples'], 'required': False},
+            {'name': 'microcoagulacao', 'label': 'Micro-coagulação', 'type': 'select', 'options': ['Sim', 'Não'], 'required': False},
+            {'name': 'solucao_frente', 'label': 'Solução Frente (seringas)', 'type': 'number', 'required': False},
+            {'name': 'solucao_coroa', 'label': 'Solução Coroa (seringas)', 'type': 'number', 'required': False},
+            {'name': 'solucao_xilo_frente', 'label': 'Solução Xilo Frente (seringas)', 'type': 'number', 'required': False},
+            {'name': 'calvicie_familiar', 'label': 'Calvície Familiar', 'type': 'select', 'options': ['Sim', 'Não'], 'required': False},
+            {'name': 'uso_finasterida', 'label': 'Uso de Finasterida', 'type': 'select', 'options': ['Sim', 'Não'], 'required': False},
+            {'name': 'uso_minoxidil', 'label': 'Uso de Minoxidil', 'type': 'select', 'options': ['Sim', 'Não'], 'required': False},
+            {'name': 'frequencia_lavagem', 'label': 'Frequência de Lavagem', 'type': 'select', 'options': ['Diária', '2-3 vezes/semana', 'Semanal'], 'required': False},
+            {'name': 'uso_capacete', 'label': 'Uso de Capacete', 'type': 'select', 'options': ['Sim', 'Não'], 'required': False},
+            {'name': 'exposicao_sol', 'label': 'Exposição ao Sol', 'type': 'select', 'options': ['Alta', 'Média', 'Baixa', 'Nenhuma'], 'required': False},
+            {'name': 'folioulos', 'label': 'Número Total de Folículos', 'type': 'number', 'required': True},
+            {'name': 'fios', 'label': 'Número Total de Fios', 'type': 'number', 'required': True},
             {'name': 'densidade', 'label': 'Densidade (Fios/cm²)', 'type': 'number', 'required': False},
             {'name': 'tempo_cirurgico', 'label': 'Tempo Cirúrgico (min)', 'type': 'number', 'required': True},
             {'name': 'observacoes', 'label': 'Observações', 'type': 'textarea', 'required': False}
@@ -117,6 +140,24 @@ def get_options():
     
     return jsonify([])
 
+@app.route('/get_medicos/<unidade>', methods=['GET'])
+def get_medicos(unidade):
+    medicos = []
+    if unidade == 'Ribeirão Preto':
+        medicos = ['Dr. Silva', 'Dr. Costa', 'Dra. Oliveira']
+    elif unidade == 'Campinas':
+        medicos = ['Dr. Santos', 'Dra. Lima', 'Dr. Pereira']
+    return jsonify({'medicos': medicos})
+
+@app.route('/get_equipe/<unidade>', methods=['GET'])
+def get_equipe(unidade):
+    equipe = []
+    if unidade == 'Ribeirão Preto':
+        equipe = ['Ana', 'Carlos', 'Mariana', 'Pedro']
+    elif unidade == 'Campinas':
+        equipe = ['Juliana', 'Roberto', 'Teresa', 'Vitor']
+    return jsonify({'equipe': equipe})
+
 @app.route('/dashboard')
 def dashboard():
     try:
@@ -126,14 +167,17 @@ def dashboard():
         if df.empty:
             return render_template('dashboard.html', has_data=False)
         
+        # Verificar quais colunas realmente existem no DataFrame
+        available_numeric_columns = [col for col in ['folioulos', 'fios', 'densidade', 'area_total', 'area_recep', 'tempo_cirurgico'] 
+                                   if col in df.columns]
+        
         # Para campos numéricos vazios, substituir por 0
-        numeric_columns = ['folioulos', 'fios', 'densidade', 'area_total', 'area_recep', 'tempo_cirurgico']
-        for col in numeric_columns:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        for col in available_numeric_columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
         
         # Converter data para datetime
-        df['data'] = pd.to_datetime(df['data'], errors='coerce')
+        if 'data' in df.columns:
+            df['data'] = pd.to_datetime(df['data'], errors='coerce', dayfirst=True)
         
         # Dados para gráficos
         data = {
@@ -145,7 +189,7 @@ def dashboard():
         }
         
         # Cirurgias por mês
-        if not df['data'].isna().all():
+        if 'data' in df.columns and not df['data'].isna().all():
             df['mes'] = df['data'].dt.strftime('%m/%Y')
             cirurgias_mes = df.groupby(['mes', 'unidade']).size().reset_index(name='count')
             
@@ -164,20 +208,30 @@ def dashboard():
                 data['cirurgias_por_mes'][mes]['Total'] += count
         
         # Cirurgias por unidade
-        unidades = df['unidade'].value_counts().to_dict()
-        data['cirurgias_por_unidade'] = unidades
+        if 'unidade' in df.columns:
+            unidades = df['unidade'].value_counts().to_dict()
+            data['cirurgias_por_unidade'] = unidades
         
         # Média de folículos por unidade
-        media_foliculos = df.groupby('unidade')['folioulos'].mean().to_dict()
-        data['media_foliculos'] = {k: round(v, 2) for k, v in media_foliculos.items()}
+        if 'folioulos' in df.columns and 'unidade' in df.columns:
+            media_foliculos = df.groupby('unidade')['folioulos'].mean().to_dict()
+            data['media_foliculos'] = {k: round(v, 2) for k, v in media_foliculos.items()}
+        else:
+            data['media_foliculos'] = {'Sem dados': 0}
         
         # Densidade média de extração (Fios/cm²)
-        densidade_media = df.groupby('unidade')['densidade'].mean().to_dict()
-        data['densidade_extracao'] = {k: round(v, 2) for k, v in densidade_media.items()}
+        if 'densidade' in df.columns and 'unidade' in df.columns:
+            densidade_media = df.groupby('unidade')['densidade'].mean().to_dict()
+            data['densidade_extracao'] = {k: round(v, 2) for k, v in densidade_media.items()}
+        else:
+            data['densidade_extracao'] = {'Sem dados': 0}
         
         # Tempo médio cirúrgico por unidade
-        tempo_medio = df.groupby('unidade')['tempo_cirurgico'].mean().to_dict()
-        data['tempo_medio'] = {k: round(v, 2) for k, v in tempo_medio.items()}
+        if 'tempo_cirurgico' in df.columns and 'unidade' in df.columns:
+            tempo_medio = df.groupby('unidade')['tempo_cirurgico'].mean().to_dict()
+            data['tempo_medio'] = {k: round(v, 2) for k, v in tempo_medio.items()}
+        else:
+            data['tempo_medio'] = {'Sem dados': 0}
         
         return render_template('dashboard.html', has_data=True, data=data)
     except Exception as e:
@@ -216,7 +270,14 @@ def necrose():
     if os.path.exists('cirurgias.xlsx'):
         df = pd.read_excel('cirurgias.xlsx')
         if not df.empty and 'paciente' in df.columns:
-            patients = df[['paciente', 'unidade', 'data', 'tempo_cirurgico', 'densidade', 'infiltracao', 'medico', 'equipe']].to_dict('records')
+            # Get only columns that exist in the DataFrame
+            available_columns = ['paciente', 'unidade']
+            
+            for col in ['data', 'tempo_cirurgico', 'densidade', 'infiltracao', 'medico', 'equipe']:
+                if col in df.columns:
+                    available_columns.append(col)
+            
+            patients = df[available_columns].to_dict('records')
     
     return render_template('necrose.html', patients=patients)
 
