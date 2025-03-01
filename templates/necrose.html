@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Avaliação de Necrose</h2>
+    
+    <!-- Campo de busca com sugestões automáticas -->
+    <div class="search-section">
+        <div class="form-group">
+            <label for="patient-search">Buscar Paciente</label>
+            <input type="text" id="patient-search" class="form-control" placeholder="Digite o nome do paciente...">
+            <div id="search-suggestions" class="search-suggestions"></div>
+        </div>
+    </div>
+
+    <!-- Relatório do paciente -->
+    <div id="patient-report" class="patient-report" style="display: none;">
+        <h3>Dados do Paciente</h3>
+        <div class="report-grid">
+            <div class="report-item">
+                <strong>Nome:</strong>
+                <span id="patient-name"></span>
+            </div>
+            <div class="report-item">
+                <strong>Data:</strong>
+                <span id="surgery-date"></span>
+            </div>
+            <div class="report-item">
+                <strong>Folículos:</strong>
+                <span id="follicles-count"></span>
+            </div>
+            <div class="report-item">
+                <strong>Densidade 1ª Faixa:</strong>
+                <span id="density-first"></span>
+            </div>
+            <div class="report-item">
+                <strong>Infiltração Frente:</strong>
+                <span id="front-infiltration"></span>
+            </div>
+            <div class="report-item">
+                <strong>Médico:</strong>
+                <span id="doctor-name"></span>
+            </div>
+            <div class="report-item">
+                <strong>Equipe:</strong>
+                <span id="team-members"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário de Necrose -->
+    <div id="necrose-form" class="necrose-form" style="display: none;">
+        <h3>Registro de Necrose</h3>
+        <form id="form-necrose" method="POST">
+            <input type="hidden" id="patient-id" name="patient_id">
+            
+            <div class="form-group">
+                <label for="lesion-count">Número de Lesões</label>
+                <input type="number" id="lesion-count" name="lesion_count" class="form-control" required min="0">
+            </div>
+
+            <div class="form-group">
+                <label for="largest-lesion">Área da Maior Lesão (mm²)</label>
+                <input type="number" id="largest-lesion" name="largest_lesion" class="form-control" required min="0" step="0.1">
+            </div>
+
+            <div class="form-group">
+                <label for="affected-band">Faixa Acometida</label>
+                <select id="affected-band" name="affected_band" class="form-control" required>
+                    <option value="">Selecione...</option>
+                    <option value="1">Faixa 1</option>
+                    <option value="2">Faixa 2</option>
+                    <option value="1,2">Faixas 1 e 2</option>
+                    <option value="3">Faixa 3</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Salvar Registro</button>
+        </form>
+    </div>
+</div>
+
+<style>
+.search-suggestions {
+    position: absolute;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    display: none;
+    z-index: 1000;
+}
+
+.suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.suggestion-item:hover {
+    background-color: #f5f5f5;
+}
+
+.patient-report {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.report-item {
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.necrose-form {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+</style>
+
+<script>
+let patientData = null;
+
+document.getElementById('patient-search').addEventListener('input', function(e) {
+    const searchTerm = e.target.value;
+    if (searchTerm.length < 2) {
+        document.getElementById('search-suggestions').style.display = 'none';
+        return;
+    }
+
+    fetch(`/search_patients?term=${encodeURIComponent(searchTerm)}`)
+        .then(response => response.json())
+        .then(data => {
+            const suggestionsDiv = document.getElementById('search-suggestions');
+            suggestionsDiv.innerHTML = '';
+            
+            if (data.length > 0) {
+                data.forEach(patient => {
+                    const div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    div.textContent = patient.nome;
+                    div.addEventListener('click', () => selectPatient(patient));
+                    suggestionsDiv.appendChild(div);
+                });
+                suggestionsDiv.style.display = 'block';
+            } else {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+});
+
+function selectPatient(patient) {
+    patientData = patient;
+    document.getElementById('search-suggestions').style.display = 'none';
+    document.getElementById('patient-search').value = patient.nome;
+    
+    // Preencher relatório
+    document.getElementById('patient-name').textContent = patient.nome;
+    document.getElementById('surgery-date').textContent = patient.data;
+    document.getElementById('follicles-count').textContent = patient.total_foliculos;
+    document.getElementById('density-first').textContent = patient.densidade_scketh;
+    document.getElementById('front-infiltration').textContent = patient.infiltracao;
+    document.getElementById('doctor-name').textContent = patient.medico;
+    document.getElementById('team-members').textContent = patient.equipe;
+    
+    // Mostrar relatório e formulário
+    document.getElementById('patient-report').style.display = 'block';
+    document.getElementById('necrose-form').style.display = 'block';
+    document.getElementById('patient-id').value = patient.id;
+}
+
+document.getElementById('form-necrose').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        patient_id: document.getElementById('patient-id').value,
+        lesion_count: document.getElementById('lesion-count').value,
+        largest_lesion: document.getElementById('largest-lesion').value,
+        affected_band: document.getElementById('affected-band').value
+    };
+
+    fetch('/save_necrose', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Registro de necrose salvo com sucesso!');
+            // Limpar formulário
+            document.getElementById('form-necrose').reset();
+        } else {
+            alert('Erro ao salvar registro: ' + data.error);
+        }
+    });
+});
+
+// Fechar sugestões ao clicar fora
+document.addEventListener('click', function(e) {
+    if (!e.target.matches('#patient-search')) {
+        document.getElementById('search-suggestions').style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

@@ -4,6 +4,8 @@ import traceback
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import pandas as pd
 from datetime import datetime
+from fuzzywuzzy import fuzz
+import json
 
 # Configure logging
 logging.basicConfig(
@@ -468,9 +470,96 @@ def download_excel():
         flash(f"Erro ao baixar arquivo: {str(e)}", "error")
         return redirect(url_for('dashboard'))
 
+@app.route('/necrose')
+def necrose():
+    """Página de avaliação de necrose"""
+    logger.info("Accessing necrose page")
+    return render_template('necrose.html')
+
+@app.route('/search_patients')
+def search_patients():
+    """Endpoint para busca de pacientes com sugestões automáticas"""
+    logger.info("Searching for patients")
+    try:
+        term = request.args.get('term', '').lower()
+        if not term or len(term) < 2:
+            return jsonify([])
+
+        # Carregar dados dos pacientes
+        df = pd.read_excel("cirurgias.xlsx")
+
+        # Filtrar e ordenar pacientes
+        patients = []
+        for _, row in df.iterrows():
+            name = str(row['nome']).lower()
+            # Usar fuzzy matching para melhorar a busca
+            ratio = fuzz.partial_ratio(term, name)
+            if ratio > 75:  # Threshold de similaridade
+                patient_data = {
+                    'id': len(patients),  # Usar índice como ID temporário
+                    'nome': row['nome'],
+                    'data': row['data'],
+                    'total_foliculos': row['total_foliculos'],
+                    'densidade_scketh': row['densidade_scketh'],
+                    'infiltracao': row['infiltracao'],
+                    'medico': row['medico'],
+                    'equipe': row['equipe']
+                }
+                patients.append(patient_data)
+
+        # Ordenar por nome
+        patients.sort(key=lambda x: x['nome'])
+
+        return jsonify(patients[:10])  # Limitar a 10 sugestões
+    except Exception as e:
+        logger.error(f"Error searching patients: {str(e)}\n{traceback.format_exc()}")
+        return jsonify([])
+
+@app.route('/save_necrose', methods=['POST'])
+def save_necrose():
+    """Endpoint para salvar dados de necrose"""
+    logger.info("Saving necrose data")
+    try:
+        data = request.get_json()
+
+        # Validar dados recebidos
+        required_fields = ['patient_id', 'lesion_count', 'largest_lesion', 'affected_band']
+        if not all(field in data for field in required_fields):
+            return jsonify({'success': False, 'error': 'Dados incompletos'})
+
+        # Carregar arquivo de necroses existente ou criar novo
+        filename = "necroses.xlsx"
+        if os.path.exists(filename):
+            df = pd.read_excel(filename)
+        else:
+            df = pd.DataFrame(columns=[
+                'patient_id', 'data_registro', 'lesion_count', 
+                'largest_lesion', 'affected_band'
+            ])
+
+        # Adicionar novo registro
+        new_data = {
+            'patient_id': data['patient_id'],
+            'data_registro': datetime.now().strftime('%d/%m/%Y'),
+            'lesion_count': data['lesion_count'],
+            'largest_lesion': data['largest_lesion'],
+            'affected_band': data['affected_band']
+        }
+
+        df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
+        df.to_excel(filename, index=False)
+
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f"Error saving necrose data: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
+
 if __name__ == '__main__':
     try:
-        port = 8080
+        # ALWAYS serve the app on port 5000
+        port = 5000
         logger.info(f"Starting Flask server on port {port}...")
         app.run(host='0.0.0.0', port=port, debug=True)
     except Exception as e:

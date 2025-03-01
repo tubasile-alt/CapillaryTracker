@@ -15,6 +15,7 @@
         <nav class="main-nav">
             <a href="{{ url_for('novo_cadastro') }}" class="nav-link">Novo Cadastro</a>
             <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
+            <a href="{{ url_for('necrose') }}" class="nav-link">Necrose</a>
         </nav>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
