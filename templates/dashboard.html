@@ -311,7 +311,7 @@
             option.textContent = doctor;
             doctorSelect.appendChild(option);
         });
-        
+
         // If unit is selected (not "all"), force reset doctor to "all" to avoid invalid selections
         if (unit !== 'all') {
             doctorSelect.value = 'all';
@@ -719,15 +719,40 @@
             }
         });
 
+        // Obter a unidade selecionada para os gráficos de equipe e médicos
+        const unitFilter = document.getElementById('filter-unit');
+        const selectedUnit = unitFilter ? unitFilter.value : 'all';
+
+        // Configurar labels e dados baseados na unidade selecionada
+        let equipeLabels, doctorLabels;
+
+        if (selectedUnit === 'Ribeirão Preto') {
+            equipeLabels = ['Aline', 'Natália', 'Ana'];
+            doctorLabels = ['Dr. Arthur', 'Dr. Daniel'];
+        } else if (selectedUnit === 'Campinas') {
+            equipeLabels = ['Juliana', 'Gabriela'];
+            doctorLabels = ['Dra. Isadora', 'Dra. Adriana'];
+        } else {
+            equipeLabels = ['Aline', 'Natália', 'Ana', 'Juliana', 'Gabriela'];
+            doctorLabels = ['Dr. Arthur', 'Dr. Daniel', 'Dra. Isadora', 'Dra. Adriana'];
+        }
+
         // Equipe chart
         const equipeCtx = document.getElementById('equipeChart').getContext('2d');
         new Chart(equipeCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Aline', 'Natália', 'Ana', 'Juliana', 'Gabriela'],
+                labels: equipeLabels,
                 datasets: [{
-                    data: computeEquipeDistribution(),
-                    backgroundColor: [chartColors.teal, chartColors.orange, chartColors.blue, chartColors.pink, chartColors.green],
+                    data: computeEquipeDistribution().filter((val, idx) => {
+                        if (selectedUnit === 'Ribeirão Preto') {
+                            return idx < 3; // Primeiros 3 são de Ribeirão
+                        } else if (selectedUnit === 'Campinas') {
+                            return idx >= 3; // Últimos 2 são de Campinas
+                        }
+                        return true; // Todos para 'all'
+                    }),
+                    backgroundColor: [chartColors.teal, chartColors.orange, chartColors.blue, chartColors.pink, chartColors.green].slice(0, equipeLabels.length),
                     borderWidth: 1
                 }]
             },
@@ -748,16 +773,23 @@
         new Chart(doctorCtx, {
             type: 'bar',
             data: {
-                labels: ['Dr. Arthur', 'Dr. Daniel', 'Dra. Isadora', 'Dra. Adriana'],
+                labels: doctorLabels,
                 datasets: [{
                     label: 'Cirurgias Realizadas',
-                    data: computeDoctorDistribution(),
+                    data: computeDoctorDistribution().filter((val, idx) => {
+                        if (selectedUnit === 'Ribeirão Preto') {
+                            return idx < 2; // Primeiros 2 são de Ribeirão
+                        } else if (selectedUnit === 'Campinas') {
+                            return idx >= 2; // Últimos 2 são de Campinas
+                        }
+                        return true; // Todos para 'all'
+                    }),
                     backgroundColor: [
                         chartColors.blue,
                         chartColors.green,
                         chartColors.pink,
                         chartColors.purple
-                    ],
+                    ].slice(0, doctorLabels.length),
                     borderWidth: 1
                 }]
             },
