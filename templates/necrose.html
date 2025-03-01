@@ -54,6 +54,10 @@
                 <span id="front-infiltration"></span>
             </div>
             <div class="report-item">
+                <strong>Tadalafila:</strong>
+                <span id="tadalafila-status"></span>
+            </div>
+            <div class="report-item">
                 <strong>Médico:</strong>
                 <span id="doctor-name"></span>
             </div>
@@ -272,6 +276,7 @@ function selectPatient(patient) {
     document.getElementById('follicles-count').textContent = patient.total_foliculos;
     document.getElementById('density-first').textContent = patient.densidade_scketh;
     document.getElementById('front-infiltration').textContent = patient.infiltracao;
+    document.getElementById('tadalafila-status').textContent = patient.tadalafila || 'Não informado';
     document.getElementById('doctor-name').textContent = patient.medico;
     document.getElementById('team-members').textContent = patient.equipe;
     

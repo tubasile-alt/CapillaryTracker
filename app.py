@@ -509,6 +509,7 @@ def search_patients():
                     'total_foliculos': row['total_foliculos'],
                     'densidade_scketh': row['densidade_scketh'],
                     'infiltracao': row['infiltracao'],
+                    'tadalafila': row['tadalafila'] if 'tadalafila' in row else 'Não',
                     'medico': row['medico'],
                     'equipe': row['equipe']
                 }
