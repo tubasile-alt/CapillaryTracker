@@ -17,19 +17,22 @@
             {% if data %}
             <div class="dashboard-info">
                 <div class="dashboard-summary">
-                    <div class="dashboard-card summary-card">
-                        <h3>Total de Cirurgias</h3>
-                        <div class="big-stat" id="big-total-surgeries">{{ data.total_surgeries }}</div>
-                    </div>
-
-                    <div class="dashboard-card summary-card">
-                        <h3>Média de Folículos</h3>
-                        <div class="big-stat" id="big-avg-follicles">{{ data.avg_follicles }}</div>
-                    </div>
-
-                    <div class="dashboard-card summary-card">
-                        <h3>Média de Densidade</h3>
-                        <div class="big-stat" id="big-avg-density">{{ data.avg_density }}</div>
+                    <div class="dashboard-card combined-stats-card">
+                        <h3>Resumo Geral</h3>
+                        <div class="stats-container">
+                            <div class="stat-item">
+                                <div class="stat-label">Total de Cirurgias</div>
+                                <div class="stat-value" id="big-total-surgeries">{{ data.total_surgeries }}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Média de Folículos</div>
+                                <div class="stat-value" id="big-avg-follicles">{{ data.avg_follicles }}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Média de Densidade</div>
+                                <div class="stat-value" id="big-avg-density">{{ data.avg_density }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
