@@ -4,6 +4,27 @@
 <div class="container">
     <h2>Avaliação de Necrose</h2>
     
+    <!-- Resumo de necroses -->
+    <div class="necrose-summary">
+        <div class="summary-box">
+            <div class="summary-title">Resumo de Necroses</div>
+            <div class="summary-data">
+                <div class="summary-item">
+                    <div class="summary-label">Total de Cirurgias:</div>
+                    <div class="summary-value" id="total-surgeries">--</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Total de Necroses:</div>
+                    <div class="summary-value" id="total-necroses">--</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Taxa de Necrose:</div>
+                    <div class="summary-value" id="necrose-rate">--</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Seleção de unidade -->
     <div class="unit-selection">
         <div class="form-group">
@@ -123,6 +144,53 @@
 </div>
 
 <style>
+.necrose-summary {
+    margin-bottom: 20px;
+}
+
+.summary-box {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-left: 4px solid #007bff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.summary-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #343a40;
+}
+
+.summary-data {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.summary-item {
+    flex: 1;
+    min-width: 150px;
+    padding: 10px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.summary-label {
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.summary-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #343a40;
+}
+
 .unit-selection {
     margin-bottom: 20px;
 }
@@ -215,6 +283,20 @@
 <script>
 let patientData = null;
 let selectedUnit = "";
+
+// Função para carregar resumo de necroses
+function loadNecroseSummary() {
+    fetch('/necrose_summary')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('total-surgeries').textContent = data.total_surgeries || '0';
+            document.getElementById('total-necroses').textContent = data.total_necroses || '0';
+            document.getElementById('necrose-rate').textContent = data.necrose_rate || '0%';
+        })
+        .catch(error => {
+            console.error('Erro ao carregar resumo de necroses:', error);
+        });
+}
 
 // Habilitar campo de busca apenas quando a unidade for selecionada
 document.getElementById('unit-select').addEventListener('change', function(e) {
@@ -344,6 +426,11 @@ document.addEventListener('click', function(e) {
     if (!e.target.matches('#patient-search')) {
         document.getElementById('search-suggestions').style.display = 'none';
     }
+});
+
+// Carregar resumo quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    loadNecroseSummary();
 });
 </script>
 {% endblock %}

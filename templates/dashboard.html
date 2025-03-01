@@ -407,15 +407,18 @@
             options: darkThemeOptions
         });
 
-        // Unit distribution chart
+        // Unit distribution chart - only show when not filtered by unit
+        const unitFilter = document.getElementById('filter-unit');
+        const selectedUnit = unitFilter ? unitFilter.value : 'all';
+
         const unitCtx = document.getElementById('unitChart').getContext('2d');
         new Chart(unitCtx, {
             type: 'pie',
             data: {
-                labels: ['Ribeirão Preto', 'Campinas'],
+                labels: selectedUnit === 'all' ? ['Ribeirão Preto', 'Campinas'] : [selectedUnit],
                 datasets: [{
-                    data: computeUnitDistribution(),
-                    backgroundColor: [chartColors.blue, chartColors.pink],
+                    data: selectedUnit === 'all' ? computeUnitDistribution() : [data.total_surgeries], //Adjust data based on filter
+                    backgroundColor: selectedUnit === 'all' ? [chartColors.blue, chartColors.pink] : [chartColors.blue],
                     borderWidth: 1
                 }]
             },
@@ -426,6 +429,14 @@
                     legend: {
                         ...darkThemeOptions.plugins.legend,
                         position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribuição por Unidade',
+                        color: '#ffffff',
+                        font: {
+                            size: 16
+                        }
                     }
                 }
             }
@@ -600,15 +611,18 @@
             options: darkThemeOptions
         });
 
-        // Unit distribution chart
+        // Unit distribution chart - only show when not filtered by unit
+        const unitFilter = document.getElementById('filter-unit');
+        const selectedUnit = unitFilter ? unitFilter.value : 'all';
+
         const unitCtx = document.getElementById('unitChart').getContext('2d');
         new Chart(unitCtx, {
             type: 'pie',
             data: {
-                labels: ['Ribeirão Preto', 'Campinas'],
+                labels: selectedUnit === 'all' ? ['Ribeirão Preto', 'Campinas'] : [selectedUnit],
                 datasets: [{
-                    data: computeUnitDistribution(),
-                    backgroundColor: [chartColors.blue, chartColors.pink],
+                    data: selectedUnit === 'all' ? computeUnitDistribution() : [data.total_surgeries], //Adjust data based on filter
+                    backgroundColor: selectedUnit === 'all' ? [chartColors.blue, chartColors.pink] : [chartColors.blue],
                     borderWidth: 1
                 }]
             },
@@ -619,6 +633,14 @@
                     legend: {
                         ...darkThemeOptions.plugins.legend,
                         position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribuição por Unidade',
+                        color: '#ffffff',
+                        font: {
+                            size: 16
+                        }
                     }
                 }
             }

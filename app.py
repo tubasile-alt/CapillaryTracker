@@ -557,6 +557,45 @@ def search_patients():
         logger.error(f"Error searching patients: {str(e)}\n{traceback.format_exc()}")
         return jsonify([])
 
+@app.route('/necrose_summary')
+def necrose_summary():
+    """Endpoint para retornar o resumo de necroses"""
+    logger.info("Getting necrose summary")
+    try:
+        # Carregar dados de cirurgias
+        cirurgias_file = "cirurgias.xlsx"
+        total_surgeries = 0
+        if os.path.exists(cirurgias_file):
+            df_cirurgias = pd.read_excel(cirurgias_file)
+            total_surgeries = len(df_cirurgias)
+        
+        # Carregar dados de necroses
+        necroses_file = "necroses.xlsx"
+        total_necroses = 0
+        if os.path.exists(necroses_file):
+            df_necroses = pd.read_excel(necroses_file)
+            total_necroses = len(df_necroses)
+        
+        # Calcular taxa de necrose
+        necrose_rate = "0%"
+        if total_surgeries > 0:
+            taxa = (total_necroses / total_surgeries) * 100
+            necrose_rate = f"{taxa:.1f}%"
+        
+        return jsonify({
+            'total_surgeries': total_surgeries,
+            'total_necroses': total_necroses,
+            'necrose_rate': necrose_rate
+        })
+    except Exception as e:
+        logger.error(f"Error getting necrose summary: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({
+            'total_surgeries': 0,
+            'total_necroses': 0,
+            'necrose_rate': '0%',
+            'error': str(e)
+        })
+
 @app.route('/save_necrose', methods=['POST'])
 def save_necrose():
     """Endpoint para salvar dados de necrose"""
