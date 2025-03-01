@@ -165,50 +165,65 @@
 
     // Global chart options for dark theme
     const darkThemeOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        devicePixelRatio: 2, // Sharper rendering on mobile
-        redraw: true, // Force redraw on update
-        plugins: {
-            legend: {
-                display: window.innerWidth > 480 ? true : false, // Hide legend on very small screens
-                position: window.innerWidth < 768 ? 'bottom' : 'bottom',
-                labels: {
-                    color: '#ffffff'
+            responsive: true,
+            maintainAspectRatio: true, // Changed to true for better mobile display
+            devicePixelRatio: 2, // Sharper rendering on mobile
+            redraw: true, // Force redraw on update
+            plugins: {
+                legend: {
+                    display: window.innerWidth > 480 ? true : false, // Hide legend on very small screens
+                    position: 'bottom',
+                    labels: {
+                        color: '#ffffff',
+                        boxWidth: window.innerWidth < 768 ? 10 : 20, // Smaller legend boxes on mobile
+                        padding: window.innerWidth < 768 ? 5 : 10 // Less padding on mobile
+                    }
                 },
-                position: 'bottom'
-            },
-            title: {
-                color: '#ffffff'
-            },
-            datalabels: {
-                color: '#ffffff',
-                font: {
-                    weight: 'bold'
+                title: {
+                    color: '#ffffff',
+                    font: {
+                        size: window.innerWidth < 768 ? 14 : 16 // Smaller title on mobile
+                    }
                 },
-                formatter: Math.round
-            }
-        },
-        scales: {
-            x: {
-                ticks: {
-                    color: '#ffffff'
-                },
-                grid: {
-                    color: 'rgba(255, 255, 255, 0.1)'
+                datalabels: {
+                    color: '#ffffff',
+                    font: {
+                        weight: 'bold',
+                        size: window.innerWidth < 768 ? 9 : 12 // Smaller labels on mobile
+                    },
+                    formatter: Math.round,
+                    display: window.innerWidth < 480 ? false : true // Hide datalabels on very small screens
                 }
             },
-            y: {
-                ticks: {
-                    color: '#ffffff'
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#ffffff',
+                        font: {
+                            size: window.innerWidth < 768 ? 9 : 12 // Smaller ticks on mobile
+                        },
+                        maxRotation: 90, // Allow vertical labels on mobile
+                        autoSkip: true, // Skip labels that don't fit
+                        autoSkipPadding: 10 // Space between labels
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
                 },
-                grid: {
-                    color: 'rgba(255, 255, 255, 0.1)'
-                },
-                beginAtZero: true
+                y: {
+                    ticks: {
+                        color: '#ffffff',
+                        font: {
+                            size: window.innerWidth < 768 ? 9 : 12 // Smaller ticks on mobile
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    beginAtZero: true
+                }
             }
-        }
-    };
+        };
 
     // Add event listeners when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
