@@ -385,6 +385,18 @@ def filter_dashboard():
         doctor = request.args.get('doctor', 'all')
         equipe = request.args.get('equipe', 'all')
         
+        # Médicos por unidade para filtros
+        medicos_por_unidade = {
+            'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
+            'Campinas': ['Dra. Isadora', 'Dra. Adriana']
+        }
+        
+        # Equipe por unidade para filtros
+        equipe_por_unidade = {
+            'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
+            'Campinas': ['Juliana', 'Gabriela']
+        }
+        
         # Load data
         filename = "cirurgias.xlsx"
         if not os.path.exists(filename):
@@ -422,9 +434,31 @@ def filter_dashboard():
                     df['mes'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.month
                 df = df[df['mes'] == int(month)]
         
+        # Apply unit filter with restrictions on doctors and team members
         if unit != 'all' and 'unidade' in df.columns:
+            # Filter by unit
             df = df[df['unidade'] == unit]
+            
+            # Restrict doctors to only those from this unit 
+            if 'medico' in df.columns:
+                valid_doctors = medicos_por_unidade.get(unit, [])
+                df = df[df['medico'].isin(valid_doctors)]
+            
+            # Restrict team members to only those from this unit
+            if 'equipe' in df.columns:
+                valid_team = equipe_por_unidade.get(unit, [])
+                # Handle case where equipe might be a single value or a list
+                if df['equipe'].dtype == 'object':
+                    # For columns that might contain lists (e.g., stored as strings)
+                    mask = df['equipe'].apply(lambda x: 
+                        any(member in str(x) for member in valid_team) if isinstance(x, str) else False
+                    )
+                    df = df[mask]
+                else:
+                    # For columns with single values
+                    df = df[df['equipe'].isin(valid_team)]
         
+        # Additional filters (only apply if not restricted by unit)
         if doctor != 'all' and 'medico' in df.columns:
             df = df[df['medico'] == doctor]
         

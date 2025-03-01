@@ -247,6 +247,8 @@
             unitFilter.addEventListener('change', function() {
                 updateDoctorOptions(this.value);
                 updateEquipeOptions(this.value);
+                // Auto-apply filters when unit changes to immediately restrict data
+                applyFilters();
             });
         }
 
@@ -309,6 +311,11 @@
             option.textContent = doctor;
             doctorSelect.appendChild(option);
         });
+        
+        // If unit is selected (not "all"), force reset doctor to "all" to avoid invalid selections
+        if (unit !== 'all') {
+            doctorSelect.value = 'all';
+        }
     }
 
     function applyFilters() {
