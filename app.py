@@ -482,11 +482,17 @@ def search_patients():
     logger.info("Searching for patients")
     try:
         term = request.args.get('term', '').lower()
+        unit = request.args.get('unit', '')
+        
         if not term or len(term) < 2:
             return jsonify([])
 
         # Carregar dados dos pacientes
         df = pd.read_excel("cirurgias.xlsx")
+        
+        # Filtrar por unidade se especificado
+        if unit:
+            df = df[df['unidade'] == unit]
 
         # Filtrar e ordenar pacientes
         patients = []
@@ -498,6 +504,7 @@ def search_patients():
                 patient_data = {
                     'id': len(patients),  # Usar índice como ID temporário
                     'nome': row['nome'],
+                    'unidade': row['unidade'],
                     'data': row['data'],
                     'total_foliculos': row['total_foliculos'],
                     'densidade_scketh': row['densidade_scketh'],
@@ -520,30 +527,57 @@ def save_necrose():
     """Endpoint para salvar dados de necrose"""
     logger.info("Saving necrose data")
     try:
-        data = request.get_json()
-
+        # Verificar se existem dados do formulário
+        if not request.form:
+            return jsonify({'success': False, 'error': 'Dados do formulário não encontrados'})
+        
+        # Obter dados do formulário
+        patient_id = request.form.get('patient_id')
+        patient_unit = request.form.get('patient_unit')
+        lesion_count = request.form.get('lesion_count')
+        largest_lesion = request.form.get('largest_lesion')
+        affected_band = request.form.get('affected_band')
+        
         # Validar dados recebidos
         required_fields = ['patient_id', 'lesion_count', 'largest_lesion', 'affected_band']
-        if not all(field in data for field in required_fields):
+        if not all(request.form.get(field) for field in required_fields):
             return jsonify({'success': False, 'error': 'Dados incompletos'})
 
+        # Processar arquivos de foto
+        photo_paths = []
+        photo_dir = os.path.join('static', 'uploads', 'necrose_photos')
+        
+        # Criar diretório se não existir
+        os.makedirs(photo_dir, exist_ok=True)
+        
+        for i in range(1, 4):  # Para cada uma das 3 fotos possíveis
+            photo_key = f'photo{i}'
+            if photo_key in request.files and request.files[photo_key].filename != '':
+                file = request.files[photo_key]
+                filename = f"necrose_{patient_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{i}.jpg"
+                file_path = os.path.join(photo_dir, filename)
+                file.save(file_path)
+                photo_paths.append(file_path)
+        
         # Carregar arquivo de necroses existente ou criar novo
         filename = "necroses.xlsx"
         if os.path.exists(filename):
             df = pd.read_excel(filename)
         else:
             df = pd.DataFrame(columns=[
-                'patient_id', 'data_registro', 'lesion_count', 
-                'largest_lesion', 'affected_band'
+                'patient_id', 'patient_unit', 'data_registro', 'lesion_count', 
+                'largest_lesion', 'affected_band', 'photo_paths'
             ])
 
         # Adicionar novo registro
         new_data = {
-            'patient_id': data['patient_id'],
+            'patient_id': patient_id,
+            'patient_unit': patient_unit,
             'data_registro': datetime.now().strftime('%d/%m/%Y'),
-            'lesion_count': data['lesion_count'],
-            'largest_lesion': data['largest_lesion'],
-            'affected_band': data['affected_band']
+            'lesion_count': lesion_count,
+            'largest_lesion': largest_lesion,
+            'affected_band': affected_band,
+            'photo_paths': ','.join(photo_paths) if photo_paths else ''
         }
 
         df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)

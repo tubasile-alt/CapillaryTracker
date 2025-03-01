@@ -4,11 +4,23 @@
 <div class="container">
     <h2>Avaliação de Necrose</h2>
     
+    <!-- Seleção de unidade -->
+    <div class="unit-selection">
+        <div class="form-group">
+            <label for="unit-select">Unidade</label>
+            <select id="unit-select" class="form-control">
+                <option value="">Selecione a Unidade</option>
+                <option value="Ribeirão Preto">Ribeirão Preto</option>
+                <option value="Campinas">Campinas</option>
+            </select>
+        </div>
+    </div>
+    
     <!-- Campo de busca com sugestões automáticas -->
     <div class="search-section">
         <div class="form-group">
             <label for="patient-search">Buscar Paciente</label>
-            <input type="text" id="patient-search" class="form-control" placeholder="Digite o nome do paciente...">
+            <input type="text" id="patient-search" class="form-control" placeholder="Digite o nome do paciente..." disabled>
             <div id="search-suggestions" class="search-suggestions"></div>
         </div>
     </div>
@@ -20,6 +32,10 @@
             <div class="report-item">
                 <strong>Nome:</strong>
                 <span id="patient-name"></span>
+            </div>
+            <div class="report-item">
+                <strong>Unidade:</strong>
+                <span id="patient-unit"></span>
             </div>
             <div class="report-item">
                 <strong>Data:</strong>
@@ -51,8 +67,9 @@
     <!-- Formulário de Necrose -->
     <div id="necrose-form" class="necrose-form" style="display: none;">
         <h3>Registro de Necrose</h3>
-        <form id="form-necrose" method="POST">
+        <form id="form-necrose" method="POST" enctype="multipart/form-data">
             <input type="hidden" id="patient-id" name="patient_id">
+            <input type="hidden" id="patient-unit" name="patient_unit">
             
             <div class="form-group">
                 <label for="lesion-count">Número de Lesões</label>
@@ -60,7 +77,7 @@
             </div>
 
             <div class="form-group">
-                <label for="largest-lesion">Área da Maior Lesão (mm²)</label>
+                <label for="largest-lesion">Área da Maior Lesão (cm²)</label>
                 <input type="number" id="largest-lesion" name="largest_lesion" class="form-control" required min="0" step="0.1">
             </div>
 
@@ -74,6 +91,27 @@
                     <option value="3">Faixa 3</option>
                 </select>
             </div>
+            
+            <div class="form-group">
+                <label>Fotos da Lesão (máximo 3)</label>
+                <div class="photo-upload-container">
+                    <div class="photo-upload">
+                        <label for="photo1" class="photo-label">Foto 1</label>
+                        <input type="file" id="photo1" name="photo1" class="form-control" accept="image/*">
+                        <div class="preview" id="preview1"></div>
+                    </div>
+                    <div class="photo-upload">
+                        <label for="photo2" class="photo-label">Foto 2</label>
+                        <input type="file" id="photo2" name="photo2" class="form-control" accept="image/*">
+                        <div class="preview" id="preview2"></div>
+                    </div>
+                    <div class="photo-upload">
+                        <label for="photo3" class="photo-label">Foto 3</label>
+                        <input type="file" id="photo3" name="photo3" class="form-control" accept="image/*">
+                        <div class="preview" id="preview3"></div>
+                    </div>
+                </div>
+            </div>
 
             <button type="submit" class="btn btn-primary">Salvar Registro</button>
         </form>
@@ -81,6 +119,10 @@
 </div>
 
 <style>
+.unit-selection {
+    margin-bottom: 20px;
+}
+
 .search-suggestions {
     position: absolute;
     width: 100%;
@@ -128,10 +170,67 @@
     border: 1px solid #ddd;
     border-radius: 5px;
 }
+
+.photo-upload-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.photo-upload {
+    border: 1px dashed #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.photo-label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.preview {
+    margin-top: 10px;
+    width: 100%;
+    height: 150px;
+    background-color: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
 </style>
 
 <script>
 let patientData = null;
+let selectedUnit = "";
+
+// Habilitar campo de busca apenas quando a unidade for selecionada
+document.getElementById('unit-select').addEventListener('change', function(e) {
+    selectedUnit = e.target.value;
+    const patientSearchField = document.getElementById('patient-search');
+    
+    if (selectedUnit) {
+        patientSearchField.disabled = false;
+        patientSearchField.placeholder = `Digite o nome do paciente na unidade ${selectedUnit}...`;
+    } else {
+        patientSearchField.disabled = true;
+        patientSearchField.placeholder = "Selecione uma unidade primeiro";
+        patientSearchField.value = "";
+        document.getElementById('search-suggestions').style.display = 'none';
+    }
+    
+    // Limpar qualquer busca anterior
+    document.getElementById('patient-report').style.display = 'none';
+    document.getElementById('necrose-form').style.display = 'none';
+});
 
 document.getElementById('patient-search').addEventListener('input', function(e) {
     const searchTerm = e.target.value;
@@ -140,7 +239,7 @@ document.getElementById('patient-search').addEventListener('input', function(e) 
         return;
     }
 
-    fetch(`/search_patients?term=${encodeURIComponent(searchTerm)}`)
+    fetch(`/search_patients?term=${encodeURIComponent(searchTerm)}&unit=${encodeURIComponent(selectedUnit)}`)
         .then(response => response.json())
         .then(data => {
             const suggestionsDiv = document.getElementById('search-suggestions');
@@ -168,6 +267,7 @@ function selectPatient(patient) {
     
     // Preencher relatório
     document.getElementById('patient-name').textContent = patient.nome;
+    document.getElementById('patient-unit').textContent = patient.unidade;
     document.getElementById('surgery-date').textContent = patient.data;
     document.getElementById('follicles-count').textContent = patient.total_foliculos;
     document.getElementById('density-first').textContent = patient.densidade_scketh;
@@ -179,24 +279,44 @@ function selectPatient(patient) {
     document.getElementById('patient-report').style.display = 'block';
     document.getElementById('necrose-form').style.display = 'block';
     document.getElementById('patient-id').value = patient.id;
+    document.getElementById('patient-unit').value = patient.unidade;
 }
+
+// Preview de imagens
+function setupImagePreview(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    
+    input.addEventListener('change', function() {
+        while(preview.firstChild) {
+            preview.removeChild(preview.firstChild);
+        }
+        
+        if (this.files && this.files[0]) {
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(this.files[0]);
+            img.onload = function() {
+                URL.revokeObjectURL(this.src);
+            }
+            preview.appendChild(img);
+        }
+    });
+}
+
+// Configurar preview para cada campo de foto
+setupImagePreview('photo1', 'preview1');
+setupImagePreview('photo2', 'preview2');
+setupImagePreview('photo3', 'preview3');
 
 document.getElementById('form-necrose').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    const formData = {
-        patient_id: document.getElementById('patient-id').value,
-        lesion_count: document.getElementById('lesion-count').value,
-        largest_lesion: document.getElementById('largest-lesion').value,
-        affected_band: document.getElementById('affected-band').value
-    };
-
+    // Criar FormData para enviar arquivos
+    const formData = new FormData(this);
+    
     fetch('/save_necrose', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
@@ -204,6 +324,10 @@ document.getElementById('form-necrose').addEventListener('submit', function(e) {
             alert('Registro de necrose salvo com sucesso!');
             // Limpar formulário
             document.getElementById('form-necrose').reset();
+            // Limpar previews
+            document.getElementById('preview1').innerHTML = '';
+            document.getElementById('preview2').innerHTML = '';
+            document.getElementById('preview3').innerHTML = '';
         } else {
             alert('Erro ao salvar registro: ' + data.error);
         }
