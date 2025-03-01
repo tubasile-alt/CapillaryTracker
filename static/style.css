@@ -1,3 +1,24 @@
+
+/* Estilos para o dashboard simplificado */
+.big-stat {
+    font-size: 3rem;
+    font-weight: bold;
+    text-align: center;
+    margin: 20px 0;
+    color: #36A2EB;
+}
+
+/* Ajustes responsivos para o dashboard */
+@media (max-width: 768px) {
+    .big-stat {
+        font-size: 2rem;
+    }
+    
+    .dashboard-card {
+        min-height: 250px;
+    }
+}
+
 * {
     box-sizing: border-box;
     margin: 0;

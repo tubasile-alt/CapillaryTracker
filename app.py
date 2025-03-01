@@ -236,7 +236,8 @@ def process_dashboard_data(df):
         'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
         'total_surgeries': 0,
         'avg_follicles': 0,
-        'avg_density': 0
+        'avg_density': 0,
+        'update_time': datetime.now().strftime('%d/%m/%Y %H:%M')
     }
     
     if df.empty:
@@ -377,6 +378,7 @@ def dashboard():
 def filter_dashboard():
     """Endpoint to get filtered dashboard data"""
     logger.info("Filtering dashboard data")
+    logger.info(f"Filter parameters: {request.args}")
     try:
         # Get filter parameters
         year = request.args.get('year', 'all')
@@ -467,6 +469,10 @@ def filter_dashboard():
         
         # Process filtered data
         dashboard_data = process_dashboard_data(df)
+        
+        # Log data being returned for debugging
+        logger.info(f"Returning dashboard data with {len(df)} records")
+        logger.info(f"Total surgeries: {dashboard_data['total_surgeries']}")
         
         return jsonify(dashboard_data)
     

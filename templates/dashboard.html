@@ -91,7 +91,18 @@
 
             {% if data %}
             <div class="dashboard-grid">
-                <!-- First row -->
+                <!-- Primeira linha - Principais indicadores -->
+                <div class="dashboard-card">
+                    <h3>Total de Cirurgias</h3>
+                    <div class="big-stat" id="big-total-surgeries">0</div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>Média de Folículos</h3>
+                    <div class="big-stat" id="big-avg-follicles">0</div>
+                </div>
+
+                <!-- Segunda linha -->
                 <div class="dashboard-card">
                     <h3>Cirurgias por Mês</h3>
                     <canvas id="monthlyChart"></canvas>
@@ -102,32 +113,21 @@
                     <canvas id="unitChart"></canvas>
                 </div>
 
-                <!-- Second row -->
-                <div class="dashboard-card">
-                    <h3>Média de Folículos</h3>
-                    <canvas id="folliclesChart"></canvas>
-                </div>
-
+                <!-- Terceira linha -->
                 <div class="dashboard-card">
                     <h3>Densidade de Extração (fios/cm²)</h3>
                     <canvas id="densityChart"></canvas>
                 </div>
 
-                <!-- Third row -->
-                <div class="dashboard-card wide-card">
-                    <h3>Evolução Mensal</h3>
-                    <canvas id="trendChart"></canvas>
-                </div>
-
-                <!-- Fourth row -->
                 <div class="dashboard-card">
                     <h3>Equipe</h3>
                     <canvas id="equipeChart"></canvas>
                 </div>
 
-                <div class="dashboard-card">
-                    <h3>Médicos por Volume</h3>
-                    <canvas id="doctorChart"></canvas>
+                <!-- Quarta linha - Gráfico de tendência -->
+                <div class="dashboard-card wide-card">
+                    <h3>Evolução Mensal</h3>
+                    <canvas id="trendChart"></canvas>
                 </div>
             </div>
 
@@ -239,12 +239,12 @@
         }
 
         // Populate doctor and team filters based on unit selection
-        const unitFilterElement = document.getElementById('filter-unit'); //Fixed duplicated variable
+        const unitFilter = document.getElementById('filter-unit');
         const doctorFilter = document.getElementById('filter-doctor');
         const equipeFilter = document.getElementById('filter-equipe');
 
-        if (unitFilterElement && doctorFilter) {
-            unitFilterElement.addEventListener('change', function() {
+        if (unitFilter && doctorFilter) {
+            unitFilter.addEventListener('change', function() {
                 updateDoctorOptions(this.value);
                 updateEquipeOptions(this.value);
                 // Auto-apply filters when unit changes to immediately restrict data
@@ -257,6 +257,9 @@
 
         // Initialize charts
         initializeCharts();
+        
+        // Trigger filters application on load to ensure data is loaded
+        setTimeout(applyFilters, 500);
     });
 
     function populateYearFilter() {
@@ -561,36 +564,31 @@
             }
         });
 
-        // Doctor performance chart
-        const doctorCtx = document.getElementById('doctorChart').getContext('2d');
-        new Chart(doctorCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Dr. Arthur', 'Dr. Daniel', 'Dra. Isadora', 'Dra. Adriana'],
-                datasets: [{
-                    label: 'Cirurgias Realizadas',
-                    data: computeDoctorDistribution(),
-                    backgroundColor: [
-                        chartColors.blue,
-                        chartColors.green,
-                        chartColors.pink,
-                        chartColors.purple
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                ...darkThemeOptions,
-                indexAxis: 'y'
-            }
-        });
+        // Doctor chart removed as requested
         {% endif %}
+    }
+
+    function updateSummaryStats(data) {
+        // Update summary statistics
+        document.getElementById('total-surgeries').textContent = data.total_surgeries || 0;
+        document.getElementById('avg-follicles').textContent = data.avg_follicles || 0;
+        document.getElementById('avg-density').textContent = data.avg_density || 0;
+        
+        // Update big stats for simplified dashboard
+        document.getElementById('big-total-surgeries').textContent = data.total_surgeries || 0;
+        document.getElementById('big-avg-follicles').textContent = data.avg_follicles || 0;
+        
+        // Log data for debugging
+        console.log("Dashboard data:", data);
     }
 
     function updateCharts(data) {
         // Clear existing charts
         const charts = Object.values(Chart.instances);
         charts.forEach(chart => chart.destroy());
+        
+        // Update stats first
+        updateSummaryStats(data);
 
         // Reinitialize with new data
         // Monthly surgeries chart
@@ -790,36 +788,7 @@
             }
         });
 
-        // Doctor performance chart
-        const doctorCtx = document.getElementById('doctorChart').getContext('2d');
-        new Chart(doctorCtx, {
-            type: 'bar',
-            data: {
-                labels: doctorLabels,
-                datasets: [{
-                    label: 'Cirurgias Realizadas',
-                    data: computeDoctorDistribution().filter((val, idx) => {
-                        if (selectedUnit === 'Ribeirão Preto') {
-                            return idx < 2; // Primeiros 2 são de Ribeirão
-                        } else if (selectedUnit === 'Campinas') {
-                            return idx >= 2; // Últimos 2 são de Campinas
-                        }
-                        return true; // Todos para 'all'
-                    }),
-                    backgroundColor: [
-                        chartColors.blue,
-                        chartColors.green,
-                        chartColors.pink,
-                        chartColors.purple
-                    ].slice(0, doctorLabels.length),
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                ...darkThemeOptions,
-                indexAxis: 'y'
-            }
-        });
+        // Gráfico de médicos removido conforme solicitado
     }
 
     function computeUnitDistribution() {
