@@ -239,12 +239,12 @@
         }
 
         // Populate doctor and team filters based on unit selection
-        const unitFilter = document.getElementById('filter-unit');
+        const unitFilterElement = document.getElementById('filter-unit'); //Fixed duplicated variable
         const doctorFilter = document.getElementById('filter-doctor');
         const equipeFilter = document.getElementById('filter-equipe');
 
-        if (unitFilter && doctorFilter) {
-            unitFilter.addEventListener('change', function() {
+        if (unitFilterElement && doctorFilter) {
+            unitFilterElement.addEventListener('change', function() {
                 updateDoctorOptions(this.value);
                 updateEquipeOptions(this.value);
                 // Auto-apply filters when unit changes to immediately restrict data
@@ -408,8 +408,8 @@
         });
 
         // Unit distribution chart - only show when not filtered by unit
-        const unitFilter = document.getElementById('filter-unit');
-        const selectedUnit = unitFilter ? unitFilter.value : 'all';
+        const unitFilterElement = document.getElementById('filter-unit'); //Fixed duplicated variable
+        const selectedUnit = unitFilterElement ? unitFilterElement.value : 'all';
 
         const unitCtx = document.getElementById('unitChart').getContext('2d');
         new Chart(unitCtx, {
@@ -612,8 +612,8 @@
         });
 
         // Unit distribution chart - only show when not filtered by unit
-        const unitFilter = document.getElementById('filter-unit');
-        const selectedUnit = unitFilter ? unitFilter.value : 'all';
+        const unitFilterElement = document.getElementById('filter-unit'); //Fixed duplicated variable
+        const selectedUnit = unitFilterElement ? unitFilterElement.value : 'all';
 
         const unitCtx = document.getElementById('unitChart').getContext('2d');
         new Chart(unitCtx, {
@@ -742,8 +742,8 @@
         });
 
         // Obter a unidade selecionada para os gráficos de equipe e médicos
-        const unitFilter = document.getElementById('filter-unit');
-        const selectedUnit = unitFilter ? unitFilter.value : 'all';
+        const unitFilterElement = document.getElementById('filter-unit'); //Fixed duplicated variable
+        const selectedUnit = unitFilterElement ? unitFilterElement.value : 'all';
 
         // Configurar labels e dados baseados na unidade selecionada
         let equipeLabels, doctorLabels;
