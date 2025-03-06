@@ -1,7 +1,7 @@
 [project]
-name = "repl-nix-workspace"
+name = "icb-transplante-capilar"
 version = "0.1.0"
-description = "Add your description here"
+description = "Sistema de gerenciamento de dados para cirurgia capilar do ICB, projetado para otimizar o registro e acompanhamento de procedimentos médicos com foco em usabilidade e precisão."
 requires-python = ">=3.11"
 dependencies = [
     "flask-cors==4.0.0",

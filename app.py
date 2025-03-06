@@ -111,6 +111,7 @@ def form():
                 {'name': 'observacoes_finais', 'label': 'Observações Finais', 'type': 'textarea'},
             ]
         }
+        logger.debug(f"Form data generated: {form_data}") #Added debug log
         return render_template('form.html', form=form_data, data={})
     except Exception as e:
         logger.error(f"Error in form route: {str(e)}")
