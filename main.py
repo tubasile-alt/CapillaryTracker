@@ -8,12 +8,14 @@ from utils import validate_date, validate_time, validate_numeric, validate_range
 # Configuração das opções por unidade
 UNIDADES_MEDICOS = {
     "Ribeirão Preto": ["Dr. Arthur", "Dr. Daniel"],
-    "Campinas": ["Dra. Isadora", "Dra. Adriana"]
+    "Campinas": ["Dra. Isadora", "Dra. Adriana"],
+    "Rio de Janeiro": ["Dra. Paula", "Dra. Ana Clara"]
 }
 
 UNIDADES_EQUIPES = {
     "Ribeirão Preto": ["Aline", "Natália", "Ana"],
-    "Campinas": ["Juliana", "Gabriela"]
+    "Campinas": ["Juliana", "Gabriela"],
+    "Rio de Janeiro": ["Mariana Moro", "Mariana Silva", "Dayane", "Assistente Extra"]
 }
 
 class HairSurgeryForm:

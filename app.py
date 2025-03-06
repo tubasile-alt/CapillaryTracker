@@ -54,7 +54,7 @@ def novo_cadastro():
             {'name': 'data', 'label': 'Data da Cirurgia', 'type': 'date', 'required': True},
             {'name': 'nome', 'label': 'Nome do Paciente', 'type': 'text', 'required': True},
             {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True, 
-             'options': ['Ribeirão Preto', 'Campinas']},
+             'options': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']},
             {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'required': True},
             {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'required': True},
             {'name': 'hora_cirurgia', 'label': 'Hora da Cirurgia (HH:MM)', 'type': 'time', 'required': True, 'default': '08:00'},
@@ -204,7 +204,8 @@ def get_medicos(unidade):
     # Médicos por unidade conforme especificação
     medicos_por_unidade = {
         'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
-        'Campinas': ['Dra. Isadora', 'Dra. Adriana']
+        'Campinas': ['Dra. Isadora', 'Dra. Adriana'],
+        'Rio de Janeiro': ['Dra. Paula', 'Dra. Ana Clara']
     }
     return {'medicos': medicos_por_unidade.get(unidade, [])}
 
@@ -214,7 +215,8 @@ def get_equipe(unidade):
     # Equipe por unidade conforme especificação
     equipe_por_unidade = {
         'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
-        'Campinas': ['Juliana', 'Gabriela']
+        'Campinas': ['Juliana', 'Gabriela'],
+        'Rio de Janeiro': ['Mariana Moro', 'Mariana Silva', 'Dayane', 'Assistente Extra']
     }
     return {'equipe': equipe_por_unidade.get(unidade, [])}
 
