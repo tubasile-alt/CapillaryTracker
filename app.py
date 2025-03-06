@@ -1,7 +1,7 @@
 import os
 import logging
 import traceback
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
 import pandas as pd
 from datetime import datetime
 from fuzzywuzzy import fuzz
@@ -16,13 +16,48 @@ logger = logging.getLogger(__name__)
 
 logger.info("Starting Flask application...")
 
-app = Flask(__name__)
+# Initialize application directories
+def initialize_app():
+    """Garante que as pastas necessárias existem"""
+    logger.info("Initializing application directories")
+    try:
+        # Criar diretório de dados se não existir
+        data_dir = os.path.join(os.getcwd(), 'data')
+        os.makedirs(data_dir, exist_ok=True)
+
+        # Criar diretório de uploads se não existir
+        uploads_dir = os.path.join(os.getcwd(), 'static', 'uploads')
+        os.makedirs(uploads_dir, exist_ok=True)
+
+        logger.info("Application directories initialized successfully")
+    except Exception as e:
+        logger.error(f"Error initializing directories: {str(e)}\n{traceback.format_exc()}")
+
+# Create Flask app
+app = Flask(__name__, 
+    static_folder='static',
+    static_url_path='/static',
+    template_folder='templates'
+)
 app.secret_key = os.urandom(24)
+
+# Initialize directories when the app starts
+initialize_app()
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                             'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route('/')
 def index():
+    """Rota principal - redireciona para a página de novo cadastro"""
     logger.info("Accessing index route")
-    return render_template('base.html')
+    try:
+        return redirect(url_for('novo_cadastro'))
+    except Exception as e:
+        logger.error(f"Error in index route: {str(e)}\n{traceback.format_exc()}")
+        return "Error accessing the application", 500
 
 @app.route('/ping')
 def ping():
@@ -404,19 +439,20 @@ def filter_dashboard():
         unit = request.args.get('unit', 'all')
         doctor = request.args.get('doctor', 'all')
         equipe = request.args.get('equipe', 'all')
-        
+
+
         # Médicos por unidade para filtros
         medicos_por_unidade = {
             'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
             'Campinas': ['Dra. Isadora', 'Dra. Adriana']
         }
-        
+
         # Equipe por unidade para filtros
         equipe_por_unidade = {
             'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
             'Campinas': ['Juliana', 'Gabriela']
         }
-        
+
         # Load data
         filename = os.path.join('data', 'cirurgias.xlsx')
         if not os.path.exists(filename):
@@ -429,12 +465,12 @@ def filter_dashboard():
                 'avg_follicles': 0,
                 'avg_density': 0
             })
-        
+
         df = pd.read_excel(filename)
-        
+
         # Preencher valores nulos com zero para evitar erros de cálculo
         df = df.fillna(0)
-        
+
         # Apply filters
         if year != 'all':
             try:
@@ -444,7 +480,7 @@ def filter_dashboard():
                 if 'ano' not in df.columns:
                     df['ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.year
                 df = df[df['ano'] == int(year)]
-        
+
         if month != 'all':
             try:
                 df = df[df['mes'] == int(month)]
@@ -453,17 +489,17 @@ def filter_dashboard():
                 if 'mes' not in df.columns:
                     df['mes'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.month
                 df = df[df['mes'] == int(month)]
-        
+
         # Apply unit filter with restrictions on doctors and team members
         if unit != 'all' and 'unidade' in df.columns:
             # Filter by unit
             df = df[df['unidade'] == unit]
-            
+
             # Restrict doctors to only those from this unit 
             if 'medico' in df.columns:
                 valid_doctors = medicos_por_unidade.get(unit, [])
                 df = df[df['medico'].isin(valid_doctors)]
-            
+
             # Restrict team members to only those from this unit
             if 'equipe' in df.columns:
                 valid_team = equipe_por_unidade.get(unit, [])
@@ -477,23 +513,23 @@ def filter_dashboard():
                 else:
                     # For columns with single values
                     df = df[df['equipe'].isin(valid_team)]
-        
+
         # Additional filters (only apply if not restricted by unit)
         if doctor != 'all' and 'medico' in df.columns:
             df = df[df['medico'] == doctor]
-        
+
         if equipe != 'all' and 'equipe' in df.columns:
             df = df[df['equipe'] == equipe]
-        
+
         # Process filtered data
         dashboard_data = process_dashboard_data(df)
-        
+
         # Log data being returned for debugging
         logger.info(f"Returning dashboard data with {len(df)} records")
         logger.info(f"Total surgeries: {dashboard_data['total_surgeries']}")
-        
+
         return jsonify(dashboard_data)
-    
+
     except Exception as e:
         logger.error(f"Error filtering dashboard data: {str(e)}\n{traceback.format_exc()}")
         return jsonify({
@@ -629,7 +665,7 @@ def save_necrose():
     """Endpoint para salvar dados de necrose"""
     logger.info("Saving necrose data")
     try:
-        # Verificar se existem dados do formulário
+                # Verificar se existem dados do formulário
         if not request.form:
             return jsonify({'success': False, 'error': 'Dados do formulário não encontrados'})
 
@@ -651,7 +687,7 @@ def save_necrose():
 
         # Carregar arquivo de necroses existente ou criar novo
         filename = os.path.join(data_dir, "necroses.xlsx")
-        if os.path.path.exists(filename):
+        if os.path.exists(filename):
             df = pd.read_excel(filename)
         else:
             df = pd.DataFrame(columns=[
@@ -680,8 +716,12 @@ def save_necrose():
 if __name__ == '__main__':
     try:
         # ALWAYS serve the app on port 5000
-        port = 5000
+        port = int(os.environ.get('PORT', 5000))
         logger.info(f"Starting Flask server on port {port}...")
+        logger.info(f"Application root path: {app.root_path}")
+        logger.info(f"Static folder: {app.static_folder}")
+        logger.info(f"Template folder: {app.template_folder}")
+
         app.run(host='0.0.0.0', port=port, debug=True)
     except Exception as e:
         logger.error(f"Failed to start Flask server: {str(e)}\n{traceback.format_exc()}")
