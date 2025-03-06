@@ -13,6 +13,11 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 app.secret_key = os.urandom(24)
 
+@app.route('/health')
+def health():
+    """Rota simples para verificação de saúde do servidor"""
+    return "OK"
+
 @app.route('/test')
 def test():
     """Rota de teste para verificar conectividade"""
@@ -24,18 +29,10 @@ def index():
     """Rota principal - serve a página de dashboard"""
     logger.info("Accessing index route")
     try:
-        # Inicializar dados vazios para o dashboard
-        dashboard_data = {
-            'total_surgeries': 0,
-            'avg_follicles': 0,
-            'avg_density': 0,
-            'labels': [],
-            'datasets': [],
-            'update_time': datetime.now().strftime('%d/%m/%Y %H:%M')
-        }
-        return render_template('dashboard.html', data=dashboard_data)
+        # Temporariamente retornando uma resposta simples para teste
+        return "Sistema de Cirurgia Capilar - OK"
     except Exception as e:
-        logger.error(f"Error in index route: {str(e)}")
+        logger.exception(f"Erro crítico na rota index: {str(e)}")
         return "Error accessing the application", 500
 
 @app.route('/form')
@@ -159,7 +156,7 @@ if __name__ == "__main__":
     try:
         # ALWAYS serve the app on port 5000
         logger.info(f"Starting Flask server on port 5000")
-        app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+        app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
     except Exception as e:
         logger.error(f"Failed to start server: {str(e)}")
         raise
