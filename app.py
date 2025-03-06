@@ -24,6 +24,11 @@ def index():
     logger.info("Accessing index route")
     return render_template('base.html')
 
+@app.route('/ping')
+def ping():
+    logger.info("Ping route accessed")
+    return "Application is running!"
+
 @app.route('/novo_cadastro', methods=['GET', 'POST'])
 def novo_cadastro():
     logger.info("Accessing novo_cadastro route")
