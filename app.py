@@ -1,8 +1,7 @@
 import os
 import logging
 import traceback
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
-from flask_cors import CORS
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import pandas as pd
 from datetime import datetime
 from fuzzywuzzy import fuzz
@@ -17,132 +16,13 @@ logger = logging.getLogger(__name__)
 
 logger.info("Starting Flask application...")
 
-# Initialize application directories
-def initialize_app():
-    """Garante que as pastas necessárias existem"""
-    logger.info("Initializing application directories")
-    try:
-        # Criar diretório de dados se não existir
-        data_dir = os.path.join(os.getcwd(), 'data')
-        os.makedirs(data_dir, exist_ok=True)
-
-        # Criar diretório de uploads se não existir
-        uploads_dir = os.path.join(os.getcwd(), 'static', 'uploads')
-        os.makedirs(uploads_dir, exist_ok=True)
-
-        logger.info("Application directories initialized successfully")
-    except Exception as e:
-        logger.error(f"Error initializing directories: {str(e)}\n{traceback.format_exc()}")
-
-# Create Flask app
-app = Flask(__name__, 
-    static_folder='static',
-    static_url_path='/static',
-    template_folder='templates'
-)
-CORS(app)  # Enable CORS for all routes
+app = Flask(__name__)
 app.secret_key = os.urandom(24)
-
-# Initialize directories when the app starts
-initialize_app()
-
-@app.after_request
-def after_request(response):
-    """Add headers to allow cross-origin requests and improve browser compatibility"""
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('X-Content-Type-Options', 'nosniff')
-    return response
-
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-                             'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route('/')
 def index():
-    """Rota principal - agora serve a página de novo cadastro diretamente"""
     logger.info("Accessing index route")
-    try:
-        # Estrutura do formulário completo
-        form_data = {
-            'title': 'Cadastro de Cirurgia Capilar',
-            'fields': [
-                # Dados Gerais da Cirurgia
-                {'name': 'data', 'label': 'Data da Cirurgia', 'type': 'date', 'required': True},
-                {'name': 'nome', 'label': 'Nome do Paciente', 'type': 'text', 'required': True},
-                {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True, 
-                 'options': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']},
-                {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'required': True},
-                {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'required': True},
-                {'name': 'hora_cirurgia', 'label': 'Hora da Cirurgia (HH:MM)', 'type': 'time', 'required': True, 'default': '08:00'},
-                {'name': 'tempo_cirurgia', 'label': 'Tempo de Cirurgia (horas)', 'type': 'number', 'required': True},
-
-                # Informações do Implante
-                {'name': 'total_foliculos', 'label': 'Total de Folículos', 'type': 'number', 'required': True},
-                {'name': 'frente', 'label': 'Frente', 'type': 'number', 'required': False},
-                {'name': 'densidade_scketh', 'label': 'Densidade Scketh', 'type': 'number', 'required': False},
-                {'name': 'coroa', 'label': 'Coroa', 'type': 'number', 'required': False},
-                {'name': 'scalpe', 'label': 'Scalpe', 'type': 'number', 'required': False},
-                {'name': 'peninsula_direita', 'label': 'Península Direita', 'type': 'number', 'required': False},
-                {'name': 'peninsula_esquerda', 'label': 'Península Esquerda', 'type': 'number', 'required': False},
-
-                # Procedimentos e Ferramentas
-                {'name': 'safira', 'label': 'Safira?', 'type': 'select', 'required': True,
-                 'options': ['Sim', 'Não']},
-                {'name': 'punch', 'label': 'Punch (mm)', 'type': 'select', 'required': True,
-                 'options': ['0.75', '0.85', '0.95']},
-                {'name': 'solucao_frente', 'label': 'Solução Frente (ml)', 'type': 'number', 'required': True},
-                {'name': 'solucao_coroa', 'label': 'Solução Coroa (ml)', 'type': 'number', 'required': False},
-                {'name': 'solucao_xilo_frente', 'label': 'Solução Xilo Frente (ml)', 'type': 'number', 'required': False},
-
-                # Extração
-                {'name': 'q1_area', 'label': 'Quadrante 1 - Área', 'type': 'number', 'required': True},
-                {'name': 'q1_furos', 'label': 'Quadrante 1 - Número de Furos', 'type': 'number', 'required': True},
-                {'name': 'q1_fios', 'label': 'Quadrante 1 - Número de Fios Retirados', 'type': 'number', 'required': True},
-
-                {'name': 'q2_area', 'label': 'Quadrante 2 - Área', 'type': 'number', 'required': True},
-                {'name': 'q2_furos', 'label': 'Quadrante 2 - Número de Furos', 'type': 'number', 'required': True},
-                {'name': 'q2_fios', 'label': 'Quadrante 2 - Número de Fios Retirados', 'type': 'number', 'required': True},
-
-                {'name': 'q3_area', 'label': 'Quadrante 3 - Área', 'type': 'number', 'required': True},
-                {'name': 'q3_furos', 'label': 'Quadrante 3 - Número de Furos', 'type': 'number', 'required': True},
-                {'name': 'q3_fios', 'label': 'Quadrante 3 - Número de Fios Retirados', 'type': 'number', 'required': True},
-
-                {'name': 'q4_area', 'label': 'Quadrante 4 - Área', 'type': 'number', 'required': True},
-                {'name': 'q4_furos', 'label': 'Quadrante 4 - Número de Furos', 'type': 'number', 'required': True},
-                {'name': 'q4_fios', 'label': 'Quadrante 4 - Número de Fios Retirados', 'type': 'number', 'required': True},
-
-                # Avaliação Intraoperatória
-                {'name': 'infiltracao', 'label': 'Infiltração (1-3)', 'type': 'select', 'required': True,
-                 'options': ['1', '2', '3']},
-                {'name': 'sedacao', 'label': 'Sedação (1-3)', 'type': 'select', 'required': True,
-                 'options': ['1', '2', '3']},
-                {'name': 'sangramento', 'label': 'Sangramento (1-3)', 'type': 'select', 'required': True,
-                 'options': ['1', '2', '3']},
-
-                # Histórico do Paciente
-                {'name': 'implante_secundario', 'label': 'Implante Secundário?', 'type': 'select', 'required': True,
-                 'options': ['Sim', 'Não']},
-                {'name': 'transamin', 'label': 'Transamin?', 'type': 'select', 'required': True,
-                 'options': ['Sim', 'Não']},
-                {'name': 'tadalafila', 'label': 'Tadalafila?', 'type': 'select', 'required': True,
-                 'options': ['Sim', 'Não']},
-                {'name': 'diprospam', 'label': 'Diprospam/Beta 30?', 'type': 'select', 'required': True,
-                 'options': ['Sim', 'Não']},
-                {'name': 'fumante', 'label': 'Fumante?', 'type': 'select', 'required': True,
-                 'options': ['Sim', 'Não']},
-                {'name': 'antecedentes', 'label': 'Antecedentes Pessoais', 'type': 'textarea', 'required': False},
-
-                # Comentários e Finalização
-                {'name': 'comentarios', 'label': 'Comentários', 'type': 'textarea', 'required': False}
-            ]
-        }
-        return render_template('form.html', form=form_data, data={})
-    except Exception as e:
-        logger.error(f"Error in index route: {str(e)}\n{traceback.format_exc()}")
-        return "Error accessing the application", 500
+    return render_template('base.html')
 
 @app.route('/ping')
 def ping():
@@ -251,88 +131,77 @@ def save_to_excel(data):
     """Salva os dados em um arquivo Excel."""
     logger.info("Salvando dados na planilha Excel...")
 
+    # Converter campos vazios para "0"
+    for key in data:
+        if data[key] == '' or data[key] is None:
+            data[key] = '0'
+
+    # Verificar se data é uma string de data válida, caso contrário usar a data atual
     try:
-        # Create data directory if it doesn't exist
-        data_dir = os.path.join(os.getcwd(), 'data')
-        os.makedirs(data_dir, exist_ok=True)
-
-        filename = os.path.join(data_dir, "cirurgias.xlsx")
-
-        # Converter campos vazios para "0"
-        for key in data:
-            if data[key] == '' or data[key] is None:
-                data[key] = '0'
-
-        # Verificar se data é uma string de data válida, caso contrário usar a data atual
-        try:
-            if 'data' in data and data['data']:
-                pd.to_datetime(data['data'])
-            else:
-                data['data'] = datetime.now().strftime('%d/%m/%Y')
-        except:
+        if 'data' in data and data['data']:
+            pd.to_datetime(data['data'])
+        else:
             data['data'] = datetime.now().strftime('%d/%m/%Y')
+    except:
+        data['data'] = datetime.now().strftime('%d/%m/%Y')
 
-        # Calcular dados adicionais
-        if all(key in data for key in ['q1_area', 'q1_furos', 'q1_fios']):
-            try:
-                # Converter strings para números
-                for quadrante in range(1, 5):
-                    for campo in ['area', 'furos', 'fios']:
-                        key = f'q{quadrante}_{campo}'
-                        if key in data:
-                            try:
-                                data[key] = float(data[key])
-                            except (ValueError, TypeError):
-                                data[key] = 0
-
-                # Calcular densidade de extração por quadrante (furos/área)
-                data['q1_densidade'] = data['q1_furos'] / data['q1_area'] if data['q1_area'] > 0 else 0
-                data['q2_densidade'] = data['q2_furos'] / data['q2_area'] if data['q2_area'] > 0 else 0
-                data['q3_densidade'] = data['q3_furos'] / data['q3_area'] if data['q3_area'] > 0 else 0
-                data['q4_densidade'] = data['q4_furos'] / data['q4_area'] if data['q4_area'] > 0 else 0
-
-                # Calcular taxa de quebra (fios/furos em porcentagem)
-                data['q1_taxa_quebra'] = (1 - data['q1_fios'] / data['q1_furos']) * 100 if data['q1_furos'] > 0 else 0
-                data['q2_taxa_quebra'] = (1 - data['q2_fios'] / data['q2_furos']) * 100 if data['q2_furos'] > 0 else 0
-                data['q3_taxa_quebra'] = (1 - data['q3_fios'] / data['q3_furos']) * 100 if data['q3_furos'] > 0 else 0
-                data['q4_taxa_quebra'] = (1 - data['q4_fios'] / data['q4_furos']) * 100 if data['q4_furos'] > 0 else 0
-
-                # Converter de volta para string para manter consistência de tipos no dataframe
-                for key in data:
-                    if isinstance(data[key], float):
-                        # Arredondar para baixo e sem casas decimais
-                        data[key] = str(int(data[key]))
-            except Exception as e:
-                logger.error(f"Error calculating derived values: {str(e)}")
-                logger.error(traceback.format_exc())
-
-        # Criar um DataFrame com os dados
-        df_new = pd.DataFrame([data])
-
-        # Nome do arquivo Excel
-
+    # Calcular dados adicionais
+    if all(key in data for key in ['q1_area', 'q1_furos', 'q1_fios']):
         try:
-            # Verificar se o arquivo existe
-            if os.path.exists(filename):
-                # Append to existing file
-                df_existing = pd.read_excel(filename)
-                df_combined = pd.concat([df_existing, df_new], ignore_index=True)
-                df_combined.to_excel(filename, index=False)
-            else:
-                # Create new file
-                df_new.to_excel(filename, index=False)
+            # Converter strings para números
+            for quadrante in range(1, 5):
+                for campo in ['area', 'furos', 'fios']:
+                    key = f'q{quadrante}_{campo}'
+                    if key in data:
+                        try:
+                            data[key] = float(data[key])
+                        except (ValueError, TypeError):
+                            data[key] = 0
 
-            logger.info(f"Dados salvos com sucesso em {filename}")
-            return True
+            # Calcular densidade de extração por quadrante (furos/área)
+            data['q1_densidade'] = data['q1_furos'] / data['q1_area'] if data['q1_area'] > 0 else 0
+            data['q2_densidade'] = data['q2_furos'] / data['q2_area'] if data['q2_area'] > 0 else 0
+            data['q3_densidade'] = data['q3_furos'] / data['q3_area'] if data['q3_area'] > 0 else 0
+            data['q4_densidade'] = data['q4_furos'] / data['q4_area'] if data['q4_area'] > 0 else 0
+
+            # Calcular taxa de quebra (fios/furos em porcentagem)
+            data['q1_taxa_quebra'] = (1 - data['q1_fios'] / data['q1_furos']) * 100 if data['q1_furos'] > 0 else 0
+            data['q2_taxa_quebra'] = (1 - data['q2_fios'] / data['q2_furos']) * 100 if data['q2_furos'] > 0 else 0
+            data['q3_taxa_quebra'] = (1 - data['q3_fios'] / data['q3_furos']) * 100 if data['q3_furos'] > 0 else 0
+            data['q4_taxa_quebra'] = (1 - data['q4_fios'] / data['q4_furos']) * 100 if data['q4_furos'] > 0 else 0
+
+            # Converter de volta para string para manter consistência de tipos no dataframe
+            for key in data:
+                if isinstance(data[key], float):
+                    # Arredondar para baixo e sem casas decimais
+                    data[key] = str(int(data[key]))
         except Exception as e:
-            logger.error(f"Erro ao salvar dados no Excel: {str(e)}")
+            logger.error(f"Error calculating derived values: {str(e)}")
             logger.error(traceback.format_exc())
-            raise
+
+    # Criar um DataFrame com os dados
+    df_new = pd.DataFrame([data])
+
+    # Nome do arquivo Excel
+    filename = "cirurgias.xlsx"
+
+    try:
+        # Verificar se o arquivo existe
+        if os.path.exists(filename):
+            # Append to existing file
+            df_existing = pd.read_excel(filename)
+            df_combined = pd.concat([df_existing, df_new], ignore_index=True)
+            df_combined.to_excel(filename, index=False)
+        else:
+            # Create new file
+            df_new.to_excel(filename, index=False)
+
+        logger.info(f"Dados salvos com sucesso em {filename}")
+        return True
     except Exception as e:
-        logger.error(f"Erro geral em save_to_excel: {str(e)}")
+        logger.error(f"Erro ao salvar dados no Excel: {str(e)}")
         logger.error(traceback.format_exc())
         raise
-
 
 @app.route('/get_medicos/<unidade>')
 def get_medicos(unidade):
@@ -482,7 +351,7 @@ def dashboard():
     logger.info("Accessing dashboard route")
     try:
         # Se o arquivo Excel existir, carregar os dados para o dashboard
-        filename = os.path.join('data', 'cirurgias.xlsx')
+        filename = "cirurgias.xlsx"
         if os.path.exists(filename):
             # Carregar o dataframe
             df = pd.read_excel(filename)
@@ -524,22 +393,21 @@ def filter_dashboard():
         unit = request.args.get('unit', 'all')
         doctor = request.args.get('doctor', 'all')
         equipe = request.args.get('equipe', 'all')
-
-
+        
         # Médicos por unidade para filtros
         medicos_por_unidade = {
             'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
             'Campinas': ['Dra. Isadora', 'Dra. Adriana']
         }
-
+        
         # Equipe por unidade para filtros
         equipe_por_unidade = {
             'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
             'Campinas': ['Juliana', 'Gabriela']
         }
-
+        
         # Load data
-        filename = os.path.join('data', 'cirurgias.xlsx')
+        filename = "cirurgias.xlsx"
         if not os.path.exists(filename):
             return jsonify({
                 'labels': [],
@@ -550,12 +418,12 @@ def filter_dashboard():
                 'avg_follicles': 0,
                 'avg_density': 0
             })
-
+        
         df = pd.read_excel(filename)
-
+        
         # Preencher valores nulos com zero para evitar erros de cálculo
         df = df.fillna(0)
-
+        
         # Apply filters
         if year != 'all':
             try:
@@ -565,7 +433,7 @@ def filter_dashboard():
                 if 'ano' not in df.columns:
                     df['ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.year
                 df = df[df['ano'] == int(year)]
-
+        
         if month != 'all':
             try:
                 df = df[df['mes'] == int(month)]
@@ -574,17 +442,17 @@ def filter_dashboard():
                 if 'mes' not in df.columns:
                     df['mes'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.month
                 df = df[df['mes'] == int(month)]
-
+        
         # Apply unit filter with restrictions on doctors and team members
         if unit != 'all' and 'unidade' in df.columns:
             # Filter by unit
             df = df[df['unidade'] == unit]
-
+            
             # Restrict doctors to only those from this unit 
             if 'medico' in df.columns:
                 valid_doctors = medicos_por_unidade.get(unit, [])
                 df = df[df['medico'].isin(valid_doctors)]
-
+            
             # Restrict team members to only those from this unit
             if 'equipe' in df.columns:
                 valid_team = equipe_por_unidade.get(unit, [])
@@ -598,23 +466,23 @@ def filter_dashboard():
                 else:
                     # For columns with single values
                     df = df[df['equipe'].isin(valid_team)]
-
+        
         # Additional filters (only apply if not restricted by unit)
         if doctor != 'all' and 'medico' in df.columns:
             df = df[df['medico'] == doctor]
-
+        
         if equipe != 'all' and 'equipe' in df.columns:
             df = df[df['equipe'] == equipe]
-
+        
         # Process filtered data
         dashboard_data = process_dashboard_data(df)
-
+        
         # Log data being returned for debugging
         logger.info(f"Returning dashboard data with {len(df)} records")
         logger.info(f"Total surgeries: {dashboard_data['total_surgeries']}")
-
+        
         return jsonify(dashboard_data)
-
+    
     except Exception as e:
         logger.error(f"Error filtering dashboard data: {str(e)}\n{traceback.format_exc()}")
         return jsonify({
@@ -633,7 +501,7 @@ def download_excel():
     """Endpoint to download the Excel data file"""
     logger.info("Downloading Excel file")
     try:
-        filename = os.path.join('data', 'cirurgias.xlsx')
+        filename = "cirurgias.xlsx"
         if os.path.exists(filename):
             # Return the file for download
             from flask import send_file
@@ -662,17 +530,13 @@ def search_patients():
     try:
         term = request.args.get('term', '').lower()
         unit = request.args.get('unit', '')
-
+        
         if not term or len(term) < 2:
             return jsonify([])
 
         # Carregar dados dos pacientes
-        filename = os.path.join('data', 'cirurgias.xlsx')
-        if not os.path.exists(filename):
-            return jsonify([])
-
-        df = pd.read_excel(filename)
-
+        df = pd.read_excel("cirurgias.xlsx")
+        
         # Filtrar por unidade se especificado
         if unit:
             df = df[df['unidade'] == unit]
@@ -711,26 +575,26 @@ def necrose_summary():
     """Endpoint para retornar o resumo de necroses"""
     logger.info("Getting necrose summary")
     try:
-        # Carregar dados de cirurgias e necroses
-        cirurgias_file = os.path.join('data', 'cirurgias.xlsx')
-        necroses_file = os.path.join('data', 'necroses.xlsx')
-
+        # Carregar dados de cirurgias
+        cirurgias_file = "cirurgias.xlsx"
         total_surgeries = 0
         if os.path.exists(cirurgias_file):
             df_cirurgias = pd.read_excel(cirurgias_file)
             total_surgeries = len(df_cirurgias)
-
+        
+        # Carregar dados de necroses
+        necroses_file = "necroses.xlsx"
         total_necroses = 0
         if os.path.exists(necroses_file):
             df_necroses = pd.read_excel(necroses_file)
             total_necroses = len(df_necroses)
-
+        
         # Calcular taxa de necrose
         necrose_rate = "0%"
         if total_surgeries > 0:
             taxa = (total_necroses / total_surgeries) * 100
             necrose_rate = f"{taxa:.1f}%"
-
+        
         return jsonify({
             'total_surgeries': total_surgeries,
             'total_necroses': total_necroses,
@@ -750,34 +614,46 @@ def save_necrose():
     """Endpoint para salvar dados de necrose"""
     logger.info("Saving necrose data")
     try:
-                # Verificar se existem dados do formulário
+        # Verificar se existem dados do formulário
         if not request.form:
             return jsonify({'success': False, 'error': 'Dados do formulário não encontrados'})
-
+        
         # Obter dados do formulário
         patient_id = request.form.get('patient_id')
         patient_unit = request.form.get('patient_unit')
         lesion_count = request.form.get('lesion_count')
         largest_lesion = request.form.get('largest_lesion')
         affected_band = request.form.get('affected_band')
-
+        
         # Validar dados recebidos
         required_fields = ['patient_id', 'lesion_count', 'largest_lesion', 'affected_band']
         if not all(request.form.get(field) for field in required_fields):
             return jsonify({'success': False, 'error': 'Dados incompletos'})
 
-        # Criar diretório de dados se não existir
-        data_dir = os.path.join(os.getcwd(), 'data')
-        os.makedirs(data_dir, exist_ok=True)
-
+        # Processar arquivos de foto
+        photo_paths = []
+        photo_dir = os.path.join('static', 'uploads', 'necrose_photos')
+        
+        # Criar diretório se não existir
+        os.makedirs(photo_dir, exist_ok=True)
+        
+        for i in range(1, 4):  # Para cada uma das 3 fotos possíveis
+            photo_key = f'photo{i}'
+            if photo_key in request.files and request.files[photo_key].filename != '':
+                file = request.files[photo_key]
+                filename = f"necrose_{patient_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{i}.jpg"
+                file_path = os.path.join(photo_dir, filename)
+                file.save(file_path)
+                photo_paths.append(file_path)
+        
         # Carregar arquivo de necroses existente ou criar novo
-        filename = os.path.join(data_dir, "necroses.xlsx")
+        filename = "necroses.xlsx"
         if os.path.exists(filename):
             df = pd.read_excel(filename)
         else:
             df = pd.DataFrame(columns=[
                 'patient_id', 'patient_unit', 'data_registro', 'lesion_count', 
-                'largest_lesion', 'affected_band'
+                'largest_lesion', 'affected_band', 'photo_paths'
             ])
 
         # Adicionar novo registro
@@ -787,7 +663,8 @@ def save_necrose():
             'data_registro': datetime.now().strftime('%d/%m/%Y'),
             'lesion_count': lesion_count,
             'largest_lesion': largest_lesion,
-            'affected_band': affected_band
+            'affected_band': affected_band,
+            'photo_paths': ','.join(photo_paths) if photo_paths else ''
         }
 
         df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
@@ -798,24 +675,14 @@ def save_necrose():
         logger.error(f"Error saving necrose data: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/health')
-def health():
-    """Endpoint para verificação de saúde do aplicativo (usado pelo deployment)"""
-    logger.info("Health check endpoint accessed")
-    return "OK", 200
+
 
 if __name__ == '__main__':
     try:
-        # Tentar obter a porta do ambiente ou usar 5000 como padrão
-        port = int(os.environ.get('PORT', 5000))
+        # ALWAYS serve the app on port 5000
+        port = 5000
         logger.info(f"Starting Flask server on port {port}...")
-        logger.info(f"Application root path: {app.root_path}")
-        logger.info(f"Static folder: {app.static_folder}")
-        logger.info(f"Template folder: {app.template_folder}")
-
-        # Quando em modo de produção, desativar o modo de debug
-        debug_mode = os.environ.get('FLASK_ENV') != 'production'
-        app.run(host='0.0.0.0', port=port, debug=debug_mode)
+        app.run(host='0.0.0.0', port=port, debug=True)
     except Exception as e:
         logger.error(f"Failed to start Flask server: {str(e)}\n{traceback.format_exc()}")
         raise
