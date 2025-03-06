@@ -807,7 +807,7 @@ def health():
 if __name__ == '__main__':
     try:
         # Tentar obter a porta do ambiente ou usar 5000 como padrão
-        port = int(os.environ.get('PORT', 5000))
+        port = int(os.environ.get('PORT', 8080))
         logger.info(f"Starting Flask server on port {port}...")
         logger.info(f"Application root path: {app.root_path}")
         logger.info(f"Static folder: {app.static_folder}")
@@ -815,6 +815,8 @@ if __name__ == '__main__':
 
         # Quando em modo de produção, desativar o modo de debug
         debug_mode = os.environ.get('FLASK_ENV') != 'production'
+        
+        # Importante: usar host='0.0.0.0' para que o app seja acessível de fora
         app.run(host='0.0.0.0', port=port, debug=debug_mode)
     except Exception as e:
         logger.error(f"Failed to start Flask server: {str(e)}\n{traceback.format_exc()}")
