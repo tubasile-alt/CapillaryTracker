@@ -724,16 +724,24 @@ def save_necrose():
         logger.error(f"Error saving necrose data: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/health')
+def health():
+    """Endpoint para verificação de saúde do aplicativo (usado pelo deployment)"""
+    logger.info("Health check endpoint accessed")
+    return "OK", 200
+
 if __name__ == '__main__':
     try:
-        # ALWAYS serve the app on port 5000
+        # Tentar obter a porta do ambiente ou usar 5000 como padrão
         port = int(os.environ.get('PORT', 5000))
         logger.info(f"Starting Flask server on port {port}...")
         logger.info(f"Application root path: {app.root_path}")
         logger.info(f"Static folder: {app.static_folder}")
         logger.info(f"Template folder: {app.template_folder}")
 
-        app.run(host='0.0.0.0', port=port, debug=True)
+        # Quando em modo de produção, desativar o modo de debug
+        debug_mode = os.environ.get('FLASK_ENV') != 'production'
+        app.run(host='0.0.0.0', port=port, debug=debug_mode)
     except Exception as e:
         logger.error(f"Failed to start Flask server: {str(e)}\n{traceback.format_exc()}")
         raise
