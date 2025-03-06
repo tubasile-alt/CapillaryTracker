@@ -39,7 +39,74 @@ def form():
     try:
         form_data = {
             'title': 'Cadastro de Cirurgia Capilar',
-            'fields': []  # Campos serão adicionados conforme necessário
+            'fields': [
+                # Dados Gerais
+                {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True,
+                 'options': ['Ribeirão Preto', 'Campinas']},
+                {'name': 'medico', 'label': 'Médico', 'type': 'select_dynamic', 'required': True},
+                {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'required': True},
+                {'name': 'data', 'label': 'Data da Cirurgia', 'type': 'date', 'required': True},
+                {'name': 'hora_inicio', 'label': 'Hora de Início', 'type': 'time', 'required': True},
+                {'name': 'hora_fim', 'label': 'Hora de Término', 'type': 'time', 'required': True},
+                {'name': 'observacoes', 'label': 'Observações', 'type': 'textarea'},
+
+                # Informações do Implante
+                {'name': 'tipo_cirurgia', 'label': 'Tipo de Cirurgia', 'type': 'select', 'required': True,
+                 'options': ['FUE', 'FUT', 'Híbrida']},
+                {'name': 'area_receptora', 'label': 'Área Receptora', 'type': 'text', 'required': True},
+                {'name': 'lamina_fio', 'label': 'Lâmina/Fio', 'type': 'text', 'required': True},
+                {'name': 'punch', 'label': 'Punch', 'type': 'text', 'required': True},
+                {'name': 'tadalafila', 'label': 'Tadalafila', 'type': 'select', 'required': True,
+                 'options': ['Sim', 'Não']},
+                {'name': 'anestesia', 'label': 'Anestesia', 'type': 'text', 'required': True},
+                {'name': 'infiltracao', 'label': 'Infiltração', 'type': 'text', 'required': True},
+
+                # Procedimentos e Ferramentas
+                {'name': 'solucao_frente', 'label': 'Solução Frente', 'type': 'number', 'required': True},
+                {'name': 'solucao_coroa', 'label': 'Solução Coroa', 'type': 'number', 'required': True},
+                {'name': 'solucao_xilo_frente', 'label': 'Solução Xilo Frente', 'type': 'number', 'required': True},
+                {'name': 'solucao_xilo_coroa', 'label': 'Solução Xilo Coroa', 'type': 'number', 'required': True},
+                {'name': 'punch_usado', 'label': 'Punch Utilizado', 'type': 'text', 'required': True},
+
+                # Extração - Quadrante 1
+                {'name': 'q1_area', 'label': 'Quadrante 1 - Área', 'type': 'number', 'required': True},
+                {'name': 'q1_furos', 'label': 'Quadrante 1 - Furos', 'type': 'number', 'required': True},
+                {'name': 'q1_fios', 'label': 'Quadrante 1 - Fios', 'type': 'number', 'required': True},
+
+                # Extração - Quadrante 2
+                {'name': 'q2_area', 'label': 'Quadrante 2 - Área', 'type': 'number', 'required': True},
+                {'name': 'q2_furos', 'label': 'Quadrante 2 - Furos', 'type': 'number', 'required': True},
+                {'name': 'q2_fios', 'label': 'Quadrante 2 - Fios', 'type': 'number', 'required': True},
+
+                # Extração - Quadrante 3
+                {'name': 'q3_area', 'label': 'Quadrante 3 - Área', 'type': 'number', 'required': True},
+                {'name': 'q3_furos', 'label': 'Quadrante 3 - Furos', 'type': 'number', 'required': True},
+                {'name': 'q3_fios', 'label': 'Quadrante 3 - Fios', 'type': 'number', 'required': True},
+
+                # Extração - Quadrante 4
+                {'name': 'q4_area', 'label': 'Quadrante 4 - Área', 'type': 'number', 'required': True},
+                {'name': 'q4_furos', 'label': 'Quadrante 4 - Furos', 'type': 'number', 'required': True},
+                {'name': 'q4_fios', 'label': 'Quadrante 4 - Fios', 'type': 'number', 'required': True},
+
+                # Avaliação Intraoperatória
+                {'name': 'dificuldade_extracao', 'label': 'Dificuldade na Extração', 'type': 'select',
+                 'options': ['Baixa', 'Média', 'Alta']},
+                {'name': 'sangramento', 'label': 'Sangramento', 'type': 'select',
+                 'options': ['Mínimo', 'Moderado', 'Intenso']},
+                {'name': 'observacoes_intra', 'label': 'Observações Intraoperatórias', 'type': 'textarea'},
+
+                # Histórico do Paciente
+                {'name': 'cirurgia_anterior', 'label': 'Cirurgia Anterior', 'type': 'select',
+                 'options': ['Sim', 'Não']},
+                {'name': 'data_anterior', 'label': 'Data da Cirurgia Anterior', 'type': 'date'},
+                {'name': 'medicamentos', 'label': 'Medicamentos em Uso', 'type': 'textarea'},
+                {'name': 'alergias', 'label': 'Alergias', 'type': 'textarea'},
+                {'name': 'comorbidades', 'label': 'Comorbidades', 'type': 'textarea'},
+                {'name': 'tratamentos', 'label': 'Tratamentos Anteriores', 'type': 'textarea'},
+
+                # Comentários e Finalização
+                {'name': 'observacoes_finais', 'label': 'Observações Finais', 'type': 'textarea'},
+            ]
         }
         return render_template('form.html', form=form_data, data={})
     except Exception as e:
