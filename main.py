@@ -19,4 +19,4 @@ if __name__ == "__main__":
     if not os.environ.get('REPL_ID'):
         print("Running in Replit environment - Tkinter interface disabled") #message indicating Tkinter is disabled
     else:
-        app.run(host='0.0.0.0', port=5000) #Run flask app
+        app.run(host='0.0.0.0', port=8080) #Run flask app
