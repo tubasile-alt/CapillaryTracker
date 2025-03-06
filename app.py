@@ -60,7 +60,7 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                              'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     """Rota principal - agora serve a página de novo cadastro diretamente"""
     logger.info("Accessing index route")
@@ -806,7 +806,7 @@ def health():
 
 if __name__ == '__main__':
     try:
-        # Tentar obter a porta do ambiente ou usar 5000 como padrão
+        # Tentar obter a porta do ambiente ou usar 8080 como padrão para Replit
         port = int(os.environ.get('PORT', 8080))
         logger.info(f"Starting Flask server on port {port}...")
         logger.info(f"Application root path: {app.root_path}")
