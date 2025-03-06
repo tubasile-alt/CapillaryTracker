@@ -2,6 +2,7 @@ import os
 import logging
 import traceback
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
+from flask_cors import CORS
 import pandas as pd
 from datetime import datetime
 from fuzzywuzzy import fuzz
@@ -39,10 +40,20 @@ app = Flask(__name__,
     static_url_path='/static',
     template_folder='templates'
 )
+CORS(app)  # Enable CORS for all routes
 app.secret_key = os.urandom(24)
 
 # Initialize directories when the app starts
 initialize_app()
+
+@app.after_request
+def after_request(response):
+    """Add headers to allow cross-origin requests and improve browser compatibility"""
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('X-Content-Type-Options', 'nosniff')
+    return response
 
 @app.route('/favicon.ico')
 def favicon():
