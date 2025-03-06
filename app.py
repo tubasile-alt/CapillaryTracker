@@ -13,6 +13,12 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 app.secret_key = os.urandom(24)
 
+@app.route('/test')
+def test():
+    """Rota de teste para verificar conectividade"""
+    logger.info("Test route accessed")
+    return "Servidor Flask está funcionando!"
+
 @app.route('/')
 def index():
     """Rota principal - serve a página de dashboard"""
@@ -151,11 +157,9 @@ def get_equipe(unidade):
 
 if __name__ == "__main__":
     try:
-        import os
-        # Use PORT environment variable with fallback to 8080
-        port = int(os.environ.get("PORT", 8080))
-        logger.info(f"Starting Flask server on port {port}")
-        app.run(host="0.0.0.0", port=port, debug=True)
+        # ALWAYS serve the app on port 5000
+        logger.info(f"Starting Flask server on port 5000")
+        app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
     except Exception as e:
         logger.error(f"Failed to start server: {str(e)}")
         raise
