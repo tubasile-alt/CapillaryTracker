@@ -50,6 +50,7 @@ args = "python main.py"
 
 [deployment]
 run = ["sh", "-c", "python app.py"]
+deploymentTarget = "scheduled"
 
 [[ports]]
 localPort = 3000
