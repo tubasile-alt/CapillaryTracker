@@ -131,77 +131,88 @@ def save_to_excel(data):
     """Salva os dados em um arquivo Excel."""
     logger.info("Salvando dados na planilha Excel...")
 
-    # Converter campos vazios para "0"
-    for key in data:
-        if data[key] == '' or data[key] is None:
-            data[key] = '0'
-
-    # Verificar se data é uma string de data válida, caso contrário usar a data atual
     try:
-        if 'data' in data and data['data']:
-            pd.to_datetime(data['data'])
-        else:
-            data['data'] = datetime.now().strftime('%d/%m/%Y')
-    except:
-        data['data'] = datetime.now().strftime('%d/%m/%Y')
+        # Create data directory if it doesn't exist
+        data_dir = os.path.join(os.getcwd(), 'data')
+        os.makedirs(data_dir, exist_ok=True)
 
-    # Calcular dados adicionais
-    if all(key in data for key in ['q1_area', 'q1_furos', 'q1_fios']):
+        filename = os.path.join(data_dir, "cirurgias.xlsx")
+
+        # Converter campos vazios para "0"
+        for key in data:
+            if data[key] == '' or data[key] is None:
+                data[key] = '0'
+
+        # Verificar se data é uma string de data válida, caso contrário usar a data atual
         try:
-            # Converter strings para números
-            for quadrante in range(1, 5):
-                for campo in ['area', 'furos', 'fios']:
-                    key = f'q{quadrante}_{campo}'
-                    if key in data:
-                        try:
-                            data[key] = float(data[key])
-                        except (ValueError, TypeError):
-                            data[key] = 0
+            if 'data' in data and data['data']:
+                pd.to_datetime(data['data'])
+            else:
+                data['data'] = datetime.now().strftime('%d/%m/%Y')
+        except:
+            data['data'] = datetime.now().strftime('%d/%m/%Y')
 
-            # Calcular densidade de extração por quadrante (furos/área)
-            data['q1_densidade'] = data['q1_furos'] / data['q1_area'] if data['q1_area'] > 0 else 0
-            data['q2_densidade'] = data['q2_furos'] / data['q2_area'] if data['q2_area'] > 0 else 0
-            data['q3_densidade'] = data['q3_furos'] / data['q3_area'] if data['q3_area'] > 0 else 0
-            data['q4_densidade'] = data['q4_furos'] / data['q4_area'] if data['q4_area'] > 0 else 0
+        # Calcular dados adicionais
+        if all(key in data for key in ['q1_area', 'q1_furos', 'q1_fios']):
+            try:
+                # Converter strings para números
+                for quadrante in range(1, 5):
+                    for campo in ['area', 'furos', 'fios']:
+                        key = f'q{quadrante}_{campo}'
+                        if key in data:
+                            try:
+                                data[key] = float(data[key])
+                            except (ValueError, TypeError):
+                                data[key] = 0
 
-            # Calcular taxa de quebra (fios/furos em porcentagem)
-            data['q1_taxa_quebra'] = (1 - data['q1_fios'] / data['q1_furos']) * 100 if data['q1_furos'] > 0 else 0
-            data['q2_taxa_quebra'] = (1 - data['q2_fios'] / data['q2_furos']) * 100 if data['q2_furos'] > 0 else 0
-            data['q3_taxa_quebra'] = (1 - data['q3_fios'] / data['q3_furos']) * 100 if data['q3_furos'] > 0 else 0
-            data['q4_taxa_quebra'] = (1 - data['q4_fios'] / data['q4_furos']) * 100 if data['q4_furos'] > 0 else 0
+                # Calcular densidade de extração por quadrante (furos/área)
+                data['q1_densidade'] = data['q1_furos'] / data['q1_area'] if data['q1_area'] > 0 else 0
+                data['q2_densidade'] = data['q2_furos'] / data['q2_area'] if data['q2_area'] > 0 else 0
+                data['q3_densidade'] = data['q3_furos'] / data['q3_area'] if data['q3_area'] > 0 else 0
+                data['q4_densidade'] = data['q4_furos'] / data['q4_area'] if data['q4_area'] > 0 else 0
 
-            # Converter de volta para string para manter consistência de tipos no dataframe
-            for key in data:
-                if isinstance(data[key], float):
-                    # Arredondar para baixo e sem casas decimais
-                    data[key] = str(int(data[key]))
+                # Calcular taxa de quebra (fios/furos em porcentagem)
+                data['q1_taxa_quebra'] = (1 - data['q1_fios'] / data['q1_furos']) * 100 if data['q1_furos'] > 0 else 0
+                data['q2_taxa_quebra'] = (1 - data['q2_fios'] / data['q2_furos']) * 100 if data['q2_furos'] > 0 else 0
+                data['q3_taxa_quebra'] = (1 - data['q3_fios'] / data['q3_furos']) * 100 if data['q3_furos'] > 0 else 0
+                data['q4_taxa_quebra'] = (1 - data['q4_fios'] / data['q4_furos']) * 100 if data['q4_furos'] > 0 else 0
+
+                # Converter de volta para string para manter consistência de tipos no dataframe
+                for key in data:
+                    if isinstance(data[key], float):
+                        # Arredondar para baixo e sem casas decimais
+                        data[key] = str(int(data[key]))
+            except Exception as e:
+                logger.error(f"Error calculating derived values: {str(e)}")
+                logger.error(traceback.format_exc())
+
+        # Criar um DataFrame com os dados
+        df_new = pd.DataFrame([data])
+
+        # Nome do arquivo Excel
+
+        try:
+            # Verificar se o arquivo existe
+            if os.path.exists(filename):
+                # Append to existing file
+                df_existing = pd.read_excel(filename)
+                df_combined = pd.concat([df_existing, df_new], ignore_index=True)
+                df_combined.to_excel(filename, index=False)
+            else:
+                # Create new file
+                df_new.to_excel(filename, index=False)
+
+            logger.info(f"Dados salvos com sucesso em {filename}")
+            return True
         except Exception as e:
-            logger.error(f"Error calculating derived values: {str(e)}")
+            logger.error(f"Erro ao salvar dados no Excel: {str(e)}")
             logger.error(traceback.format_exc())
-
-    # Criar um DataFrame com os dados
-    df_new = pd.DataFrame([data])
-
-    # Nome do arquivo Excel
-    filename = "cirurgias.xlsx"
-
-    try:
-        # Verificar se o arquivo existe
-        if os.path.exists(filename):
-            # Append to existing file
-            df_existing = pd.read_excel(filename)
-            df_combined = pd.concat([df_existing, df_new], ignore_index=True)
-            df_combined.to_excel(filename, index=False)
-        else:
-            # Create new file
-            df_new.to_excel(filename, index=False)
-
-        logger.info(f"Dados salvos com sucesso em {filename}")
-        return True
+            raise
     except Exception as e:
-        logger.error(f"Erro ao salvar dados no Excel: {str(e)}")
+        logger.error(f"Erro geral em save_to_excel: {str(e)}")
         logger.error(traceback.format_exc())
         raise
+
 
 @app.route('/get_medicos/<unidade>')
 def get_medicos(unidade):
@@ -351,7 +362,7 @@ def dashboard():
     logger.info("Accessing dashboard route")
     try:
         # Se o arquivo Excel existir, carregar os dados para o dashboard
-        filename = "cirurgias.xlsx"
+        filename = os.path.join('data', 'cirurgias.xlsx')
         if os.path.exists(filename):
             # Carregar o dataframe
             df = pd.read_excel(filename)
@@ -407,7 +418,7 @@ def filter_dashboard():
         }
         
         # Load data
-        filename = "cirurgias.xlsx"
+        filename = os.path.join('data', 'cirurgias.xlsx')
         if not os.path.exists(filename):
             return jsonify({
                 'labels': [],
@@ -501,7 +512,7 @@ def download_excel():
     """Endpoint to download the Excel data file"""
     logger.info("Downloading Excel file")
     try:
-        filename = "cirurgias.xlsx"
+        filename = os.path.join('data', 'cirurgias.xlsx')
         if os.path.exists(filename):
             # Return the file for download
             from flask import send_file
@@ -530,13 +541,17 @@ def search_patients():
     try:
         term = request.args.get('term', '').lower()
         unit = request.args.get('unit', '')
-        
+
         if not term or len(term) < 2:
             return jsonify([])
 
         # Carregar dados dos pacientes
-        df = pd.read_excel("cirurgias.xlsx")
-        
+        filename = os.path.join('data', 'cirurgias.xlsx')
+        if not os.path.exists(filename):
+            return jsonify([])
+
+        df = pd.read_excel(filename)
+
         # Filtrar por unidade se especificado
         if unit:
             df = df[df['unidade'] == unit]
@@ -575,26 +590,26 @@ def necrose_summary():
     """Endpoint para retornar o resumo de necroses"""
     logger.info("Getting necrose summary")
     try:
-        # Carregar dados de cirurgias
-        cirurgias_file = "cirurgias.xlsx"
+        # Carregar dados de cirurgias e necroses
+        cirurgias_file = os.path.join('data', 'cirurgias.xlsx')
+        necroses_file = os.path.join('data', 'necroses.xlsx')
+
         total_surgeries = 0
         if os.path.exists(cirurgias_file):
             df_cirurgias = pd.read_excel(cirurgias_file)
             total_surgeries = len(df_cirurgias)
-        
-        # Carregar dados de necroses
-        necroses_file = "necroses.xlsx"
+
         total_necroses = 0
         if os.path.exists(necroses_file):
             df_necroses = pd.read_excel(necroses_file)
             total_necroses = len(df_necroses)
-        
+
         # Calcular taxa de necrose
         necrose_rate = "0%"
         if total_surgeries > 0:
             taxa = (total_necroses / total_surgeries) * 100
             necrose_rate = f"{taxa:.1f}%"
-        
+
         return jsonify({
             'total_surgeries': total_surgeries,
             'total_necroses': total_necroses,
@@ -617,43 +632,31 @@ def save_necrose():
         # Verificar se existem dados do formulário
         if not request.form:
             return jsonify({'success': False, 'error': 'Dados do formulário não encontrados'})
-        
+
         # Obter dados do formulário
         patient_id = request.form.get('patient_id')
         patient_unit = request.form.get('patient_unit')
         lesion_count = request.form.get('lesion_count')
         largest_lesion = request.form.get('largest_lesion')
         affected_band = request.form.get('affected_band')
-        
+
         # Validar dados recebidos
         required_fields = ['patient_id', 'lesion_count', 'largest_lesion', 'affected_band']
         if not all(request.form.get(field) for field in required_fields):
             return jsonify({'success': False, 'error': 'Dados incompletos'})
 
-        # Processar arquivos de foto
-        photo_paths = []
-        photo_dir = os.path.join('static', 'uploads', 'necrose_photos')
-        
-        # Criar diretório se não existir
-        os.makedirs(photo_dir, exist_ok=True)
-        
-        for i in range(1, 4):  # Para cada uma das 3 fotos possíveis
-            photo_key = f'photo{i}'
-            if photo_key in request.files and request.files[photo_key].filename != '':
-                file = request.files[photo_key]
-                filename = f"necrose_{patient_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{i}.jpg"
-                file_path = os.path.join(photo_dir, filename)
-                file.save(file_path)
-                photo_paths.append(file_path)
-        
+        # Criar diretório de dados se não existir
+        data_dir = os.path.join(os.getcwd(), 'data')
+        os.makedirs(data_dir, exist_ok=True)
+
         # Carregar arquivo de necroses existente ou criar novo
-        filename = "necroses.xlsx"
-        if os.path.exists(filename):
+        filename = os.path.join(data_dir, "necroses.xlsx")
+        if os.path.path.exists(filename):
             df = pd.read_excel(filename)
         else:
             df = pd.DataFrame(columns=[
                 'patient_id', 'patient_unit', 'data_registro', 'lesion_count', 
-                'largest_lesion', 'affected_band', 'photo_paths'
+                'largest_lesion', 'affected_band'
             ])
 
         # Adicionar novo registro
@@ -663,8 +666,7 @@ def save_necrose():
             'data_registro': datetime.now().strftime('%d/%m/%Y'),
             'lesion_count': lesion_count,
             'largest_lesion': largest_lesion,
-            'affected_band': affected_band,
-            'photo_paths': ','.join(photo_paths) if photo_paths else ''
+            'affected_band': affected_band
         }
 
         df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
@@ -674,8 +676,6 @@ def save_necrose():
     except Exception as e:
         logger.error(f"Error saving necrose data: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'error': str(e)})
-
-
 
 if __name__ == '__main__':
     try:
