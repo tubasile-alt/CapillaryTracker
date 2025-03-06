@@ -1,7 +1,6 @@
 import os
 import logging
 from flask import Flask
-from flask_cors import CORS
 
 # Configure logging
 logging.basicConfig(
@@ -12,8 +11,13 @@ logger = logging.getLogger(__name__)
 # Create Flask app first
 logger.info("Creating Flask application instance")
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
 app.secret_key = os.urandom(24)
+
+@app.route('/')
+def index():
+    """Root endpoint"""
+    logger.info("Root endpoint accessed")
+    return "Application is running!", 200
 
 @app.route('/health')
 def health():
@@ -26,12 +30,6 @@ def ping():
     """Simple ping endpoint for testing"""
     logger.info("Ping endpoint accessed")
     return "pong", 200
-
-@app.route('/')
-def index():
-    """Root endpoint"""
-    logger.info("Root endpoint accessed")
-    return "Application is running!", 200
 
 if __name__ == '__main__':
     try:
