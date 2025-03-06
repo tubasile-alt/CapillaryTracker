@@ -11,11 +11,11 @@ import json
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 logger.info("Starting Flask application...")
+
 
 # Initialize application directories
 def initialize_app():
@@ -32,33 +32,41 @@ def initialize_app():
 
         logger.info("Application directories initialized successfully")
     except Exception as e:
-        logger.error(f"Error initializing directories: {str(e)}\n{traceback.format_exc()}")
+        logger.error(
+            f"Error initializing directories: {str(e)}\n{traceback.format_exc()}"
+        )
+
 
 # Create Flask app
-app = Flask(__name__, 
-    static_folder='static',
-    static_url_path='/static',
-    template_folder='templates'
-)
+app = Flask(__name__,
+            static_folder='static',
+            static_url_path='/static',
+            template_folder='templates')
 CORS(app)  # Enable CORS for all routes
 app.secret_key = os.urandom(24)
 
 # Initialize directories when the app starts
 initialize_app()
 
+
 @app.after_request
 def after_request(response):
     """Add headers to allow cross-origin requests and improve browser compatibility"""
     response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers',
+                         'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods',
+                         'GET,PUT,POST,DELETE,OPTIONS')
     response.headers.add('X-Content-Type-Options', 'nosniff')
     return response
+
 
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
-                             'favicon.ico', mimetype='image/vnd.microsoft.icon')
+                               'favicon.ico',
+                               mimetype='image/vnd.microsoft.icon')
+
 
 @app.route('/', methods=['GET'])
 def index():
@@ -67,87 +75,295 @@ def index():
     try:
         # Estrutura do formulário completo
         form_data = {
-            'title': 'Cadastro de Cirurgia Capilar',
+            'title':
+            'Cadastro de Cirurgia Capilar',
             'fields': [
                 # Dados Gerais da Cirurgia
-                {'name': 'data', 'label': 'Data da Cirurgia', 'type': 'date', 'required': True},
-                {'name': 'nome', 'label': 'Nome do Paciente', 'type': 'text', 'required': True},
-                {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True, 
-                 'options': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']},
-                {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'required': True},
-                {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'required': True},
-                {'name': 'hora_cirurgia', 'label': 'Hora da Cirurgia (HH:MM)', 'type': 'time', 'required': True, 'default': '08:00'},
-                {'name': 'tempo_cirurgia', 'label': 'Tempo de Cirurgia (horas)', 'type': 'number', 'required': True},
+                {
+                    'name': 'data',
+                    'label': 'Data da Cirurgia',
+                    'type': 'date',
+                    'required': True
+                },
+                {
+                    'name': 'nome',
+                    'label': 'Nome do Paciente',
+                    'type': 'text',
+                    'required': True
+                },
+                {
+                    'name': 'unidade',
+                    'label': 'Unidade',
+                    'type': 'select',
+                    'required': True,
+                    'options':
+                    ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']
+                },
+                {
+                    'name': 'medico',
+                    'label': 'Médico Responsável',
+                    'type': 'select_dynamic',
+                    'required': True
+                },
+                {
+                    'name': 'equipe',
+                    'label': 'Equipe',
+                    'type': 'select_dynamic',
+                    'required': True
+                },
+                {
+                    'name': 'hora_cirurgia',
+                    'label': 'Hora da Cirurgia (HH:MM)',
+                    'type': 'time',
+                    'required': True,
+                    'default': '08:00'
+                },
+                {
+                    'name': 'tempo_cirurgia',
+                    'label': 'Tempo de Cirurgia (horas)',
+                    'type': 'number',
+                    'required': True
+                },
 
                 # Informações do Implante
-                {'name': 'total_foliculos', 'label': 'Total de Folículos', 'type': 'number', 'required': True},
-                {'name': 'frente', 'label': 'Frente', 'type': 'number', 'required': False},
-                {'name': 'densidade_scketh', 'label': 'Densidade Scketh', 'type': 'number', 'required': False},
-                {'name': 'coroa', 'label': 'Coroa', 'type': 'number', 'required': False},
-                {'name': 'scalpe', 'label': 'Scalpe', 'type': 'number', 'required': False},
-                {'name': 'peninsula_direita', 'label': 'Península Direita', 'type': 'number', 'required': False},
-                {'name': 'peninsula_esquerda', 'label': 'Península Esquerda', 'type': 'number', 'required': False},
+                {
+                    'name': 'total_foliculos',
+                    'label': 'Total de Folículos',
+                    'type': 'number',
+                    'required': True
+                },
+                {
+                    'name': 'frente',
+                    'label': 'Frente',
+                    'type': 'number',
+                    'required': False
+                },
+                {
+                    'name': 'densidade_scketh',
+                    'label': 'Densidade Scketh',
+                    'type': 'number',
+                    'required': False
+                },
+                {
+                    'name': 'coroa',
+                    'label': 'Coroa',
+                    'type': 'number',
+                    'required': False
+                },
+                {
+                    'name': 'scalpe',
+                    'label': 'Scalpe',
+                    'type': 'number',
+                    'required': False
+                },
+                {
+                    'name': 'peninsula_direita',
+                    'label': 'Península Direita',
+                    'type': 'number',
+                    'required': False
+                },
+                {
+                    'name': 'peninsula_esquerda',
+                    'label': 'Península Esquerda',
+                    'type': 'number',
+                    'required': False
+                },
 
                 # Procedimentos e Ferramentas
-                {'name': 'safira', 'label': 'Safira?', 'type': 'select', 'required': True,
-                 'options': ['Sim', 'Não']},
-                {'name': 'punch', 'label': 'Punch (mm)', 'type': 'select', 'required': True,
-                 'options': ['0.75', '0.85', '0.95']},
-                {'name': 'solucao_frente', 'label': 'Solução Frente (ml)', 'type': 'number', 'required': True},
-                {'name': 'solucao_coroa', 'label': 'Solução Coroa (ml)', 'type': 'number', 'required': False},
-                {'name': 'solucao_xilo_frente', 'label': 'Solução Xilo Frente (ml)', 'type': 'number', 'required': False},
+                {
+                    'name': 'safira',
+                    'label': 'Safira?',
+                    'type': 'select',
+                    'required': True,
+                    'options': ['Sim', 'Não']
+                },
+                {
+                    'name': 'punch',
+                    'label': 'Punch (mm)',
+                    'type': 'select',
+                    'required': True,
+                    'options': ['0.75', '0.85', '0.95']
+                },
+                {
+                    'name': 'solucao_frente',
+                    'label': 'Solução Frente (ml)',
+                    'type': 'number',
+                    'required': True
+                },
+                {
+                    'name': 'solucao_coroa',
+                    'label': 'Solução Coroa (ml)',
+                    'type': 'number',
+                    'required': False
+                },
+                {
+                    'name': 'solucao_xilo_frente',
+                    'label': 'Solução Xilo Frente (ml)',
+                    'type': 'number',
+                    'required': False
+                },
 
                 # Extração
-                {'name': 'q1_area', 'label': 'Quadrante 1 - Área', 'type': 'number', 'required': True},
-                {'name': 'q1_furos', 'label': 'Quadrante 1 - Número de Furos', 'type': 'number', 'required': True},
-                {'name': 'q1_fios', 'label': 'Quadrante 1 - Número de Fios Retirados', 'type': 'number', 'required': True},
-
-                {'name': 'q2_area', 'label': 'Quadrante 2 - Área', 'type': 'number', 'required': True},
-                {'name': 'q2_furos', 'label': 'Quadrante 2 - Número de Furos', 'type': 'number', 'required': True},
-                {'name': 'q2_fios', 'label': 'Quadrante 2 - Número de Fios Retirados', 'type': 'number', 'required': True},
-
-                {'name': 'q3_area', 'label': 'Quadrante 3 - Área', 'type': 'number', 'required': True},
-                {'name': 'q3_furos', 'label': 'Quadrante 3 - Número de Furos', 'type': 'number', 'required': True},
-                {'name': 'q3_fios', 'label': 'Quadrante 3 - Número de Fios Retirados', 'type': 'number', 'required': True},
-
-                {'name': 'q4_area', 'label': 'Quadrante 4 - Área', 'type': 'number', 'required': True},
-                {'name': 'q4_furos', 'label': 'Quadrante 4 - Número de Furos', 'type': 'number', 'required': True},
-                {'name': 'q4_fios', 'label': 'Quadrante 4 - Número de Fios Retirados', 'type': 'number', 'required': True},
+                {
+                    'name': 'q1_area',
+                    'label': 'Quadrante 1 - Área',
+                    'type': 'number',
+                    'required': True
+                },
+                {
+                    'name': 'q1_furos',
+                    'label': 'Quadrante 1 - Número de Furos',
+                    'type': 'number',
+                    'required': True
+                },
+                {
+                    'name': 'q1_fios',
+                    'label': 'Quadrante 1 - Número de Fios Retirados',
+                    'type': 'number',
+                    'required': True
+                },
+                {
+                    'name': 'q2_area',
+                    'label': 'Quadrante 2 - Área',
+                    'type': 'number',
+                    'required': True
+                },
+                {
+                    'name': 'q2_furos',
+                    'label': 'Quadrante 2 - Número de Furos',
+                    'type': 'number',
+                    'required': True
+                },
+                {
+                    'name': 'q2_fios',
+                    'label': 'Quadrante 2 - Número de Fios Retirados',
+                    'type': 'number',
+                    'required': True
+                },
+                {
+                    'name': 'q3_area',
+                    'label': 'Quadrante 3 - Área',
+                    'type': 'number',
+                    'required': True
+                },
+                {
+                    'name': 'q3_furos',
+                    'label': 'Quadrante 3 - Número de Furos',
+                    'type': 'number',
+                    'required': True
+                },
+                {
+                    'name': 'q3_fios',
+                    'label': 'Quadrante 3 - Número de Fios Retirados',
+                    'type': 'number',
+                    'required': True
+                },
+                {
+                    'name': 'q4_area',
+                    'label': 'Quadrante 4 - Área',
+                    'type': 'number',
+                    'required': True
+                },
+                {
+                    'name': 'q4_furos',
+                    'label': 'Quadrante 4 - Número de Furos',
+                    'type': 'number',
+                    'required': True
+                },
+                {
+                    'name': 'q4_fios',
+                    'label': 'Quadrante 4 - Número de Fios Retirados',
+                    'type': 'number',
+                    'required': True
+                },
 
                 # Avaliação Intraoperatória
-                {'name': 'infiltracao', 'label': 'Infiltração (1-3)', 'type': 'select', 'required': True,
-                 'options': ['1', '2', '3']},
-                {'name': 'sedacao', 'label': 'Sedação (1-3)', 'type': 'select', 'required': True,
-                 'options': ['1', '2', '3']},
-                {'name': 'sangramento', 'label': 'Sangramento (1-3)', 'type': 'select', 'required': True,
-                 'options': ['1', '2', '3']},
+                {
+                    'name': 'infiltracao',
+                    'label': 'Infiltração (1-3)',
+                    'type': 'select',
+                    'required': True,
+                    'options': ['1', '2', '3']
+                },
+                {
+                    'name': 'sedacao',
+                    'label': 'Sedação (1-3)',
+                    'type': 'select',
+                    'required': True,
+                    'options': ['1', '2', '3']
+                },
+                {
+                    'name': 'sangramento',
+                    'label': 'Sangramento (1-3)',
+                    'type': 'select',
+                    'required': True,
+                    'options': ['1', '2', '3']
+                },
 
                 # Histórico do Paciente
-                {'name': 'implante_secundario', 'label': 'Implante Secundário?', 'type': 'select', 'required': True,
-                 'options': ['Sim', 'Não']},
-                {'name': 'transamin', 'label': 'Transamin?', 'type': 'select', 'required': True,
-                 'options': ['Sim', 'Não']},
-                {'name': 'tadalafila', 'label': 'Tadalafila?', 'type': 'select', 'required': True,
-                 'options': ['Sim', 'Não']},
-                {'name': 'diprospam', 'label': 'Diprospam/Beta 30?', 'type': 'select', 'required': True,
-                 'options': ['Sim', 'Não']},
-                {'name': 'fumante', 'label': 'Fumante?', 'type': 'select', 'required': True,
-                 'options': ['Sim', 'Não']},
-                {'name': 'antecedentes', 'label': 'Antecedentes Pessoais', 'type': 'textarea', 'required': False},
+                {
+                    'name': 'implante_secundario',
+                    'label': 'Implante Secundário?',
+                    'type': 'select',
+                    'required': True,
+                    'options': ['Sim', 'Não']
+                },
+                {
+                    'name': 'transamin',
+                    'label': 'Transamin?',
+                    'type': 'select',
+                    'required': True,
+                    'options': ['Sim', 'Não']
+                },
+                {
+                    'name': 'tadalafila',
+                    'label': 'Tadalafila?',
+                    'type': 'select',
+                    'required': True,
+                    'options': ['Sim', 'Não']
+                },
+                {
+                    'name': 'diprospam',
+                    'label': 'Diprospam/Beta 30?',
+                    'type': 'select',
+                    'required': True,
+                    'options': ['Sim', 'Não']
+                },
+                {
+                    'name': 'fumante',
+                    'label': 'Fumante?',
+                    'type': 'select',
+                    'required': True,
+                    'options': ['Sim', 'Não']
+                },
+                {
+                    'name': 'antecedentes',
+                    'label': 'Antecedentes Pessoais',
+                    'type': 'textarea',
+                    'required': False
+                },
 
                 # Comentários e Finalização
-                {'name': 'comentarios', 'label': 'Comentários', 'type': 'textarea', 'required': False}
+                {
+                    'name': 'comentarios',
+                    'label': 'Comentários',
+                    'type': 'textarea',
+                    'required': False
+                }
             ]
         }
         return render_template('form.html', form=form_data, data={})
     except Exception as e:
-        logger.error(f"Error in index route: {str(e)}\n{traceback.format_exc()}")
+        logger.error(
+            f"Error in index route: {str(e)}\n{traceback.format_exc()}")
         return "Error accessing the application", 500
+
 
 @app.route('/ping')
 def ping():
     logger.info("Ping route accessed")
     return "Application is running!"
+
 
 @app.route('/novo_cadastro', methods=['GET', 'POST'])
 def novo_cadastro():
@@ -168,84 +384,290 @@ def novo_cadastro():
             flash("Dados salvos com sucesso!", "success")
             return redirect(url_for('index'))
         except Exception as e:
-            logger.error(f"Error saving data: {str(e)}\n{traceback.format_exc()}")
+            logger.error(
+                f"Error saving data: {str(e)}\n{traceback.format_exc()}")
             flash(f"Erro ao salvar dados: {str(e)}", "error")
 
     # Estrutura do formulário completo
     form_data = {
-        'title': 'Cadastro de Cirurgia Capilar',
+        'title':
+        'Cadastro de Cirurgia Capilar',
         'fields': [
             # Dados Gerais da Cirurgia
-            {'name': 'data', 'label': 'Data da Cirurgia', 'type': 'date', 'required': True},
-            {'name': 'nome', 'label': 'Nome do Paciente', 'type': 'text', 'required': True},
-            {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True, 
-             'options': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']},
-            {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'required': True},
-            {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'required': True},
-            {'name': 'hora_cirurgia', 'label': 'Hora da Cirurgia (HH:MM)', 'type': 'time', 'required': True, 'default': '08:00'},
-            {'name': 'tempo_cirurgia', 'label': 'Tempo de Cirurgia (horas)', 'type': 'number', 'required': True},
+            {
+                'name': 'data',
+                'label': 'Data da Cirurgia',
+                'type': 'date',
+                'required': True
+            },
+            {
+                'name': 'nome',
+                'label': 'Nome do Paciente',
+                'type': 'text',
+                'required': True
+            },
+            {
+                'name': 'unidade',
+                'label': 'Unidade',
+                'type': 'select',
+                'required': True,
+                'options': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']
+            },
+            {
+                'name': 'medico',
+                'label': 'Médico Responsável',
+                'type': 'select_dynamic',
+                'required': True
+            },
+            {
+                'name': 'equipe',
+                'label': 'Equipe',
+                'type': 'select_dynamic',
+                'required': True
+            },
+            {
+                'name': 'hora_cirurgia',
+                'label': 'Hora da Cirurgia (HH:MM)',
+                'type': 'time',
+                'required': True,
+                'default': '08:00'
+            },
+            {
+                'name': 'tempo_cirurgia',
+                'label': 'Tempo de Cirurgia (horas)',
+                'type': 'number',
+                'required': True
+            },
 
             # Informações do Implante
-            {'name': 'total_foliculos', 'label': 'Total de Folículos', 'type': 'number', 'required': True},
-            {'name': 'frente', 'label': 'Frente', 'type': 'number', 'required': False},
-            {'name': 'densidade_scketh', 'label': 'Densidade Scketh', 'type': 'number', 'required': False},
-            {'name': 'coroa', 'label': 'Coroa', 'type': 'number', 'required': False},
-            {'name': 'scalpe', 'label': 'Scalpe', 'type': 'number', 'required': False},
-            {'name': 'peninsula_direita', 'label': 'Península Direita', 'type': 'number', 'required': False},
-            {'name': 'peninsula_esquerda', 'label': 'Península Esquerda', 'type': 'number', 'required': False},
+            {
+                'name': 'total_foliculos',
+                'label': 'Total de Folículos',
+                'type': 'number',
+                'required': True
+            },
+            {
+                'name': 'frente',
+                'label': 'Frente',
+                'type': 'number',
+                'required': False
+            },
+            {
+                'name': 'densidade_scketh',
+                'label': 'Densidade Scketh',
+                'type': 'number',
+                'required': False
+            },
+            {
+                'name': 'coroa',
+                'label': 'Coroa',
+                'type': 'number',
+                'required': False
+            },
+            {
+                'name': 'scalpe',
+                'label': 'Scalpe',
+                'type': 'number',
+                'required': False
+            },
+            {
+                'name': 'peninsula_direita',
+                'label': 'Península Direita',
+                'type': 'number',
+                'required': False
+            },
+            {
+                'name': 'peninsula_esquerda',
+                'label': 'Península Esquerda',
+                'type': 'number',
+                'required': False
+            },
 
             # Procedimentos e Ferramentas
-            {'name': 'safira', 'label': 'Safira?', 'type': 'select', 'required': True,
-             'options': ['Sim', 'Não']},
-            {'name': 'punch', 'label': 'Punch (mm)', 'type': 'select', 'required': True,
-             'options': ['0.75', '0.85', '0.95']},
-            {'name': 'solucao_frente', 'label': 'Solução Frente (ml)', 'type': 'number', 'required': True},
-            {'name': 'solucao_coroa', 'label': 'Solução Coroa (ml)', 'type': 'number', 'required': False},
-            {'name': 'solucao_xilo_frente', 'label': 'Solução Xilo Frente (ml)', 'type': 'number', 'required': False},
+            {
+                'name': 'safira',
+                'label': 'Safira?',
+                'type': 'select',
+                'required': True,
+                'options': ['Sim', 'Não']
+            },
+            {
+                'name': 'punch',
+                'label': 'Punch (mm)',
+                'type': 'select',
+                'required': True,
+                'options': ['0.75', '0.85', '0.95']
+            },
+            {
+                'name': 'solucao_frente',
+                'label': 'Solução Frente (ml)',
+                'type': 'number',
+                'required': True
+            },
+            {
+                'name': 'solucao_coroa',
+                'label': 'Solução Coroa (ml)',
+                'type': 'number',
+                'required': False
+            },
+            {
+                'name': 'solucao_xilo_frente',
+                'label': 'Solução Xilo Frente (ml)',
+                'type': 'number',
+                'required': False
+            },
 
             # Extração
-            {'name': 'q1_area', 'label': 'Quadrante 1 - Área', 'type': 'number', 'required': True},
-            {'name': 'q1_furos', 'label': 'Quadrante 1 - Número de Furos', 'type': 'number', 'required': True},
-            {'name': 'q1_fios', 'label': 'Quadrante 1 - Número de Fios Retirados', 'type': 'number', 'required': True},
-
-            {'name': 'q2_area', 'label': 'Quadrante 2 - Área', 'type': 'number', 'required': True},
-            {'name': 'q2_furos', 'label': 'Quadrante 2 - Número de Furos', 'type': 'number', 'required': True},
-            {'name': 'q2_fios', 'label': 'Quadrante 2 - Número de Fios Retirados', 'type': 'number', 'required': True},
-
-            {'name': 'q3_area', 'label': 'Quadrante 3 - Área', 'type': 'number', 'required': True},
-            {'name': 'q3_furos', 'label': 'Quadrante 3 - Número de Furos', 'type': 'number', 'required': True},
-            {'name': 'q3_fios', 'label': 'Quadrante 3 - Número de Fios Retirados', 'type': 'number', 'required': True},
-
-            {'name': 'q4_area', 'label': 'Quadrante 4 - Área', 'type': 'number', 'required': True},
-            {'name': 'q4_furos', 'label': 'Quadrante 4 - Número de Furos', 'type': 'number', 'required': True},
-            {'name': 'q4_fios', 'label': 'Quadrante 4 - Número de Fios Retirados', 'type': 'number', 'required': True},
+            {
+                'name': 'q1_area',
+                'label': 'Quadrante 1 - Área',
+                'type': 'number',
+                'required': True
+            },
+            {
+                'name': 'q1_furos',
+                'label': 'Quadrante 1 - Número de Furos',
+                'type': 'number',
+                'required': True
+            },
+            {
+                'name': 'q1_fios',
+                'label': 'Quadrante 1 - Número de Fios Retirados',
+                'type': 'number',
+                'required': True
+            },
+            {
+                'name': 'q2_area',
+                'label': 'Quadrante 2 - Área',
+                'type': 'number',
+                'required': True
+            },
+            {
+                'name': 'q2_furos',
+                'label': 'Quadrante 2 - Número de Furos',
+                'type': 'number',
+                'required': True
+            },
+            {
+                'name': 'q2_fios',
+                'label': 'Quadrante 2 - Número de Fios Retirados',
+                'type': 'number',
+                'required': True
+            },
+            {
+                'name': 'q3_area',
+                'label': 'Quadrante 3 - Área',
+                'type': 'number',
+                'required': True
+            },
+            {
+                'name': 'q3_furos',
+                'label': 'Quadrante 3 - Número de Furos',
+                'type': 'number',
+                'required': True
+            },
+            {
+                'name': 'q3_fios',
+                'label': 'Quadrante 3 - Número de Fios Retirados',
+                'type': 'number',
+                'required': True
+            },
+            {
+                'name': 'q4_area',
+                'label': 'Quadrante 4 - Área',
+                'type': 'number',
+                'required': True
+            },
+            {
+                'name': 'q4_furos',
+                'label': 'Quadrante 4 - Número de Furos',
+                'type': 'number',
+                'required': True
+            },
+            {
+                'name': 'q4_fios',
+                'label': 'Quadrante 4 - Número de Fios Retirados',
+                'type': 'number',
+                'required': True
+            },
 
             # Avaliação Intraoperatória
-            {'name': 'infiltracao', 'label': 'Infiltração (1-3)', 'type': 'select', 'required': True,
-             'options': ['1', '2', '3']},
-            {'name': 'sedacao', 'label': 'Sedação (1-3)', 'type': 'select', 'required': True,
-             'options': ['1', '2', '3']},
-            {'name': 'sangramento', 'label': 'Sangramento (1-3)', 'type': 'select', 'required': True,
-             'options': ['1', '2', '3']},
+            {
+                'name': 'infiltracao',
+                'label': 'Infiltração (1-3)',
+                'type': 'select',
+                'required': True,
+                'options': ['1', '2', '3']
+            },
+            {
+                'name': 'sedacao',
+                'label': 'Sedação (1-3)',
+                'type': 'select',
+                'required': True,
+                'options': ['1', '2', '3']
+            },
+            {
+                'name': 'sangramento',
+                'label': 'Sangramento (1-3)',
+                'type': 'select',
+                'required': True,
+                'options': ['1', '2', '3']
+            },
 
             # Histórico do Paciente
-            {'name': 'implante_secundario', 'label': 'Implante Secundário?', 'type': 'select', 'required': True,
-             'options': ['Sim', 'Não']},
-            {'name': 'transamin', 'label': 'Transamin?', 'type': 'select', 'required': True,
-             'options': ['Sim', 'Não']},
-            {'name': 'tadalafila', 'label': 'Tadalafila?', 'type': 'select', 'required': True,
-             'options': ['Sim', 'Não']},
-            {'name': 'diprospam', 'label': 'Diprospam/Beta 30?', 'type': 'select', 'required': True,
-             'options': ['Sim', 'Não']},
-            {'name': 'fumante', 'label': 'Fumante?', 'type': 'select', 'required': True,
-             'options': ['Sim', 'Não']},
-            {'name': 'antecedentes', 'label': 'Antecedentes Pessoais', 'type': 'textarea', 'required': False},
+            {
+                'name': 'implante_secundario',
+                'label': 'Implante Secundário?',
+                'type': 'select',
+                'required': True,
+                'options': ['Sim', 'Não']
+            },
+            {
+                'name': 'transamin',
+                'label': 'Transamin?',
+                'type': 'select',
+                'required': True,
+                'options': ['Sim', 'Não']
+            },
+            {
+                'name': 'tadalafila',
+                'label': 'Tadalafila?',
+                'type': 'select',
+                'required': True,
+                'options': ['Sim', 'Não']
+            },
+            {
+                'name': 'diprospam',
+                'label': 'Diprospam/Beta 30?',
+                'type': 'select',
+                'required': True,
+                'options': ['Sim', 'Não']
+            },
+            {
+                'name': 'fumante',
+                'label': 'Fumante?',
+                'type': 'select',
+                'required': True,
+                'options': ['Sim', 'Não']
+            },
+            {
+                'name': 'antecedentes',
+                'label': 'Antecedentes Pessoais',
+                'type': 'textarea',
+                'required': False
+            },
 
             # Comentários e Finalização
-            {'name': 'comentarios', 'label': 'Comentários', 'type': 'textarea', 'required': False}
+            {
+                'name': 'comentarios',
+                'label': 'Comentários',
+                'type': 'textarea',
+                'required': False
+            }
         ]
     }
     return render_template('form.html', form=form_data, data={})
+
 
 def save_to_excel(data):
     """Salva os dados em um arquivo Excel."""
@@ -286,16 +708,28 @@ def save_to_excel(data):
                                 data[key] = 0
 
                 # Calcular densidade de extração por quadrante (furos/área)
-                data['q1_densidade'] = data['q1_furos'] / data['q1_area'] if data['q1_area'] > 0 else 0
-                data['q2_densidade'] = data['q2_furos'] / data['q2_area'] if data['q2_area'] > 0 else 0
-                data['q3_densidade'] = data['q3_furos'] / data['q3_area'] if data['q3_area'] > 0 else 0
-                data['q4_densidade'] = data['q4_furos'] / data['q4_area'] if data['q4_area'] > 0 else 0
+                data['q1_densidade'] = data['q1_furos'] / data[
+                    'q1_area'] if data['q1_area'] > 0 else 0
+                data['q2_densidade'] = data['q2_furos'] / data[
+                    'q2_area'] if data['q2_area'] > 0 else 0
+                data['q3_densidade'] = data['q3_furos'] / data[
+                    'q3_area'] if data['q3_area'] > 0 else 0
+                data['q4_densidade'] = data['q4_furos'] / data[
+                    'q4_area'] if data['q4_area'] > 0 else 0
 
                 # Calcular taxa de quebra (fios/furos em porcentagem)
-                data['q1_taxa_quebra'] = (1 - data['q1_fios'] / data['q1_furos']) * 100 if data['q1_furos'] > 0 else 0
-                data['q2_taxa_quebra'] = (1 - data['q2_fios'] / data['q2_furos']) * 100 if data['q2_furos'] > 0 else 0
-                data['q3_taxa_quebra'] = (1 - data['q3_fios'] / data['q3_furos']) * 100 if data['q3_furos'] > 0 else 0
-                data['q4_taxa_quebra'] = (1 - data['q4_fios'] / data['q4_furos']) * 100 if data['q4_furos'] > 0 else 0
+                data['q1_taxa_quebra'] = (
+                    1 - data['q1_fios'] /
+                    data['q1_furos']) * 100 if data['q1_furos'] > 0 else 0
+                data['q2_taxa_quebra'] = (
+                    1 - data['q2_fios'] /
+                    data['q2_furos']) * 100 if data['q2_furos'] > 0 else 0
+                data['q3_taxa_quebra'] = (
+                    1 - data['q3_fios'] /
+                    data['q3_furos']) * 100 if data['q3_furos'] > 0 else 0
+                data['q4_taxa_quebra'] = (
+                    1 - data['q4_fios'] /
+                    data['q4_furos']) * 100 if data['q4_furos'] > 0 else 0
 
                 # Converter de volta para string para manter consistência de tipos no dataframe
                 for key in data:
@@ -316,7 +750,8 @@ def save_to_excel(data):
             if os.path.exists(filename):
                 # Append to existing file
                 df_existing = pd.read_excel(filename)
-                df_combined = pd.concat([df_existing, df_new], ignore_index=True)
+                df_combined = pd.concat([df_existing, df_new],
+                                        ignore_index=True)
                 df_combined.to_excel(filename, index=False)
             else:
                 # Create new file
@@ -345,6 +780,7 @@ def get_medicos(unidade):
     }
     return {'medicos': medicos_por_unidade.get(unidade, [])}
 
+
 @app.route('/get_equipe/<unidade>')
 def get_equipe(unidade):
     logger.info(f"Retrieving team for unit: {unidade}")
@@ -352,42 +788,54 @@ def get_equipe(unidade):
     equipe_por_unidade = {
         'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
         'Campinas': ['Juliana', 'Gabriela'],
-        'Rio de Janeiro': ['Mariana Moro', 'Mariana Silva', 'Dayane', 'Assistente Extra']
+        'Rio de Janeiro':
+        ['Mariana Moro', 'Mariana Silva', 'Dayane', 'Assistente Extra']
     }
     return {'equipe': equipe_por_unidade.get(unidade, [])}
+
 
 def process_dashboard_data(df):
     """Process dataframe into dashboard-ready data"""
     # Lidar com valores vazios
     df = df.fillna(0)
-    
+
     # Garantir que colunas numéricas tenham valores zerados quando vazios
     numeric_columns = df.select_dtypes(include=['number']).columns
     for col in numeric_columns:
         df[col] = df[col].fillna(0).replace('', 0)
-    
+
     # Estrutura para armazenar os dados do dashboard
     dashboard_data = {
         'labels': [],
         'datasets': [],
         'has_follicle_data': False,
-        'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+        'follicles_data': {
+            'labels': [],
+            'averages': [],
+            'le_density': []
+        },
         'total_surgeries': 0,
         'avg_follicles': 0,
         'avg_density': 0,
         'update_time': datetime.now().strftime('%d/%m/%Y %H:%M')
     }
-    
+
     if df.empty:
         return dashboard_data
-    
+
     # Processar datas e criar coluna mes_ano
     try:
         if 'data' in df.columns:
-            df['mes_ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.strftime('%m/%Y')
+            df['mes_ano'] = pd.to_datetime(
+                df['data'], dayfirst=True,
+                errors='coerce').dt.strftime('%m/%Y')
             # Extrair ano e mês para filtragem
-            df['ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.year
-            df['mes'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.month
+            df['ano'] = pd.to_datetime(df['data'],
+                                       dayfirst=True,
+                                       errors='coerce').dt.year
+            df['mes'] = pd.to_datetime(df['data'],
+                                       dayfirst=True,
+                                       errors='coerce').dt.month
         else:
             # Se não houver coluna 'data', usar uma data padrão
             df['mes_ano'] = datetime.now().strftime('%m/%Y')
@@ -398,84 +846,99 @@ def process_dashboard_data(df):
         df['mes_ano'] = datetime.now().strftime('%m/%Y')
         df['ano'] = datetime.now().year
         df['mes'] = datetime.now().month
-    
+
     # Calcular estatísticas gerais
     dashboard_data['total_surgeries'] = len(df)
-    
+
     # 1. Cirurgias por mês (total)
     cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
-    cirurgias_por_mes['count'] = cirurgias_por_mes['count'].fillna(0).astype(int)
-    
+    cirurgias_por_mes['count'] = cirurgias_por_mes['count'].fillna(0).astype(
+        int)
+
     dashboard_data['labels'] = cirurgias_por_mes['mes_ano'].tolist()
-    
+
     # Adicionar dataset principal
     dashboard_data['datasets'].append({
-        'label': 'Total de Cirurgias',
-        'data': cirurgias_por_mes['count'].tolist()
+        'label':
+        'Total de Cirurgias',
+        'data':
+        cirurgias_por_mes['count'].tolist()
     })
-    
+
     # 2. Cirurgias por mês por unidade
     if 'unidade' in df.columns:
         # Substituir valores vazios na coluna unidade
         df['unidade'] = df['unidade'].fillna('Não especificada')
-        
-        cirurgias_por_mes_unidade = df.groupby(['mes_ano', 'unidade']).size().reset_index(name='count')
-        cirurgias_por_mes_unidade['count'] = cirurgias_por_mes_unidade['count'].fillna(0).astype(int)
-        
+
+        cirurgias_por_mes_unidade = df.groupby(
+            ['mes_ano', 'unidade']).size().reset_index(name='count')
+        cirurgias_por_mes_unidade['count'] = cirurgias_por_mes_unidade[
+            'count'].fillna(0).astype(int)
+
         # Preparar datasets por unidade
         unidades = df['unidade'].unique()
-        
+
         for unidade in unidades:
-            dados_unidade = cirurgias_por_mes_unidade[cirurgias_por_mes_unidade['unidade'] == unidade]
+            dados_unidade = cirurgias_por_mes_unidade[
+                cirurgias_por_mes_unidade['unidade'] == unidade]
             # Mapa para todas as datas possíveis
-            dados_completos = pd.DataFrame({
-                'mes_ano': cirurgias_por_mes['mes_ano'].unique()
-            })
+            dados_completos = pd.DataFrame(
+                {'mes_ano': cirurgias_por_mes['mes_ano'].unique()})
             # Juntar com dados existentes
-            merged = dados_completos.merge(dados_unidade, on='mes_ano', how='left')
+            merged = dados_completos.merge(dados_unidade,
+                                           on='mes_ano',
+                                           how='left')
             # Tratar valores nulos corretamente
             merged['count'] = merged['count'].fillna(0).astype(int)
-            
+
             dashboard_data['datasets'].append({
                 'label': f'Cirurgias - {unidade}',
                 'data': merged['count'].tolist()
             })
-    
+
     # 3. Verificar se existem dados de folículos
     has_follicle_data = 'total_foliculos' in df.columns
-    
+
     # Se temos dados de folículos, processar
     if has_follicle_data:
         # Converter coluna para numérico, tratando erros
-        df['total_foliculos'] = pd.to_numeric(df['total_foliculos'], errors='coerce').fillna(0)
-        
+        df['total_foliculos'] = pd.to_numeric(df['total_foliculos'],
+                                              errors='coerce').fillna(0)
+
         # Média geral de folículos
         dashboard_data['avg_follicles'] = int(df['total_foliculos'].mean())
-        
+
         # Média de folículos por mês
-        folliculo_medio = df.groupby('mes_ano')['total_foliculos'].mean().reset_index()
-        
+        folliculo_medio = df.groupby(
+            'mes_ano')['total_foliculos'].mean().reset_index()
+
         # Preparar dados para gráficos
-        dashboard_data['follicles_data']['labels'] = folliculo_medio['mes_ano'].tolist()
-        dashboard_data['follicles_data']['averages'] = folliculo_medio['total_foliculos'].round(0).astype(int).tolist()
-        
+        dashboard_data['follicles_data']['labels'] = folliculo_medio[
+            'mes_ano'].tolist()
+        dashboard_data['follicles_data']['averages'] = folliculo_medio[
+            'total_foliculos'].round(0).astype(int).tolist()
+
         # Se tiver dado de densidade, calcular média
         if 'densidade_scketh' in df.columns:
             # Converter coluna para numérico, tratando erros
-            df['densidade_scketh'] = pd.to_numeric(df['densidade_scketh'], errors='coerce').fillna(0)
-            
+            df['densidade_scketh'] = pd.to_numeric(df['densidade_scketh'],
+                                                   errors='coerce').fillna(0)
+
             # Média geral de densidade
             dashboard_data['avg_density'] = int(df['densidade_scketh'].mean())
-            
-            densidade_media = df.groupby('mes_ano')['densidade_scketh'].mean().reset_index()
-            dashboard_data['follicles_data']['le_density'] = densidade_media['densidade_scketh'].round(0).astype(int).tolist()
-        
+
+            densidade_media = df.groupby(
+                'mes_ano')['densidade_scketh'].mean().reset_index()
+            dashboard_data['follicles_data']['le_density'] = densidade_media[
+                'densidade_scketh'].round(0).astype(int).tolist()
+
         dashboard_data['has_follicle_data'] = True
-    
+
     # Adicionar timestamp de atualização
     dashboard_data['update_time'] = datetime.now().strftime('%d/%m/%Y %H:%M')
-    
+
     return dashboard_data
+
 
 @app.route('/dashboard')
 def dashboard():
@@ -490,9 +953,16 @@ def dashboard():
         else:
             dashboard_data = {
                 'labels': [],
-                'datasets': [{'label': 'Cirurgias', 'data': []}],
+                'datasets': [{
+                    'label': 'Cirurgias',
+                    'data': []
+                }],
                 'has_follicle_data': False,
-                'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+                'follicles_data': {
+                    'labels': [],
+                    'averages': [],
+                    'le_density': []
+                },
                 'total_surgeries': 0,
                 'avg_follicles': 0,
                 'avg_density': 0
@@ -501,16 +971,27 @@ def dashboard():
         return render_template('dashboard.html', data=dashboard_data)
 
     except Exception as e:
-        logger.error(f"Error in dashboard route: {str(e)}\n{traceback.format_exc()}")
-        return render_template('dashboard.html', data={
-            'labels': [],
-            'datasets': [{'label': 'Cirurgias', 'data': []}],
-            'has_follicle_data': False,
-            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-            'total_surgeries': 0,
-            'avg_follicles': 0,
-            'avg_density': 0
-        }, error=f"Erro ao carregar dashboard: {str(e)}")
+        logger.error(
+            f"Error in dashboard route: {str(e)}\n{traceback.format_exc()}")
+        return render_template('dashboard.html',
+                               data={
+                                   'labels': [],
+                                   'datasets': [{
+                                       'label': 'Cirurgias',
+                                       'data': []
+                                   }],
+                                   'has_follicle_data': False,
+                                   'follicles_data': {
+                                       'labels': [],
+                                       'averages': [],
+                                       'le_density': []
+                                   },
+                                   'total_surgeries': 0,
+                                   'avg_follicles': 0,
+                                   'avg_density': 0
+                               },
+                               error=f"Erro ao carregar dashboard: {str(e)}")
+
 
 @app.route('/filter_dashboard')
 def filter_dashboard():
@@ -524,7 +1005,6 @@ def filter_dashboard():
         unit = request.args.get('unit', 'all')
         doctor = request.args.get('doctor', 'all')
         equipe = request.args.get('equipe', 'all')
-
 
         # Médicos por unidade para filtros
         medicos_por_unidade = {
@@ -543,9 +1023,16 @@ def filter_dashboard():
         if not os.path.exists(filename):
             return jsonify({
                 'labels': [],
-                'datasets': [{'label': 'Cirurgias', 'data': []}],
+                'datasets': [{
+                    'label': 'Cirurgias',
+                    'data': []
+                }],
                 'has_follicle_data': False,
-                'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+                'follicles_data': {
+                    'labels': [],
+                    'averages': [],
+                    'le_density': []
+                },
                 'total_surgeries': 0,
                 'avg_follicles': 0,
                 'avg_density': 0
@@ -563,7 +1050,9 @@ def filter_dashboard():
             except:
                 # Process dates if not already done
                 if 'ano' not in df.columns:
-                    df['ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.year
+                    df['ano'] = pd.to_datetime(df['data'],
+                                               dayfirst=True,
+                                               errors='coerce').dt.year
                 df = df[df['ano'] == int(year)]
 
         if month != 'all':
@@ -572,7 +1061,9 @@ def filter_dashboard():
             except:
                 # Process dates if not already done
                 if 'mes' not in df.columns:
-                    df['mes'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.month
+                    df['mes'] = pd.to_datetime(df['data'],
+                                               dayfirst=True,
+                                               errors='coerce').dt.month
                 df = df[df['mes'] == int(month)]
 
         # Apply unit filter with restrictions on doctors and team members
@@ -580,7 +1071,7 @@ def filter_dashboard():
             # Filter by unit
             df = df[df['unidade'] == unit]
 
-            # Restrict doctors to only those from this unit 
+            # Restrict doctors to only those from this unit
             if 'medico' in df.columns:
                 valid_doctors = medicos_por_unidade.get(unit, [])
                 df = df[df['medico'].isin(valid_doctors)]
@@ -591,9 +1082,9 @@ def filter_dashboard():
                 # Handle case where equipe might be a single value or a list
                 if df['equipe'].dtype == 'object':
                     # For columns that might contain lists (e.g., stored as strings)
-                    mask = df['equipe'].apply(lambda x: 
-                        any(member in str(x) for member in valid_team) if isinstance(x, str) else False
-                    )
+                    mask = df['equipe'].apply(lambda x: any(
+                        member in str(x) for member in valid_team)
+                                              if isinstance(x, str) else False)
                     df = df[mask]
                 else:
                     # For columns with single values
@@ -616,17 +1107,27 @@ def filter_dashboard():
         return jsonify(dashboard_data)
 
     except Exception as e:
-        logger.error(f"Error filtering dashboard data: {str(e)}\n{traceback.format_exc()}")
+        logger.error(
+            f"Error filtering dashboard data: {str(e)}\n{traceback.format_exc()}"
+        )
         return jsonify({
             'error': str(e),
             'labels': [],
-            'datasets': [{'label': 'Cirurgias', 'data': []}],
+            'datasets': [{
+                'label': 'Cirurgias',
+                'data': []
+            }],
             'has_follicle_data': False,
-            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+            'follicles_data': {
+                'labels': [],
+                'averages': [],
+                'le_density': []
+            },
             'total_surgeries': 0,
             'avg_follicles': 0,
             'avg_density': 0
         })
+
 
 @app.route('/download_excel')
 def download_excel():
@@ -637,23 +1138,29 @@ def download_excel():
         if os.path.exists(filename):
             # Return the file for download
             from flask import send_file
-            return send_file(filename, 
-                             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                             as_attachment=True,
-                             download_name='relatorio_cirurgias.xlsx')
+            return send_file(
+                filename,
+                mimetype=
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name='relatorio_cirurgias.xlsx')
         else:
             flash("Arquivo de dados não encontrado.", "error")
             return redirect(url_for('dashboard'))
     except Exception as e:
-        logger.error(f"Error downloading Excel file: {str(e)}\n{traceback.format_exc()}")
+        logger.error(
+            f"Error downloading Excel file: {str(e)}\n{traceback.format_exc()}"
+        )
         flash(f"Erro ao baixar arquivo: {str(e)}", "error")
         return redirect(url_for('dashboard'))
+
 
 @app.route('/necrose')
 def necrose():
     """Página de avaliação de necrose"""
     logger.info("Accessing necrose page")
     return render_template('necrose.html')
+
 
 @app.route('/search_patients')
 def search_patients():
@@ -692,7 +1199,8 @@ def search_patients():
                     'total_foliculos': row['total_foliculos'],
                     'densidade_scketh': row['densidade_scketh'],
                     'infiltracao': row['infiltracao'],
-                    'tadalafila': row['tadalafila'] if 'tadalafila' in row else 'Não',
+                    'tadalafila':
+                    row['tadalafila'] if 'tadalafila' in row else 'Não',
                     'medico': row['medico'],
                     'equipe': row['equipe']
                 }
@@ -703,8 +1211,10 @@ def search_patients():
 
         return jsonify(patients[:10])  # Limitar a 10 sugestões
     except Exception as e:
-        logger.error(f"Error searching patients: {str(e)}\n{traceback.format_exc()}")
+        logger.error(
+            f"Error searching patients: {str(e)}\n{traceback.format_exc()}")
         return jsonify([])
+
 
 @app.route('/necrose_summary')
 def necrose_summary():
@@ -737,7 +1247,9 @@ def necrose_summary():
             'necrose_rate': necrose_rate
         })
     except Exception as e:
-        logger.error(f"Error getting necrose summary: {str(e)}\n{traceback.format_exc()}")
+        logger.error(
+            f"Error getting necrose summary: {str(e)}\n{traceback.format_exc()}"
+        )
         return jsonify({
             'total_surgeries': 0,
             'total_necroses': 0,
@@ -745,14 +1257,18 @@ def necrose_summary():
             'error': str(e)
         })
 
+
 @app.route('/save_necrose', methods=['POST'])
 def save_necrose():
     """Endpoint para salvar dados de necrose"""
     logger.info("Saving necrose data")
     try:
-                # Verificar se existem dados do formulário
+        # Verificar se existem dados do formulário
         if not request.form:
-            return jsonify({'success': False, 'error': 'Dados do formulário não encontrados'})
+            return jsonify({
+                'success': False,
+                'error': 'Dados do formulário não encontrados'
+            })
 
         # Obter dados do formulário
         patient_id = request.form.get('patient_id')
@@ -762,7 +1278,9 @@ def save_necrose():
         affected_band = request.form.get('affected_band')
 
         # Validar dados recebidos
-        required_fields = ['patient_id', 'lesion_count', 'largest_lesion', 'affected_band']
+        required_fields = [
+            'patient_id', 'lesion_count', 'largest_lesion', 'affected_band'
+        ]
         if not all(request.form.get(field) for field in required_fields):
             return jsonify({'success': False, 'error': 'Dados incompletos'})
 
@@ -776,7 +1294,7 @@ def save_necrose():
             df = pd.read_excel(filename)
         else:
             df = pd.DataFrame(columns=[
-                'patient_id', 'patient_unit', 'data_registro', 'lesion_count', 
+                'patient_id', 'patient_unit', 'data_registro', 'lesion_count',
                 'largest_lesion', 'affected_band'
             ])
 
@@ -795,8 +1313,10 @@ def save_necrose():
 
         return jsonify({'success': True})
     except Exception as e:
-        logger.error(f"Error saving necrose data: {str(e)}\n{traceback.format_exc()}")
+        logger.error(
+            f"Error saving necrose data: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'error': str(e)})
+
 
 @app.route('/health')
 def health():
@@ -804,11 +1324,13 @@ def health():
     logger.info("Health check endpoint accessed")
     return "OK", 200
 
+
 @app.route('/teste')
 def teste():
     """Endpoint simples para testar se o servidor está respondendo"""
     logger.info("Teste endpoint accessed")
     return "Servidor funcionando!", 200
+
 
 if __name__ == '__main__':
     try:
@@ -821,9 +1343,11 @@ if __name__ == '__main__':
 
         # Quando em modo de produção, desativar o modo de debug
         debug_mode = os.environ.get('FLASK_ENV') != 'production'
-        
+
         # Importante: usar host='0.0.0.0' para que o app seja acessível de fora
         app.run(host='0.0.0.0', port=port, debug=debug_mode)
     except Exception as e:
-        logger.error(f"Failed to start Flask server: {str(e)}\n{traceback.format_exc()}")
+        logger.error(
+            f"Failed to start Flask server: {str(e)}\n{traceback.format_exc()}"
+        )
         raise
