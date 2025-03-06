@@ -62,9 +62,9 @@ def form():
                 {'name': 'infiltracao', 'label': 'Infiltração', 'type': 'text', 'required': True},
 
                 # Procedimentos e Ferramentas
-                {'name': 'solucao_frente', 'label': 'Solução Frente', 'type': 'number', 'required': True},
-                {'name': 'solucao_coroa', 'label': 'Solução Coroa', 'type': 'number', 'required': True},
-                {'name': 'solucao_xilo_frente', 'label': 'Solução Xilo Frente', 'type': 'number', 'required': True},
+                {'name': 'solucao_frente', 'label': 'Solução Frente (seringas)', 'type': 'number', 'required': True},
+                {'name': 'solucao_coroa', 'label': 'Solução Coroa (seringas)', 'type': 'number', 'required': True},
+                {'name': 'solucao_xilo_frente', 'label': 'Solução Xilo Frente (seringas)', 'type': 'number', 'required': True},
                 {'name': 'solucao_xilo_coroa', 'label': 'Solução Xilo Coroa', 'type': 'number', 'required': True},
                 {'name': 'punch_usado', 'label': 'Punch Utilizado', 'type': 'text', 'required': True},
 
@@ -90,14 +90,14 @@ def form():
 
                 # Avaliação Intraoperatória
                 {'name': 'dificuldade_extracao', 'label': 'Dificuldade na Extração', 'type': 'select',
-                 'options': ['Baixa', 'Média', 'Alta']},
+                 'options': ['Baixa', 'Média', 'Alta'], 'required': True},
                 {'name': 'sangramento', 'label': 'Sangramento', 'type': 'select',
-                 'options': ['Mínimo', 'Moderado', 'Intenso']},
+                 'options': ['Mínimo', 'Moderado', 'Intenso'], 'required': True},
                 {'name': 'observacoes_intra', 'label': 'Observações Intraoperatórias', 'type': 'textarea'},
 
                 # Histórico do Paciente
                 {'name': 'cirurgia_anterior', 'label': 'Cirurgia Anterior', 'type': 'select',
-                 'options': ['Sim', 'Não']},
+                 'options': ['Sim', 'Não'], 'required': True},
                 {'name': 'data_anterior', 'label': 'Data da Cirurgia Anterior', 'type': 'date'},
                 {'name': 'medicamentos', 'label': 'Medicamentos em Uso', 'type': 'textarea'},
                 {'name': 'alergias', 'label': 'Alergias', 'type': 'textarea'},
