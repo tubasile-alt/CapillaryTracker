@@ -62,10 +62,84 @@ def favicon():
 
 @app.route('/')
 def index():
-    """Rota principal - redireciona para a página de novo cadastro"""
+    """Rota principal - agora serve a página de novo cadastro diretamente"""
     logger.info("Accessing index route")
     try:
-        return redirect(url_for('novo_cadastro'))
+        # Estrutura do formulário completo
+        form_data = {
+            'title': 'Cadastro de Cirurgia Capilar',
+            'fields': [
+                # Dados Gerais da Cirurgia
+                {'name': 'data', 'label': 'Data da Cirurgia', 'type': 'date', 'required': True},
+                {'name': 'nome', 'label': 'Nome do Paciente', 'type': 'text', 'required': True},
+                {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True, 
+                 'options': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']},
+                {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'required': True},
+                {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'required': True},
+                {'name': 'hora_cirurgia', 'label': 'Hora da Cirurgia (HH:MM)', 'type': 'time', 'required': True, 'default': '08:00'},
+                {'name': 'tempo_cirurgia', 'label': 'Tempo de Cirurgia (horas)', 'type': 'number', 'required': True},
+
+                # Informações do Implante
+                {'name': 'total_foliculos', 'label': 'Total de Folículos', 'type': 'number', 'required': True},
+                {'name': 'frente', 'label': 'Frente', 'type': 'number', 'required': False},
+                {'name': 'densidade_scketh', 'label': 'Densidade Scketh', 'type': 'number', 'required': False},
+                {'name': 'coroa', 'label': 'Coroa', 'type': 'number', 'required': False},
+                {'name': 'scalpe', 'label': 'Scalpe', 'type': 'number', 'required': False},
+                {'name': 'peninsula_direita', 'label': 'Península Direita', 'type': 'number', 'required': False},
+                {'name': 'peninsula_esquerda', 'label': 'Península Esquerda', 'type': 'number', 'required': False},
+
+                # Procedimentos e Ferramentas
+                {'name': 'safira', 'label': 'Safira?', 'type': 'select', 'required': True,
+                 'options': ['Sim', 'Não']},
+                {'name': 'punch', 'label': 'Punch (mm)', 'type': 'select', 'required': True,
+                 'options': ['0.75', '0.85', '0.95']},
+                {'name': 'solucao_frente', 'label': 'Solução Frente (ml)', 'type': 'number', 'required': True},
+                {'name': 'solucao_coroa', 'label': 'Solução Coroa (ml)', 'type': 'number', 'required': False},
+                {'name': 'solucao_xilo_frente', 'label': 'Solução Xilo Frente (ml)', 'type': 'number', 'required': False},
+
+                # Extração
+                {'name': 'q1_area', 'label': 'Quadrante 1 - Área', 'type': 'number', 'required': True},
+                {'name': 'q1_furos', 'label': 'Quadrante 1 - Número de Furos', 'type': 'number', 'required': True},
+                {'name': 'q1_fios', 'label': 'Quadrante 1 - Número de Fios Retirados', 'type': 'number', 'required': True},
+
+                {'name': 'q2_area', 'label': 'Quadrante 2 - Área', 'type': 'number', 'required': True},
+                {'name': 'q2_furos', 'label': 'Quadrante 2 - Número de Furos', 'type': 'number', 'required': True},
+                {'name': 'q2_fios', 'label': 'Quadrante 2 - Número de Fios Retirados', 'type': 'number', 'required': True},
+
+                {'name': 'q3_area', 'label': 'Quadrante 3 - Área', 'type': 'number', 'required': True},
+                {'name': 'q3_furos', 'label': 'Quadrante 3 - Número de Furos', 'type': 'number', 'required': True},
+                {'name': 'q3_fios', 'label': 'Quadrante 3 - Número de Fios Retirados', 'type': 'number', 'required': True},
+
+                {'name': 'q4_area', 'label': 'Quadrante 4 - Área', 'type': 'number', 'required': True},
+                {'name': 'q4_furos', 'label': 'Quadrante 4 - Número de Furos', 'type': 'number', 'required': True},
+                {'name': 'q4_fios', 'label': 'Quadrante 4 - Número de Fios Retirados', 'type': 'number', 'required': True},
+
+                # Avaliação Intraoperatória
+                {'name': 'infiltracao', 'label': 'Infiltração (1-3)', 'type': 'select', 'required': True,
+                 'options': ['1', '2', '3']},
+                {'name': 'sedacao', 'label': 'Sedação (1-3)', 'type': 'select', 'required': True,
+                 'options': ['1', '2', '3']},
+                {'name': 'sangramento', 'label': 'Sangramento (1-3)', 'type': 'select', 'required': True,
+                 'options': ['1', '2', '3']},
+
+                # Histórico do Paciente
+                {'name': 'implante_secundario', 'label': 'Implante Secundário?', 'type': 'select', 'required': True,
+                 'options': ['Sim', 'Não']},
+                {'name': 'transamin', 'label': 'Transamin?', 'type': 'select', 'required': True,
+                 'options': ['Sim', 'Não']},
+                {'name': 'tadalafila', 'label': 'Tadalafila?', 'type': 'select', 'required': True,
+                 'options': ['Sim', 'Não']},
+                {'name': 'diprospam', 'label': 'Diprospam/Beta 30?', 'type': 'select', 'required': True,
+                 'options': ['Sim', 'Não']},
+                {'name': 'fumante', 'label': 'Fumante?', 'type': 'select', 'required': True,
+                 'options': ['Sim', 'Não']},
+                {'name': 'antecedentes', 'label': 'Antecedentes Pessoais', 'type': 'textarea', 'required': False},
+
+                # Comentários e Finalização
+                {'name': 'comentarios', 'label': 'Comentários', 'type': 'textarea', 'required': False}
+            ]
+        }
+        return render_template('form.html', form=form_data, data={})
     except Exception as e:
         logger.error(f"Error in index route: {str(e)}\n{traceback.format_exc()}")
         return "Error accessing the application", 500
