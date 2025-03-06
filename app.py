@@ -804,6 +804,12 @@ def health():
     logger.info("Health check endpoint accessed")
     return "OK", 200
 
+@app.route('/teste')
+def teste():
+    """Endpoint simples para testar se o servidor está respondendo"""
+    logger.info("Teste endpoint accessed")
+    return "Servidor funcionando!", 200
+
 if __name__ == '__main__':
     try:
         # Tentar obter a porta do ambiente ou usar 8080 como padrão para Replit
