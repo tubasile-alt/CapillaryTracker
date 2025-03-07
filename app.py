@@ -30,7 +30,7 @@ def initialize_empty_files():
         ]
         pd.DataFrame(columns=columns).to_excel("cirurgias.xlsx", index=False)
         logger.info("Created empty cirurgias.xlsx file")
-        
+
     # Initialize necroses.xlsx
     if not os.path.exists("necroses.xlsx"):
         columns = [
@@ -66,7 +66,7 @@ def clear_data():
                 'coroa', 'scalpe', 'peninsula_direita', 'peninsula_esquerda'
             ]
             pd.DataFrame(columns=columns).to_excel("cirurgias.xlsx", index=False)
-            
+
         # Clear necroses.xlsx
         if os.path.exists("necroses.xlsx"):
             columns = [
@@ -74,7 +74,7 @@ def clear_data():
                 'largest_lesion', 'affected_band', 'photo_paths'
             ]
             pd.DataFrame(columns=columns).to_excel("necroses.xlsx", index=False)
-            
+
         logger.info("✅ All data cleared successfully for deployment")
         flash("✅ Todos os dados foram limpos com sucesso! O sistema está pronto para deployment.", "success")
         return redirect(url_for('index'))
@@ -83,8 +83,6 @@ def clear_data():
         flash(f"❌ Erro ao limpar dados: {str(e)}", "error")
         return redirect(url_for('index'))
 
-    logger.info("Ping route accessed")
-    return "Application is running!"
 
 @app.route('/novo_cadastro', methods=['GET', 'POST'])
 def novo_cadastro():
@@ -286,12 +284,12 @@ def process_dashboard_data(df):
     """Process dataframe into dashboard-ready data"""
     # Lidar com valores vazios
     df = df.fillna(0)
-    
+
     # Garantir que colunas numéricas tenham valores zerados quando vazios
     numeric_columns = df.select_dtypes(include=['number']).columns
     for col in numeric_columns:
         df[col] = df[col].fillna(0).replace('', 0)
-    
+
     # Estrutura para armazenar os dados do dashboard
     dashboard_data = {
         'labels': [],
@@ -303,10 +301,10 @@ def process_dashboard_data(df):
         'avg_density': 0,
         'update_time': datetime.now().strftime('%d/%m/%Y %H:%M')
     }
-    
+
     if df.empty:
         return dashboard_data
-    
+
     # Processar datas e criar coluna mes_ano
     try:
         if 'data' in df.columns:
@@ -324,33 +322,33 @@ def process_dashboard_data(df):
         df['mes_ano'] = datetime.now().strftime('%m/%Y')
         df['ano'] = datetime.now().year
         df['mes'] = datetime.now().month
-    
+
     # Calcular estatísticas gerais
     dashboard_data['total_surgeries'] = len(df)
-    
+
     # 1. Cirurgias por mês (total)
     cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
     cirurgias_por_mes['count'] = cirurgias_por_mes['count'].fillna(0).astype(int)
-    
+
     dashboard_data['labels'] = cirurgias_por_mes['mes_ano'].tolist()
-    
+
     # Adicionar dataset principal
     dashboard_data['datasets'].append({
         'label': 'Total de Cirurgias',
         'data': cirurgias_por_mes['count'].tolist()
     })
-    
+
     # 2. Cirurgias por mês por unidade
     if 'unidade' in df.columns:
         # Substituir valores vazios na coluna unidade
         df['unidade'] = df['unidade'].fillna('Não especificada')
-        
+
         cirurgias_por_mes_unidade = df.groupby(['mes_ano', 'unidade']).size().reset_index(name='count')
         cirurgias_por_mes_unidade['count'] = cirurgias_por_mes_unidade['count'].fillna(0).astype(int)
-        
+
         # Preparar datasets por unidade
         unidades = df['unidade'].unique()
-        
+
         for unidade in unidades:
             dados_unidade = cirurgias_por_mes_unidade[cirurgias_por_mes_unidade['unidade'] == unidade]
             # Mapa para todas as datas possíveis
@@ -361,46 +359,46 @@ def process_dashboard_data(df):
             merged = dados_completos.merge(dados_unidade, on='mes_ano', how='left')
             # Tratar valores nulos corretamente
             merged['count'] = merged['count'].fillna(0).astype(int)
-            
+
             dashboard_data['datasets'].append({
                 'label': f'Cirurgias - {unidade}',
                 'data': merged['count'].tolist()
             })
-    
+
     # 3. Verificar se existem dados de folículos
     has_follicle_data = 'total_foliculos' in df.columns
-    
+
     # Se temos dados de folículos, processar
     if has_follicle_data:
         # Converter coluna para numérico, tratando erros
         df['total_foliculos'] = pd.to_numeric(df['total_foliculos'], errors='coerce').fillna(0)
-        
+
         # Média geral de folículos
         dashboard_data['avg_follicles'] = int(df['total_foliculos'].mean())
-        
+
         # Média de folículos por mês
         folliculo_medio = df.groupby('mes_ano')['total_foliculos'].mean().reset_index()
-        
+
         # Preparar dados para gráficos
         dashboard_data['follicles_data']['labels'] = folliculo_medio['mes_ano'].tolist()
         dashboard_data['follicles_data']['averages'] = folliculo_medio['total_foliculos'].round(0).astype(int).tolist()
-        
+
         # Se tiver dado de densidade, calcular média
         if 'densidade_scketh' in df.columns:
             # Converter coluna para numérico, tratando erros
             df['densidade_scketh'] = pd.to_numeric(df['densidade_scketh'], errors='coerce').fillna(0)
-            
+
             # Média geral de densidade
             dashboard_data['avg_density'] = int(df['densidade_scketh'].mean())
-            
+
             densidade_media = df.groupby('mes_ano')['densidade_scketh'].mean().reset_index()
             dashboard_data['follicles_data']['le_density'] = densidade_media['densidade_scketh'].round(0).astype(int).tolist()
-        
+
         dashboard_data['has_follicle_data'] = True
-    
+
     # Adicionar timestamp de atualização
     dashboard_data['update_time'] = datetime.now().strftime('%d/%m/%Y %H:%M')
-    
+
     return dashboard_data
 
 @app.route('/dashboard')
@@ -450,19 +448,19 @@ def filter_dashboard():
         unit = request.args.get('unit', 'all')
         doctor = request.args.get('doctor', 'all')
         equipe = request.args.get('equipe', 'all')
-        
+
         # Médicos por unidade para filtros
         medicos_por_unidade = {
             'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
             'Campinas': ['Dra. Isadora', 'Dra. Adriana']
         }
-        
+
         # Equipe por unidade para filtros
         equipe_por_unidade = {
             'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
             'Campinas': ['Juliana', 'Gabriela']
         }
-        
+
         # Load data
         filename = "cirurgias.xlsx"
         if not os.path.exists(filename):
@@ -475,12 +473,12 @@ def filter_dashboard():
                 'avg_follicles': 0,
                 'avg_density': 0
             })
-        
+
         df = pd.read_excel(filename)
-        
+
         # Preencher valores nulos com zero para evitar erros de cálculo
         df = df.fillna(0)
-        
+
         # Apply filters
         if year != 'all':
             try:
@@ -490,7 +488,7 @@ def filter_dashboard():
                 if 'ano' not in df.columns:
                     df['ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.year
                 df = df[df['ano'] == int(year)]
-        
+
         if month != 'all':
             try:
                 df = df[df['mes'] == int(month)]
@@ -499,17 +497,17 @@ def filter_dashboard():
                 if 'mes' not in df.columns:
                     df['mes'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.month
                 df = df[df['mes'] == int(month)]
-        
+
         # Apply unit filter with restrictions on doctors and team members
         if unit != 'all' and 'unidade' in df.columns:
             # Filter by unit
             df = df[df['unidade'] == unit]
-            
+
             # Restrict doctors to only those from this unit 
             if 'medico' in df.columns:
                 valid_doctors = medicos_por_unidade.get(unit, [])
                 df = df[df['medico'].isin(valid_doctors)]
-            
+
             # Restrict team members to only those from this unit
             if 'equipe' in df.columns:
                 valid_team = equipe_por_unidade.get(unit, [])
@@ -523,23 +521,23 @@ def filter_dashboard():
                 else:
                     # For columns with single values
                     df = df[df['equipe'].isin(valid_team)]
-        
+
         # Additional filters (only apply if not restricted by unit)
         if doctor != 'all' and 'medico' in df.columns:
             df = df[df['medico'] == doctor]
-        
+
         if equipe != 'all' and 'equipe' in df.columns:
             df = df[df['equipe'] == equipe]
-        
+
         # Process filtered data
         dashboard_data = process_dashboard_data(df)
-        
+
         # Log data being returned for debugging
         logger.info(f"Returning dashboard data with {len(df)} records")
         logger.info(f"Total surgeries: {dashboard_data['total_surgeries']}")
-        
+
         return jsonify(dashboard_data)
-    
+
     except Exception as e:
         logger.error(f"Error filtering dashboard data: {str(e)}\n{traceback.format_exc()}")
         return jsonify({
@@ -587,13 +585,13 @@ def search_patients():
     try:
         term = request.args.get('term', '').lower()
         unit = request.args.get('unit', '')
-        
+
         if not term or len(term) < 2:
             return jsonify([])
 
         # Carregar dados dos pacientes
         df = pd.read_excel("cirurgias.xlsx")
-        
+
         # Filtrar por unidade se especificado
         if unit:
             df = df[df['unidade'] == unit]
@@ -638,20 +636,20 @@ def necrose_summary():
         if os.path.exists(cirurgias_file):
             df_cirurgias = pd.read_excel(cirurgias_file)
             total_surgeries = len(df_cirurgias)
-        
+
         # Carregar dados de necroses
         necroses_file = "necroses.xlsx"
         total_necroses = 0
         if os.path.exists(necroses_file):
             df_necroses = pd.read_excel(necroses_file)
             total_necroses = len(df_necroses)
-        
+
         # Calcular taxa de necrose
         necrose_rate = "0%"
         if total_surgeries > 0:
             taxa = (total_necroses / total_surgeries) * 100
             necrose_rate = f"{taxa:.1f}%"
-        
+
         return jsonify({
             'total_surgeries': total_surgeries,
             'total_necroses': total_necroses,
@@ -663,7 +661,7 @@ def necrose_summary():
             'total_surgeries': 0,
             'total_necroses': 0,
             'necrose_rate': '0%',
-            'error': str(e)
+'error': str(e)
         })
 
 @app.route('/save_necrose', methods=['POST'])
@@ -674,14 +672,14 @@ def save_necrose():
         # Verificar se existem dados do formulário
         if not request.form:
             return jsonify({'success': False, 'error': 'Dados do formulário não encontrados'})
-        
+
         # Obter dados do formulário
         patient_id = request.form.get('patient_id')
         patient_unit = request.form.get('patient_unit')
         lesion_count = request.form.get('lesion_count')
         largest_lesion = request.form.get('largest_lesion')
         affected_band = request.form.get('affected_band')
-        
+
         # Validar dados recebidos
         required_fields = ['patient_id', 'lesion_count', 'largest_lesion', 'affected_band']
         if not all(request.form.get(field) for field in required_fields):
@@ -690,10 +688,10 @@ def save_necrose():
         # Processar arquivos de foto
         photo_paths = []
         photo_dir = os.path.join('static', 'uploads', 'necrose_photos')
-        
+
         # Criar diretório se não existir
         os.makedirs(photo_dir, exist_ok=True)
-        
+
         for i in range(1, 4):  # Para cada uma das 3 fotos possíveis
             photo_key = f'photo{i}'
             if photo_key in request.files and request.files[photo_key].filename != '':
@@ -702,7 +700,7 @@ def save_necrose():
                 file_path = os.path.join(photo_dir, filename)
                 file.save(file_path)
                 photo_paths.append(file_path)
-        
+
         # Carregar arquivo de necroses existente ou criar novo
         filename = "necroses.xlsx"
         if os.path.exists(filename):

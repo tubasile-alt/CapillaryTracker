@@ -404,7 +404,8 @@
 
         // Submit the form after a short delay
         setTimeout(() => {
-            this.submit();
+            const form = document.getElementById('cirurgia-form');
+            form.submit();
         }, 1000);
     });
 
