@@ -19,6 +19,30 @@ logger.info("Starting Flask application...")
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
+# Initialize empty Excel files if they don't exist
+def initialize_empty_files():
+    # Initialize cirurgias.xlsx
+    if not os.path.exists("cirurgias.xlsx"):
+        columns = [
+            'data', 'nome', 'unidade', 'medico', 'equipe', 'hora_cirurgia', 
+            'tempo_cirurgia', 'total_foliculos', 'frente', 'densidade_scketh',
+            'coroa', 'scalpe', 'peninsula_direita', 'peninsula_esquerda'
+        ]
+        pd.DataFrame(columns=columns).to_excel("cirurgias.xlsx", index=False)
+        logger.info("Created empty cirurgias.xlsx file")
+        
+    # Initialize necroses.xlsx
+    if not os.path.exists("necroses.xlsx"):
+        columns = [
+            'patient_id', 'patient_unit', 'data_registro', 'lesion_count', 
+            'largest_lesion', 'affected_band', 'photo_paths'
+        ]
+        pd.DataFrame(columns=columns).to_excel("necroses.xlsx", index=False)
+        logger.info("Created empty necroses.xlsx file")
+
+# Initialize empty files at startup
+initialize_empty_files()
+
 @app.route('/')
 def index():
     logger.info("Accessing index route")
@@ -26,6 +50,37 @@ def index():
 
 @app.route('/ping')
 def ping():
+
+@app.route('/clear_data', methods=['POST'])
+def clear_data():
+    """Clear all data from Excel files before deployment"""
+    try:
+        # Clear cirurgias.xlsx
+        if os.path.exists("cirurgias.xlsx"):
+            # Create empty dataframe with columns
+            columns = [
+                'data', 'nome', 'unidade', 'medico', 'equipe', 'hora_cirurgia', 
+                'tempo_cirurgia', 'total_foliculos', 'frente', 'densidade_scketh',
+                'coroa', 'scalpe', 'peninsula_direita', 'peninsula_esquerda'
+            ]
+            pd.DataFrame(columns=columns).to_excel("cirurgias.xlsx", index=False)
+            
+        # Clear necroses.xlsx
+        if os.path.exists("necroses.xlsx"):
+            columns = [
+                'patient_id', 'patient_unit', 'data_registro', 'lesion_count', 
+                'largest_lesion', 'affected_band', 'photo_paths'
+            ]
+            pd.DataFrame(columns=columns).to_excel("necroses.xlsx", index=False)
+            
+        logger.info("✅ All data cleared successfully for deployment")
+        flash("✅ Todos os dados foram limpos com sucesso! O sistema está pronto para deployment.", "success")
+        return redirect(url_for('index'))
+    except Exception as e:
+        logger.error(f"Error clearing data: {str(e)}\n{traceback.format_exc()}")
+        flash(f"❌ Erro ao limpar dados: {str(e)}", "error")
+        return redirect(url_for('index'))
+
     logger.info("Ping route accessed")
     return "Application is running!"
 
@@ -45,7 +100,7 @@ def novo_cadastro():
             # Salvar no Excel
             save_to_excel(form_data)
 
-            flash("Dados salvos com sucesso!", "success")
+            flash("✅ Dados salvos com sucesso! 🎉", "success")
             return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error saving data: {str(e)}\n{traceback.format_exc()}")

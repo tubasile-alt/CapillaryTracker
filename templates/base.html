@@ -25,6 +25,12 @@
             {% endif %}
         {% endwith %}
         {% block content %}{% endblock %}
+        <div class="footer">
+                <p>&copy; 2023 CapillaryTracker - Instituto Capilar do Brasil</p>
+                <form method="post" action="{{ url_for('clear_data') }}" style="margin-top:10px" onsubmit="return confirm('⚠️ ATENÇÃO: Esta ação irá apagar TODOS os dados do sistema. Você tem certeza que deseja continuar?');">
+                    <button type="submit" class="btn btn-danger btn-sm">Limpar Dados (Antes do Deployment)</button>
+                </form>
+            </div>
     </div>
 </body>
 </html>
