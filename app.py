@@ -50,6 +50,8 @@ def index():
 
 @app.route('/ping')
 def ping():
+    logger.info("Ping route accessed")
+    return "Application is running!"
 
 @app.route('/clear_data', methods=['POST'])
 def clear_data():
