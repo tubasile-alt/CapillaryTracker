@@ -139,6 +139,13 @@
                 {% endfor %}
             </div>
 
+            <div class="extra-people-fields">
+                <label for="extra_person_1">Pessoa Extra 1:</label>
+                <input type="text" name="extra_person_1" id="extra_person_1">
+                <label for="extra_person_2">Pessoa Extra 2:</label>
+                <input type="text" name="extra_person_2" id="extra_person_2">
+            </div>
+
             <!-- Botões de navegação da página 1 -->
             <div class="nav-buttons">
                 <button type="button" class="btn btn-primary" onclick="goToPage(2)">Próximo</button>
@@ -322,7 +329,7 @@
                     </div>
                 {% endfor %}
             </div>
-                
+
 
 
             <!-- Botões de navegação da página 2 -->
@@ -333,6 +340,44 @@
         </div>
     </form>
 </div>
+
+<style>
+    .extra-people-fields {
+        margin-top: 15px;
+        padding: 10px;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .extra-people-fields label {
+        display: block;
+        margin-top: 8px;
+        font-size: 0.9em;
+        color: #555;
+    }
+
+    .extra-people-fields input {
+        width: 100%;
+        padding: 6px;
+        margin: 3px 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .time-buttons {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .time-btn {
+        border: none;
+        background-color: #f0f0f0;
+        cursor: pointer;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        text-align: center;
+        font-weight: bold;
+    }
+</style>
 
 <script>
     // Set today's date as default
@@ -428,7 +473,7 @@
         // Garantir que o formulário seja enviado corretamente
         const form = this;
         this.removeEventListener('submit', arguments.callee);
-        
+
         // Usar um timeout maior para garantir que todos os dados estejam prontos
         setTimeout(() => {
             try {
