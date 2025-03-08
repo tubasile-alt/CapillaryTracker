@@ -380,7 +380,17 @@
             var dd = String(date.getDate()).padStart(2, '0');
             var mm = String(date.getMonth() + 1).padStart(2, '0');
             var yyyy = date.getFullYear();
-            document.getElementById('data_formatted').value = dd + '/' + mm + '/' + yyyy;
+            
+            // Create a hidden input if it doesn't exist
+            let dataFormatted = document.getElementById('data_formatted');
+            if (!dataFormatted) {
+                dataFormatted = document.createElement('input');
+                dataFormatted.type = 'hidden';
+                dataFormatted.id = 'data_formatted';
+                dataFormatted.name = 'data_formatted';
+                document.getElementById('cirurgia-form').appendChild(dataFormatted);
+            }
+            dataFormatted.value = dd + '/' + mm + '/' + yyyy;
         }
 
         // Get selected equipe values from checkboxes
@@ -402,11 +412,13 @@
         successMessage.innerHTML = '✅ Dados salvos com sucesso! 🎉';
         document.body.appendChild(successMessage);
 
-        // Submit the form after a short delay
+        console.log('Enviando formulário...');
+        
+        // Garantir que o formulário seja enviado
+        this.removeEventListener('submit', arguments.callee);
         setTimeout(() => {
-            const form = document.getElementById('cirurgia-form');
-            form.submit();
-        }, 1000);
+            this.submit();
+        }, 500);
     });
 
     // Update medicos based on selected unidade
