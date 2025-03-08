@@ -183,80 +183,35 @@ def novo_cadastro():
     return render_template('form.html', form=form_data, data={})
 
 def save_to_excel(data):
-    """Salva os dados em um arquivo Excel."""
-    logger.info("Salvando dados na planilha Excel...")
-
-    # Converter campos vazios para "0"
-    for key in data:
-        if data[key] == '' or data[key] is None:
-            data[key] = '0'
-
-    # Verificar se data é uma string de data válida, caso contrário usar a data atual
     try:
-        if 'data' in data and data['data']:
-            pd.to_datetime(data['data'])
-        else:
-            data['data'] = datetime.now().strftime('%d/%m/%Y')
-    except:
-        data['data'] = datetime.now().strftime('%d/%m/%Y')
+        logging.info("Salvando dados na planilha Excel...")
+        filename = "cirurgias.xlsx"
 
-    # Calcular dados adicionais
-    if all(key in data for key in ['q1_area', 'q1_furos', 'q1_fios']):
-        try:
-            # Converter strings para números
-            for quadrante in range(1, 5):
-                for campo in ['area', 'furos', 'fios']:
-                    key = f'q{quadrante}_{campo}'
-                    if key in data:
-                        try:
-                            data[key] = float(data[key])
-                        except (ValueError, TypeError):
-                            data[key] = 0
-
-            # Calcular densidade de extração por quadrante (furos/área)
-            data['q1_densidade'] = data['q1_furos'] / data['q1_area'] if data['q1_area'] > 0 else 0
-            data['q2_densidade'] = data['q2_furos'] / data['q2_area'] if data['q2_area'] > 0 else 0
-            data['q3_densidade'] = data['q3_furos'] / data['q3_area'] if data['q3_area'] > 0 else 0
-            data['q4_densidade'] = data['q4_furos'] / data['q4_area'] if data['q4_area'] > 0 else 0
-
-            # Calcular taxa de quebra (fios/furos em porcentagem)
-            data['q1_taxa_quebra'] = (1 - data['q1_fios'] / data['q1_furos']) * 100 if data['q1_furos'] > 0 else 0
-            data['q2_taxa_quebra'] = (1 - data['q2_fios'] / data['q2_furos']) * 100 if data['q2_furos'] > 0 else 0
-            data['q3_taxa_quebra'] = (1 - data['q3_fios'] / data['q3_furos']) * 100 if data['q3_furos'] > 0 else 0
-            data['q4_taxa_quebra'] = (1 - data['q4_fios'] / data['q4_furos']) * 100 if data['q4_furos'] > 0 else 0
-
-            # Converter de volta para string para manter consistência de tipos no dataframe
-            for key in data:
-                if isinstance(data[key], float):
-                    # Arredondar para baixo e sem casas decimais
-                    data[key] = str(int(data[key]))
-        except Exception as e:
-            logger.error(f"Error calculating derived values: {str(e)}")
-            logger.error(traceback.format_exc())
-
-    # Criar um DataFrame com os dados
-    df_new = pd.DataFrame([data])
-
-    # Nome do arquivo Excel
-    filename = "cirurgias.xlsx"
-
-    try:
         # Verificar se o arquivo existe
         if os.path.exists(filename):
-            # Append to existing file
-            df_existing = pd.read_excel(filename, engine='openpyxl')
-            df_combined = pd.concat([df_existing, df_new], ignore_index=True)
-            df_combined.to_excel(filename, index=False, engine='openpyxl')
+            try:
+                # Tente ler com openpyxl
+                df_existing = pd.read_excel(filename, engine='openpyxl')
+                # Adicionar nova linha
+                df_new = pd.DataFrame([data])
+                df_combined = pd.concat([df_existing, df_new], ignore_index=True)
+            except Exception as e:
+                logging.error(f"Erro ao ler o arquivo Excel existente: {str(e)}")
+                logging.error(traceback.format_exc())
+                # Se falhar, criar um novo DataFrame
+                df_combined = pd.DataFrame([data])
         else:
-            # Create new file
-            df_new.to_excel(filename, index=False, engine='openpyxl')
+            # Criar novo arquivo
+            df_combined = pd.DataFrame([data])
 
-        logger.info(f"Dados salvos com sucesso em {filename}")
-        return True
+        # Salvar o DataFrame no arquivo Excel com engine específico
+        df_combined.to_excel(filename, index=False, engine='openpyxl')
+        logging.info("Dados salvos com sucesso!")
+        return True, "Dados salvos com sucesso!"
     except Exception as e:
-        logger.error(f"Erro ao salvar dados no Excel: {str(e)}")
-        logger.error(traceback.format_exc())
-        raise
+        logging.error(f"Erro ao salvar dados no Excel: {str(e)}")
+        logging.error(traceback.format_exc())
+        return False, f"Erro ao salvar dados: {str(e)}"
 
 @app.route('/get_medicos/<unidade>')
 def get_medicos(unidade):
@@ -717,7 +672,7 @@ def save_necrose():
             'patient_unit': patient_unit,
             'data_registro': datetime.now().strftime('%d/%m/%Y'),
             'lesion_count': lesion_count,
-            'largest_lesion': largest_lesion,
+            'largest_lesion': largestlesion,
             'affected_band': affected_band,
             'photo_paths': ','.join(photo_paths) if photo_paths else ''
         }

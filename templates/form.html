@@ -314,10 +314,15 @@
                 {% endfor %}
             </div>
                 <div class="form-group">
-                    <label for="tempo_cirurgia">Tempo de Cirurgia (horas)</label>
-                    <input type="number" name="tempo_cirurgia" id="tempo_cirurgia" value="5" min="0" step="0.5">
-                    <button type="button" onclick="adjustTime('add')">+</button>
-                    <button type="button" onclick="adjustTime('subtract')">-</button>
+                    <label for="tempo_cirurgia">Tempo de Cirurgia (horas) *</label>
+                    <div class="time-input-container">
+                        <input type="number" name="tempo_cirurgia" id="tempo_cirurgia" value="5" min="0" step="0.5" required>
+                        <div class="time-buttons">
+                            <button type="button" class="time-btn" onclick="adjustTime('add')">+</button>
+                            <button type="button" class="time-btn" onclick="adjustTime('subtract')">-</button>
+                        </div>
+                    </div>
+                    <small class="form-text">Ajuste em intervalos de 30 minutos (0.5 hora)</small>
                 </div>
 
 
@@ -421,11 +426,20 @@
 
         console.log('Enviando formulário...');
 
-        // Garantir que o formulário seja enviado
+        // Garantir que o formulário seja enviado corretamente
+        const form = this;
         this.removeEventListener('submit', arguments.callee);
+        
+        // Usar um timeout maior para garantir que todos os dados estejam prontos
         setTimeout(() => {
-            this.submit();
-        }, 500);
+            try {
+                form.submit();
+            } catch (err) {
+                console.error('Erro ao enviar formulário:', err);
+                alert('Erro ao enviar formulário. Por favor, tente novamente.');
+                location.reload();
+            }
+        }, 1000);
     });
 
     // Update medicos based on selected unidade

@@ -422,6 +422,43 @@ textarea {
     to { opacity: 1; }
 }
 
+/* Estilos para input de tempo com botões */
+.time-input-container {
+    display: flex;
+    align-items: center;
+}
+
+.time-input-container input {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.time-buttons {
+    display: flex;
+    flex-direction: column;
+}
+
+.time-btn {
+    padding: 5px 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin: 2px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.time-btn:hover {
+    background-color: #0056b3;
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 0.85em;
+    margin-top: 5px;
+}
+
 /* Dashboard styles */
 .dashboard-container {
     background: white;
