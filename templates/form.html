@@ -313,6 +313,13 @@
                     </div>
                 {% endfor %}
             </div>
+                <div class="form-group">
+                    <label for="tempo_cirurgia">Tempo de Cirurgia (horas)</label>
+                    <input type="number" name="tempo_cirurgia" id="tempo_cirurgia" value="5" min="0" step="0.5">
+                    <button type="button" onclick="adjustTime('add')">+</button>
+                    <button type="button" onclick="adjustTime('subtract')">-</button>
+                </div>
+
 
             <!-- Botões de navegação da página 2 -->
             <div class="nav-buttons">
@@ -380,7 +387,7 @@
             var dd = String(date.getDate()).padStart(2, '0');
             var mm = String(date.getMonth() + 1).padStart(2, '0');
             var yyyy = date.getFullYear();
-            
+
             // Create a hidden input if it doesn't exist
             let dataFormatted = document.getElementById('data_formatted');
             if (!dataFormatted) {
@@ -413,7 +420,7 @@
         document.body.appendChild(successMessage);
 
         console.log('Enviando formulário...');
-        
+
         // Garantir que o formulário seja enviado
         this.removeEventListener('submit', arguments.callee);
         setTimeout(() => {
@@ -555,6 +562,20 @@
 
         // Rolar para o topo
         window.scrollTo(0, 0);
+    }
+
+    function adjustTime(action) {
+        const tempoCirurgiaInput = document.getElementById('tempo_cirurgia');
+        let currentTime = parseFloat(tempoCirurgiaInput.value);
+
+        if (action === 'add') {
+            currentTime += 0.5;
+        } else if (action === 'subtract') {
+            currentTime -= 0.5;
+            currentTime = Math.max(0, currentTime); // Prevent negative values
+        }
+
+        tempoCirurgiaInput.value = currentTime;
     }
 </script>
 {% endblock %}

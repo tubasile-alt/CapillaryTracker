@@ -28,7 +28,7 @@ def initialize_empty_files():
             'tempo_cirurgia', 'total_foliculos', 'frente', 'densidade_scketh',
             'coroa', 'scalpe', 'peninsula_direita', 'peninsula_esquerda'
         ]
-        pd.DataFrame(columns=columns).to_excel("cirurgias.xlsx", index=False)
+        pd.DataFrame(columns=columns).to_excel("cirurgias.xlsx", index=False, engine='openpyxl')
         logger.info("Created empty cirurgias.xlsx file")
 
     # Initialize necroses.xlsx
@@ -37,7 +37,7 @@ def initialize_empty_files():
             'patient_id', 'patient_unit', 'data_registro', 'lesion_count', 
             'largest_lesion', 'affected_band', 'photo_paths'
         ]
-        pd.DataFrame(columns=columns).to_excel("necroses.xlsx", index=False)
+        pd.DataFrame(columns=columns).to_excel("necroses.xlsx", index=False, engine='openpyxl')
         logger.info("Created empty necroses.xlsx file")
 
 # Initialize empty files at startup
@@ -65,7 +65,7 @@ def clear_data():
                 'tempo_cirurgia', 'total_foliculos', 'frente', 'densidade_scketh',
                 'coroa', 'scalpe', 'peninsula_direita', 'peninsula_esquerda'
             ]
-            pd.DataFrame(columns=columns).to_excel("cirurgias.xlsx", index=False)
+            pd.DataFrame(columns=columns).to_excel("cirurgias.xlsx", index=False, engine='openpyxl')
 
         # Clear necroses.xlsx
         if os.path.exists("necroses.xlsx"):
@@ -73,7 +73,7 @@ def clear_data():
                 'patient_id', 'patient_unit', 'data_registro', 'lesion_count', 
                 'largest_lesion', 'affected_band', 'photo_paths'
             ]
-            pd.DataFrame(columns=columns).to_excel("necroses.xlsx", index=False)
+            pd.DataFrame(columns=columns).to_excel("necroses.xlsx", index=False, engine='openpyxl')
 
         logger.info("✅ All data cleared successfully for deployment")
         flash("✅ Todos os dados foram limpos com sucesso! O sistema está pronto para deployment.", "success")
@@ -244,12 +244,12 @@ def save_to_excel(data):
         # Verificar se o arquivo existe
         if os.path.exists(filename):
             # Append to existing file
-            df_existing = pd.read_excel(filename)
+            df_existing = pd.read_excel(filename, engine='openpyxl')
             df_combined = pd.concat([df_existing, df_new], ignore_index=True)
-            df_combined.to_excel(filename, index=False)
+            df_combined.to_excel(filename, index=False, engine='openpyxl')
         else:
             # Create new file
-            df_new.to_excel(filename, index=False)
+            df_new.to_excel(filename, index=False, engine='openpyxl')
 
         logger.info(f"Dados salvos com sucesso em {filename}")
         return True
