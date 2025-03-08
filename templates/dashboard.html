@@ -72,6 +72,21 @@
                 <div class="dashboard-actions">
                     <a href="#" class="btn btn-primary" onclick="exportToPdf()">Exportar PDF</a>
                     <a href="{{ url_for('download_excel') }}" class="btn btn-secondary">Baixar Excel</a>
+                    <a href="#" class="btn btn-danger" onclick="confirmClearData()">Limpar Dados</a>
+                </div>
+                
+                <!-- Modal para confirmação de senha -->
+                <div id="passwordModal" class="password-modal">
+                    <div class="password-modal-content">
+                        <span class="close-modal">&times;</span>
+                        <h3>Proteção de Segurança</h3>
+                        <p>Digite a senha para confirmar a exclusão de todos os dados:</p>
+                        <input type="password" id="securityPassword" class="password-input">
+                        <div class="modal-buttons">
+                            <button class="btn btn-secondary" onclick="closePasswordModal()">Cancelar</button>
+                            <button class="btn btn-danger" onclick="submitPassword()">Confirmar Exclusão</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             {% else %}
@@ -341,5 +356,133 @@
     function exportToPdf() {
         window.print();
     }
+    
+    // Funções para o modal de senha
+    function confirmClearData() {
+        document.getElementById('passwordModal').style.display = 'flex';
+    }
+    
+    function closePasswordModal() {
+        document.getElementById('passwordModal').style.display = 'none';
+        document.getElementById('securityPassword').value = '';
+    }
+    
+    function submitPassword() {
+        const password = document.getElementById('securityPassword').value;
+        if (password) {
+            // Envia a senha para verificação
+            fetch('/clear_data_protected', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ Dados limpos com sucesso!');
+                    window.location.reload();
+                } else {
+                    alert('❌ Senha incorreta ou erro ao limpar dados.');
+                }
+                closePasswordModal();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Erro ao processar solicitação.');
+                closePasswordModal();
+            });
+        } else {
+            alert('Por favor, digite a senha.');
+        }
+    }
+    
+    // Fecha o modal quando o usuário clica no X
+    document.querySelector('.close-modal').addEventListener('click', closePasswordModal);
+    
+    // Fecha o modal quando o usuário clica fora dele
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('passwordModal');
+        if (event.target == modal) {
+            closePasswordModal();
+        }
+    });
 </script>
+
+<style>
+/* Estilos para o botão vermelho */
+.btn-danger {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+/* Estilos para o modal de senha */
+.password-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+}
+
+.password-modal-content {
+    background-color: #27293d;
+    padding: 25px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.close-modal:hover {
+    color: #fff;
+}
+
+.password-input {
+    width: 100%;
+    padding: 10px;
+    margin: 15px 0;
+    border-radius: 5px;
+    background-color: #1e1e2f;
+    color: #ffffff;
+    border: 1px solid #444444;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .modal-buttons .btn {
+        width: 100%;
+    }
+}
+</style>
 {% endblock %}

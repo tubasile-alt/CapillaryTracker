@@ -83,6 +83,42 @@ def clear_data():
         flash(f"❌ Erro ao limpar dados: {str(e)}", "error")
         return redirect(url_for('index'))
 
+@app.route('/clear_data_protected', methods=['POST'])
+def clear_data_protected():
+    """Clear all data from Excel files with password protection"""
+    try:
+        # Get password from request
+        data = request.get_json()
+        password = data.get('password', '')
+        
+        # Check if password is correct (12345)
+        if password != '12345':
+            logger.warning("Incorrect password attempt to clear data")
+            return jsonify({'success': False, 'message': 'Senha incorreta'})
+        
+        # Clear cirurgias.xlsx
+        if os.path.exists("cirurgias.xlsx"):
+            columns = [
+                'data', 'nome', 'unidade', 'medico', 'equipe', 'hora_cirurgia', 
+                'tempo_cirurgia', 'total_foliculos', 'frente', 'densidade_scketh',
+                'coroa', 'scalpe', 'peninsula_direita', 'peninsula_esquerda'
+            ]
+            pd.DataFrame(columns=columns).to_excel("cirurgias.xlsx", index=False, engine='openpyxl')
+
+        # Clear necroses.xlsx
+        if os.path.exists("necroses.xlsx"):
+            columns = [
+                'patient_id', 'patient_unit', 'data_registro', 'lesion_count', 
+                'largest_lesion', 'affected_band', 'photo_paths'
+            ]
+            pd.DataFrame(columns=columns).to_excel("necroses.xlsx", index=False, engine='openpyxl')
+
+        logger.info("✅ All data cleared successfully through dashboard")
+        return jsonify({'success': True, 'message': 'Dados limpos com sucesso'})
+    except Exception as e:
+        logger.error(f"Error clearing data via dashboard: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'message': f'Erro ao limpar dados: {str(e)}'})
+
 
 @app.route('/novo_cadastro', methods=['GET', 'POST'])
 def novo_cadastro():
