@@ -37,9 +37,9 @@
                                     <p class="select-message">Selecione a unidade primeiro...</p>
                                 </div>
                                 <div class="extra-people-fields">
-                                    <label for="extra_person_1">Pessoa Extra 1:</label>
+                                    <label for="extra_person_1">Técnica Extra 1:</label>
                                     <input type="text" name="extra_person_1" id="extra_person_1">
-                                    <label for="extra_person_2">Pessoa Extra 2:</label>
+                                    <label for="extra_person_2">Técnica Extra 2:</label>
                                     <input type="text" name="extra_person_2" id="extra_person_2">
                                 </div>
                             {% else %}
@@ -456,7 +456,7 @@
             selectedEquipe = Array.from(checkboxes).map(checkbox => checkbox.value);
         }
         
-        // Adicionar pessoas extras à equipe se estiverem preenchidas
+        // Adicionar técnicas extras à equipe se estiverem preenchidas
         var extraPerson1 = document.getElementById('extra_person_1').value;
         var extraPerson2 = document.getElementById('extra_person_2').value;
         
