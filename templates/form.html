@@ -36,6 +36,12 @@
                                 <div id="{{ field.name }}_container" class="checkbox-group">
                                     <p class="select-message">Selecione a unidade primeiro...</p>
                                 </div>
+                                <div class="extra-people-fields">
+                                    <label for="extra_person_1">Pessoa Extra 1:</label>
+                                    <input type="text" name="extra_person_1" id="extra_person_1">
+                                    <label for="extra_person_2">Pessoa Extra 2:</label>
+                                    <input type="text" name="extra_person_2" id="extra_person_2">
+                                </div>
                             {% else %}
                                 <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
                                     <option value="">Selecione a unidade primeiro...</option>
@@ -137,13 +143,6 @@
                         {% endif %}
                     </div>
                 {% endfor %}
-            </div>
-
-            <div class="extra-people-fields">
-                <label for="extra_person_1">Pessoa Extra 1:</label>
-                <input type="text" name="extra_person_1" id="extra_person_1">
-                <label for="extra_person_2">Pessoa Extra 2:</label>
-                <input type="text" name="extra_person_2" id="extra_person_2">
             </div>
 
             <!-- Botões de navegação da página 1 -->
@@ -451,9 +450,25 @@
 
         // Get selected equipe values from checkboxes
         var checkboxes = document.querySelectorAll('input[name="equipe"]:checked');
+        var selectedEquipe = [];
+        
         if (checkboxes.length > 0) {
-            var selectedEquipe = Array.from(checkboxes).map(checkbox => checkbox.value);
-
+            selectedEquipe = Array.from(checkboxes).map(checkbox => checkbox.value);
+        }
+        
+        // Adicionar pessoas extras à equipe se estiverem preenchidas
+        var extraPerson1 = document.getElementById('extra_person_1').value;
+        var extraPerson2 = document.getElementById('extra_person_2').value;
+        
+        if (extraPerson1) {
+            selectedEquipe.push(extraPerson1 + ' (extra)');
+        }
+        
+        if (extraPerson2) {
+            selectedEquipe.push(extraPerson2 + ' (extra)');
+        }
+        
+        if (selectedEquipe.length > 0) {
             // Create a hidden input to store the comma-separated values
             var hiddenInput = document.createElement('input');
             hiddenInput.type = 'hidden';
