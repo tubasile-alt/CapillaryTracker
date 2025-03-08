@@ -53,6 +53,15 @@
                             <input type="time" id="{{ field.name }}" name="{{ field.name }}" 
                                    {% if field.required %}required{% endif %}
                                    value="{{ data[field.name] if data and field.name in data else field.default if 'default' in field else '08:00' }}">
+                        {% elif field.name == 'tempo_cirurgia' %}
+                            <div class="time-input-container">
+                                <input type="number" name="{{ field.name }}" id="{{ field.name }}" value="5" min="0" step="0.5" {% if field.required %}required{% endif %}>
+                                <div class="time-buttons">
+                                    <button type="button" class="time-btn" onclick="adjustTime('add')">+</button>
+                                    <button type="button" class="time-btn" onclick="adjustTime('subtract')">-</button>
+                                </div>
+                            </div>
+                            <small class="form-text">Ajuste em intervalos de 30 minutos (0.5 hora)</small>
                         {% else %}
                             <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
                                 value="{{ data.get(field.name, '') }}"
@@ -313,17 +322,7 @@
                     </div>
                 {% endfor %}
             </div>
-                <div class="form-group">
-                    <label for="tempo_cirurgia">Tempo de Cirurgia (horas) *</label>
-                    <div class="time-input-container">
-                        <input type="number" name="tempo_cirurgia" id="tempo_cirurgia" value="5" min="0" step="0.5" required>
-                        <div class="time-buttons">
-                            <button type="button" class="time-btn" onclick="adjustTime('add')">+</button>
-                            <button type="button" class="time-btn" onclick="adjustTime('subtract')">-</button>
-                        </div>
-                    </div>
-                    <small class="form-text">Ajuste em intervalos de 30 minutos (0.5 hora)</small>
-                </div>
+                
 
 
             <!-- Botões de navegação da página 2 -->
