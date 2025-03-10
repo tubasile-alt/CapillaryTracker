@@ -143,6 +143,28 @@
                         {% endif %}
                     </div>
                 {% endfor %}
+                
+                <!-- Campo de Bloqueio -->
+                <div class="form-group">
+                    <label for="bloqueio">Bloqueio</label>
+                    <select name="bloqueio" id="bloqueio" onchange="toggleBloqueioSeringas(this.value)">
+                        <option value="Não" selected>Não</option>
+                        <option value="Xilo sem vaso">Xilo sem vaso</option>
+                        <option value="Xilo com vaso">Xilo com vaso</option>
+                    </select>
+                </div>
+                
+                <!-- Campo de seringas do bloqueio (inicialmente oculto) -->
+                <div id="bloqueio_seringas_container" class="form-group" style="display: none;">
+                    <label for="bloqueio_seringas">Quantidade de seringas</label>
+                    <input type="number" name="bloqueio_seringas" id="bloqueio_seringas" min="0" step="1">
+                </div>
+                
+                <!-- Campo de comentários do bloqueio (inicialmente oculto) -->
+                <div id="bloqueio_comentarios_container" class="form-group" style="display: none;">
+                    <label for="bloqueio_comentarios">Comentários sobre o bloqueio</label>
+                    <textarea name="bloqueio_comentarios" id="bloqueio_comentarios" rows="2"></textarea>
+                </div>
             </div>
 
             <!-- Botões de navegação da página 1 -->
@@ -657,6 +679,27 @@
             document.getElementById('cirurgia-form').appendChild(hiddenInput);
         }
         
+        // Adicionar dados de bloqueio
+        const bloqueioSelect = document.getElementById('bloqueio');
+        const bloqueioValue = bloqueioSelect.value;
+        
+        let bloqueioData = {
+            tipo: bloqueioValue,
+            seringas: '',
+            comentarios: ''
+        };
+        
+        if (bloqueioValue !== 'Não') {
+            bloqueioData.seringas = document.getElementById('bloqueio_seringas').value;
+            bloqueioData.comentarios = document.getElementById('bloqueio_comentarios').value;
+        }
+        
+        const bloqueioInput = document.createElement('input');
+        bloqueioInput.type = 'hidden';
+        bloqueioInput.name = 'bloqueio_data';
+        bloqueioInput.value = JSON.stringify(bloqueioData);
+        document.getElementById('cirurgia-form').appendChild(bloqueioInput);
+        
         // Prepara os dados de Body Hair, se aplicável
         if (document.getElementById('body-hair-check').checked) {
             const bodyHairSources = ['barba', 'peitoral', 'abdome', 'dorso'];
@@ -857,6 +900,22 @@
         }
 
         tempoCirurgiaInput.value = currentTime;
+    }
+    
+    // Função para mostrar/ocultar campo de seringas do bloqueio
+    function toggleBloqueioSeringas(value) {
+        const seringasContainer = document.getElementById('bloqueio_seringas_container');
+        const comentariosContainer = document.getElementById('bloqueio_comentarios_container');
+        
+        if (value === "Não") {
+            seringasContainer.style.display = 'none';
+            comentariosContainer.style.display = 'none';
+            document.getElementById('bloqueio_seringas').value = '';
+            document.getElementById('bloqueio_comentarios').value = '';
+        } else {
+            seringasContainer.style.display = 'block';
+            comentariosContainer.style.display = 'block';
+        }
     }
 </script>
 {% endblock %}
