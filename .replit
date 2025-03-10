@@ -1,3 +1,4 @@
+
 modules = ["python-3.11"]
 
 [nix]
@@ -53,13 +54,5 @@ run = ["sh", "-c", "python app.py"]
 deploymentTarget = "cloudrun"
 
 [[ports]]
-localPort = 3000
-externalPort = 3000
-
-[[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 8080
-externalPort = 8080
