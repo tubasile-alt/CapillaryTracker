@@ -72,6 +72,7 @@
                 <div class="dashboard-actions">
                     <a href="#" class="btn btn-primary" onclick="exportToPdf()">Exportar PDF</a>
                     <a href="{{ url_for('download_excel') }}" class="btn btn-secondary">Baixar Excel</a>
+                    <a href="#" class="btn btn-warning" onclick="confirmDeleteLastRecord()">Apagar Último Cadastro</a>
                     <a href="#" class="btn btn-danger" onclick="confirmClearData()">Limpar Dados</a>
                 </div>
                 
@@ -85,6 +86,20 @@
                         <div class="modal-buttons">
                             <button class="btn btn-secondary" onclick="closePasswordModal()">Cancelar</button>
                             <button class="btn btn-danger" onclick="submitPassword()">Confirmar Exclusão</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal para confirmação de exclusão do último registro -->
+                <div id="deleteLastModal" class="password-modal">
+                    <div class="password-modal-content">
+                        <span class="close-modal" onclick="closeDeleteLastModal()">&times;</span>
+                        <h3>Confirmação de Exclusão</h3>
+                        <p>Tem certeza que deseja apagar o último cadastro?</p>
+                        <p><strong>Paciente: <span id="lastPatientName">Carregando...</span></strong></p>
+                        <div class="modal-buttons">
+                            <button class="btn btn-secondary" onclick="closeDeleteLastModal()">Cancelar</button>
+                            <button class="btn btn-warning" onclick="deleteLastRecord()">Confirmar Exclusão</button>
                         </div>
                     </div>
                 </div>
@@ -403,11 +418,61 @@
     
     // Fecha o modal quando o usuário clica fora dele
     window.addEventListener('click', function(event) {
-        const modal = document.getElementById('passwordModal');
-        if (event.target == modal) {
+        const passwordModal = document.getElementById('passwordModal');
+        const deleteLastModal = document.getElementById('deleteLastModal');
+        
+        if (event.target == passwordModal) {
             closePasswordModal();
         }
+        
+        if (event.target == deleteLastModal) {
+            closeDeleteLastModal();
+        }
     });
+    
+    // Funções para exclusão do último registro
+    function confirmDeleteLastRecord() {
+        // Buscar informações do último registro
+        fetch('/get_last_record')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('lastPatientName').textContent = data.patient_name;
+                    document.getElementById('deleteLastModal').style.display = 'flex';
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Erro ao buscar o último registro.');
+            });
+    }
+    
+    function closeDeleteLastModal() {
+        document.getElementById('deleteLastModal').style.display = 'none';
+    }
+    
+    function deleteLastRecord() {
+        fetch('/delete_last_record', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ ' + data.message);
+                window.location.reload();
+            } else {
+                alert('❌ ' + data.message);
+            }
+            closeDeleteLastModal();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Erro ao excluir o último registro.');
+            closeDeleteLastModal();
+        });
+    }
 </script>
 
 <style>
@@ -419,6 +484,16 @@
 
 .btn-danger:hover {
     background-color: #c0392b;
+}
+
+/* Estilos para o botão amarelo */
+.btn-warning {
+    background-color: #f39c12;
+    color: white;
+}
+
+.btn-warning:hover {
+    background-color: #d35400;
 }
 
 /* Estilos para o modal de senha */

@@ -119,6 +119,62 @@ def clear_data_protected():
         logger.error(f"Error clearing data via dashboard: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'message': f'Erro ao limpar dados: {str(e)}'})
 
+@app.route('/get_last_record')
+def get_last_record():
+    """Get the last surgery record information"""
+    try:
+        filename = "cirurgias.xlsx"
+        if not os.path.exists(filename):
+            return jsonify({'success': False, 'message': 'Nenhum registro encontrado'})
+        
+        df = pd.read_excel(filename)
+        if df.empty:
+            return jsonify({'success': False, 'message': 'Nenhum registro encontrado'})
+        
+        # Get last row
+        last_record = df.iloc[-1]
+        
+        # Get patient name
+        patient_name = last_record.get('nome', 'Nome não disponível')
+        
+        return jsonify({
+            'success': True, 
+            'patient_name': patient_name
+        })
+    except Exception as e:
+        logger.error(f"Error getting last record: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'message': f'Erro ao buscar último registro: {str(e)}'})
+
+@app.route('/delete_last_record', methods=['POST'])
+def delete_last_record():
+    """Delete the last surgery record"""
+    try:
+        filename = "cirurgias.xlsx"
+        if not os.path.exists(filename):
+            return jsonify({'success': False, 'message': 'Nenhum registro encontrado para excluir'})
+        
+        df = pd.read_excel(filename)
+        if df.empty:
+            return jsonify({'success': False, 'message': 'Nenhum registro encontrado para excluir'})
+        
+        # Store the patient name before deletion
+        patient_name = df.iloc[-1].get('nome', 'Nome não disponível')
+        
+        # Remove the last row
+        df = df.iloc[:-1]
+        
+        # Save back to file
+        df.to_excel(filename, index=False, engine='openpyxl')
+        
+        logger.info(f"✅ Last record deleted successfully (Patient: {patient_name})")
+        return jsonify({
+            'success': True, 
+            'message': f'Registro do paciente {patient_name} excluído com sucesso'
+        })
+    except Exception as e:
+        logger.error(f"Error deleting last record: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'message': f'Erro ao excluir último registro: {str(e)}'})
+
 
 @app.route('/novo_cadastro', methods=['GET', 'POST'])
 def novo_cadastro():
