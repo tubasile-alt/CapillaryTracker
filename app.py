@@ -708,7 +708,7 @@ def save_necrose():
             'patient_unit': patient_unit,
             'data_registro': datetime.now().strftime('%d/%m/%Y'),
             'lesion_count': lesion_count,
-            'largest_lesion': largestlesion,
+            'largest_lesion': largest_lesion,
             'affected_band': affected_band,
             'photo_paths': ','.join(photo_paths) if photo_paths else ''
         }
