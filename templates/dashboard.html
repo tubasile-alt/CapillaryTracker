@@ -85,6 +85,7 @@
                         </div>
                     </div>
                     <div id="gaugeContainer" class="gauge-container">
+                        <div class="gauge-meta-label">Meta: <span id="metaValue">0</span></div>
                         <div class="new-gauge">
                             <div class="gauge-track">
                                 <div class="gauge-fill" id="gaugeFill"></div>
@@ -92,10 +93,9 @@
                             <div class="gauge-marker" id="gaugeMarker"></div>
                             <div class="gauge-value-box">
                                 <div class="gauge-value" id="gaugeValue">0</div>
-                                <div class="gauge-unit-label">cirurgias de ${meta}</div>
                             </div>
-                            <div class="gauge-max" id="gaugeMax"></div>
                         </div>
+                        <div class="gauge-cirurgias-label">Cirurgias: <span id="cirurgiasValue">0</span></div>
                     </div>
                 </div>
             </div>
@@ -498,8 +498,9 @@
                     const formattedValue = valorAtual.toFixed(2);
                     
                     // Atualizar textos
+                    document.getElementById('metaValue').textContent = `${meta}`;
+                    document.getElementById('cirurgiasValue').textContent = `${formattedValue}`;
                     valueElement.textContent = `${formattedValue}`;
-                    maxElement.textContent = `${meta}`;
                     
                     // Posição do marcador (icone seta)
                     markerElement.style.left = `${cappedPercentual}%`;

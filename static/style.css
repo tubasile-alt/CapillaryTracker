@@ -972,8 +972,9 @@ textarea {
 }
 
 .gauge-unit-label {
-    font-size: 14px;
+    font-size: 16px;
     color: #cccccc;
+    margin-bottom: 5px;
 }
 
 .gauge-max {
@@ -987,24 +988,24 @@ textarea {
     .new-gauge {
         width: 95%;
     }
-    
+
     .gauge-value {
         font-size: 24px;
     }
-    
+
     .gauge-unit-label {
         font-size: 12px;
     }
-    
+
     .gauge-track {
         height: 30px;
     }
-    
+
     .gauge-marker {
         width: 20px;
         height: 20px;
     }
-    
+
     .gauge-marker::before {
         font-size: 20px;
     }
@@ -1014,30 +1015,46 @@ textarea {
     .new-gauge {
         width: 100%;
     }
-    
+
     .gauge-title {
         font-size: 14px;
     }
-    
+
     .gauge-value {
         font-size: 20px;
     }
-    
+
     .gauge-unit-label {
         font-size: 11px;
     }
-    
+
     .gauge-track {
         height: 25px;
     }
-    
+
     .gauge-marker {
         width: 16px;
         height: 16px;
         top: 4px;
     }
-    
+
     .gauge-marker::before {
         font-size: 16px;
     }
+}
+
+.gauge-meta-label {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.gauge-cirurgias-label {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-top: 10px;
+    text-align: center;
 }
