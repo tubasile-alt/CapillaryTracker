@@ -250,31 +250,22 @@
     // Função para carregar unidades disponíveis
     function loadAvailableUnits() {
         const unitFilter = document.getElementById('unitFilter');
-        const equipeUnitFilter = document.getElementById('equipeUnitFilter');
         
         unitFilter.innerHTML = '<option value="">Carregando...</option>';
-        equipeUnitFilter.innerHTML = '<option value="todas">Todas as Unidades</option><option value="">Carregando...</option>';
         
         fetch('/get_available_units')
             .then(response => response.json())
             .then(data => {
-                // Limpar e repopular os selects
+                // Limpar e repopular o select
                 unitFilter.innerHTML = '';
-                equipeUnitFilter.innerHTML = '<option value="todas">Todas as Unidades</option>';
                 
                 if (data.units && data.units.length > 0) {
                     data.units.forEach(unit => {
                         // Para o filtro de velocímetro
-                        const option1 = document.createElement('option');
-                        option1.value = unit;
-                        option1.textContent = unit;
-                        unitFilter.appendChild(option1);
-                        
-                        // Para o filtro de equipe
-                        const option2 = document.createElement('option');
-                        option2.value = unit;
-                        option2.textContent = unit;
-                        equipeUnitFilter.appendChild(option2);
+                        const option = document.createElement('option');
+                        option.value = unit;
+                        option.textContent = unit;
+                        unitFilter.appendChild(option);
                     });
                     
                     // Inicializar o velocímetro após carregar as unidades
@@ -284,16 +275,10 @@
                     const defaultUnits = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'];
                     defaultUnits.forEach(unit => {
                         // Para o filtro de velocímetro
-                        const option1 = document.createElement('option');
-                        option1.value = unit;
-                        option1.textContent = unit;
-                        unitFilter.appendChild(option1);
-                        
-                        // Para o filtro de equipe
-                        const option2 = document.createElement('option');
-                        option2.value = unit;
-                        option2.textContent = unit;
-                        equipeUnitFilter.appendChild(option2);
+                        const option = document.createElement('option');
+                        option.value = unit;
+                        option.textContent = unit;
+                        unitFilter.appendChild(option);
                     });
                     
                     // Inicializar o velocímetro
@@ -305,21 +290,14 @@
                 
                 // Unidades padrão em caso de erro
                 unitFilter.innerHTML = '';
-                equipeUnitFilter.innerHTML = '<option value="todas">Todas as Unidades</option>';
                 
                 const defaultUnits = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'];
                 defaultUnits.forEach(unit => {
                     // Para o filtro de velocímetro
-                    const option1 = document.createElement('option');
-                    option1.value = unit;
-                    option1.textContent = unit;
-                    unitFilter.appendChild(option1);
-                    
-                    // Para o filtro de equipe
-                    const option2 = document.createElement('option');
-                    option2.value = unit;
-                    option2.textContent = unit;
-                    equipeUnitFilter.appendChild(option2);
+                    const option = document.createElement('option');
+                    option.value = unit;
+                    option.textContent = unit;
+                    unitFilter.appendChild(option);
                 });
                 
                 // Inicializar o velocímetro
@@ -447,11 +425,18 @@
 
     // Função para atualizar o velocímetro de meta
     function updateGaugeChart() {
-        const selectedUnit = document.getElementById('unitFilter').value;
+        const selectedUnit = document.getElementById('unitFilter')?.value || 'Ribeirão Preto';
+        
+        console.log("Atualizando velocímetro para unidade:", selectedUnit);
         
         // Buscar dados reais da API
         fetch(`/get_unit_progress?unit=${encodeURIComponent(selectedUnit)}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 console.log("Dados recebidos do servidor:", data);
                 const meta = data.meta || 30; // Valor padrão caso não venha no response
@@ -464,10 +449,28 @@
                 
                 // Remover o canvas anterior para evitar problemas de renderização
                 const container = document.getElementById('gaugeContainer');
+                if (!container) {
+                    console.error("Elemento 'gaugeContainer' não encontrado no DOM");
+                    return;
+                }
+                
                 container.innerHTML = '<canvas id="gaugeChart"></canvas>';
                 
                 // Obter o contexto do novo canvas
-                const gaugeCtx = document.getElementById('gaugeChart').getContext('2d');
+                const gaugeCanvas = document.getElementById('gaugeChart');
+                if (!gaugeCanvas) {
+                    console.error("Elemento 'gaugeChart' não foi criado corretamente");
+                    return;
+                }
+                
+                const gaugeCtx = gaugeCanvas.getContext('2d');
+                if (!gaugeCtx) {
+                    console.error("Não foi possível obter o contexto 2D do canvas");
+                    return;
+                }
+                
+                // Log para depuração
+                console.log(`Criando velocímetro: Meta=${meta}, Valor Atual=${valorAtual}`);
                 
                 const config = {
                     type: 'doughnut',
@@ -513,7 +516,7 @@
                             ctx.textBaseline = 'middle';
                             
                             // Desenhar valor principal
-                            ctx.fillText(valorAtual, width / 2, height - 40);
+                            ctx.fillText(valorAtual.toString(), width / 2, height - 40);
                             
                             // Estilo para texto da meta
                             ctx.font = '16px Arial';
@@ -526,7 +529,7 @@
                             ctx.fillText(selectedUnit, width / 2, height / 2 - 30);
                             
                             // Adicionar percentual
-                            const percentual = Math.round((valorAtual / meta) * 100);
+                            const percentual = meta > 0 ? Math.round((valorAtual / meta) * 100) : 0;
                             ctx.fillStyle = percentual >= 100 ? chartColors.green : chartColors.yellow;
                             ctx.font = 'bold 36px Arial';
                             ctx.fillText(`${percentual}%`, width / 2, height / 2 + 20);
@@ -536,7 +539,13 @@
                     }]
                 };
                 
-                new Chart(gaugeCtx, config);
+                try {
+                    new Chart(gaugeCtx, config);
+                    console.log("Velocímetro criado com sucesso!");
+                } catch (chartError) {
+                    console.error("Erro ao criar o gráfico:", chartError);
+                    container.innerHTML = '<div class="error-message">Erro ao criar o velocímetro.</div>';
+                }
             })
             .catch(error => {
                 console.error('Erro ao obter dados de progresso:', error);
@@ -546,53 +555,66 @@
                 
                 // Mensagem de erro
                 const container = document.getElementById('gaugeContainer');
+                if (!container) return;
+                
                 container.innerHTML = '<canvas id="gaugeChart"></canvas><div class="error-message">Erro ao carregar dados. Usando valores padrão.</div>';
                 
-                const gaugeCtx = document.getElementById('gaugeChart').getContext('2d');
+                const gaugeCanvas = document.getElementById('gaugeChart');
+                if (!gaugeCanvas) return;
+                
+                const gaugeCtx = gaugeCanvas.getContext('2d');
+                if (!gaugeCtx) return;
                 
                 // Criar gráfico com valores padrão
-                new Chart(gaugeCtx, {
-                    type: 'doughnut',
-                    data: {
-                        datasets: [{
-                            data: [valorAtual, meta],
-                            backgroundColor: [
-                                chartColors.green,
-                                'rgba(100, 100, 100, 0.2)'
-                            ],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        circumference: 180,
-                        rotation: -90,
-                        cutout: '80%',
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                enabled: false
+                try {
+                    new Chart(gaugeCtx, {
+                        type: 'doughnut',
+                        data: {
+                            datasets: [{
+                                data: [valorAtual, meta],
+                                backgroundColor: [
+                                    chartColors.green,
+                                    'rgba(100, 100, 100, 0.2)'
+                                ],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            circumference: 180,
+                            rotation: -90,
+                            cutout: '80%',
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    enabled: false
+                                }
                             }
-                        }
-                    },
-                    plugins: [{
-                        id: 'gaugeText',
-                        afterDraw: (chart) => {
-                            const { ctx, width, height } = chart;
-                            ctx.save();
-                            
-                            // Texto centralizado no gráfico
-                            ctx.font = 'bold 24px Arial';
-                            ctx.fillStyle = '#ffffff';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            ctx.fillText(`${valorAtual} de ${meta}`, width / 2, height / 2);
-                            
-                            ctx.restore();
-                        }
-                    }]
-                });
+                        },
+                        plugins: [{
+                            id: 'gaugeText',
+                            afterDraw: (chart) => {
+                                const { ctx, width, height } = chart;
+                                ctx.save();
+                                
+                                // Texto centralizado no gráfico
+                                ctx.font = 'bold 24px Arial';
+                                ctx.fillStyle = '#ffffff';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillText(`${valorAtual} de ${meta}`, width / 2, height / 2);
+                                
+                                ctx.restore();
+                            }
+                        }]
+                    });
+                } catch (fallbackError) {
+                    console.error("Erro ao criar o gráfico de fallback:", fallbackError);
+                    container.innerHTML = '<div class="error-message">Não foi possível carregar o velocímetro.</div>';
+                }
             });
     }
     

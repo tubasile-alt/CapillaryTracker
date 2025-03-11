@@ -527,19 +527,32 @@ def get_unit_progress():
         
         filename = "cirurgias.xlsx"
         if not os.path.exists(filename):
+            logger.info(f"Arquivo {filename} não encontrado. Retornando atual=0.")
             return jsonify({'unit': unit, 'meta': meta, 'atual': 0})
         
-        df = pd.read_excel(filename)
+        # Carregar o dataframe com tratamento explícito de erros
+        try:
+            df = pd.read_excel(filename, engine='openpyxl')
+            logger.info(f"DataFrame carregado com sucesso: {len(df)} registros no total")
+        except Exception as e:
+            logger.error(f"Erro ao ler o arquivo Excel: {str(e)}")
+            return jsonify({'unit': unit, 'meta': meta, 'atual': 0, 'error': f'Erro ao ler arquivo: {str(e)}'})
         
         # Verificar se a coluna unidade existe
         if 'unidade' not in df.columns:
+            logger.warning("Coluna 'unidade' não encontrada no DataFrame")
             return jsonify({'unit': unit, 'meta': meta, 'atual': 0, 'error': 'Coluna unidade não encontrada'})
         
-        # Contar todos os registros da unidade (em vez de filtrar por mês)
-        atual = len(df[df['unidade'] == unit])
+        # Garantir que valores nulos na coluna 'unidade' não causem problemas
+        df['unidade'] = df['unidade'].fillna('').astype(str)
         
-        # Log para depuração
-        logger.info(f"Unidade: {unit}, Total de registros: {atual}")
+        # Contar todos os registros da unidade (em vez de filtrar por mês)
+        unit_filter = df['unidade'] == unit
+        atual = unit_filter.sum()  # Conta os valores True
+        
+        # Detalhes para debug
+        logger.info(f"Unidade: {unit}, Total de registros para esta unidade: {atual}")
+        logger.info(f"Valores únicos na coluna 'unidade': {df['unidade'].unique().tolist()}")
         
         # Garantir que o valor atual seja um inteiro válido
         if pd.isna(atual) or not isinstance(atual, (int, float)):
@@ -547,6 +560,7 @@ def get_unit_progress():
         else:
             atual = int(atual)
         
+        logger.info(f"Progresso final: Unidade={unit}, Meta={meta}, Atual={atual}")
         return jsonify({
             'unit': unit, 
             'meta': meta, 
@@ -555,7 +569,7 @@ def get_unit_progress():
         
     except Exception as e:
         logger.error(f"Erro ao obter progresso: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({'unit': unit, 'meta': metas.get(unit, 30), 'atual': 0, 'error': str(e)})
+        return jsonify({'unit': unit, 'meta': meta if 'meta' in locals() else 30, 'atual': 0, 'error': str(e)})
 
 @app.route('/get_tecnicas_data')
 def get_tecnicas_data():
