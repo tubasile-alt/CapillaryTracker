@@ -680,9 +680,17 @@ def get_equipe_data():
             
             logger.info(f"Colunas de equipe encontradas: {equipe_columns}")
             
+            # Dicionário para rastrear participações únicas por cirurgia
+            # Estrutura: {membro|unidade: {id_cirurgia1, id_cirurgia2, ...}}
+            participacoes_unicas = {}
+            
             # Iterar sobre cada linha para contar participações
-            for _, row in df.iterrows():
+            for idx, row in df.iterrows():
                 unidade = row['unidade'] if pd.notna(row['unidade']) else "Não especificada"
+                cirurgia_id = idx  # Usar o índice da linha como ID único da cirurgia
+                
+                # Conjunto para guardar todos os membros desta cirurgia
+                membros_desta_cirurgia = set()
                 
                 # Processar todas as colunas relevantes
                 for col in equipe_columns:
@@ -701,11 +709,18 @@ def get_equipe_data():
                             member = re.sub(r'\s*\([^)]*\)', '', member).strip()
                             
                             if member and len(member) > 1:  # Ignorar entradas vazias ou muito curtas
-                                key = f"{member}|{unidade}"
-                                if key in equipe_counts:
-                                    equipe_counts[key] += 1
-                                else:
-                                    equipe_counts[key] = 1
+                                membros_desta_cirurgia.add(member)
+                
+                # Adicionar todos os membros desta cirurgia ao rastreamento
+                for member in membros_desta_cirurgia:
+                    key = f"{member}|{unidade}"
+                    if key not in participacoes_unicas:
+                        participacoes_unicas[key] = set()
+                    participacoes_unicas[key].add(cirurgia_id)
+            
+            # Converter para contagem final
+            for key, cirurgias_ids in participacoes_unicas.items():
+                equipe_counts[key] = len(cirurgias_ids)  # Número de cirurgias únicas
             
             # Converter o dicionário para o formato esperado
             for key, count in equipe_counts.items():
