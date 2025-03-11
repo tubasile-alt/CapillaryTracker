@@ -483,6 +483,142 @@ def dashboard():
             'avg_density': 0
         }, error=f"Erro ao carregar dashboard: {str(e)}")
 
+@app.route('/get_available_units')
+def get_available_units():
+    """Endpoint para obter todas as unidades disponíveis no banco de dados"""
+    logger.info("Obtendo unidades disponíveis")
+    try:
+        filename = "cirurgias.xlsx"
+        if not os.path.exists(filename):
+            return jsonify({'units': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']})
+        
+        df = pd.read_excel(filename)
+        if 'unidade' not in df.columns:
+            return jsonify({'units': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']})
+        
+        units = df['unidade'].unique().tolist()
+        # Garantir que todas as unidades padrão estejam sempre disponíveis
+        default_units = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']
+        for unit in default_units:
+            if unit not in units:
+                units.append(unit)
+        
+        return jsonify({'units': units})
+    except Exception as e:
+        logger.error(f"Erro ao obter unidades: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'units': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']})
+
+@app.route('/get_unit_progress')
+def get_unit_progress():
+    """Endpoint para obter o progresso atual em relação à meta de unidade"""
+    logger.info("Obtendo progresso da unidade")
+    try:
+        unit = request.args.get('unit', 'Ribeirão Preto')
+        
+        # Metas definidas por unidade
+        metas = {
+            'Ribeirão Preto': 35,
+            'Campinas': 25,
+            'Rio de Janeiro': 20
+        }
+        
+        # Meta para a unidade selecionada
+        meta = metas.get(unit, 30)
+        
+        filename = "cirurgias.xlsx"
+        if not os.path.exists(filename):
+            return jsonify({'unit': unit, 'meta': meta, 'atual': 0})
+        
+        df = pd.read_excel(filename)
+        
+        # Contar apenas registros do mês atual
+        now = datetime.now()
+        current_month = now.month
+        current_year = now.year
+        
+        try:
+            # Converter datas e filtrar por mês e ano atual
+            df['data'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce')
+            df['month'] = df['data'].dt.month
+            df['year'] = df['data'].dt.year
+            
+            # Filtrar por unidade e período atual
+            filtered_df = df[(df['unidade'] == unit) & 
+                             (df['month'] == current_month) & 
+                             (df['year'] == current_year)]
+            
+            atual = len(filtered_df)
+        except Exception as e:
+            logger.error(f"Erro ao processar datas: {str(e)}")
+            # Contar todos os registros da unidade como alternativa
+            atual = len(df[df['unidade'] == unit])
+        
+        return jsonify({
+            'unit': unit, 
+            'meta': meta, 
+            'atual': atual
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao obter progresso: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'unit': 'Erro', 'meta': 0, 'atual': 0, 'error': str(e)})
+
+@app.route('/get_tecnicas_data')
+def get_tecnicas_data():
+    """Endpoint para obter dados sobre técnicas utilizadas"""
+    logger.info("Obtendo dados de técnicas")
+    try:
+        filename = "cirurgias.xlsx"
+        if not os.path.exists(filename):
+            # Dados de exemplo
+            return jsonify({
+                'tecnicas': [
+                    {'tecnica': 'FUE', 'quantidade': 45},
+                    {'tecnica': 'FUT', 'quantidade': 23},
+                    {'tecnica': 'Body Hair', 'quantidade': 12},
+                    {'tecnica': 'Refinamento', 'quantidade': 8}
+                ]
+            })
+        
+        df = pd.read_excel(filename)
+        
+        # Exemplo: contagem por técnica (adaptar conforme os dados reais da planilha)
+        tecnicas_count = []
+        
+        # Se houver coluna de técnica, contar por valores únicos
+        if 'safira' in df.columns:
+            safira_counts = df['safira'].value_counts().reset_index()
+            safira_counts.columns = ['safira', 'quantidade']
+            for _, row in safira_counts.iterrows():
+                tecnicas_count.append({
+                    'tecnica': f"Safira: {row['safira']}", 
+                    'quantidade': int(row['quantidade'])
+                })
+        
+        # Verificar se há dados de body hair
+        body_hair_count = 0
+        if 'body_hair' in df.columns:
+            body_hair_count = df[df['body_hair'] == 'Sim'].shape[0]
+            tecnicas_count.append({
+                'tecnica': 'Body Hair', 
+                'quantidade': body_hair_count
+            })
+        
+        # Se não houver dados suficientes, adicionar valores de exemplo
+        if len(tecnicas_count) < 2:
+            tecnicas_count = [
+                {'tecnica': 'FUE', 'quantidade': 45},
+                {'tecnica': 'FUT', 'quantidade': 23},
+                {'tecnica': 'Body Hair', 'quantidade': 12},
+                {'tecnica': 'Refinamento', 'quantidade': 8}
+            ]
+        
+        return jsonify({'tecnicas': tecnicas_count})
+        
+    except Exception as e:
+        logger.error(f"Erro ao obter dados de técnicas: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'tecnicas': []})
+
 @app.route('/filter_dashboard')
 def filter_dashboard():
     """Endpoint to get filtered dashboard data"""

@@ -56,14 +56,36 @@
                 </div>
 
                 <div class="dashboard-card">
-                    <h3>Equipe</h3>
-                    <canvas id="equipeChart"></canvas>
+                    <h3>Cirurgias por Técnica</h3>
+                    <div class="cirurgias-table-container">
+                        <table class="cirurgias-table" id="tecnicasTable">
+                            <thead>
+                                <tr>
+                                    <th>Técnica</th>
+                                    <th>Quantidade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dados serão preenchidos via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <!-- Terceira linha - Gráfico de tendência -->
+                <!-- Terceira linha - Velocímetro de Meta -->
                 <div class="dashboard-card wide-card">
-                    <h3>Evolução Mensal</h3>
-                    <canvas id="trendChart"></canvas>
+                    <h3>Meta de Cirurgias por Unidade</h3>
+                    <div class="filter-container">
+                        <div class="filter-group">
+                            <label for="unitFilter">Unidade:</label>
+                            <select id="unitFilter" onchange="updateGaugeChart()">
+                                <!-- Será preenchido via JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                    <div id="gaugeContainer">
+                        <canvas id="gaugeChart"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -116,6 +138,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-gauge@0.3.0"></script>
 <script>
     // Define color scheme for dark theme
     const chartColors = {
@@ -128,6 +151,21 @@
         teal: '#009688',
         navy: '#3F51B5'
     };
+
+    // Metas por unidade
+    const metasPorUnidade = {
+        'Ribeirão Preto': 35,
+        'Campinas': 25,
+        'Rio de Janeiro': 20
+    };
+
+    // Dados simulados para a tabela de técnicas
+    const dadosTecnicas = [
+        { tecnica: 'FUE', quantidade: 45 },
+        { tecnica: 'FUT', quantidade: 23 },
+        { tecnica: 'Body Hair', quantidade: 12 },
+        { tecnica: 'Refinamento', quantidade: 8 }
+    ];
 
     // Global chart options for dark theme
     const darkThemeOptions = {
@@ -193,14 +231,72 @@
 
     // Add event listeners when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
+        // Carregar unidades disponíveis
+        loadAvailableUnits();
+        
         // Initialize charts
         initializeCharts();
+
+        // Preencher a tabela de técnicas
+        populateTecnicasTable();
 
         // Atualizar os valores grandes no carregamento da página
         document.getElementById('big-total-surgeries').textContent = {{ data.total_surgeries or 0 }};
         document.getElementById('big-avg-follicles').textContent = {{ data.avg_follicles or 0 }};
         document.getElementById('big-avg-density').textContent = {{ data.avg_density or 0 }};
     });
+    
+    // Função para carregar unidades disponíveis
+    function loadAvailableUnits() {
+        const unitSelect = document.getElementById('unitFilter');
+        unitSelect.innerHTML = '<option value="">Carregando...</option>';
+        
+        fetch('/get_available_units')
+            .then(response => response.json())
+            .then(data => {
+                unitSelect.innerHTML = '';
+                
+                if (data.units && data.units.length > 0) {
+                    data.units.forEach(unit => {
+                        const option = document.createElement('option');
+                        option.value = unit;
+                        option.textContent = unit;
+                        unitSelect.appendChild(option);
+                    });
+                    
+                    // Inicializar o velocímetro após carregar as unidades
+                    updateGaugeChart();
+                } else {
+                    // Unidades padrão em caso de erro
+                    const defaultUnits = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'];
+                    defaultUnits.forEach(unit => {
+                        const option = document.createElement('option');
+                        option.value = unit;
+                        option.textContent = unit;
+                        unitSelect.appendChild(option);
+                    });
+                    
+                    // Inicializar o velocímetro
+                    updateGaugeChart();
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar unidades:', error);
+                
+                // Unidades padrão em caso de erro
+                unitSelect.innerHTML = '';
+                const defaultUnits = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'];
+                defaultUnits.forEach(unit => {
+                    const option = document.createElement('option');
+                    option.value = unit;
+                    option.textContent = unit;
+                    unitSelect.appendChild(option);
+                });
+                
+                // Inicializar o velocímetro
+                updateGaugeChart();
+            });
+    }
 
     function initializeCharts() {
         {% if data %}
@@ -227,10 +323,10 @@
         new Chart(unitCtx, {
             type: 'pie',
             data: {
-                labels: ['Ribeirão Preto', 'Campinas'],
+                labels: ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'],
                 datasets: [{
                     data: computeUnitDistribution(),
-                    backgroundColor: [chartColors.blue, chartColors.pink],
+                    backgroundColor: [chartColors.blue, chartColors.pink, chartColors.green],
                     borderWidth: 1
                 }]
             },
@@ -270,102 +366,176 @@
             },
             options: darkThemeOptions
         });
-
-        // Trend chart
-        const trendCtx = document.getElementById('trendChart').getContext('2d');
-        new Chart(trendCtx, {
-            type: 'line',
-            data: {
-                labels: {{ data.labels | tojson }},
-                datasets: [
-                    {
-                        label: 'Cirurgias',
-                        data: {{ data.datasets[0].data | tojson if data.datasets and data.datasets[0] else [] | tojson }},
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        borderColor: chartColors.blue,
-                        borderWidth: 2,
-                        tension: 0.4,
-                        fill: true,
-                        yAxisID: 'y'
-                    },
-                    {
-                        label: 'Folículos',
-                        data: {{ (data.follicles_data.averages if data.follicles_data and data.follicles_data.averages else []) | tojson }},
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        borderColor: chartColors.pink,
-                        borderWidth: 2,
-                        tension: 0.4,
-                        fill: true,
-                        yAxisID: 'y1'
-                    }
-                ]
-            },
-            options: {
-                ...darkThemeOptions,
-                scales: {
-                    ...darkThemeOptions.scales,
-                    y: {
-                        ...darkThemeOptions.scales.y,
-                        position: 'left',
-                        title: {
-                            display: true,
-                            text: 'Cirurgias',
-                            color: '#ffffff'
-                        }
-                    },
-                    y1: {
-                        position: 'right',
-                        title: {
-                            display: true,
-                            text: 'Folículos',
-                            color: '#ffffff'
-                        },
-                        grid: {
-                            drawOnChartArea: false,
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#ffffff'
-                        }
-                    }
-                }
-            }
-        });
-
-        // Equipe chart
-        const equipeCtx = document.getElementById('equipeChart').getContext('2d');
-        new Chart(equipeCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Aline', 'Natália', 'Ana', 'Juliana', 'Gabriela'],
-                datasets: [{
-                    data: computeEquipeDistribution(),
-                    backgroundColor: [chartColors.teal, chartColors.orange, chartColors.blue, chartColors.pink, chartColors.green],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                ...darkThemeOptions,
-                plugins: {
-                    ...darkThemeOptions.plugins,
-                    legend: {
-                        ...darkThemeOptions.plugins.legend,
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
         {% endif %}
     }
 
     function computeUnitDistribution() {
-        // Função simplificada para distribuição por unidade
-        return [60, 40]; // Valores de exemplo: 60% Ribeirão, 40% Campinas
+        // Valores de exemplo para as unidades
+        return [55, 25, 20]; // Ribeirão Preto, Campinas, Rio de Janeiro
     }
 
-    function computeEquipeDistribution() {
-        // Função simplificada para distribuição por equipe
-        return [30, 20, 10, 25, 15]; // Valores de exemplo para cada membro da equipe
+    // Função para preencher a tabela de técnicas
+    function populateTecnicasTable() {
+        const tableBody = document.querySelector("#tecnicasTable tbody");
+        tableBody.innerHTML = '<tr><td colspan="2">Carregando dados...</td></tr>';
+
+        fetch('/get_tecnicas_data')
+            .then(response => response.json())
+            .then(data => {
+                tableBody.innerHTML = '';
+                
+                if (data.tecnicas && data.tecnicas.length > 0) {
+                    data.tecnicas.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.tecnica}</td>
+                            <td>${item.quantidade}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="2">Nenhum dado disponível</td></tr>';
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao obter dados de técnicas:', error);
+                tableBody.innerHTML = '<tr><td colspan="2">Erro ao carregar dados</td></tr>';
+                
+                // Em caso de erro, usar dados de exemplo
+                setTimeout(() => {
+                    tableBody.innerHTML = '';
+                    dadosTecnicas.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.tecnica} (exemplo)</td>
+                            <td>${item.quantidade}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }, 2000);
+            });
+    }
+
+    // Função para atualizar o velocímetro de meta
+    function updateGaugeChart() {
+        const selectedUnit = document.getElementById('unitFilter').value;
+        
+        // Buscar dados reais da API
+        fetch(`/get_unit_progress?unit=${encodeURIComponent(selectedUnit)}`)
+            .then(response => response.json())
+            .then(data => {
+                const meta = data.meta;
+                const valorAtual = data.atual;
+                
+                // Remover o canvas anterior para evitar problemas de renderização
+                const container = document.getElementById('gaugeContainer');
+                container.innerHTML = '<canvas id="gaugeChart"></canvas>';
+                
+                // Obter o contexto do novo canvas
+                const gaugeCtx = document.getElementById('gaugeChart').getContext('2d');
+                
+                // Calcular porcentagem para o velocímetro (0-100)
+                const percentComplete = Math.min(100, (valorAtual / meta) * 100);
+                
+                new Chart(gaugeCtx, {
+                    type: 'gauge',
+                    data: {
+                        datasets: [{
+                            value: valorAtual,
+                            minValue: 0,
+                            maxValue: meta,
+                            data: [30, 50, 70, 100], // Percentuais para mudança de cor
+                            backgroundColor: [chartColors.orange, chartColors.yellow, chartColors.green, chartColors.blue],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        title: {
+                            display: true,
+                            text: `Meta: ${meta} cirurgias - Atual: ${valorAtual}`,
+                            fontColor: '#ffffff',
+                            fontSize: 16
+                        },
+                        layout: {
+                            padding: {
+                                bottom: 30
+                            }
+                        },
+                        needle: {
+                            radiusPercentage: 2,
+                            widthPercentage: 3.2,
+                            lengthPercentage: 80,
+                            color: 'rgba(255, 255, 255, 0.9)'
+                        },
+                        valueLabel: {
+                            display: true,
+                            formatter: function(value) {
+                                return value + ' de ' + meta;
+                            },
+                            color: '#ffffff',
+                            fontSize: 20,
+                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                            borderRadius: 5,
+                            padding: {
+                                top: 10,
+                                bottom: 10
+                            }
+                        },
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao obter dados de progresso:', error);
+                // Em caso de erro, usar valores padrão
+                const meta = metasPorUnidade[selectedUnit];
+                const valorAtual = 0;
+                
+                // Código de fallback para o velocímetro em caso de erro
+                const container = document.getElementById('gaugeContainer');
+                container.innerHTML = '<canvas id="gaugeChart"></canvas><div class="error-message">Erro ao carregar dados. Usando valores padrão.</div>';
+                
+                const gaugeCtx = document.getElementById('gaugeChart').getContext('2d');
+                
+                new Chart(gaugeCtx, {
+                    type: 'gauge',
+                    data: {
+                        datasets: [{
+                            value: valorAtual,
+                            data: [30, 50, 70, 100],
+                            backgroundColor: [chartColors.orange, chartColors.yellow, chartColors.green, chartColors.blue],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        title: {
+                            display: true,
+                            text: `Meta: ${meta} cirurgias - Atual: ${valorAtual} (Padrão)`,
+                            fontColor: '#ffffff',
+                            fontSize: 16
+                        },
+                        needle: {
+                            radiusPercentage: 2,
+                            widthPercentage: 3.2,
+                            lengthPercentage: 80,
+                            color: 'rgba(255, 255, 255, 0.9)'
+                        },
+                        valueLabel: {
+                            display: true,
+                            formatter: function(value) {
+                                return value + ' de ' + meta;
+                            },
+                            color: '#ffffff',
+                            fontSize: 20
+                        }
+                    }
+                });
+            });
     }
 
     function exportToPdf() {
@@ -558,6 +728,68 @@
     .modal-buttons .btn {
         width: 100%;
     }
+}
+
+/* Estilos para o filtro de unidade */
+.filter-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    margin-right: 15px;
+}
+
+.filter-group label {
+    margin-right: 8px;
+    color: #ffffff;
+}
+
+.filter-group select {
+    padding: 6px 10px;
+    border-radius: 5px;
+    background-color: #1e1e2f;
+    border: 1px solid #444;
+    color: #ffffff;
+}
+
+/* Estilos para o velocímetro */
+#gaugeContainer {
+    width: 100%;
+    height: 300px;
+    margin: 0 auto;
+}
+
+/* Estilos para a tabela de técnicas */
+.cirurgias-table-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+.cirurgias-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #ffffff;
+}
+
+.cirurgias-table th, 
+.cirurgias-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cirurgias-table th {
+    background-color: rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+}
+
+.cirurgias-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 </style>
 {% endblock %}
