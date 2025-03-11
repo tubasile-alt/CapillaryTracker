@@ -864,7 +864,7 @@ textarea {
     }
 }
 
-/* Estilos para o velocímetro semi-circular */
+/* Estilos para o novo velocímetro (como na referência) */
 .gauge-container {
     width: 100%;
     margin: 20px auto;
@@ -894,81 +894,134 @@ textarea {
     border-radius: 8px;
 }
 
-.gauge-semicircle {
+/* Novo velocímetro estilo similar à referência */
+.speedometer {
     position: relative;
     width: 300px;
-    height: 150px;
+    height: 160px;
     margin: 20px auto 10px;
+    overflow: visible;
 }
 
-.gauge-semicircle-mask {
+.speedometer-scale {
     position: absolute;
-    top: 0;
-    left: 0;
     width: 300px;
     height: 150px;
     border-radius: 150px 150px 0 0;
-    background-color: rgba(100, 100, 100, 0.1);
     overflow: hidden;
-    border: 2px solid #444;
-    border-bottom: none;
-}
-
-.gauge-semicircle-fill {
-    position: absolute;
     top: 0;
     left: 0;
-    width: 300px;
-    height: 300px;
-    border-radius: 50%;
-    background-color: #FF6384; /* Cor padrão inicial - vermelho */
-    clip-path: polygon(150px 0, 300px 0, 300px 300px, 0 300px, 0 0, 150px 0, 150px 150px);
-    transform-origin: 150px 150px;
-    transform: rotate(-90deg); /* Começar no 0% */
-    transition: transform 1s ease-out, background-color 1s ease;
+    display: flex;
+    flex-direction: row;
 }
 
-.gauge-percentage {
+.speedometer-scale-segment {
+    flex: 1;
+    height: 100%;
+}
+
+.red-segment {
+    background-color: #FF0000;
+}
+
+.orange-segment {
+    background-color: #FF9800;
+}
+
+.yellow-segment {
+    background-color: #FFEB3B;
+}
+
+.green-segment {
+    background-color: #4CAF50;
+}
+
+.speedometer-center {
     position: absolute;
-    bottom: -5px;
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    border-radius: 50%;
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 32px;
-    font-weight: bold;
-    color: #ffffff;
-    text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
-    z-index: 5;
+    z-index: 3;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
 }
 
-.gauge-needle {
+.speedometer-needle {
     position: absolute;
-    width: 130px;
+    width: 140px;
     height: 4px;
     background-color: #ffffff;
-    top: 150px;
-    left: 150px;
-    transform-origin: 0 50%;
-    transform: rotate(-90deg); /* Apontar para 0% inicialmente */
-    z-index: 4;
+    bottom: 10px;
+    left: 50%;
+    transform-origin: left center;
+    transform: translateX(-50%) rotate(-90deg); /* Começar no 0% */
+    z-index: 2;
     transition: transform 1s cubic-bezier(0.36, 0, 0.66, 1.3);
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 0 5px rgba(0,0,0,0.7);
 }
 
-.gauge-needle::after {
+.speedometer-needle::after {
     content: "";
     position: absolute;
-    width: 12px;
-    height: 12px;
-    background-color: #ffffff;
-    border-radius: 50%;
+    width: 0;
+    height: 0;
+    right: -5px;
     top: -4px;
-    left: -6px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+    border-left: 8px solid #ffffff;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+}
+
+.speedometer-labels {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.speedometer-label {
+    position: absolute;
+    font-size: 14px;
+    font-weight: bold;
+    color: #000;
+    text-shadow: 0 0 2px rgba(255,255,255,0.7);
+}
+
+.label-25 {
+    top: 70%;
+    left: 15%;
+}
+
+.label-50 {
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.label-75 {
+    top: 70%;
+    right: 15%;
+}
+
+.label-100 {
+    top: 80%;
+    right: 5%;
 }
 
 .gauge-details {
     text-align: center;
-    margin-top: 20px;
+    margin-top: 10px;
+}
+
+.gauge-percentage {
+    font-size: 28px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 5px;
 }
 
 .gauge-count {
@@ -983,63 +1036,20 @@ textarea {
     color: #cccccc;
 }
 
-.gauge-labels {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-}
-
-.gauge-label {
-    position: absolute;
-    font-size: 14px;
-    font-weight: bold;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.gauge-label-25 {
-    top: 60%;
-    left: 15%;
-}
-
-.gauge-label-50 {
-    top: 30%;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.gauge-label-75 {
-    top: 60%;
-    right: 15%;
-}
-
-.gauge-label-100 {
-    top: 80%;
-    right: 5%;
-}
-
 /* Estilos responsivos para o velocímetro */
 @media (max-width: 768px) {
-    .gauge-semicircle {
+    .speedometer {
+        width: 240px;
+        height: 130px;
+    }
+
+    .speedometer-scale {
         width: 240px;
         height: 120px;
     }
 
-    .gauge-semicircle-mask {
-        width: 240px;
-        height: 120px;
-    }
-
-    .gauge-semicircle-fill {
-        width: 240px;
-        height: 240px;
-        transform-origin: 120px 120px;
-        clip-path: polygon(120px 0, 240px 0, 240px 240px, 0 240px, 0 0, 120px 0, 120px 120px);
-    }
-
-    .gauge-needle {
-        width: 100px;
-        top: 120px;
-        left: 120px;
+    .speedometer-needle {
+        width: 110px;
     }
 
     .gauge-percentage {
@@ -1052,34 +1062,25 @@ textarea {
 }
 
 @media (max-width: 480px) {
-    .gauge-semicircle {
+    .speedometer {
+        width: 200px;
+        height: 110px;
+    }
+
+    .speedometer-scale {
         width: 200px;
         height: 100px;
     }
 
-    .gauge-semicircle-mask {
-        width: 200px;
-        height: 100px;
-    }
-
-    .gauge-semicircle-fill {
-        width: 200px;
-        height: 200px;
-        transform-origin: 100px 100px;
-        clip-path: polygon(100px 0, 200px 0, 200px 200px, 0 200px, 0 0, 100px 0, 100px 100px);
-    }
-
-    .gauge-needle {
-        width: 80px;
-        top: 100px;
-        left: 100px;
+    .speedometer-needle {
+        width: 90px;
     }
 
     .gauge-percentage {
         font-size: 20px;
     }
 
-    .gauge-label {
+    .speedometer-label {
         font-size: 12px;
     }
 }
