@@ -423,11 +423,21 @@
             });
     }
 
-    // Função para atualizar o velocímetro de meta - versão simplificada
+    // Função para atualizar o velocímetro de meta - implementação melhorada
     function updateGaugeChart() {
         const selectedUnit = document.getElementById('unitFilter')?.value || 'Ribeirão Preto';
         
         console.log("Atualizando velocímetro para unidade:", selectedUnit);
+        
+        // Mostrar indicador de carregamento
+        const container = document.getElementById('gaugeContainer');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="gauge-loading">
+                <div>Carregando dados...</div>
+            </div>
+        `;
         
         // Buscar dados reais da API
         fetch(`/get_unit_progress?unit=${encodeURIComponent(selectedUnit)}`)
@@ -444,21 +454,25 @@
                 
                 // Calcular percentual
                 const percentual = meta > 0 ? Math.round((valorAtual / meta) * 100) : 0;
+                console.log(`Criando velocímetro: Meta=${meta}, Valor Atual=${valorAtual}`);
                 
-                // Usar HTML simples em vez de canvas para maior compatibilidade
-                const container = document.getElementById('gaugeContainer');
-                if (!container) return;
+                // Determinar cor baseada no percentual
+                let color = '#FFCE56'; // Amarelo padrão
+                if (percentual >= 100) {
+                    color = '#4CAF50'; // Verde para meta atingida
+                } else if (percentual < 30) {
+                    color = '#FF6384'; // Vermelho para progresso baixo
+                }
                 
-                // Criar uma representação visual do medidor usando CSS e HTML
+                // Atualizar com o novo conteúdo
                 const fillWidth = Math.min(percentual, 100);
-                
                 container.innerHTML = `
                     <div class="gauge-meter">
                         <div class="gauge-background">
-                            <div class="gauge-fill" style="width: ${fillWidth}%;"></div>
+                            <div class="gauge-fill" style="width: ${fillWidth}%; background-color: ${color};"></div>
                         </div>
                         <div class="gauge-value-container">
-                            <div class="gauge-percentage" style="color: ${percentual >= 100 ? '#4CAF50' : '#FFCE56'}">
+                            <div class="gauge-percentage" style="color: ${color}">
                                 ${percentual}%
                             </div>
                             <div class="gauge-count">
@@ -470,6 +484,7 @@
                         </div>
                     </div>
                 `;
+                console.log("Velocímetro criado com sucesso!");
             })
             .catch(error => {
                 console.error('Erro ao obter dados de progresso:', error);
@@ -477,16 +492,13 @@
                 const meta = metasPorUnidade[selectedUnit] || 30;
                 
                 // Usar HTML simples em caso de erro
-                const container = document.getElementById('gaugeContainer');
-                if (!container) return;
-                
                 container.innerHTML = `
                     <div class="gauge-meter">
                         <div class="gauge-background">
                             <div class="gauge-fill" style="width: 0%;"></div>
                         </div>
                         <div class="gauge-value-container">
-                            <div class="gauge-percentage" style="color: #FFCE56">0%</div>
+                            <div class="gauge-percentage" style="color: #FF6384">0%</div>
                             <div class="gauge-count">0 de ${meta}</div>
                             <div class="gauge-unit">${selectedUnit}</div>
                             <div class="gauge-error">Erro ao carregar dados</div>
@@ -780,11 +792,23 @@
     width: 100%;
     margin: 20px auto;
     padding: 0 20px;
+    min-height: 180px; /* Altura mínima para evitar layout shift */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.gauge-loading {
+    color: #cccccc;
+    text-align: center;
+    font-style: italic;
+    padding: 30px;
 }
 
 .gauge-meter {
     padding: 20px;
     text-align: center;
+    width: 100%;
 }
 
 .gauge-background {
@@ -795,13 +819,15 @@
     max-width: 80%;
     overflow: hidden;
     position: relative;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .gauge-fill {
     background-color: #4CAF50;
     height: 100%;
     border-radius: 20px;
-    transition: width 1s ease-in-out;
+    transition: width 1s ease-in-out, background-color 1s ease-in-out;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
 .gauge-value-container {
@@ -813,6 +839,7 @@
     font-size: 36px;
     font-weight: bold;
     margin-bottom: 5px;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .gauge-count {
@@ -825,12 +852,28 @@
 .gauge-unit {
     font-size: 16px;
     color: #cccccc;
+    margin-bottom: 5px;
 }
 
 .gauge-error {
     color: #e74c3c;
     font-size: 12px;
     margin-top: 10px;
+}
+
+/* Estilos responsivos para o velocímetro */
+@media (max-width: 768px) {
+    .gauge-percentage {
+        font-size: 28px;
+    }
+    
+    .gauge-count {
+        font-size: 16px;
+    }
+    
+    .gauge-background {
+        height: 30px;
+    }
 }
 
 /* Estilos para a tabela de técnicas */
