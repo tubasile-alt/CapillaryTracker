@@ -319,6 +319,62 @@ def get_medicos(unidade):
 
 
 
+@app.route('/import_data', methods=['GET', 'POST'])
+def import_data():
+    """Importa dados de um arquivo Excel para o banco de dados"""
+    if request.method == 'POST':
+        try:
+            # Verificar se um arquivo foi enviado
+            if 'excel_file' not in request.files:
+                flash("❌ Nenhum arquivo selecionado", "error")
+                return redirect(request.url)
+            
+            file = request.files['excel_file']
+            if file.filename == '':
+                flash("❌ Nenhum arquivo selecionado", "error")
+                return redirect(request.url)
+            
+            # Salvar o arquivo temporariamente
+            temp_path = "temp_import.xlsx"
+            file.save(temp_path)
+            
+            # Ler o arquivo Excel
+            df_import = pd.read_excel(temp_path)
+            
+            # Verificar se o arquivo está vazio
+            if df_import.empty:
+                flash("❌ O arquivo está vazio", "error")
+                os.remove(temp_path)
+                return redirect(request.url)
+            
+            # Verificar se já existe arquivo de dados
+            target_file = "cirurgias.xlsx"
+            if os.path.exists(target_file):
+                # Ler arquivo existente e concatenar com novos dados
+                df_existing = pd.read_excel(target_file)
+                df_combined = pd.concat([df_existing, df_import], ignore_index=True)
+                # Remover possíveis duplicatas
+                df_combined = df_combined.drop_duplicates()
+                df_combined.to_excel(target_file, index=False)
+                num_added = len(df_import)
+                flash(f"✅ Dados importados com sucesso! {num_added} registros adicionados.", "success")
+            else:
+                # Criar novo arquivo
+                df_import.to_excel(target_file, index=False)
+                flash(f"✅ Dados importados com sucesso! {len(df_import)} registros adicionados.", "success")
+            
+            # Remover arquivo temporário
+            os.remove(temp_path)
+            return redirect(url_for('index'))
+            
+        except Exception as e:
+            logger.error(f"Erro ao importar dados: {str(e)}\n{traceback.format_exc()}")
+            flash(f"❌ Erro ao importar dados: {str(e)}", "error")
+            return redirect(request.url)
+    
+    # Se for GET, mostrar formulário de upload
+    return render_template('import_data.html')
+
 @app.route('/verify_data', methods=['GET'])
 def verify_data():
     """Verifica se os dados foram mantidos após o deployment e tenta restaurá-los se necessário"""

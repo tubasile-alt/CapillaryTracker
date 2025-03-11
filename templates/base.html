@@ -13,9 +13,11 @@
             <h1>Formulário de Cirurgia Capilar</h1>
         </div>
         <nav class="main-nav">
+            <a href="{{ url_for('index') }}" class="nav-link">Início</a>
             <a href="{{ url_for('novo_cadastro') }}" class="nav-link">Novo Cadastro</a>
             <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
-            <a href="{{ url_for('necrose') }}" class="nav-link">Necrose</a>
+            <a href="{{ url_for('necrose') }}" class="nav-link">Registrar Necrose</a>
+            <a href="{{ url_for('import_data') }}" class="nav-link">Importar Dados</a>
         </nav>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}

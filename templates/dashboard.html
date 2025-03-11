@@ -537,10 +537,13 @@
                 
                 try {
                     // Destruir charts anteriores que possam estar causando conflito
-                    Chart.getChart(gaugeCanvas)?.destroy();
+                    const existingChart = Chart.getChart(gaugeCanvas);
+                    if (existingChart) {
+                        existingChart.destroy();
+                    }
                     
-                    // Criar novo chart
-                    new Chart(gaugeCtx, config);
+                    // Criar novo chart com configuração simplificada para maior compatibilidade
+                    const gaugeChart = new Chart(gaugeCtx, config);
                     console.log("Velocímetro criado com sucesso!");
                 } catch (chartError) {
                     console.error("Erro ao criar o gráfico:", chartError);
