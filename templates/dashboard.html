@@ -56,13 +56,23 @@
                 </div>
 
                 <div class="dashboard-card">
-                    <h3>Cirurgias por Técnica</h3>
+                    <h3>Cirurgias por Equipe</h3>
+                    <div class="filter-container">
+                        <div class="filter-group">
+                            <label for="equipeUnitFilter">Filtrar por Unidade:</label>
+                            <select id="equipeUnitFilter" onchange="filterEquipeTable()">
+                                <option value="todas">Todas as Unidades</option>
+                                <!-- Será preenchido via JavaScript -->
+                            </select>
+                        </div>
+                    </div>
                     <div class="cirurgias-table-container">
-                        <table class="cirurgias-table" id="tecnicasTable">
+                        <table class="cirurgias-table" id="equipeTable">
                             <thead>
                                 <tr>
-                                    <th>Técnica</th>
+                                    <th>Membro da Equipe</th>
                                     <th>Quantidade</th>
+                                    <th>Unidade</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -231,14 +241,14 @@
 
     // Add event listeners when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
-        // Carregar unidades disponíveis
+        // Carregar unidades disponíveis para os filtros
         loadAvailableUnits();
         
         // Initialize charts
         initializeCharts();
 
-        // Preencher a tabela de técnicas
-        populateTecnicasTable();
+        // Preencher a tabela de equipe
+        populateEquipeTable();
 
         // Atualizar os valores grandes no carregamento da página
         document.getElementById('big-total-surgeries').textContent = {{ data.total_surgeries or 0 }};
@@ -248,20 +258,32 @@
     
     // Função para carregar unidades disponíveis
     function loadAvailableUnits() {
-        const unitSelect = document.getElementById('unitFilter');
-        unitSelect.innerHTML = '<option value="">Carregando...</option>';
+        const unitFilter = document.getElementById('unitFilter');
+        const equipeUnitFilter = document.getElementById('equipeUnitFilter');
+        
+        unitFilter.innerHTML = '<option value="">Carregando...</option>';
+        equipeUnitFilter.innerHTML = '<option value="todas">Todas as Unidades</option><option value="">Carregando...</option>';
         
         fetch('/get_available_units')
             .then(response => response.json())
             .then(data => {
-                unitSelect.innerHTML = '';
+                // Limpar e repopular os selects
+                unitFilter.innerHTML = '';
+                equipeUnitFilter.innerHTML = '<option value="todas">Todas as Unidades</option>';
                 
                 if (data.units && data.units.length > 0) {
                     data.units.forEach(unit => {
-                        const option = document.createElement('option');
-                        option.value = unit;
-                        option.textContent = unit;
-                        unitSelect.appendChild(option);
+                        // Para o filtro de velocímetro
+                        const option1 = document.createElement('option');
+                        option1.value = unit;
+                        option1.textContent = unit;
+                        unitFilter.appendChild(option1);
+                        
+                        // Para o filtro de equipe
+                        const option2 = document.createElement('option');
+                        option2.value = unit;
+                        option2.textContent = unit;
+                        equipeUnitFilter.appendChild(option2);
                     });
                     
                     // Inicializar o velocímetro após carregar as unidades
@@ -270,10 +292,17 @@
                     // Unidades padrão em caso de erro
                     const defaultUnits = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'];
                     defaultUnits.forEach(unit => {
-                        const option = document.createElement('option');
-                        option.value = unit;
-                        option.textContent = unit;
-                        unitSelect.appendChild(option);
+                        // Para o filtro de velocímetro
+                        const option1 = document.createElement('option');
+                        option1.value = unit;
+                        option1.textContent = unit;
+                        unitFilter.appendChild(option1);
+                        
+                        // Para o filtro de equipe
+                        const option2 = document.createElement('option');
+                        option2.value = unit;
+                        option2.textContent = unit;
+                        equipeUnitFilter.appendChild(option2);
                     });
                     
                     // Inicializar o velocímetro
@@ -284,13 +313,22 @@
                 console.error('Erro ao carregar unidades:', error);
                 
                 // Unidades padrão em caso de erro
-                unitSelect.innerHTML = '';
+                unitFilter.innerHTML = '';
+                equipeUnitFilter.innerHTML = '<option value="todas">Todas as Unidades</option>';
+                
                 const defaultUnits = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'];
                 defaultUnits.forEach(unit => {
-                    const option = document.createElement('option');
-                    option.value = unit;
-                    option.textContent = unit;
-                    unitSelect.appendChild(option);
+                    // Para o filtro de velocímetro
+                    const option1 = document.createElement('option');
+                    option1.value = unit;
+                    option1.textContent = unit;
+                    unitFilter.appendChild(option1);
+                    
+                    // Para o filtro de equipe
+                    const option2 = document.createElement('option');
+                    option2.value = unit;
+                    option2.textContent = unit;
+                    equipeUnitFilter.appendChild(option2);
                 });
                 
                 // Inicializar o velocímetro
@@ -424,8 +462,8 @@
         fetch(`/get_unit_progress?unit=${encodeURIComponent(selectedUnit)}`)
             .then(response => response.json())
             .then(data => {
-                const meta = data.meta;
-                const valorAtual = data.atual;
+                const meta = data.meta || 30; // Valor padrão caso não venha no response
+                const valorAtual = data.atual || 0;
                 
                 // Remover o canvas anterior para evitar problemas de renderização
                 const container = document.getElementById('gaugeContainer');
@@ -434,108 +472,204 @@
                 // Obter o contexto do novo canvas
                 const gaugeCtx = document.getElementById('gaugeChart').getContext('2d');
                 
-                // Calcular porcentagem para o velocímetro (0-100)
-                const percentComplete = Math.min(100, (valorAtual / meta) * 100);
-                
-                new Chart(gaugeCtx, {
-                    type: 'gauge',
+                const config = {
+                    type: 'doughnut',
                     data: {
                         datasets: [{
-                            value: valorAtual,
-                            minValue: 0,
-                            maxValue: meta,
-                            data: [30, 50, 70, 100], // Percentuais para mudança de cor
-                            backgroundColor: [chartColors.orange, chartColors.yellow, chartColors.green, chartColors.blue],
+                            data: [valorAtual, meta - valorAtual > 0 ? meta - valorAtual : 0],
+                            backgroundColor: [
+                                chartColors.green,
+                                'rgba(100, 100, 100, 0.2)'
+                            ],
                             borderWidth: 0
                         }]
                     },
                     options: {
+                        circumference: 180,
+                        rotation: -90,
+                        cutout: '80%',
                         responsive: true,
-                        title: {
-                            display: true,
-                            text: `Meta: ${meta} cirurgias - Atual: ${valorAtual}`,
-                            fontColor: '#ffffff',
-                            fontSize: 16
-                        },
-                        layout: {
-                            padding: {
-                                bottom: 30
-                            }
-                        },
-                        needle: {
-                            radiusPercentage: 2,
-                            widthPercentage: 3.2,
-                            lengthPercentage: 80,
-                            color: 'rgba(255, 255, 255, 0.9)'
-                        },
-                        valueLabel: {
-                            display: true,
-                            formatter: function(value) {
-                                return value + ' de ' + meta;
-                            },
-                            color: '#ffffff',
-                            fontSize: 20,
-                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                            borderRadius: 5,
-                            padding: {
-                                top: 10,
-                                bottom: 10
-                            }
-                        },
+                        maintainAspectRatio: true,
                         animation: {
-                            duration: 1000,
-                            easing: 'easeInOutQuart'
+                            animateRotate: true,
+                            animateScale: true
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: false
+                            }
                         }
-                    }
-                });
+                    },
+                    plugins: [{
+                        id: 'gaugeText',
+                        afterDraw: (chart) => {
+                            const { ctx, width, height } = chart;
+                            ctx.save();
+                            
+                            // Estilo para o valor principal
+                            ctx.font = 'bold 24px Arial';
+                            ctx.fillStyle = '#ffffff';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            
+                            // Desenhar valor principal
+                            ctx.fillText(valorAtual, width / 2, height - 40);
+                            
+                            // Estilo para texto da meta
+                            ctx.font = '16px Arial';
+                            ctx.fillStyle = '#cccccc';
+                            ctx.fillText(`Meta: ${meta}`, width / 2, height - 15);
+                            
+                            // Adicionar nome da unidade
+                            ctx.font = 'bold 18px Arial';
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillText(selectedUnit, width / 2, height / 2 - 30);
+                            
+                            // Adicionar percentual
+                            const percentual = Math.round((valorAtual / meta) * 100);
+                            ctx.fillStyle = percentual >= 100 ? chartColors.green : chartColors.yellow;
+                            ctx.font = 'bold 36px Arial';
+                            ctx.fillText(`${percentual}%`, width / 2, height / 2 + 20);
+                            
+                            ctx.restore();
+                        }
+                    }]
+                };
+                
+                new Chart(gaugeCtx, config);
             })
             .catch(error => {
                 console.error('Erro ao obter dados de progresso:', error);
                 // Em caso de erro, usar valores padrão
-                const meta = metasPorUnidade[selectedUnit];
+                const meta = metasPorUnidade[selectedUnit] || 30;
                 const valorAtual = 0;
                 
-                // Código de fallback para o velocímetro em caso de erro
+                // Mensagem de erro
                 const container = document.getElementById('gaugeContainer');
                 container.innerHTML = '<canvas id="gaugeChart"></canvas><div class="error-message">Erro ao carregar dados. Usando valores padrão.</div>';
                 
                 const gaugeCtx = document.getElementById('gaugeChart').getContext('2d');
                 
+                // Criar gráfico com valores padrão
                 new Chart(gaugeCtx, {
-                    type: 'gauge',
+                    type: 'doughnut',
                     data: {
                         datasets: [{
-                            value: valorAtual,
-                            data: [30, 50, 70, 100],
-                            backgroundColor: [chartColors.orange, chartColors.yellow, chartColors.green, chartColors.blue],
+                            data: [valorAtual, meta],
+                            backgroundColor: [
+                                chartColors.green,
+                                'rgba(100, 100, 100, 0.2)'
+                            ],
                             borderWidth: 0
                         }]
                     },
                     options: {
-                        responsive: true,
-                        title: {
-                            display: true,
-                            text: `Meta: ${meta} cirurgias - Atual: ${valorAtual} (Padrão)`,
-                            fontColor: '#ffffff',
-                            fontSize: 16
-                        },
-                        needle: {
-                            radiusPercentage: 2,
-                            widthPercentage: 3.2,
-                            lengthPercentage: 80,
-                            color: 'rgba(255, 255, 255, 0.9)'
-                        },
-                        valueLabel: {
-                            display: true,
-                            formatter: function(value) {
-                                return value + ' de ' + meta;
+                        circumference: 180,
+                        rotation: -90,
+                        cutout: '80%',
+                        plugins: {
+                            legend: {
+                                display: false
                             },
-                            color: '#ffffff',
-                            fontSize: 20
+                            tooltip: {
+                                enabled: false
+                            }
                         }
-                    }
+                    },
+                    plugins: [{
+                        id: 'gaugeText',
+                        afterDraw: (chart) => {
+                            const { ctx, width, height } = chart;
+                            ctx.save();
+                            
+                            // Texto centralizado no gráfico
+                            ctx.font = 'bold 24px Arial';
+                            ctx.fillStyle = '#ffffff';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(`${valorAtual} de ${meta}`, width / 2, height / 2);
+                            
+                            ctx.restore();
+                        }
+                    }]
                 });
             });
+    }
+    
+    // Função para preencher a tabela de equipe
+    function populateEquipeTable() {
+        const tableBody = document.querySelector("#equipeTable tbody");
+        tableBody.innerHTML = '<tr><td colspan="3">Carregando dados...</td></tr>';
+        
+        fetch('/get_equipe_data')
+            .then(response => response.json())
+            .then(data => {
+                // Armazenar dados globalmente para filtragem
+                window.equipeData = data.equipe;
+                
+                // Preencher a tabela inicialmente com todos os dados
+                filterEquipeTable();
+            })
+            .catch(error => {
+                console.error('Erro ao obter dados de equipe:', error);
+                tableBody.innerHTML = '<tr><td colspan="3">Erro ao carregar dados</td></tr>';
+                
+                // Dados de exemplo em caso de erro
+                window.equipeData = [
+                    {nome: 'Aline', quantidade: 15, unidade: 'Ribeirão Preto'},
+                    {nome: 'Natália', quantidade: 12, unidade: 'Ribeirão Preto'},
+                    {nome: 'Ana', quantidade: 18, unidade: 'Ribeirão Preto'},
+                    {nome: 'Juliana', quantidade: 10, unidade: 'Campinas'},
+                    {nome: 'Gabriela', quantidade: 9, unidade: 'Campinas'},
+                    {nome: 'Mariana Moro', quantidade: 14, unidade: 'Rio de Janeiro'},
+                    {nome: 'Mariana Silva', quantidade: 11, unidade: 'Rio de Janeiro'},
+                    {nome: 'Dayane', quantidade: 7, unidade: 'Rio de Janeiro'}
+                ];
+                
+                // Preencher a tabela com dados de exemplo
+                filterEquipeTable();
+            });
+    }
+    
+    // Função para filtrar a tabela de equipe por unidade
+    function filterEquipeTable() {
+        const selectedUnit = document.getElementById('equipeUnitFilter').value;
+        const tableBody = document.querySelector("#equipeTable tbody");
+        tableBody.innerHTML = '';
+        
+        if (!window.equipeData) {
+            tableBody.innerHTML = '<tr><td colspan="3">Nenhum dado disponível</td></tr>';
+            return;
+        }
+        
+        let filteredData = window.equipeData;
+        
+        // Aplicar filtro se não for "todas"
+        if (selectedUnit !== 'todas') {
+            filteredData = window.equipeData.filter(item => item.unidade === selectedUnit);
+        }
+        
+        // Ordenar por quantidade (decrescente)
+        filteredData.sort((a, b) => b.quantidade - a.quantidade);
+        
+        if (filteredData.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="3">Nenhum dado encontrado para esta unidade</td></tr>';
+            return;
+        }
+        
+        // Preencher a tabela com os dados filtrados
+        filteredData.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.nome}</td>
+                <td>${item.quantidade}</td>
+                <td>${item.unidade}</td>
+            `;
+            tableBody.appendChild(row);
+        });
     }
 
     function exportToPdf() {

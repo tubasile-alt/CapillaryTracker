@@ -531,6 +531,10 @@ def get_unit_progress():
         
         df = pd.read_excel(filename)
         
+        # Verificar se a coluna unidade existe
+        if 'unidade' not in df.columns:
+            return jsonify({'unit': unit, 'meta': meta, 'atual': 0, 'error': 'Coluna unidade não encontrada'})
+        
         # Contar apenas registros do mês atual
         now = datetime.now()
         current_month = now.month
@@ -538,20 +542,30 @@ def get_unit_progress():
         
         try:
             # Converter datas e filtrar por mês e ano atual
-            df['data'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce')
-            df['month'] = df['data'].dt.month
-            df['year'] = df['data'].dt.year
-            
-            # Filtrar por unidade e período atual
-            filtered_df = df[(df['unidade'] == unit) & 
-                             (df['month'] == current_month) & 
-                             (df['year'] == current_year)]
-            
-            atual = len(filtered_df)
+            if 'data' in df.columns:
+                df['data'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce')
+                df['month'] = df['data'].dt.month
+                df['year'] = df['data'].dt.year
+                
+                # Filtrar por unidade e período atual
+                filtered_df = df[(df['unidade'] == unit) & 
+                                (df['month'] == current_month) & 
+                                (df['year'] == current_year)]
+                
+                atual = len(filtered_df)
+            else:
+                # Se não houver coluna de data, contar todos os registros da unidade
+                atual = len(df[df['unidade'] == unit])
         except Exception as e:
             logger.error(f"Erro ao processar datas: {str(e)}")
             # Contar todos os registros da unidade como alternativa
             atual = len(df[df['unidade'] == unit])
+        
+        # Garantir que o valor atual seja um inteiro válido
+        if pd.isna(atual) or not isinstance(atual, (int, float)):
+            atual = 0
+        else:
+            atual = int(atual)
         
         return jsonify({
             'unit': unit, 
@@ -561,7 +575,7 @@ def get_unit_progress():
         
     except Exception as e:
         logger.error(f"Erro ao obter progresso: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({'unit': 'Erro', 'meta': 0, 'atual': 0, 'error': str(e)})
+        return jsonify({'unit': unit, 'meta': metas.get(unit, 30), 'atual': 0, 'error': str(e)})
 
 @app.route('/get_tecnicas_data')
 def get_tecnicas_data():
@@ -618,6 +632,104 @@ def get_tecnicas_data():
     except Exception as e:
         logger.error(f"Erro ao obter dados de técnicas: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'tecnicas': []})
+
+@app.route('/get_equipe_data')
+def get_equipe_data():
+    """Endpoint para obter dados sobre participantes da equipe"""
+    logger.info("Obtendo dados de equipe")
+    try:
+        filename = "cirurgias.xlsx"
+        if not os.path.exists(filename):
+            # Dados de exemplo
+            return jsonify({
+                'equipe': [
+                    {'nome': 'Aline', 'quantidade': 15, 'unidade': 'Ribeirão Preto'},
+                    {'nome': 'Natália', 'quantidade': 12, 'unidade': 'Ribeirão Preto'},
+                    {'nome': 'Ana', 'quantidade': 18, 'unidade': 'Ribeirão Preto'},
+                    {'nome': 'Juliana', 'quantidade': 10, 'unidade': 'Campinas'},
+                    {'nome': 'Gabriela', 'quantidade': 9, 'unidade': 'Campinas'},
+                    {'nome': 'Mariana Moro', 'quantidade': 14, 'unidade': 'Rio de Janeiro'},
+                    {'nome': 'Mariana Silva', 'quantidade': 11, 'unidade': 'Rio de Janeiro'},
+                    {'nome': 'Dayane', 'quantidade': 7, 'unidade': 'Rio de Janeiro'}
+                ]
+            })
+        
+        df = pd.read_excel(filename)
+        
+        # Inicializar lista para armazenar os dados da equipe
+        equipe_data = []
+        
+        # Verificar se existem as colunas necessárias
+        if 'equipe' in df.columns and 'unidade' in df.columns:
+            # Processar membros da equipe regular
+            equipe_counts = {}
+            
+            # Iterar sobre cada linha para contar participações
+            for _, row in df.iterrows():
+                unidade = row['unidade']
+                
+                # Processar equipe regular (pode ser uma string ou lista)
+                equipe_str = str(row['equipe'])
+                
+                # Dividir a string em nomes individuais (assumindo que estão separados por vírgula ou outros caracteres)
+                equipe_members = [name.strip() for name in equipe_str.replace(',', ';').replace('|', ';').split(';')]
+                
+                for member in equipe_members:
+                    if member and len(member) > 1:  # Ignorar entradas vazias ou muito curtas
+                        key = f"{member}|{unidade}"
+                        if key in equipe_counts:
+                            equipe_counts[key] += 1
+                        else:
+                            equipe_counts[key] = 1
+                
+                # Processar técnica extra 1 se existir e tiver valor
+                if 'tecnica_extra1' in df.columns and pd.notna(row['tecnica_extra1']) and str(row['tecnica_extra1']).strip():
+                    tecnica_extra = str(row['tecnica_extra1']).strip()
+                    key = f"{tecnica_extra}|{unidade}"
+                    if key in equipe_counts:
+                        equipe_counts[key] += 1
+                    else:
+                        equipe_counts[key] = 1
+                
+                # Processar técnica extra 2 se existir e tiver valor
+                if 'tecnica_extra2' in df.columns and pd.notna(row['tecnica_extra2']) and str(row['tecnica_extra2']).strip():
+                    tecnica_extra = str(row['tecnica_extra2']).strip()
+                    key = f"{tecnica_extra}|{unidade}"
+                    if key in equipe_counts:
+                        equipe_counts[key] += 1
+                    else:
+                        equipe_counts[key] = 1
+            
+            # Converter o dicionário para o formato esperado
+            for key, count in equipe_counts.items():
+                member, unidade = key.split('|')
+                equipe_data.append({
+                    'nome': member,
+                    'quantidade': count,
+                    'unidade': unidade
+                })
+            
+            # Ordenar por quantidade (decrescente) e depois por nome
+            equipe_data.sort(key=lambda x: (-x['quantidade'], x['nome']))
+            
+        # Se não houver dados suficientes, usar dados de exemplo
+        if len(equipe_data) < 2:
+            equipe_data = [
+                {'nome': 'Aline', 'quantidade': 15, 'unidade': 'Ribeirão Preto'},
+                {'nome': 'Natália', 'quantidade': 12, 'unidade': 'Ribeirão Preto'},
+                {'nome': 'Ana', 'quantidade': 18, 'unidade': 'Ribeirão Preto'},
+                {'nome': 'Juliana', 'quantidade': 10, 'unidade': 'Campinas'},
+                {'nome': 'Gabriela', 'quantidade': 9, 'unidade': 'Campinas'},
+                {'nome': 'Mariana Moro', 'quantidade': 14, 'unidade': 'Rio de Janeiro'},
+                {'nome': 'Mariana Silva', 'quantidade': 11, 'unidade': 'Rio de Janeiro'},
+                {'nome': 'Dayane', 'quantidade': 7, 'unidade': 'Rio de Janeiro'}
+            ]
+        
+        return jsonify({'equipe': equipe_data})
+        
+    except Exception as e:
+        logger.error(f"Erro ao obter dados de equipe: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'equipe': []})
 
 @app.route('/filter_dashboard')
 def filter_dashboard():
