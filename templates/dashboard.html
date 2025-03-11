@@ -494,8 +494,8 @@
                         fillElement.style.backgroundColor = '#8A2BE2'; // Roxo como na referência
                     }
                     
-                    // Formatar valor numérico com casa decimal
-                    const formattedValue = valorAtual.toFixed(2);
+                    // Formatar valor numérico como número inteiro
+                    const formattedValue = Math.round(valorAtual);
                     
                     // Atualizar textos
                     document.getElementById('metaValue').textContent = `${meta}`;
