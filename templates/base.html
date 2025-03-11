@@ -7,33 +7,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="navbar">
-        <div class="navbar-logo">
-          <img class="logo" src="/static/img/icb_logo.png" alt="ICB Logo">
-          <span class="site-title">Sistema de Monitoramento de Cirurgias</span>
-        </div>
-        <div class="navbar-links">
-          <a href="/" class="button">Formulário</a>
-          <a href="/dashboard" class="button">Dashboard</a>
-          <a href="/necrose" class="button">Necrose</a>
-          <a href="#" class="button" onclick="confirmDelete()">Apagar Dados</a>
-          <a href="/report" class="button">Relatórios</a>
-          <a href="#" class="button" onclick="confirmLoadAttachment()">Carregar Anexo</a>
-        </div>
-      </div>
-
-      <script>
-        function confirmLoadAttachment() {
-          if (confirm("Isso irá substituir TODOS os dados atuais pelos dados do arquivo anexado. Continuar?")) {
-            // Criar um formulário para enviar o POST
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/load_from_attachment';
-            document.body.appendChild(form);
-            form.submit();
-          }
-        }
-      </script>
     <div class="container">
         <div class="header">
             <img src="{{ url_for('static', filename='img/icb_logo.png') }}" alt="Logo ICB" class="company-logo" onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/logo4_Logo - transplante.pdf') }}';">
