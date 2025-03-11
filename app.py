@@ -317,6 +317,57 @@ def get_medicos(unidade):
     }
     return {'medicos': medicos_por_unidade.get(unidade, [])}
 
+
+
+@app.route('/verify_data', methods=['GET'])
+def verify_data():
+    """Verifica se os dados foram mantidos após o deployment e tenta restaurá-los se necessário"""
+    try:
+        cirurgias_file = "cirurgias.xlsx"
+        necroses_file = "necroses.xlsx"
+        
+        # Verificar arquivo de cirurgias
+        if os.path.exists(cirurgias_file):
+            df_cirurgias = pd.read_excel(cirurgias_file)
+            count_cirurgias = len(df_cirurgias)
+            logger.info(f"Arquivo {cirurgias_file} contém {count_cirurgias} registros")
+        else:
+            count_cirurgias = 0
+            logger.warning(f"Arquivo {cirurgias_file} não encontrado")
+        
+        # Verificar arquivo de necroses
+        if os.path.exists(necroses_file):
+            df_necroses = pd.read_excel(necroses_file)
+            count_necroses = len(df_necroses)
+            logger.info(f"Arquivo {necroses_file} contém {count_necroses} registros")
+        else:
+            count_necroses = 0
+            logger.warning(f"Arquivo {necroses_file} não encontrado")
+        
+        # Se não houver dados, tentar restaurar
+        if count_cirurgias == 0:
+            try:
+                from restore_deployment_data import restore_deployment_data
+                success, restored_files = restore_deployment_data()
+                
+                if success:
+                    restored_info = "<br>".join([f"- {f[0]}: {f[2]} registros (fonte: {f[1]})" for f in restored_files])
+                    flash(f"✅ Dados restaurados com sucesso!<br>{restored_info}", "success")
+                else:
+                    flash("⚠️ Não foi possível restaurar os dados automaticamente. Execute 'python restore_deployment_data.py'", "warning")
+            except Exception as e:
+                logger.error(f"Erro ao restaurar dados: {str(e)}")
+                flash(f"❌ Erro ao restaurar dados: {str(e)}", "error")
+        else:
+            flash(f"✅ Dados verificados: {count_cirurgias} cirurgias e {count_necroses} relatórios de necrose.", "info")
+        
+        return redirect(url_for('index'))
+        
+    except Exception as e:
+        logger.error(f"Erro ao verificar dados: {str(e)}\n{traceback.format_exc()}")
+        flash(f"❌ Erro ao verificar dados: {str(e)}", "error")
+        return redirect(url_for('index'))
+
 @app.route('/get_equipe/<unidade>')
 def get_equipe(unidade):
     logger.info(f"Retrieving team for unit: {unidade}")
