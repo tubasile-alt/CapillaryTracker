@@ -454,7 +454,11 @@
                     return;
                 }
                 
-                container.innerHTML = '<canvas id="gaugeChart"></canvas>';
+                // Limpar completamente o container antes de criar um novo canvas
+                container.innerHTML = '';
+                const newCanvas = document.createElement('canvas');
+                newCanvas.id = 'gaugeChart';
+                container.appendChild(newCanvas);
                 
                 // Obter o contexto do novo canvas
                 const gaugeCanvas = document.getElementById('gaugeChart');
@@ -472,6 +476,10 @@
                 // Log para depuração
                 console.log(`Criando velocímetro: Meta=${meta}, Valor Atual=${valorAtual}`);
                 
+                // Calcular percentual diretamente
+                const percentual = meta > 0 ? Math.round((valorAtual / meta) * 100) : 0;
+                
+                // Configuração simplificada para ser mais compatível com todos os navegadores
                 const config = {
                     type: 'doughnut',
                     data: {
@@ -486,14 +494,10 @@
                     },
                     options: {
                         circumference: 180,
-                        rotation: -90,
-                        cutout: '80%',
+                        rotation: 270,
+                        cutout: '75%',
                         responsive: true,
                         maintainAspectRatio: true,
-                        animation: {
-                            animateRotate: true,
-                            animateScale: true
-                        },
                         plugins: {
                             legend: {
                                 display: false
@@ -509,30 +513,22 @@
                             const { ctx, width, height } = chart;
                             ctx.save();
                             
-                            // Estilo para o valor principal
-                            ctx.font = 'bold 24px Arial';
-                            ctx.fillStyle = '#ffffff';
+                            // Adicionar percentual
                             ctx.textAlign = 'center';
                             ctx.textBaseline = 'middle';
-                            
-                            // Desenhar valor principal
-                            ctx.fillText(valorAtual.toString(), width / 2, height - 40);
-                            
-                            // Estilo para texto da meta
-                            ctx.font = '16px Arial';
-                            ctx.fillStyle = '#cccccc';
-                            ctx.fillText(`Meta: ${meta}`, width / 2, height - 15);
-                            
-                            // Adicionar nome da unidade
-                            ctx.font = 'bold 18px Arial';
-                            ctx.fillStyle = '#ffffff';
-                            ctx.fillText(selectedUnit, width / 2, height / 2 - 30);
-                            
-                            // Adicionar percentual
-                            const percentual = meta > 0 ? Math.round((valorAtual / meta) * 100) : 0;
                             ctx.fillStyle = percentual >= 100 ? chartColors.green : chartColors.yellow;
                             ctx.font = 'bold 36px Arial';
-                            ctx.fillText(`${percentual}%`, width / 2, height / 2 + 20);
+                            ctx.fillText(`${percentual}%`, width / 2, height / 2 - 10);
+                            
+                            // Valor e meta
+                            ctx.font = 'bold 20px Arial';
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillText(`${valorAtual} de ${meta}`, width / 2, height / 2 + 30);
+                            
+                            // Nome da unidade
+                            ctx.font = '16px Arial';
+                            ctx.fillStyle = '#cccccc';
+                            ctx.fillText(selectedUnit, width / 2, height - 30);
                             
                             ctx.restore();
                         }
@@ -540,11 +536,53 @@
                 };
                 
                 try {
+                    // Destruir charts anteriores que possam estar causando conflito
+                    Chart.getChart(gaugeCanvas)?.destroy();
+                    
+                    // Criar novo chart
                     new Chart(gaugeCtx, config);
                     console.log("Velocímetro criado com sucesso!");
                 } catch (chartError) {
                     console.error("Erro ao criar o gráfico:", chartError);
-                    container.innerHTML = '<div class="error-message">Erro ao criar o velocímetro.</div>';
+                    container.innerHTML = '<div class="error-message">Erro ao criar o velocímetro: ' + chartError.message + '</div>';
+                    
+                    // Tenta uma renderização alternativa
+                    setTimeout(() => {
+                        try {
+                            container.innerHTML = '';
+                            const newCanvas = document.createElement('canvas');
+                            newCanvas.id = 'gaugeChart';
+                            container.appendChild(newCanvas);
+                            
+                            // Versão super simplificada do gráfico
+                            new Chart(newCanvas.getContext('2d'), {
+                                type: 'pie',
+                                data: {
+                                    datasets: [{
+                                        data: [valorAtual, meta - valorAtual > 0 ? meta - valorAtual : 0],
+                                        backgroundColor: [chartColors.green, 'rgba(100, 100, 100, 0.2)']
+                                    }]
+                                },
+                                options: {
+                                    plugins: {
+                                        legend: { display: false },
+                                        tooltip: { enabled: false }
+                                    }
+                                }
+                            });
+                            
+                            // Adicionar texto separadamente
+                            const textDiv = document.createElement('div');
+                            textDiv.style.textAlign = 'center';
+                            textDiv.style.marginTop = '10px';
+                            textDiv.innerHTML = `<strong style="font-size: 24px; color: ${chartColors.green}">${percentual}%</strong><br>
+                                                <span style="color: #ffffff">${valorAtual} de ${meta}</span><br>
+                                                <span style="color: #cccccc">${selectedUnit}</span>`;
+                            container.appendChild(textDiv);
+                        } catch (e) {
+                            container.innerHTML = '<div class="error-message">Não foi possível renderizar o velocímetro.</div>';
+                        }
+                    }, 100);
                 }
             })
             .catch(error => {
@@ -553,68 +591,20 @@
                 const meta = metasPorUnidade[selectedUnit] || 30;
                 const valorAtual = 0;
                 
-                // Mensagem de erro
+                // Mensagem de erro e visualização alternativa
                 const container = document.getElementById('gaugeContainer');
                 if (!container) return;
                 
-                container.innerHTML = '<canvas id="gaugeChart"></canvas><div class="error-message">Erro ao carregar dados. Usando valores padrão.</div>';
-                
-                const gaugeCanvas = document.getElementById('gaugeChart');
-                if (!gaugeCanvas) return;
-                
-                const gaugeCtx = gaugeCanvas.getContext('2d');
-                if (!gaugeCtx) return;
-                
-                // Criar gráfico com valores padrão
-                try {
-                    new Chart(gaugeCtx, {
-                        type: 'doughnut',
-                        data: {
-                            datasets: [{
-                                data: [valorAtual, meta],
-                                backgroundColor: [
-                                    chartColors.green,
-                                    'rgba(100, 100, 100, 0.2)'
-                                ],
-                                borderWidth: 0
-                            }]
-                        },
-                        options: {
-                            circumference: 180,
-                            rotation: -90,
-                            cutout: '80%',
-                            responsive: true,
-                            maintainAspectRatio: true,
-                            plugins: {
-                                legend: {
-                                    display: false
-                                },
-                                tooltip: {
-                                    enabled: false
-                                }
-                            }
-                        },
-                        plugins: [{
-                            id: 'gaugeText',
-                            afterDraw: (chart) => {
-                                const { ctx, width, height } = chart;
-                                ctx.save();
-                                
-                                // Texto centralizado no gráfico
-                                ctx.font = 'bold 24px Arial';
-                                ctx.fillStyle = '#ffffff';
-                                ctx.textAlign = 'center';
-                                ctx.textBaseline = 'middle';
-                                ctx.fillText(`${valorAtual} de ${meta}`, width / 2, height / 2);
-                                
-                                ctx.restore();
-                            }
-                        }]
-                    });
-                } catch (fallbackError) {
-                    console.error("Erro ao criar o gráfico de fallback:", fallbackError);
-                    container.innerHTML = '<div class="error-message">Não foi possível carregar o velocímetro.</div>';
-                }
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 36px; font-weight: bold; color: ${chartColors.yellow}">0%</div>
+                        <div style="margin: 10px 0; color: #ffffff">0 de ${meta}</div>
+                        <div style="color: #cccccc">${selectedUnit}</div>
+                        <div class="error-message" style="margin-top: 15px; font-size: 12px;">
+                            Erro ao carregar dados. Exibindo valores padrão.
+                        </div>
+                    </div>
+                `;
             });
     }
     

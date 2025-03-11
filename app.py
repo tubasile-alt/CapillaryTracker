@@ -588,40 +588,34 @@ def get_unit_progress():
             logger.info(f"DataFrame carregado com sucesso: {len(df)} registros no total")
         except Exception as e:
             logger.error(f"Erro ao ler o arquivo Excel: {str(e)}")
-            return jsonify({'unit': unit, 'meta': meta, 'atual': 0, 'error': f'Erro ao ler arquivo: {str(e)}'})
+            return jsonify({'unit': unit, 'meta': meta, 'atual': 0})
         
         # Verificar se a coluna unidade existe
         if 'unidade' not in df.columns:
             logger.warning("Coluna 'unidade' não encontrada no DataFrame")
-            return jsonify({'unit': unit, 'meta': meta, 'atual': 0, 'error': 'Coluna unidade não encontrada'})
+            return jsonify({'unit': unit, 'meta': meta, 'atual': 0})
         
         # Garantir que valores nulos na coluna 'unidade' não causem problemas
         df['unidade'] = df['unidade'].fillna('').astype(str)
         
-        # Contar todos os registros da unidade
-        # Garantir que valores nulos na coluna 'unidade' não causem problemas
-        df['unidade'] = df['unidade'].fillna('').astype(str)
-        
-        # Usar método exato de comparação de strings
-        filtered_df = df[df['unidade'].str.strip() == unit.strip()]
+        # Usar correspondência exata com tratamento adequado de espaços
+        filtered_df = df[df['unidade'].str.strip().str.lower() == unit.strip().lower()]
         atual = len(filtered_df)  # Conta as linhas filtradas
         
-        # Mostrar mais informações para debug
-        logger.info(f"Unidade: {unit}, Total de registros para esta unidade: {atual}")
-        logger.info(f"Valores únicos na coluna 'unidade': {df['unidade'].unique().tolist()}")
-        logger.info(f"Dados da unidade selecionada: {filtered_df.to_dict(orient='records')}")
+        # Verificação adicional: busca fuzzywuzzy para nomes próximos se a correspondência exata falhar
+        if atual == 0:
+            from fuzzywuzzy import process
+            unidades_unicas = df['unidade'].unique()
+            matches = process.extractOne(unit, unidades_unicas)
+            if matches and matches[1] > 80:  # Se correspondência for maior que 80%
+                melhor_correspondencia = matches[0]
+                logger.info(f"Correspondência fuzzy encontrada: '{unit}' → '{melhor_correspondencia}'")
+                filtered_df = df[df['unidade'].str.strip() == melhor_correspondencia.strip()]
+                atual = len(filtered_df)
+                unit = melhor_correspondencia  # Usar o nome correto
         
         # Garantir que o valor atual seja um inteiro válido
-        if pd.isna(atual) or not isinstance(atual, (int, float)):
-            atual = 0
-        else:
-            atual = int(atual)
-        
-        # Verificar se o número real de registros foi capturado
-        registro_real = len(filtered_df) if 'filtered_df' in locals() else 0
-        if registro_real != atual:
-            logger.warning(f"Discrepância na contagem: atual={atual}, registros reais={registro_real}")
-            atual = registro_real
+        atual = int(atual) if not pd.isna(atual) and isinstance(atual, (int, float)) else 0
         
         logger.info(f"Progresso final: Unidade={unit}, Meta={meta}, Atual={atual}")
         return jsonify({
@@ -632,7 +626,7 @@ def get_unit_progress():
         
     except Exception as e:
         logger.error(f"Erro ao obter progresso: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({'unit': unit, 'meta': meta if 'meta' in locals() else 30, 'atual': 0, 'error': str(e)})
+        return jsonify({'unit': unit, 'meta': meta if 'meta' in locals() else 30, 'atual': 0})
 
 @app.route('/get_tecnicas_data')
 def get_tecnicas_data():
