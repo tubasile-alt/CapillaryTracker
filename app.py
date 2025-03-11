@@ -734,14 +734,14 @@ def get_equipe_data():
             # Dados de exemplo
             return jsonify({
                 'equipe': [
-                    {'nome': 'Aline', 'quantidade': 15, 'unidade': 'Ribeirão Preto'},
-                    {'nome': 'Natália', 'quantidade': 12, 'unidade': 'Ribeirão Preto'},
-                    {'nome': 'Ana', 'quantidade': 18, 'unidade': 'Ribeirão Preto'},
-                    {'nome': 'Juliana', 'quantidade': 10, 'unidade': 'Campinas'},
-                    {'nome': 'Gabriela', 'quantidade': 9, 'unidade': 'Campinas'},
-                    {'nome': 'Mariana Moro', 'quantidade': 14, 'unidade': 'Rio de Janeiro'},
-                    {'nome': 'Mariana Silva', 'quantidade': 11, 'unidade': 'Rio de Janeiro'},
-                    {'nome': 'Dayane', 'quantidade': 7, 'unidade': 'Rio de Janeiro'}
+                    {'nome': 'Aline', 'quantidade': 15, 'unidades': 'Ribeirão Preto, Rio de Janeiro'},
+                    {'nome': 'Natália', 'quantidade': 12, 'unidades': 'Ribeirão Preto, Campinas'},
+                    {'nome': 'Ana', 'quantidade': 18, 'unidades': 'Ribeirão Preto'},
+                    {'nome': 'Juliana', 'quantidade': 10, 'unidades': 'Campinas'},
+                    {'nome': 'Gabriela', 'quantidade': 9, 'unidades': 'Campinas, Rio de Janeiro'},
+                    {'nome': 'Mariana Moro', 'quantidade': 14, 'unidades': 'Rio de Janeiro'},
+                    {'nome': 'Mariana Silva', 'quantidade': 11, 'unidades': 'Rio de Janeiro, Campinas'},
+                    {'nome': 'Dayane', 'quantidade': 7, 'unidades': 'Rio de Janeiro'}
                 ]
             })
         
@@ -752,8 +752,10 @@ def get_equipe_data():
         
         # Verificar se existem as colunas necessárias
         if 'equipe' in df.columns and 'unidade' in df.columns:
-            # Processar membros da equipe regular
-            equipe_counts = {}
+            # Para contar cirurgias totais por pessoa (independente da unidade)
+            cirurgias_por_pessoa = {}
+            # Para rastrear em quais unidades cada pessoa trabalhou
+            unidades_por_pessoa = {}
             
             # Identificar todas as colunas que podem conter membros da equipe
             equipe_columns = ['equipe']
@@ -765,9 +767,9 @@ def get_equipe_data():
             
             logger.info(f"Colunas de equipe encontradas: {equipe_columns}")
             
-            # Dicionário para rastrear participações únicas por cirurgia
-            # Estrutura: {membro|unidade: {id_cirurgia1, id_cirurgia2, ...}}
-            participacoes_unicas = {}
+            # Dicionário para rastrear participações únicas por cirurgia para cada pessoa
+            # Estrutura: {membro: {id_cirurgia1, id_cirurgia2, ...}}
+            participacoes_por_pessoa = {}
             
             # Iterar sobre cada linha para contar participações
             for idx, row in df.iterrows():
@@ -798,22 +800,29 @@ def get_equipe_data():
                 
                 # Adicionar todos os membros desta cirurgia ao rastreamento
                 for member in membros_desta_cirurgia:
-                    key = f"{member}|{unidade}"
-                    if key not in participacoes_unicas:
-                        participacoes_unicas[key] = set()
-                    participacoes_unicas[key].add(cirurgia_id)
+                    # Rastrear em quais cirurgias a pessoa trabalhou
+                    if member not in participacoes_por_pessoa:
+                        participacoes_por_pessoa[member] = set()
+                    participacoes_por_pessoa[member].add(cirurgia_id)
+                    
+                    # Rastrear em quais unidades a pessoa trabalhou
+                    if member not in unidades_por_pessoa:
+                        unidades_por_pessoa[member] = set()
+                    unidades_por_pessoa[member].add(unidade)
             
-            # Converter para contagem final
-            for key, cirurgias_ids in participacoes_unicas.items():
-                equipe_counts[key] = len(cirurgias_ids)  # Número de cirurgias únicas
+            # Converter para contagem final (total de cirurgias por pessoa)
+            for member, cirurgias_ids in participacoes_por_pessoa.items():
+                cirurgias_por_pessoa[member] = len(cirurgias_ids)
             
-            # Converter o dicionário para o formato esperado
-            for key, count in equipe_counts.items():
-                member, unidade = key.split('|')
+            # Converter os dados para o formato esperado
+            for member, count in cirurgias_por_pessoa.items():
+                # Obter a lista de unidades onde esta pessoa trabalhou
+                unidades = sorted(list(unidades_por_pessoa.get(member, ["Não especificada"])))
+                
                 equipe_data.append({
                     'nome': member,
                     'quantidade': count,
-                    'unidade': unidade
+                    'unidades': ", ".join(unidades)
                 })
             
             # Ordenar por quantidade (decrescente) e depois por nome
@@ -824,14 +833,14 @@ def get_equipe_data():
         # Se não houver dados suficientes, usar dados de exemplo
         if len(equipe_data) < 2:
             equipe_data = [
-                {'nome': 'Aline', 'quantidade': 15, 'unidade': 'Ribeirão Preto'},
-                {'nome': 'Natália', 'quantidade': 12, 'unidade': 'Ribeirão Preto'},
-                {'nome': 'Ana', 'quantidade': 18, 'unidade': 'Ribeirão Preto'},
-                {'nome': 'Juliana', 'quantidade': 10, 'unidade': 'Campinas'},
-                {'nome': 'Gabriela', 'quantidade': 9, 'unidade': 'Campinas'},
-                {'nome': 'Mariana Moro', 'quantidade': 14, 'unidade': 'Rio de Janeiro'},
-                {'nome': 'Mariana Silva', 'quantidade': 11, 'unidade': 'Rio de Janeiro'},
-                {'nome': 'Dayane', 'quantidade': 7, 'unidade': 'Rio de Janeiro'}
+                {'nome': 'Aline', 'quantidade': 15, 'unidades': 'Ribeirão Preto, Rio de Janeiro'},
+                {'nome': 'Natália', 'quantidade': 12, 'unidades': 'Ribeirão Preto, Campinas'},
+                {'nome': 'Ana', 'quantidade': 18, 'unidades': 'Ribeirão Preto'},
+                {'nome': 'Juliana', 'quantidade': 10, 'unidades': 'Campinas'},
+                {'nome': 'Gabriela', 'quantidade': 9, 'unidades': 'Campinas, Rio de Janeiro'},
+                {'nome': 'Mariana Moro', 'quantidade': 14, 'unidades': 'Rio de Janeiro'},
+                {'nome': 'Mariana Silva', 'quantidade': 11, 'unidades': 'Rio de Janeiro, Campinas'},
+                {'nome': 'Dayane', 'quantidade': 7, 'unidades': 'Rio de Janeiro'}
             ]
         
         return jsonify({'equipe': equipe_data})

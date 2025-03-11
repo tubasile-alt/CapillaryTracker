@@ -38,32 +38,16 @@
             </div>
 
             <div class="dashboard-grid">
-                <!-- Primeira linha -->
-                <div class="dashboard-card">
-                    <h3>Cirurgias por Mês</h3>
-                    <canvas id="monthlyChart"></canvas>
-                </div>
-
-                <div class="dashboard-card">
-                    <h3>Cirurgias por Unidade</h3>
-                    <canvas id="unitChart"></canvas>
-                </div>
-
-                <!-- Segunda linha -->
-                <div class="dashboard-card">
-                    <h3>Densidade de Extração (fios/cm²)</h3>
-                    <canvas id="densityChart"></canvas>
-                </div>
-
-                <div class="dashboard-card">
-                    <h3>Cirurgias por Equipe</h3>
+                <!-- Layout simplificado -->
+                <div class="dashboard-card wide-card">
+                    <h3>Cirurgias por Equipe (Total por Pessoa)</h3>
                     <div class="cirurgias-table-container">
                         <table class="cirurgias-table" id="equipeTable">
                             <thead>
                                 <tr>
                                     <th>Membro da Equipe</th>
                                     <th>Quantidade</th>
-                                    <th>Unidade</th>
+                                    <th>Unidades Atendidas</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -317,79 +301,8 @@
     }
 
     function initializeCharts() {
-        {% if data %}
-        // Monthly surgeries chart
-        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-        new Chart(monthlyCtx, {
-            type: 'line',
-            data: {
-                labels: {{ data.labels | tojson }},
-                datasets: {{ data.datasets | tojson }}.map((dataset, index) => ({
-                    ...dataset,
-                    backgroundColor: Object.values(chartColors)[index % Object.keys(chartColors).length],
-                    borderColor: Object.values(chartColors)[index % Object.keys(chartColors).length],
-                    borderWidth: 2,
-                    tension: 0.3,
-                    fill: false
-                }))
-            },
-            options: darkThemeOptions
-        });
-
-        // Unit distribution chart
-        const unitCtx = document.getElementById('unitChart').getContext('2d');
-        new Chart(unitCtx, {
-            type: 'pie',
-            data: {
-                labels: ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'],
-                datasets: [{
-                    data: computeUnitDistribution(),
-                    backgroundColor: [chartColors.blue, chartColors.pink, chartColors.green],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                ...darkThemeOptions,
-                plugins: {
-                    ...darkThemeOptions.plugins,
-                    legend: {
-                        ...darkThemeOptions.plugins.legend,
-                        position: 'bottom'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Distribuição por Unidade',
-                        color: '#ffffff',
-                        font: {
-                            size: 16
-                        }
-                    }
-                }
-            }
-        });
-
-        // Density chart
-        const densityCtx = document.getElementById('densityChart').getContext('2d');
-        new Chart(densityCtx, {
-            type: 'bar',
-            data: {
-                labels: {{ (data.follicles_data.labels if data.follicles_data and data.follicles_data.labels else []) | tojson }},
-                datasets: [{
-                    label: 'Densidade de Extração (fios/cm²)',
-                    data: {{ (data.follicles_data.le_density if data.follicles_data and data.follicles_data.le_density else []) | tojson }},
-                    backgroundColor: chartColors.purple,
-                    borderColor: 'rgba(156, 39, 176, 0.8)',
-                    borderWidth: 1
-                }]
-            },
-            options: darkThemeOptions
-        });
-        {% endif %}
-    }
-
-    function computeUnitDistribution() {
-        // Valores de exemplo para as unidades
-        return [55, 25, 20]; // Ribeirão Preto, Campinas, Rio de Janeiro
+        // Removidos os gráficos conforme solicitado
+        // Permaneceram apenas a tabela de equipes e o velocímetro de meta
     }
 
     // Função para preencher a tabela de técnicas
@@ -526,7 +439,7 @@
                     row.innerHTML = `
                         <td>${item.nome}</td>
                         <td>${item.quantidade}</td>
-                        <td>${item.unidade}</td>
+                        <td>${item.unidades}</td>
                     `;
                     tableBody.appendChild(row);
                 });
@@ -537,14 +450,14 @@
 
                 // Dados de exemplo em caso de erro
                 const exemploData = [
-                    {nome: 'Aline', quantidade: 15, unidade: 'Ribeirão Preto'},
-                    {nome: 'Natália', quantidade: 12, unidade: 'Ribeirão Preto'},
-                    {nome: 'Ana', quantidade: 18, unidade: 'Ribeirão Preto'},
-                    {nome: 'Juliana', quantidade: 10, unidade: 'Campinas'},
-                    {nome: 'Gabriela', quantidade: 9, unidade: 'Campinas'},
-                    {nome: 'Mariana Moro', quantidade: 14, unidade: 'Rio de Janeiro'},
-                    {nome: 'Mariana Silva', quantidade: 11, unidade: 'Rio de Janeiro'},
-                    {nome: 'Dayane', quantidade: 7, unidade: 'Rio de Janeiro'}
+                    {nome: 'Aline', quantidade: 15, unidades: 'Ribeirão Preto, Rio de Janeiro'},
+                    {nome: 'Natália', quantidade: 12, unidades: 'Ribeirão Preto, Campinas'},
+                    {nome: 'Ana', quantidade: 18, unidades: 'Ribeirão Preto'},
+                    {nome: 'Juliana', quantidade: 10, unidades: 'Campinas'},
+                    {nome: 'Gabriela', quantidade: 9, unidades: 'Campinas, Rio de Janeiro'},
+                    {nome: 'Mariana Moro', quantidade: 14, unidades: 'Rio de Janeiro'},
+                    {nome: 'Mariana Silva', quantidade: 11, unidades: 'Rio de Janeiro, Campinas'},
+                    {nome: 'Dayane', quantidade: 7, unidades: 'Rio de Janeiro'}
                 ];
 
                 // Preencher a tabela com dados de exemplo após um breve atraso
@@ -555,7 +468,7 @@
                         row.innerHTML = `
                             <td>${item.nome}</td>
                             <td>${item.quantidade}</td>
-                            <td>${item.unidade}</td>
+                            <td>${item.unidades}</td>
                         `;
                         tableBody.appendChild(row);
                     });
