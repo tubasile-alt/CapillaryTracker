@@ -84,8 +84,24 @@
                             </select>
                         </div>
                     </div>
-                    <div id="gaugeContainer">
-                        <canvas id="gaugeChart"></canvas>
+                    <div id="gaugeContainer" class="gauge-container">
+                        <div class="gauge-semicircle">
+                            <div class="gauge-percentage">0%</div>
+                            <div class="gauge-needle" id="gaugeNeedle"></div>
+                            <div class="gauge-semicircle-mask">
+                                <div class="gauge-semicircle-fill" id="gaugeFill"></div>
+                            </div>
+                            <div class="gauge-labels">
+                                <div class="gauge-label gauge-label-25">25%</div>
+                                <div class="gauge-label gauge-label-50">50%</div>
+                                <div class="gauge-label gauge-label-75">75%</div>
+                                <div class="gauge-label gauge-label-100">100%</div>
+                            </div>
+                        </div>
+                        <div class="gauge-details">
+                            <div class="gauge-count" id="gaugeCount">0 de 0</div>
+                            <div class="gauge-unit" id="gaugeUnit">Unidade</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -423,26 +439,28 @@
             });
     }
 
-    // Função para atualizar o velocímetro de meta - implementação mais robusta
+    // Função para atualizar o velocímetro de meta - implementação semi-circular
     function updateGaugeChart() {
         try {
             const selectedUnit = document.getElementById('unitFilter')?.value || 'Ribeirão Preto';
             
             console.log("Atualizando velocímetro para unidade:", selectedUnit);
             
-            // Mostrar indicador de carregamento
+            // Elementos do velocímetro
             const container = document.getElementById('gaugeContainer');
-            if (!container) {
-                console.error("Elemento gaugeContainer não encontrado");
+            const needleElement = document.getElementById('gaugeNeedle');
+            const fillElement = document.getElementById('gaugeFill');
+            const percentageElement = container.querySelector('.gauge-percentage');
+            const countElement = document.getElementById('gaugeCount');
+            const unitElement = document.getElementById('gaugeUnit');
+            
+            if (!container || !needleElement || !fillElement || !percentageElement || !countElement || !unitElement) {
+                console.error("Elementos do velocímetro não encontrados");
                 return;
             }
             
-            // Limpar conteúdo anterior e mostrar carregamento
-            container.innerHTML = `
-                <div class="gauge-loading">
-                    <div>Carregando dados...</div>
-                </div>
-            `;
+            // Adicionar classe de carregamento
+            container.classList.add('loading');
             
             // Buscar dados reais da API
             fetch(`/get_unit_progress?unit=${encodeURIComponent(selectedUnit)}`)
@@ -464,37 +482,38 @@
                     
                     // Calcular percentual
                     const percentual = meta > 0 ? Math.round((valorAtual / meta) * 100) : 0;
+                    console.log("Criando velocímetro: Meta=" + meta + ", Valor Atual=" + valorAtual);
+                    
+                    // Garantir que o percentual não ultrapasse 100%
+                    const cappedPercentual = Math.min(percentual, 100);
                     
                     // Determinar cor baseada no percentual
-                    let color = '#FFCE56'; // Amarelo padrão
-                    if (percentual >= 100) {
-                        color = '#4CAF50'; // Verde para meta atingida
-                    } else if (percentual < 30) {
-                        color = '#FF6384'; // Vermelho para progresso baixo
+                    let color;
+                    if (cappedPercentual >= 75) {
+                        color = '#4CAF50'; // Verde para meta próxima
+                    } else if (cappedPercentual >= 50) {
+                        color = '#FFCE56'; // Amarelo para progresso médio
+                    } else if (cappedPercentual >= 25) {
+                        color = '#FF9800'; // Laranja para progresso baixo
+                    } else {
+                        color = '#FF6384'; // Vermelho para progresso muito baixo
                     }
                     
-                    // Garantir que o valor de preenchimento não ultrapasse 100%
-                    const fillWidth = Math.min(percentual, 100);
+                    // Calcular o ângulo da agulha (0% = -90°, 100% = 90°)
+                    const needleAngle = -90 + (cappedPercentual * 180 / 100);
                     
-                    // Atualizar interface com HTML simplificado (sem canvas)
-                    container.innerHTML = `
-                        <div class="gauge-meter">
-                            <div class="gauge-background">
-                                <div class="gauge-fill" style="width: ${fillWidth}%; background-color: ${color};"></div>
-                            </div>
-                            <div class="gauge-value-container">
-                                <div class="gauge-percentage" style="color: ${color}">
-                                    ${percentual}%
-                                </div>
-                                <div class="gauge-count">
-                                    ${valorAtual} de ${meta}
-                                </div>
-                                <div class="gauge-unit">
-                                    ${selectedUnit}
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    // Atualizar os elementos visuais
+                    needleElement.style.transform = `rotate(${needleAngle}deg)`;
+                    fillElement.style.transform = `rotate(${Math.min(needleAngle, 90)}deg)`;
+                    fillElement.style.backgroundColor = color;
+                    percentageElement.textContent = `${percentual}%`;
+                    percentageElement.style.color = color;
+                    countElement.textContent = `${valorAtual} de ${meta}`;
+                    unitElement.textContent = selectedUnit;
+                    
+                    // Remover classe de carregamento
+                    container.classList.remove('loading');
+                    console.log("Velocímetro criado com sucesso!");
                 })
                 .catch(error => {
                     console.error('Erro ao obter dados de progresso:', error);
@@ -502,19 +521,17 @@
                     // Em caso de erro, mostrar feedback visual
                     const meta = metasPorUnidade[selectedUnit] || 30;
                     
-                    container.innerHTML = `
-                        <div class="gauge-meter">
-                            <div class="gauge-background">
-                                <div class="gauge-fill" style="width: 0%;"></div>
-                            </div>
-                            <div class="gauge-value-container">
-                                <div class="gauge-percentage" style="color: #FF6384">0%</div>
-                                <div class="gauge-count">0 de ${meta}</div>
-                                <div class="gauge-unit">${selectedUnit}</div>
-                                <div class="gauge-error">Erro: ${error.message || 'Falha ao carregar dados'}</div>
-                            </div>
-                        </div>
-                    `;
+                    // Resetar o velocímetro
+                    needleElement.style.transform = 'rotate(-90deg)';
+                    fillElement.style.transform = 'rotate(-90deg)';
+                    fillElement.style.backgroundColor = '#FF6384';
+                    percentageElement.textContent = '0%';
+                    percentageElement.style.color = '#FF6384';
+                    countElement.textContent = `0 de ${meta}`;
+                    unitElement.textContent = `${selectedUnit} (Erro: ${error.message || 'Falha ao carregar'})`;
+                    
+                    // Remover classe de carregamento
+                    container.classList.remove('loading');
                 });
         } catch (err) {
             console.error("Erro no updateGaugeChart:", err);

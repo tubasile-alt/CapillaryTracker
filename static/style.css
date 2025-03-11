@@ -1,4 +1,3 @@
-
 /* Estilos para o dashboard simplificado */
 .combined-stats-card {
     width: 100%;
@@ -44,11 +43,11 @@
     .big-stat {
         font-size: 2rem;
     }
-    
+
     .stat-value {
         font-size: 1.5rem;
     }
-    
+
     .dashboard-card {
         min-height: 250px;
     }
@@ -862,5 +861,225 @@ textarea {
     .nav-link {
         margin: 0;
         width: 100%;
+    }
+}
+
+/* Estilos para o velocímetro semi-circular */
+.gauge-container {
+    width: 100%;
+    margin: 20px auto;
+    padding: 0 20px;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.gauge-container.loading::before {
+    content: "Carregando...";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ffffff;
+    font-style: italic;
+    z-index: 10;
+    border-radius: 8px;
+}
+
+.gauge-semicircle {
+    position: relative;
+    width: 300px;
+    height: 150px;
+    margin: 20px auto 10px;
+}
+
+.gauge-semicircle-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 300px;
+    height: 150px;
+    border-radius: 150px 150px 0 0;
+    background-color: rgba(100, 100, 100, 0.1);
+    overflow: hidden;
+    border: 2px solid #444;
+    border-bottom: none;
+}
+
+.gauge-semicircle-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background-color: #FF6384; /* Cor padrão inicial - vermelho */
+    clip-path: polygon(150px 0, 300px 0, 300px 300px, 0 300px, 0 0, 150px 0, 150px 150px);
+    transform-origin: 150px 150px;
+    transform: rotate(-90deg); /* Começar no 0% */
+    transition: transform 1s ease-out, background-color 1s ease;
+}
+
+.gauge-percentage {
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 32px;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+    z-index: 5;
+}
+
+.gauge-needle {
+    position: absolute;
+    width: 130px;
+    height: 4px;
+    background-color: #ffffff;
+    top: 150px;
+    left: 150px;
+    transform-origin: 0 50%;
+    transform: rotate(-90deg); /* Apontar para 0% inicialmente */
+    z-index: 4;
+    transition: transform 1s cubic-bezier(0.36, 0, 0.66, 1.3);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+}
+
+.gauge-needle::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    top: -4px;
+    left: -6px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+}
+
+.gauge-details {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.gauge-count {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 5px;
+}
+
+.gauge-unit {
+    font-size: 16px;
+    color: #cccccc;
+}
+
+.gauge-labels {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.gauge-label {
+    position: absolute;
+    font-size: 14px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.gauge-label-25 {
+    top: 60%;
+    left: 15%;
+}
+
+.gauge-label-50 {
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.gauge-label-75 {
+    top: 60%;
+    right: 15%;
+}
+
+.gauge-label-100 {
+    top: 80%;
+    right: 5%;
+}
+
+/* Estilos responsivos para o velocímetro */
+@media (max-width: 768px) {
+    .gauge-semicircle {
+        width: 240px;
+        height: 120px;
+    }
+
+    .gauge-semicircle-mask {
+        width: 240px;
+        height: 120px;
+    }
+
+    .gauge-semicircle-fill {
+        width: 240px;
+        height: 240px;
+        transform-origin: 120px 120px;
+        clip-path: polygon(120px 0, 240px 0, 240px 240px, 0 240px, 0 0, 120px 0, 120px 120px);
+    }
+
+    .gauge-needle {
+        width: 100px;
+        top: 120px;
+        left: 120px;
+    }
+
+    .gauge-percentage {
+        font-size: 24px;
+    }
+
+    .gauge-count {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .gauge-semicircle {
+        width: 200px;
+        height: 100px;
+    }
+
+    .gauge-semicircle-mask {
+        width: 200px;
+        height: 100px;
+    }
+
+    .gauge-semicircle-fill {
+        width: 200px;
+        height: 200px;
+        transform-origin: 100px 100px;
+        clip-path: polygon(100px 0, 200px 0, 200px 200px, 0 200px, 0 0, 100px 0, 100px 100px);
+    }
+
+    .gauge-needle {
+        width: 80px;
+        top: 100px;
+        left: 100px;
+    }
+
+    .gauge-percentage {
+        font-size: 20px;
+    }
+
+    .gauge-label {
+        font-size: 12px;
     }
 }
