@@ -85,26 +85,17 @@
                         </div>
                     </div>
                     <div id="gaugeContainer" class="gauge-container">
-                        <div class="speedometer">
-                            <div class="speedometer-scale">
-                                <div class="speedometer-scale-segment red-segment"></div>
-                                <div class="speedometer-scale-segment orange-segment"></div>
-                                <div class="speedometer-scale-segment yellow-segment"></div>
-                                <div class="speedometer-scale-segment green-segment"></div>
+                        <div class="new-gauge">
+                            <div class="gauge-title">Previsão vs Meta</div>
+                            <div class="gauge-track">
+                                <div class="gauge-fill" id="gaugeFill"></div>
                             </div>
-                            <div class="speedometer-center"></div>
-                            <div class="speedometer-needle" id="speedometerNeedle"></div>
-                            <div class="speedometer-labels">
-                                <div class="speedometer-label label-25">25%</div>
-                                <div class="speedometer-label label-50">50%</div>
-                                <div class="speedometer-label label-75">75%</div>
-                                <div class="speedometer-label label-100">100%</div>
+                            <div class="gauge-marker" id="gaugeMarker"></div>
+                            <div class="gauge-value-box">
+                                <div class="gauge-value" id="gaugeValue">0</div>
+                                <div class="gauge-unit-label">cirurgias</div>
                             </div>
-                        </div>
-                        <div class="gauge-details">
-                            <div class="gauge-percentage" id="gaugePercentage">0%</div>
-                            <div class="gauge-count" id="gaugeCount">0 de 0</div>
-                            <div class="gauge-unit" id="gaugeUnit">Unidade</div>
+                            <div class="gauge-max" id="gaugeMax">de 0</div>
                         </div>
                     </div>
                 </div>
@@ -443,7 +434,7 @@
             });
     }
 
-    // Função para atualizar o velocímetro de meta - novo modelo como na referência
+    // Função para atualizar o velocímetro de meta - modelo simplificado
     function updateGaugeChart() {
         try {
             const selectedUnit = document.getElementById('unitFilter')?.value || 'Ribeirão Preto';
@@ -452,12 +443,12 @@
             
             // Elementos do velocímetro
             const container = document.getElementById('gaugeContainer');
-            const needleElement = document.getElementById('speedometerNeedle');
-            const percentageElement = document.getElementById('gaugePercentage');
-            const countElement = document.getElementById('gaugeCount');
-            const unitElement = document.getElementById('gaugeUnit');
+            const fillElement = document.getElementById('gaugeFill');
+            const valueElement = document.getElementById('gaugeValue');
+            const maxElement = document.getElementById('gaugeMax');
+            const markerElement = document.getElementById('gaugeMarker');
             
-            if (!container || !needleElement || !percentageElement || !countElement || !unitElement) {
+            if (!container || !fillElement || !valueElement || !maxElement || !markerElement) {
                 console.error("Elementos do velocímetro não encontrados");
                 return;
             }
@@ -484,33 +475,35 @@
                                     (parseInt(data.atual, 10) || 0);
                     
                     // Calcular percentual
-                    const percentual = meta > 0 ? Math.round((valorAtual / meta) * 100) : 0;
+                    const percentual = meta > 0 ? (valorAtual / meta) * 100 : 0;
                     console.log("Criando velocímetro: Meta=" + meta + ", Valor Atual=" + valorAtual);
                     
                     // Garantir que o percentual não ultrapasse 100%
                     const cappedPercentual = Math.min(percentual, 100);
                     
-                    // Determinar cor baseada no percentual
-                    let color;
+                    // Atualizar os elementos visuais
+                    fillElement.style.width = `${cappedPercentual}%`;
+                    
+                    // Cor baseada no percentual
                     if (cappedPercentual >= 75) {
-                        color = '#4CAF50'; // Verde para meta próxima
+                        fillElement.style.backgroundColor = '#8A2BE2'; // Roxo como na referência
                     } else if (cappedPercentual >= 50) {
-                        color = '#FFCE56'; // Amarelo para progresso médio
+                        fillElement.style.backgroundColor = '#8A2BE2'; // Roxo como na referência
                     } else if (cappedPercentual >= 25) {
-                        color = '#FF9800'; // Laranja para progresso baixo
+                        fillElement.style.backgroundColor = '#8A2BE2'; // Roxo como na referência
                     } else {
-                        color = '#FF6384'; // Vermelho para progresso muito baixo
+                        fillElement.style.backgroundColor = '#8A2BE2'; // Roxo como na referência
                     }
                     
-                    // Calcular o ângulo da agulha (0% = -90°, 100% = 90°)
-                    const needleAngle = -90 + (cappedPercentual * 180 / 100);
+                    // Formatar valor numérico com casa decimal
+                    const formattedValue = valorAtual.toFixed(2);
                     
-                    // Atualizar os elementos visuais
-                    needleElement.style.transform = `rotate(${needleAngle}deg)`;
-                    percentageElement.textContent = `${percentual}%`;
-                    percentageElement.style.color = color;
-                    countElement.textContent = `${valorAtual} de ${meta}`;
-                    unitElement.textContent = selectedUnit;
+                    // Atualizar textos
+                    valueElement.textContent = `${formattedValue} Mil`;
+                    maxElement.textContent = `${meta} Mil`;
+                    
+                    // Posição do marcador (icone seta)
+                    markerElement.style.left = `${cappedPercentual}%`;
                     
                     // Remover classe de carregamento
                     container.classList.remove('loading');
@@ -523,11 +516,10 @@
                     const meta = metasPorUnidade[selectedUnit] || 30;
                     
                     // Resetar o velocímetro
-                    needleElement.style.transform = 'rotate(-90deg)';
-                    percentageElement.textContent = '0%';
-                    percentageElement.style.color = '#FF6384';
-                    countElement.textContent = `0 de ${meta}`;
-                    unitElement.textContent = `${selectedUnit} (Erro: ${error.message || 'Falha ao carregar'})`;
+                    fillElement.style.width = '0%';
+                    valueElement.textContent = '0 Mil';
+                    maxElement.textContent = `${meta} Mil`;
+                    markerElement.style.left = '0%';
                     
                     // Remover classe de carregamento
                     container.classList.remove('loading');
