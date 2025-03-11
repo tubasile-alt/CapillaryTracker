@@ -158,6 +158,25 @@ def clear_data():
         flash(f"Erro ao limpar dados: {str(e)}", "error")
         return redirect(url_for('index'))
 
+@app.route('/importar_rapido', methods=['POST'])
+def importar_rapido():
+    try:
+        # Importar usando o script de importação rápida
+        from import_deployed_data import importar_dados_rapidos
+        
+        success = importar_dados_rapidos()
+        
+        if success:
+            flash("Dados importados com sucesso!", "success")
+        else:
+            flash("Erro ao importar dados. Verifique os logs.", "error")
+            
+        return redirect(url_for('index'))
+    except Exception as e:
+        logger.error(f"Error importing data: {str(e)}\n{traceback.format_exc()}")
+        flash(f"Erro ao importar dados: {str(e)}", "error")
+        return redirect(url_for('index'))
+
 @app.route('/search_patients', methods=['GET'])
 def search_patients():
     try:

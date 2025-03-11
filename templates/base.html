@@ -1,0 +1,17 @@
+<div class="footer">
+        <div class="utility-buttons">
+            <form method="post" action="{{ url_for('clear_data') }}" onsubmit="return confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita!');">
+                <button type="submit" class="clear-data-btn">
+                    <i class="fas fa-trash"></i> Limpar Dados
+                </button>
+            </form>
+            <form method="post" action="{{ url_for('importar_rapido') }}" onsubmit="return confirm('Deseja importar dados do backup ou arquivos anexados? Isso substituirá os dados atuais.');">
+                <button type="submit" class="import-data-btn">
+                    <i class="fas fa-file-import"></i> Importar Dados
+                </button>
+            </form>
+            <a href="{{ url_for('dashboard') }}" class="dashboard-btn">
+                <i class="fas fa-chart-line"></i> Relatórios
+            </a>
+        </div>
+    </div>

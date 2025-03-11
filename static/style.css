@@ -1180,3 +1180,29 @@ label {
         grid-template-columns: 1fr;
     }
 }
+
+.dashboard-btn, .clear-data-btn, .import-data-btn {
+    padding: 10px 15px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: white;
+    transition: background-color 0.3s;
+}
+
+.dashboard-btn {
+    background-color: #4CAF50;
+}
+
+.clear-data-btn {
+    background-color: #f44336;
+}
+
+.import-data-btn {
+    background-color: #2196F3;
+}
