@@ -93,9 +93,9 @@
                             <div class="gauge-marker" id="gaugeMarker"></div>
                             <div class="gauge-value-box">
                                 <div class="gauge-value" id="gaugeValue">0</div>
-                                <div class="gauge-unit-label">cirurgias</div>
+                                <div class="gauge-unit-label">cirurgias de ${meta}</div>
                             </div>
-                            <div class="gauge-max" id="gaugeMax">de 0</div>
+                            <div class="gauge-max" id="gaugeMax"></div>
                         </div>
                     </div>
                 </div>
@@ -499,8 +499,8 @@
                     const formattedValue = valorAtual.toFixed(2);
                     
                     // Atualizar textos
-                    valueElement.textContent = `${formattedValue} Mil`;
-                    maxElement.textContent = `${meta} Mil`;
+                    valueElement.textContent = `${formattedValue}`;
+                    maxElement.textContent = `${meta}`;
                     
                     // Posição do marcador (icone seta)
                     markerElement.style.left = `${cappedPercentual}%`;
