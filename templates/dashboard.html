@@ -85,17 +85,17 @@
                         </div>
                     </div>
                     <div id="gaugeContainer" class="gauge-container">
-                        <div class="gauge-meta-label">Meta: <span id="metaValue">0</span></div>
+                        <div class="gauge-meta-label">Meta: <span id="metaValue">--</span></div>
                         <div class="new-gauge">
                             <div class="gauge-track">
                                 <div class="gauge-fill" id="gaugeFill"></div>
                             </div>
                             <div class="gauge-marker" id="gaugeMarker"></div>
                             <div class="gauge-value-box">
-                                <div class="gauge-value" id="gaugeValue">0</div>
+                                <div class="gauge-value" id="gaugeValue">--</div>
                             </div>
                         </div>
-                        <div class="gauge-cirurgias-label">Cirurgias: <span id="cirurgiasValue">0</span></div>
+                        <div class="gauge-cirurgias-label">Cirurgias: <span id="cirurgiasValue">--</span></div>
                     </div>
                 </div>
             </div>
@@ -108,7 +108,7 @@
                     <a href="#" class="btn btn-warning" onclick="confirmDeleteLastRecord()">Apagar Último Cadastro</a>
                     <a href="#" class="btn btn-danger" onclick="confirmClearData()">Limpar Dados</a>
                 </div>
-                
+
                 <!-- Modal para confirmação de senha -->
                 <div id="passwordModal" class="password-modal">
                     <div class="password-modal-content">
@@ -122,7 +122,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Modal para confirmação de exclusão do último registro -->
                 <div id="deleteLastModal" class="password-modal">
                     <div class="password-modal-content">
@@ -244,7 +244,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Carregar unidades disponíveis para os filtros
         loadAvailableUnits();
-        
+
         // Initialize charts
         initializeCharts();
 
@@ -256,19 +256,19 @@
         document.getElementById('big-avg-follicles').textContent = {{ data.avg_follicles or 0 }};
         document.getElementById('big-avg-density').textContent = {{ data.avg_density or 0 }};
     });
-    
+
     // Função para carregar unidades disponíveis
     function loadAvailableUnits() {
         const unitFilter = document.getElementById('unitFilter');
-        
+
         unitFilter.innerHTML = '<option value="">Carregando...</option>';
-        
+
         fetch('/get_available_units')
             .then(response => response.json())
             .then(data => {
                 // Limpar e repopular o select
                 unitFilter.innerHTML = '';
-                
+
                 if (data.units && data.units.length > 0) {
                     data.units.forEach(unit => {
                         // Para o filtro de velocímetro
@@ -277,7 +277,7 @@
                         option.textContent = unit;
                         unitFilter.appendChild(option);
                     });
-                    
+
                     // Inicializar o velocímetro após carregar as unidades
                     updateGaugeChart();
                 } else {
@@ -290,17 +290,17 @@
                         option.textContent = unit;
                         unitFilter.appendChild(option);
                     });
-                    
+
                     // Inicializar o velocímetro
                     updateGaugeChart();
                 }
             })
             .catch(error => {
                 console.error('Erro ao carregar unidades:', error);
-                
+
                 // Unidades padrão em caso de erro
                 unitFilter.innerHTML = '';
-                
+
                 const defaultUnits = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'];
                 defaultUnits.forEach(unit => {
                     // Para o filtro de velocímetro
@@ -309,7 +309,7 @@
                     option.textContent = unit;
                     unitFilter.appendChild(option);
                 });
-                
+
                 // Inicializar o velocímetro
                 updateGaugeChart();
             });
@@ -400,7 +400,7 @@
             .then(response => response.json())
             .then(data => {
                 tableBody.innerHTML = '';
-                
+
                 if (data.tecnicas && data.tecnicas.length > 0) {
                     data.tecnicas.forEach(item => {
                         const row = document.createElement('tr');
@@ -417,7 +417,7 @@
             .catch(error => {
                 console.error('Erro ao obter dados de técnicas:', error);
                 tableBody.innerHTML = '<tr><td colspan="2">Erro ao carregar dados</td></tr>';
-                
+
                 // Em caso de erro, usar dados de exemplo
                 setTimeout(() => {
                     tableBody.innerHTML = '';
@@ -437,24 +437,24 @@
     function updateGaugeChart() {
         try {
             const selectedUnit = document.getElementById('unitFilter')?.value || 'Ribeirão Preto';
-            
+
             console.log("Atualizando velocímetro para unidade:", selectedUnit);
-            
+
             // Elementos do velocímetro
             const container = document.getElementById('gaugeContainer');
             const fillElement = document.getElementById('gaugeFill');
             const valueElement = document.getElementById('gaugeValue');
             const maxElement = document.getElementById('gaugeMax');
             const markerElement = document.getElementById('gaugeMarker');
-            
+
             if (!container || !fillElement || !valueElement || !maxElement || !markerElement) {
                 console.error("Elementos do velocímetro não encontrados");
                 return;
             }
-            
+
             // Adicionar classe de carregamento
             container.classList.add('loading');
-            
+
             // Buscar dados reais da API
             fetch(`/get_unit_progress?unit=${encodeURIComponent(selectedUnit)}`)
                 .then(response => {
@@ -465,24 +465,24 @@
                 })
                 .then(data => {
                     console.log("Dados recebidos do servidor:", data);
-                    
+
                     // Extrair e validar os valores necessários
                     const meta = typeof data.meta === 'number' ? data.meta : 
                            (parseInt(data.meta, 10) || metasPorUnidade[selectedUnit] || 30);
-                    
+
                     let valorAtual = typeof data.atual === 'number' ? data.atual : 
                                     (parseInt(data.atual, 10) || 0);
-                    
+
                     // Calcular percentual
                     const percentual = meta > 0 ? (valorAtual / meta) * 100 : 0;
                     console.log("Criando velocímetro: Meta=" + meta + ", Valor Atual=" + valorAtual);
-                    
+
                     // Garantir que o percentual não ultrapasse 100%
                     const cappedPercentual = Math.min(percentual, 100);
-                    
+
                     // Atualizar os elementos visuais
                     fillElement.style.width = `${cappedPercentual}%`;
-                    
+
                     // Cor baseada no percentual
                     if (cappedPercentual >= 75) {
                         fillElement.style.backgroundColor = '#8A2BE2'; // Roxo como na referência
@@ -493,34 +493,34 @@
                     } else {
                         fillElement.style.backgroundColor = '#8A2BE2'; // Roxo como na referência
                     }
-                    
+
                     // Formatar valor numérico como número inteiro
                     const formattedValue = Math.round(valorAtual);
-                    
-                    // Atualizar textos
-                    document.getElementById('metaValue').textContent = `${meta}`;
-                    document.getElementById('cirurgiasValue').textContent = `${formattedValue}`;
-                    valueElement.textContent = `${formattedValue}`;
-                    
+
+                    // Atualizar textos com valores verificados
+                    document.getElementById('metaValue').textContent = meta;
+                    document.getElementById('cirurgiasValue').textContent = formattedValue;
+                    valueElement.textContent = formattedValue;
+
                     // Posição do marcador (icone seta)
                     markerElement.style.left = `${cappedPercentual}%`;
-                    
+
                     // Remover classe de carregamento
                     container.classList.remove('loading');
                     console.log("Velocímetro criado com sucesso!");
                 })
                 .catch(error => {
                     console.error('Erro ao obter dados de progresso:', error);
-                    
+
                     // Em caso de erro, mostrar feedback visual
                     const meta = metasPorUnidade[selectedUnit] || 30;
-                    
+
                     // Resetar o velocímetro
                     fillElement.style.width = '0%';
                     valueElement.textContent = '0 Mil';
                     maxElement.textContent = `${meta} Mil`;
                     markerElement.style.left = '0%';
-                    
+
                     // Remover classe de carregamento
                     container.classList.remove('loading');
                 });
@@ -528,25 +528,25 @@
             console.error("Erro no updateGaugeChart:", err);
         }
     }
-    
+
     // Função para preencher a tabela de equipe
     function populateEquipeTable() {
         const tableBody = document.querySelector("#equipeTable tbody");
         tableBody.innerHTML = '<tr><td colspan="3">Carregando dados...</td></tr>';
-        
+
         fetch('/get_equipe_data')
             .then(response => response.json())
             .then(data => {
                 tableBody.innerHTML = '';
-                
+
                 if (!data.equipe || data.equipe.length === 0) {
                     tableBody.innerHTML = '<tr><td colspan="3">Nenhum dado disponível</td></tr>';
                     return;
                 }
-                
+
                 // Ordenar por quantidade (decrescente)
                 const sortedData = data.equipe.sort((a, b) => b.quantidade - a.quantidade);
-                
+
                 // Preencher a tabela com todos os dados
                 sortedData.forEach(item => {
                     const row = document.createElement('tr');
@@ -561,7 +561,7 @@
             .catch(error => {
                 console.error('Erro ao obter dados de equipe:', error);
                 tableBody.innerHTML = '<tr><td colspan="3">Erro ao carregar dados</td></tr>';
-                
+
                 // Dados de exemplo em caso de erro
                 const exemploData = [
                     {nome: 'Aline', quantidade: 15, unidade: 'Ribeirão Preto'},
@@ -573,7 +573,7 @@
                     {nome: 'Mariana Silva', quantidade: 11, unidade: 'Rio de Janeiro'},
                     {nome: 'Dayane', quantidade: 7, unidade: 'Rio de Janeiro'}
                 ];
-                
+
                 // Preencher a tabela com dados de exemplo após um breve atraso
                 setTimeout(() => {
                     tableBody.innerHTML = '';
@@ -593,17 +593,17 @@
     function exportToPdf() {
         window.print();
     }
-    
+
     // Funções para o modal de senha
     function confirmClearData() {
         document.getElementById('passwordModal').style.display = 'flex';
     }
-    
+
     function closePasswordModal() {
         document.getElementById('passwordModal').style.display = 'none';
         document.getElementById('securityPassword').value = '';
     }
-    
+
     function submitPassword() {
         const password = document.getElementById('securityPassword').value;
         if (password) {
@@ -634,24 +634,24 @@
             alert('Por favor, digite a senha.');
         }
     }
-    
+
     // Fecha o modal quando o usuário clica no X
     document.querySelector('.close-modal').addEventListener('click', closePasswordModal);
-    
+
     // Fecha o modal quando o usuário clica fora dele
     window.addEventListener('click', function(event) {
         const passwordModal = document.getElementById('passwordModal');
         const deleteLastModal = document.getElementById('deleteLastModal');
-        
+
         if (event.target == passwordModal) {
             closePasswordModal();
         }
-        
+
         if (event.target == deleteLastModal) {
             closeDeleteLastModal();
         }
     });
-    
+
     // Funções para exclusão do último registro
     function confirmDeleteLastRecord() {
         // Buscar informações do último registro
@@ -670,11 +670,11 @@
                 alert('❌ Erro ao buscar o último registro.');
             });
     }
-    
+
     function closeDeleteLastModal() {
         document.getElementById('deleteLastModal').style.display = 'none';
     }
-    
+
     function deleteLastRecord() {
         fetch('/delete_last_record', {
             method: 'POST'
@@ -776,7 +776,7 @@
         flex-direction: column;
         gap: 10px;
     }
-    
+
     .modal-buttons .btn {
         width: 100%;
     }
@@ -916,11 +916,11 @@
     .gauge-percentage {
         font-size: 28px;
     }
-    
+
     .gauge-count {
         font-size: 16px;
     }
-    
+
     .gauge-background {
         height: 30px;
     }
