@@ -546,9 +546,13 @@ def get_unit_progress():
         # Garantir que valores nulos na coluna 'unidade' não causem problemas
         df['unidade'] = df['unidade'].fillna('').astype(str)
         
-        # Contar todos os registros da unidade (em vez de filtrar por mês)
-        unit_filter = df['unidade'] == unit
-        atual = unit_filter.sum()  # Conta os valores True
+        # Contar todos os registros da unidade
+        # Primeiro verifica se a coluna tem dados válidos
+        df['unidade'] = df['unidade'].fillna('').astype(str)
+        
+        # Filtrar e contar registros desta unidade
+        filtered_df = df[df['unidade'] == unit]
+        atual = len(filtered_df)  # Conta as linhas filtradas
         
         # Detalhes para debug
         logger.info(f"Unidade: {unit}, Total de registros para esta unidade: {atual}")
