@@ -1,17 +1,34 @@
-<div class="footer">
-        <div class="utility-buttons">
-            <form method="post" action="{{ url_for('clear_data') }}" onsubmit="return confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita!');">
-                <button type="submit" class="clear-data-btn">
-                    <i class="fas fa-trash"></i> Limpar Dados
-                </button>
-            </form>
-            <form method="post" action="{{ url_for('importar_rapido') }}" onsubmit="return confirm('Deseja importar dados do backup ou arquivos anexados? Isso substituirá os dados atuais.');">
-                <button type="submit" class="import-data-btn">
-                    <i class="fas fa-file-import"></i> Importar Dados
-                </button>
-            </form>
-            <a href="{{ url_for('dashboard') }}" class="dashboard-btn">
-                <i class="fas fa-chart-line"></i> Relatórios
-            </a>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Formulário de Cirurgia Capilar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{ url_for('static', filename='img/icb_logo.png') }}" alt="Logo ICB" class="company-logo" onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/logo4_Logo - transplante.pdf') }}';">
+            <h1>Formulário de Cirurgia Capilar</h1>
         </div>
+        <nav class="main-nav">
+            <a href="{{ url_for('index') }}" class="nav-link">Início</a>
+            <a href="{{ url_for('novo_cadastro') }}" class="nav-link">Novo Cadastro</a>
+            <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
+            <a href="{{ url_for('necrose') }}" class="nav-link">Registrar Necrose</a>
+        </nav>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+        <div class="footer">
+                <p>&copy; 2023 CapillaryTracker - Instituto Capilar do Brasil</p>
+            </div>
     </div>
+</body>
+</html>

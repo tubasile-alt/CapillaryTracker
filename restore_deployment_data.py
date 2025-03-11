@@ -136,7 +136,7 @@ def restore_deployment_data():
         # Verificar se a contagem de pacientes foi restaurada corretamente
         if success and expected_patient_count > 0:
             # Verificar quantos pacientes foram restaurados
-            # pandas já importado no início do arquivo
+            import pandas as pd
             actual_count = 0
             if os.path.exists("cirurgias.xlsx"):
                 try:
