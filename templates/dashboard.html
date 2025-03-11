@@ -423,7 +423,7 @@
             });
     }
 
-    // Função para atualizar o velocímetro de meta - versão simplificada
+    // Função para atualizar o velocímetro de meta - versão melhorada
     function updateGaugeChart() {
         const selectedUnit = document.getElementById('unitFilter')?.value || 'Ribeirão Preto';
         
@@ -444,6 +444,7 @@
                 
                 // Calcular percentual
                 const percentual = meta > 0 ? Math.round((valorAtual / meta) * 100) : 0;
+                console.log("Criando velocímetro: Meta=" + meta + ", Valor Atual=" + valorAtual);
                 
                 // Usar HTML simples em vez de canvas para maior compatibilidade
                 const container = document.getElementById('gaugeContainer');
@@ -452,24 +453,33 @@
                 // Criar uma representação visual do medidor usando CSS e HTML
                 const fillWidth = Math.min(percentual, 100);
                 
+                // Definir cores com base no progresso
+                let fillColor = '#FFCE56'; // Amarelo para progresso normal
+                if (percentual >= 80) {
+                    fillColor = '#4CAF50'; // Verde para bom progresso
+                } else if (percentual <= 25) {
+                    fillColor = '#FF6384'; // Vermelho para progresso baixo
+                }
+                
                 container.innerHTML = `
                     <div class="gauge-meter">
                         <div class="gauge-background">
-                            <div class="gauge-fill" style="width: ${fillWidth}%;"></div>
+                            <div class="gauge-fill" style="width: ${fillWidth}%; background-color: ${fillColor};"></div>
                         </div>
                         <div class="gauge-value-container">
-                            <div class="gauge-percentage" style="color: ${percentual >= 100 ? '#4CAF50' : '#FFCE56'}">
+                            <div class="gauge-percentage" style="color: ${fillColor}; font-size: 48px; margin: 10px 0;">
                                 ${percentual}%
                             </div>
-                            <div class="gauge-count">
+                            <div class="gauge-count" style="font-size: 24px; margin: 5px 0;">
                                 ${valorAtual} de ${meta}
                             </div>
-                            <div class="gauge-unit">
+                            <div class="gauge-unit" style="font-size: 18px; margin-top: 5px;">
                                 ${selectedUnit}
                             </div>
                         </div>
                     </div>
                 `;
+                console.log("Velocímetro criado com sucesso!");
             })
             .catch(error => {
                 console.error('Erro ao obter dados de progresso:', error);
@@ -778,13 +788,16 @@
 /* Estilos para o velocímetro simples baseado em HTML/CSS */
 #gaugeContainer {
     width: 100%;
-    margin: 20px auto;
+    margin: 30px auto;
     padding: 0 20px;
 }
 
 .gauge-meter {
     padding: 20px;
     text-align: center;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .gauge-background {
@@ -795,6 +808,7 @@
     max-width: 80%;
     overflow: hidden;
     position: relative;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .gauge-fill {
@@ -802,35 +816,43 @@
     height: 100%;
     border-radius: 20px;
     transition: width 1s ease-in-out;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
 }
 
 .gauge-value-container {
     margin-top: 15px;
     text-align: center;
+    padding: 10px;
 }
 
 .gauge-percentage {
-    font-size: 36px;
+    font-size: 48px;
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .gauge-count {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: bold;
     color: #ffffff;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .gauge-unit {
-    font-size: 16px;
+    font-size: 18px;
     color: #cccccc;
+    font-weight: 500;
 }
 
 .gauge-error {
     color: #e74c3c;
-    font-size: 12px;
+    font-size: 14px;
     margin-top: 10px;
+    padding: 5px 10px;
+    background-color: rgba(231, 76, 60, 0.1);
+    border-radius: 5px;
+    display: inline-block;
 }
 
 /* Estilos para a tabela de técnicas */
