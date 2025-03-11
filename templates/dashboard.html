@@ -62,7 +62,7 @@
                             <thead>
                                 <tr>
                                     <th>Membro da Equipe</th>
-                                    <th>Qtd. Cirurgias</th>
+                                    <th>Quantidade</th>
                                     <th>Unidade</th>
                                 </tr>
                             </thead>
@@ -517,15 +517,10 @@
                 // Preencher a tabela com todos os dados
                 sortedData.forEach(item => {
                     const row = document.createElement('tr');
-                    
-                    // Destacar membros que trabalham em múltiplas unidades
-                    const isMultiUnit = item.unidade === 'Todas as unidades';
-                    const unidadeClass = isMultiUnit ? 'class="multi-unit"' : '';
-                    
                     row.innerHTML = `
                         <td>${item.nome}</td>
                         <td>${item.quantidade}</td>
-                        <td ${unidadeClass}>${item.unidade}</td>
+                        <td>${item.unidade}</td>
                     `;
                     tableBody.appendChild(row);
                 });
@@ -536,8 +531,8 @@
                 
                 // Dados de exemplo em caso de erro
                 const exemploData = [
-                    {nome: 'Aline', quantidade: 15, unidade: 'Todas as unidades'},
-                    {nome: 'Natália', quantidade: 12, unidade: 'Todas as unidades'},
+                    {nome: 'Aline', quantidade: 15, unidade: 'Ribeirão Preto'},
+                    {nome: 'Natália', quantidade: 12, unidade: 'Ribeirão Preto'},
                     {nome: 'Ana', quantidade: 18, unidade: 'Ribeirão Preto'},
                     {nome: 'Juliana', quantidade: 10, unidade: 'Campinas'},
                     {nome: 'Gabriela', quantidade: 9, unidade: 'Campinas'},
@@ -551,15 +546,10 @@
                     tableBody.innerHTML = '';
                     exemploData.forEach(item => {
                         const row = document.createElement('tr');
-                        
-                        // Destacar membros que trabalham em múltiplas unidades
-                        const isMultiUnit = item.unidade === 'Todas as unidades';
-                        const unidadeClass = isMultiUnit ? 'class="multi-unit"' : '';
-                        
                         row.innerHTML = `
                             <td>${item.nome}</td>
                             <td>${item.quantidade}</td>
-                            <td ${unidadeClass}>${item.unidade}</td>
+                            <td>${item.unidade}</td>
                         `;
                         tableBody.appendChild(row);
                     });
@@ -870,12 +860,6 @@
 
 .cirurgias-table tr:hover {
     background-color: rgba(255, 255, 255, 0.05);
-}
-
-/* Estilo para equipes que trabalham em múltiplas unidades */
-.cirurgias-table .multi-unit {
-    color: #4CAF50;
-    font-weight: bold;
 }
 </style>
 {% endblock %}
