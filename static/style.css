@@ -864,55 +864,36 @@ textarea {
     }
 }
 
-/* Estilos para o novo velocímetro simplificado (como na nova referência) */
+/* Estilos simplificados para o velocímetro */
 .gauge-container {
     width: 100%;
     margin: 20px auto;
     padding: 0 20px;
-    min-height: 180px;
+    min-height: 150px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
     position: relative;
 }
 
-.gauge-container.loading::before {
-    content: "Carregando...";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #ffffff;
-    font-style: italic;
-    z-index: 10;
-    border-radius: 8px;
-}
-
-/* Novo modelo de velocímetro simples (similar à imagem de referência) */
 .new-gauge {
     position: relative;
     width: 90%;
-    max-width: 400px;
-    margin: 20px auto 0;
-    text-align: center;
+    max-width: 500px;
+    margin: 15px auto;
 }
 
-.gauge-title {
-    color: #ffffff;
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 12px;
-    text-align: center;
-    background-color: rgba(0, 0, 0, 0.5);
-    border-radius: 15px;
-    padding: 5px 15px;
-    display: inline-block;
+.gauge-header, .gauge-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0 10px;
+    margin-bottom: 10px;
+}
+
+.gauge-footer {
+    margin-top: 10px;
 }
 
 .gauge-track {
@@ -922,7 +903,7 @@ textarea {
     border-radius: 20px;
     overflow: hidden;
     position: relative;
-    margin-bottom: 15px;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .gauge-fill {
@@ -930,139 +911,73 @@ textarea {
     top: 0;
     left: 0;
     height: 100%;
-    width: 0%; /* será definido por JavaScript */
-    background-color: #8A2BE2; /* Roxo como na referência */
+    width: 0%; /* Definido via JavaScript */
+    background-color: #8A2BE2; /* Roxo */
     border-radius: 20px;
-    transition: width 1s ease-out, background-color 1s;
+    transition: width 0.5s ease-out;
 }
 
 .gauge-marker {
     position: absolute;
-    top: 5px;
-    left: 0%; /* será definido por JavaScript */
+    top: 0;
+    left: 0%; /* Definido via JavaScript */
     transform: translateX(-50%);
-    width: 30px;
-    height: 30px;
-    background-color: transparent;
-    text-align: center;
-    transition: left 1s ease-out;
-    z-index: 2;
-}
-
-.gauge-marker::before {
-    content: "▲";
+    color: #FFD700; /* Amarelo */
     font-size: 24px;
-    color: #FFD700;
-    display: block;
+    line-height: 40px;
+    z-index: 2;
+    transition: left 0.5s ease-out;
 }
 
-.gauge-value-box {
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    border-radius: 10px;
-    padding: 10px 15px;
-    display: inline-block;
-    margin-bottom: 10px;
-}
-
-.gauge-value {
-    font-size: 28px;
+.gauge-meta-label, .gauge-cirurgias-label {
+    font-size: 22px;
     font-weight: bold;
-    margin-bottom: 2px;
-}
-
-.gauge-unit-label {
-    font-size: 16px;
-    color: #cccccc;
-    margin-bottom: 5px;
-}
-
-.gauge-max {
-    font-size: 16px;
     color: #ffffff;
-    margin-top: 5px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 5px 15px;
+    display: inline-block;
 }
 
-/* Estilos responsivos para o novo velocímetro */
+.gauge-percent {
+    font-size: 22px;
+    font-weight: bold;
+    color: #ffffff;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 5px 15px;
+    display: inline-block;
+}
+
+/* Responsividade */
 @media (max-width: 768px) {
-    .new-gauge {
-        width: 95%;
-    }
-
-    .gauge-value {
-        font-size: 24px;
-    }
-
-    .gauge-unit-label {
-        font-size: 12px;
-    }
-
     .gauge-track {
         height: 30px;
     }
 
-    .gauge-marker {
-        width: 20px;
-        height: 20px;
+    .gauge-meta-label, .gauge-cirurgias-label, .gauge-percent {
+        font-size: 18px;
+        padding: 3px 10px;
     }
 
-    .gauge-marker::before {
+    .gauge-marker {
         font-size: 20px;
+        line-height: 30px;
     }
 }
 
 @media (max-width: 480px) {
-    .new-gauge {
-        width: 100%;
-    }
-
-    .gauge-title {
-        font-size: 14px;
-    }
-
-    .gauge-value {
-        font-size: 20px;
-    }
-
-    .gauge-unit-label {
-        font-size: 11px;
-    }
-
     .gauge-track {
         height: 25px;
     }
 
-    .gauge-marker {
-        width: 16px;
-        height: 16px;
-        top: 4px;
-    }
-
-    .gauge-marker::before {
+    .gauge-meta-label, .gauge-cirurgias-label, .gauge-percent {
         font-size: 16px;
+        padding: 2px 8px;
     }
-}
 
-.gauge-meta-label {
-    font-size: 22px;
-    font-weight: bold;
-    color: #ffffff;
-    margin-bottom: 10px;
-    text-align: center;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-    padding: 5px 15px;
-    display: inline-block;
-}
-
-.gauge-cirurgias-label {
-    font-size: 22px;
-    font-weight: bold;
-    color: #ffffff;
-    margin-top: 15px;
-    text-align: center;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-    padding: 5px 15px;
-    display: inline-block;
+    .gauge-marker {
+        font-size: 16px;
+        line-height: 25px;
+    }
 }

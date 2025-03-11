@@ -96,6 +96,7 @@
                             </div>
                         </div>
                         <div class="gauge-cirurgias-label">Cirurgias: <span id="cirurgiasValue">--</span></div>
+                        <div class="gauge-percent-label">Percentual: <span id="percentValue">--</span>%</div>
                     </div>
                 </div>
             </div>
@@ -433,101 +434,73 @@
             });
     }
 
-    // Função para atualizar o velocímetro de meta - modelo simplificado
+    // Função simplificada para atualizar o velocímetro de meta
     function updateGaugeChart() {
-        try {
-            const selectedUnit = document.getElementById('unitFilter')?.value || 'Ribeirão Preto';
+        const selectedUnit = document.getElementById('unitFilter').value || 'Rio de Janeiro';
+        const fillElement = document.getElementById('gaugeFill');
+        const markerElement = document.getElementById('gaugeMarker');
+        const metaElement = document.getElementById('metaValue');
+        const cirurgiasElement = document.getElementById('cirurgiasValue');
+        const percentElement = document.getElementById('percentValue');
 
-            console.log("Atualizando velocímetro para unidade:", selectedUnit);
+        // Buscar dados da API
+        fetch(`/get_unit_progress?unit=${encodeURIComponent(selectedUnit)}`)
+            .then(response => response.json())
+            .then(data => {
+                // Extrair dados
+                const meta = data.meta || 0;
+                const atual = data.atual || 0;
+                const percentual = data.percentual || 0;
 
-            // Elementos do velocímetro
-            const container = document.getElementById('gaugeContainer');
-            const fillElement = document.getElementById('gaugeFill');
-            const valueElement = document.getElementById('gaugeValue');
-            const maxElement = document.getElementById('gaugeMax');
-            const markerElement = document.getElementById('gaugeMarker');
+                // Atualizar elementos visuais
+                metaElement.textContent = meta;
+                cirurgiasElement.textContent = atual;
+                percentElement.textContent = percentual;
 
-            if (!container || !fillElement || !valueElement || !maxElement || !markerElement) {
-                console.error("Elementos do velocímetro não encontrados");
-                return;
-            }
+                // Atualizar a barra de progresso
+                fillElement.style.width = `${Math.min(percentual, 100)}%`;
+                markerElement.style.left = `${Math.min(percentual, 100)}%`;
 
-            // Adicionar classe de carregamento
-            container.classList.add('loading');
+                // Alterar cor com base no percentual
+                if (percentual >= 90) {
+                    fillElement.style.backgroundColor = '#4CAF50'; // Verde
+                } else if (percentual >= 50) {
+                    fillElement.style.backgroundColor = '#8A2BE2'; // Roxo
+                } else if (percentual >= 25) {
+                    fillElement.style.backgroundColor = '#FF9800'; // Laranja
+                } else {
+                    fillElement.style.backgroundColor = '#F44336'; // Vermelho
+                }
 
-            // Buscar dados reais da API
-            fetch(`/get_unit_progress?unit=${encodeURIComponent(selectedUnit)}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Erro HTTP ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("Dados recebidos do servidor:", data);
+                // Auto atualizar a cada 30 segundos
+                setTimeout(updateGaugeChart, 30000);
+            })
+            .catch(error => {
+                console.error('Erro ao obter dados de progresso:', error);
 
-                    // Extrair e validar os valores necessários
-                    const meta = typeof data.meta === 'number' ? data.meta : 
-                           (parseInt(data.meta, 10) || metasPorUnidade[selectedUnit] || 30);
+                // Em caso de erro, mostrar valores zerados
+                metaElement.textContent = '0';
+                cirurgiasElement.textContent = '0';
+                percentElement.textContent = '0';
+                fillElement.style.width = '0%';
+                markerElement.style.left = '0%';
 
-                    let valorAtual = typeof data.atual === 'number' ? data.atual : 
-                                    (parseInt(data.atual, 10) || 0);
-
-                    // Calcular percentual
-                    const percentual = meta > 0 ? (valorAtual / meta) * 100 : 0;
-                    console.log("Criando velocímetro: Meta=" + meta + ", Valor Atual=" + valorAtual);
-
-                    // Garantir que o percentual não ultrapasse 100%
-                    const cappedPercentual = Math.min(percentual, 100);
-
-                    // Atualizar os elementos visuais
-                    fillElement.style.width = `${cappedPercentual}%`;
-
-                    // Cor baseada no percentual
-                    if (cappedPercentual >= 75) {
-                        fillElement.style.backgroundColor = '#8A2BE2'; // Roxo como na referência
-                    } else if (cappedPercentual >= 50) {
-                        fillElement.style.backgroundColor = '#8A2BE2'; // Roxo como na referência
-                    } else if (cappedPercentual >= 25) {
-                        fillElement.style.backgroundColor = '#8A2BE2'; // Roxo como na referência
-                    } else {
-                        fillElement.style.backgroundColor = '#8A2BE2'; // Roxo como na referência
-                    }
-
-                    // Formatar valor numérico como número inteiro
-                    const formattedValue = Math.round(valorAtual);
-
-                    // Atualizar textos com valores verificados
-                    document.getElementById('metaValue').textContent = meta;
-                    document.getElementById('cirurgiasValue').textContent = formattedValue;
-                    valueElement.textContent = formattedValue;
-
-                    // Posição do marcador (icone seta)
-                    markerElement.style.left = `${cappedPercentual}%`;
-
-                    // Remover classe de carregamento
-                    container.classList.remove('loading');
-                    console.log("Velocímetro criado com sucesso!");
-                })
-                .catch(error => {
-                    console.error('Erro ao obter dados de progresso:', error);
-
-                    // Em caso de erro, mostrar feedback visual
-                    const meta = metasPorUnidade[selectedUnit] || 30;
-
-                    // Resetar o velocímetro
-                    fillElement.style.width = '0%';
-                    valueElement.textContent = '0 Mil';
-                    maxElement.textContent = `${meta} Mil`;
-                    markerElement.style.left = '0%';
-
-                    // Remover classe de carregamento
-                    container.classList.remove('loading');
-                });
-        } catch (err) {
-            console.error("Erro no updateGaugeChart:", err);
-        }
+                // Tentar novamente após 1 minuto
+                setTimeout(updateGaugeChart, 60000);
+            });
     }
+
+    // Adicionar atualização automática
+    document.addEventListener('DOMContentLoaded', function() {
+        // Carregar unidades disponíveis
+        loadAvailableUnits();
+
+        // Iniciar atualização automática do velocímetro
+        updateGaugeChart();
+
+        // Atualizar automaticamente a cada 30 segundos
+        setInterval(updateGaugeChart, 30000);
+    });
 
     // Função para preencher a tabela de equipe
     function populateEquipeTable() {

@@ -633,56 +633,40 @@ def get_unit_progress():
         # Meta para a unidade selecionada
         meta = metas.get(unit, 30)
         
+        # Valor atual (número de cirurgias para esta unidade)
+        atual = 0
+        
         filename = "cirurgias.xlsx"
-        if not os.path.exists(filename):
-            logger.info(f"Arquivo {filename} não encontrado. Retornando atual=0.")
-            return jsonify({'unit': unit, 'meta': meta, 'atual': 0})
+        if os.path.exists(filename):
+            # Carregar dados
+            df = pd.read_excel(filename)
+            
+            # Verificar se a coluna unidade existe
+            if 'unidade' in df.columns:
+                # Contar registros para a unidade selecionada (case insensitive)
+                df['unidade'] = df['unidade'].fillna('').astype(str)
+                atual = len(df[df['unidade'].str.lower() == unit.lower()])
         
-        # Carregar o dataframe com tratamento explícito de erros
-        try:
-            df = pd.read_excel(filename, engine='openpyxl')
-            logger.info(f"DataFrame carregado com sucesso: {len(df)} registros no total")
-        except Exception as e:
-            logger.error(f"Erro ao ler o arquivo Excel: {str(e)}")
-            return jsonify({'unit': unit, 'meta': meta, 'atual': 0})
+        logger.info(f"Progresso: Unidade={unit}, Meta={meta}, Atual={atual}")
         
-        # Verificar se a coluna unidade existe
-        if 'unidade' not in df.columns:
-            logger.warning("Coluna 'unidade' não encontrada no DataFrame")
-            return jsonify({'unit': unit, 'meta': meta, 'atual': 0})
+        # Calcular o percentual alcançado da meta
+        percentual = round((atual / meta) * 100) if meta > 0 else 0
         
-        # Garantir que valores nulos na coluna 'unidade' não causem problemas
-        df['unidade'] = df['unidade'].fillna('').astype(str)
-        
-        # Usar correspondência exata com tratamento adequado de espaços
-        filtered_df = df[df['unidade'].str.strip().str.lower() == unit.strip().lower()]
-        atual = len(filtered_df)  # Conta as linhas filtradas
-        
-        # Verificação adicional: busca fuzzywuzzy para nomes próximos se a correspondência exata falhar
-        if atual == 0:
-            from fuzzywuzzy import process
-            unidades_unicas = df['unidade'].unique()
-            matches = process.extractOne(unit, unidades_unicas)
-            if matches and matches[1] > 80:  # Se correspondência for maior que 80%
-                melhor_correspondencia = matches[0]
-                logger.info(f"Correspondência fuzzy encontrada: '{unit}' → '{melhor_correspondencia}'")
-                filtered_df = df[df['unidade'].str.strip() == melhor_correspondencia.strip()]
-                atual = len(filtered_df)
-                unit = melhor_correspondencia  # Usar o nome correto
-        
-        # Garantir que o valor atual seja um inteiro válido
-        atual = int(atual) if not pd.isna(atual) and isinstance(atual, (int, float)) else 0
-        
-        logger.info(f"Progresso final: Unidade={unit}, Meta={meta}, Atual={atual}")
         return jsonify({
             'unit': unit, 
             'meta': meta, 
-            'atual': atual
+            'atual': atual,
+            'percentual': percentual
         })
         
     except Exception as e:
-        logger.error(f"Erro ao obter progresso: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({'unit': unit, 'meta': meta if 'meta' in locals() else 30, 'atual': 0})
+        logger.error(f"Erro ao obter progresso: {str(e)}")
+        return jsonify({
+            'unit': unit, 
+            'meta': metas.get(unit, 30) if 'metas' in locals() else 30, 
+            'atual': 0,
+            'percentual': 0
+        })
 
 @app.route('/get_tecnicas_data')
 def get_tecnicas_data():
