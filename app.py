@@ -535,31 +535,11 @@ def get_unit_progress():
         if 'unidade' not in df.columns:
             return jsonify({'unit': unit, 'meta': meta, 'atual': 0, 'error': 'Coluna unidade não encontrada'})
         
-        # Contar apenas registros do mês atual
-        now = datetime.now()
-        current_month = now.month
-        current_year = now.year
+        # Contar todos os registros da unidade (em vez de filtrar por mês)
+        atual = len(df[df['unidade'] == unit])
         
-        try:
-            # Converter datas e filtrar por mês e ano atual
-            if 'data' in df.columns:
-                df['data'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce')
-                df['month'] = df['data'].dt.month
-                df['year'] = df['data'].dt.year
-                
-                # Filtrar por unidade e período atual
-                filtered_df = df[(df['unidade'] == unit) & 
-                                (df['month'] == current_month) & 
-                                (df['year'] == current_year)]
-                
-                atual = len(filtered_df)
-            else:
-                # Se não houver coluna de data, contar todos os registros da unidade
-                atual = len(df[df['unidade'] == unit])
-        except Exception as e:
-            logger.error(f"Erro ao processar datas: {str(e)}")
-            # Contar todos os registros da unidade como alternativa
-            atual = len(df[df['unidade'] == unit])
+        # Log para depuração
+        logger.info(f"Unidade: {unit}, Total de registros: {atual}")
         
         # Garantir que o valor atual seja um inteiro válido
         if pd.isna(atual) or not isinstance(atual, (int, float)):

@@ -57,15 +57,6 @@
 
                 <div class="dashboard-card">
                     <h3>Cirurgias por Equipe</h3>
-                    <div class="filter-container">
-                        <div class="filter-group">
-                            <label for="equipeUnitFilter">Filtrar por Unidade:</label>
-                            <select id="equipeUnitFilter" onchange="filterEquipeTable()">
-                                <option value="todas">Todas as Unidades</option>
-                                <!-- Será preenchido via JavaScript -->
-                            </select>
-                        </div>
-                    </div>
                     <div class="cirurgias-table-container">
                         <table class="cirurgias-table" id="equipeTable">
                             <thead>
@@ -462,8 +453,14 @@
         fetch(`/get_unit_progress?unit=${encodeURIComponent(selectedUnit)}`)
             .then(response => response.json())
             .then(data => {
+                console.log("Dados recebidos do servidor:", data);
                 const meta = data.meta || 30; // Valor padrão caso não venha no response
-                const valorAtual = data.atual || 0;
+                let valorAtual = data.atual || 0;
+                
+                // Garantir que o valor atual seja um número
+                if (typeof valorAtual === 'string') {
+                    valorAtual = parseInt(valorAtual, 10) || 0;
+                }
                 
                 // Remover o canvas anterior para evitar problemas de renderização
                 const container = document.getElementById('gaugeContainer');
@@ -607,18 +604,33 @@
         fetch('/get_equipe_data')
             .then(response => response.json())
             .then(data => {
-                // Armazenar dados globalmente para filtragem
-                window.equipeData = data.equipe;
+                tableBody.innerHTML = '';
                 
-                // Preencher a tabela inicialmente com todos os dados
-                filterEquipeTable();
+                if (!data.equipe || data.equipe.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="3">Nenhum dado disponível</td></tr>';
+                    return;
+                }
+                
+                // Ordenar por quantidade (decrescente)
+                const sortedData = data.equipe.sort((a, b) => b.quantidade - a.quantidade);
+                
+                // Preencher a tabela com todos os dados
+                sortedData.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.nome}</td>
+                        <td>${item.quantidade}</td>
+                        <td>${item.unidade}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
             })
             .catch(error => {
                 console.error('Erro ao obter dados de equipe:', error);
                 tableBody.innerHTML = '<tr><td colspan="3">Erro ao carregar dados</td></tr>';
                 
                 // Dados de exemplo em caso de erro
-                window.equipeData = [
+                const exemploData = [
                     {nome: 'Aline', quantidade: 15, unidade: 'Ribeirão Preto'},
                     {nome: 'Natália', quantidade: 12, unidade: 'Ribeirão Preto'},
                     {nome: 'Ana', quantidade: 18, unidade: 'Ribeirão Preto'},
@@ -629,47 +641,20 @@
                     {nome: 'Dayane', quantidade: 7, unidade: 'Rio de Janeiro'}
                 ];
                 
-                // Preencher a tabela com dados de exemplo
-                filterEquipeTable();
+                // Preencher a tabela com dados de exemplo após um breve atraso
+                setTimeout(() => {
+                    tableBody.innerHTML = '';
+                    exemploData.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.nome}</td>
+                            <td>${item.quantidade}</td>
+                            <td>${item.unidade}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }, 1000);
             });
-    }
-    
-    // Função para filtrar a tabela de equipe por unidade
-    function filterEquipeTable() {
-        const selectedUnit = document.getElementById('equipeUnitFilter').value;
-        const tableBody = document.querySelector("#equipeTable tbody");
-        tableBody.innerHTML = '';
-        
-        if (!window.equipeData) {
-            tableBody.innerHTML = '<tr><td colspan="3">Nenhum dado disponível</td></tr>';
-            return;
-        }
-        
-        let filteredData = window.equipeData;
-        
-        // Aplicar filtro se não for "todas"
-        if (selectedUnit !== 'todas') {
-            filteredData = window.equipeData.filter(item => item.unidade === selectedUnit);
-        }
-        
-        // Ordenar por quantidade (decrescente)
-        filteredData.sort((a, b) => b.quantidade - a.quantidade);
-        
-        if (filteredData.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="3">Nenhum dado encontrado para esta unidade</td></tr>';
-            return;
-        }
-        
-        // Preencher a tabela com os dados filtrados
-        filteredData.forEach(item => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${item.nome}</td>
-                <td>${item.quantidade}</td>
-                <td>${item.unidade}</td>
-            `;
-            tableBody.appendChild(row);
-        });
     }
 
     function exportToPdf() {
