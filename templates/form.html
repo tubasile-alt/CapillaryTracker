@@ -402,7 +402,12 @@
                             <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
                                 <option value="">Selecione...</option>
                                 {% for option in field.options %}
-                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                    <option value="{{ option }}" 
+                                        {% if data.get(field.name) == option %}
+                                            selected
+                                        {% elif field.label == 'Implante Secundário?' and option == 'Não' and not data.get(field.name) %}
+                                            selected
+                                        {% endif %}>
                                         {{ option }}
                                     </option>
                                 {% endfor %}
