@@ -17,6 +17,26 @@ def prepare_deployment():
     Preparar os arquivos para deployment, assegurando que os dados existentes sejam mantidos
     """
     try:
+        # 0. Verificar quantos registros existem atualmente
+        import pandas as pd
+        patient_count = 0
+        if os.path.exists("cirurgias.xlsx"):
+            df = pd.read_excel("cirurgias.xlsx")
+            patient_count = len(df)
+            logger.info(f"✅ Verificado: Existem {patient_count} pacientes registrados no sistema atual")
+            print(f"\n==================================================")
+            print(f"Atualmente existem {patient_count} pacientes registrados no sistema")
+            print(f"==================================================\n")
+            # Exibir informações dos pacientes
+            if patient_count > 0:
+                print("Resumo dos pacientes:")
+                for i, row in df.iterrows():
+                    nome = row.get('nome', 'Nome não disponível')
+                    data = row.get('data', 'Data não disponível')
+                    unidade = row.get('unidade', 'Unidade não disponível')
+                    print(f"  {i+1}. {nome} ({unidade}) - {data}")
+                print()
+        
         # 1. Executar o backup e preparação de dados
         logger.info("Executando backup e preparação de dados...")
         from backup_and_prepare_data import backup_and_prepare_data
@@ -32,7 +52,8 @@ def prepare_deployment():
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "data_files": [file[0] for file in backup_files],
             "version": datetime.now().strftime("%Y%m%d%H%M%S"),
-            "include_data": True
+            "include_data": True,
+            "patient_count": patient_count
         }
         
         # Salvar manifesto em JSON
@@ -45,7 +66,7 @@ def prepare_deployment():
         logger.info("Configurando script post-deployment...")
         
         # Criar instrução para restaurar dados após deployment
-        post_deploy_instructions = """
+        post_deploy_instructions = f"""
 ============================================================
 ✅ DEPLOYMENT CONCLUÍDO! AGORA RESTAURE OS DADOS:
 

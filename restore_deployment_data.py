@@ -19,6 +19,7 @@ def restore_deployment_data():
     """
     try:
         restored_files = []
+        expected_patient_count = 0
         
         # 1. Verificar se o diretório de dados de deploy existe
         deploy_data_dir = "deploy_data"
@@ -31,6 +32,13 @@ def restore_deployment_data():
             with open(manifest_file, "r") as f:
                 manifest = json.load(f)
             logger.info(f"Manifesto de deployment carregado: {manifest}")
+            # Obter a contagem esperada de pacientes do manifesto
+            expected_patient_count = manifest.get("patient_count", 0)
+            if expected_patient_count > 0:
+                logger.info(f"✓ De acordo com o manifesto, devemos restaurar {expected_patient_count} pacientes")
+                print(f"\n==================================================")
+                print(f"Verificando restauração de {expected_patient_count} pacientes")
+                print(f"==================================================\n")
         else:
             logger.warning("⚠️ Manifesto de deployment não encontrado.")
             manifest = {"data_files": ["cirurgias.xlsx", "necroses.xlsx"], "include_data": True}
@@ -38,7 +46,7 @@ def restore_deployment_data():
         # 3. Se include_data for False, não restaurar dados
         if not manifest.get("include_data", True):
             logger.info("Restauração de dados desativada no manifesto.")
-            return True
+            return True, []
         
         # 4. Restaurar cada arquivo de dados do deploy_data
         for file in manifest.get("data_files", []):
@@ -122,15 +130,51 @@ def restore_deployment_data():
                             except Exception as e:
                                 logger.error(f"⚠️ Erro ao ler checkpoint {checkpoint_file}: {str(e)}")
         
-        return len(restored_files) > 0, restored_files
+        # Verificar se a restauração foi bem-sucedida
+        success = len(restored_files) > 0
         
-        return True
+        # Verificar se a contagem de pacientes foi restaurada corretamente
+        if success and expected_patient_count > 0:
+            # Verificar quantos pacientes foram restaurados
+            import pandas as pd
+            actual_count = 0
+            if os.path.exists("cirurgias.xlsx"):
+                try:
+                    df = pd.read_excel("cirurgias.xlsx")
+                    actual_count = len(df)
+                    
+                    # Exibir resultado da verificação
+                    if actual_count >= expected_patient_count:
+                        logger.info(f"✅ Verificação concluída: {actual_count} pacientes restaurados (esperados: {expected_patient_count})")
+                        print(f"\n==================================================")
+                        print(f"✅ VERIFICAÇÃO CONCLUÍDA COM SUCESSO!")
+                        print(f"✅ {actual_count} pacientes restaurados (esperados: {expected_patient_count})")
+                        
+                        # Mostrar os pacientes restaurados
+                        print("\nPacientes restaurados:")
+                        for i, row in df.iterrows():
+                            nome = row.get('nome', 'Nome não disponível')
+                            data = row.get('data', 'Data não disponível')
+                            unidade = row.get('unidade', 'Unidade não disponível')
+                            print(f"  {i+1}. {nome} ({unidade}) - {data}")
+                        
+                        print(f"==================================================\n")
+                    else:
+                        logger.warning(f"⚠️ Verificação concluída: {actual_count} pacientes restaurados, mas esperávamos {expected_patient_count}")
+                        print(f"\n==================================================")
+                        print(f"⚠️ VERIFICAÇÃO CONCLUÍDA COM AVISO!")
+                        print(f"⚠️ {actual_count} pacientes restaurados, mas esperávamos {expected_patient_count}")
+                        print(f"==================================================\n")
+                except Exception as e:
+                    logger.error(f"❌ Erro ao verificar contagem de pacientes: {str(e)}")
+        
+        return success, restored_files
         
     except Exception as e:
         logger.error(f"❌ Erro durante restauração dos dados: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
-        return False
+        return False, []
 
 if __name__ == "__main__":
     print("\n==================================================")
