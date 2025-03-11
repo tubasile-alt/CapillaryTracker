@@ -750,8 +750,8 @@ def get_equipe_data():
             # Dados de exemplo
             return jsonify({
                 'equipe': [
-                    {'nome': 'Aline', 'quantidade': 15, 'unidade': 'Ribeirão Preto'},
-                    {'nome': 'Natália', 'quantidade': 12, 'unidade': 'Ribeirão Preto'},
+                    {'nome': 'Aline', 'quantidade': 15, 'unidade': 'Múltiplas Unidades'},
+                    {'nome': 'Natália', 'quantidade': 12, 'unidade': 'Múltiplas Unidades'},
                     {'nome': 'Ana', 'quantidade': 18, 'unidade': 'Ribeirão Preto'},
                     {'nome': 'Juliana', 'quantidade': 10, 'unidade': 'Campinas'},
                     {'nome': 'Gabriela', 'quantidade': 9, 'unidade': 'Campinas'},
@@ -769,7 +769,8 @@ def get_equipe_data():
         # Verificar se existem as colunas necessárias
         if 'equipe' in df.columns and 'unidade' in df.columns:
             # Processar membros da equipe regular
-            equipe_counts = {}
+            # Dicionário para contar cirurgias por membro: {membro: {'total': X, 'unidades': {unidade1: count1, unidade2: count2}, 'cirurgias': {id1, id2, ...}}}
+            equipe_stats = {}
             
             # Identificar todas as colunas que podem conter membros da equipe
             equipe_columns = ['equipe']
@@ -781,11 +782,7 @@ def get_equipe_data():
             
             logger.info(f"Colunas de equipe encontradas: {equipe_columns}")
             
-            # Dicionário para rastrear participações únicas por cirurgia
-            # Estrutura: {membro|unidade: {id_cirurgia1, id_cirurgia2, ...}}
-            participacoes_unicas = {}
-            
-            # Iterar sobre cada linha para contar participações
+            # Iterar sobre cada linha para identificar membros da equipe
             for idx, row in df.iterrows():
                 unidade = row['unidade'] if pd.notna(row['unidade']) else "Não especificada"
                 cirurgia_id = idx  # Usar o índice da linha como ID único da cirurgia
@@ -812,24 +809,43 @@ def get_equipe_data():
                             if member and len(member) > 1:  # Ignorar entradas vazias ou muito curtas
                                 membros_desta_cirurgia.add(member)
                 
-                # Adicionar todos os membros desta cirurgia ao rastreamento
+                # Para cada membro identificado, atualizar estatísticas
                 for member in membros_desta_cirurgia:
-                    key = f"{member}|{unidade}"
-                    if key not in participacoes_unicas:
-                        participacoes_unicas[key] = set()
-                    participacoes_unicas[key].add(cirurgia_id)
+                    if member not in equipe_stats:
+                        equipe_stats[member] = {
+                            'total': 0,
+                            'unidades': {},
+                            'cirurgias': set()
+                        }
+                    
+                    # Adicionar esta cirurgia ao conjunto de cirurgias do membro
+                    equipe_stats[member]['cirurgias'].add(cirurgia_id)
+                    
+                    # Incrementar contador da unidade
+                    if unidade not in equipe_stats[member]['unidades']:
+                        equipe_stats[member]['unidades'][unidade] = 0
+                    equipe_stats[member]['unidades'][unidade] += 1
+                    
+                    # Atualizar total de cirurgias
+                    equipe_stats[member]['total'] = len(equipe_stats[member]['cirurgias'])
             
-            # Converter para contagem final
-            for key, cirurgias_ids in participacoes_unicas.items():
-                equipe_counts[key] = len(cirurgias_ids)  # Número de cirurgias únicas
-            
-            # Converter o dicionário para o formato esperado
-            for key, count in equipe_counts.items():
-                member, unidade = key.split('|')
+            # Converter as estatísticas para o formato esperado para exibição
+            for member, stats in equipe_stats.items():
+                # Verificar se o membro trabalha em múltiplas unidades
+                unidades = list(stats['unidades'].keys())
+                num_unidades = len(unidades)
+                
+                if num_unidades > 1:
+                    # Se trabalha em múltiplas unidades, marcar como tal
+                    unidade_display = "Múltiplas Unidades"
+                else:
+                    # Se trabalha em apenas uma unidade, mostrar o nome da unidade
+                    unidade_display = unidades[0] if unidades else "Não especificada"
+                
                 equipe_data.append({
                     'nome': member,
-                    'quantidade': count,
-                    'unidade': unidade
+                    'quantidade': stats['total'],
+                    'unidade': unidade_display
                 })
             
             # Ordenar por quantidade (decrescente) e depois por nome
