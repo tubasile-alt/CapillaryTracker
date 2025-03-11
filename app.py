@@ -547,22 +547,29 @@ def get_unit_progress():
         df['unidade'] = df['unidade'].fillna('').astype(str)
         
         # Contar todos os registros da unidade
-        # Primeiro verifica se a coluna tem dados válidos
+        # Garantir que valores nulos na coluna 'unidade' não causem problemas
         df['unidade'] = df['unidade'].fillna('').astype(str)
         
-        # Filtrar e contar registros desta unidade
-        filtered_df = df[df['unidade'] == unit]
+        # Usar método exato de comparação de strings
+        filtered_df = df[df['unidade'].str.strip() == unit.strip()]
         atual = len(filtered_df)  # Conta as linhas filtradas
         
-        # Detalhes para debug
+        # Mostrar mais informações para debug
         logger.info(f"Unidade: {unit}, Total de registros para esta unidade: {atual}")
         logger.info(f"Valores únicos na coluna 'unidade': {df['unidade'].unique().tolist()}")
+        logger.info(f"Dados da unidade selecionada: {filtered_df.to_dict(orient='records')}")
         
         # Garantir que o valor atual seja um inteiro válido
         if pd.isna(atual) or not isinstance(atual, (int, float)):
             atual = 0
         else:
             atual = int(atual)
+        
+        # Verificar se o número real de registros foi capturado
+        registro_real = len(filtered_df) if 'filtered_df' in locals() else 0
+        if registro_real != atual:
+            logger.warning(f"Discrepância na contagem: atual={atual}, registros reais={registro_real}")
+            atual = registro_real
         
         logger.info(f"Progresso final: Unidade={unit}, Meta={meta}, Atual={atual}")
         return jsonify({
