@@ -1,0 +1,563 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-container dark-theme">
+    <div class="dashboard-layout no-sidebar">
+        <!-- Main dashboard content -->
+        <div class="dashboard-main">
+            <h2>Dashboard de Cirurgias Capilares</h2>
+
+            {% if error %}
+            <div class="alert alert-error">
+                <p>⚠️ {{ error }}</p>
+                <p>Tente cadastrar novos dados para visualizar o dashboard.</p>
+            </div>
+            {% endif %}
+
+            {% if data %}
+            <div class="dashboard-info">
+                <div class="dashboard-summary">
+                    <div class="dashboard-card combined-stats-card">
+                        <h3>Resumo Geral</h3>
+                        <div class="stats-container">
+                            <div class="stat-item">
+                                <div class="stat-label">Total de Cirurgias</div>
+                                <div class="stat-value" id="big-total-surgeries">{{ data.total_surgeries }}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Média de Folículos</div>
+                                <div class="stat-value" id="big-avg-follicles">{{ data.avg_follicles }}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Média de Densidade</div>
+                                <div class="stat-value" id="big-avg-density">{{ data.avg_density }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Primeira linha -->
+                <div class="dashboard-card">
+                    <h3>Cirurgias por Mês</h3>
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>Cirurgias por Unidade</h3>
+                    <canvas id="unitChart"></canvas>
+                </div>
+
+                <!-- Segunda linha -->
+                <div class="dashboard-card">
+                    <h3>Densidade de Extração (fios/cm²)</h3>
+                    <canvas id="densityChart"></canvas>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>Equipe</h3>
+                    <canvas id="equipeChart"></canvas>
+                </div>
+
+                <!-- Terceira linha - Gráfico de tendência -->
+                <div class="dashboard-card wide-card">
+                    <h3>Evolução Mensal</h3>
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-footer">
+                <p>📊 Dados extraídos da planilha de cirurgias. Última atualização: {{ data.update_time }}</p>
+                <div class="dashboard-actions">
+                    <a href="#" class="btn btn-primary" onclick="exportToPdf()">Exportar PDF</a>
+                    <a href="{{ url_for('download_excel') }}" class="btn btn-secondary">Baixar Excel</a>
+                    <a href="#" class="btn btn-warning" onclick="confirmDeleteLastRecord()">Apagar Último Cadastro</a>
+                    <a href="#" class="btn btn-danger" onclick="confirmClearData()">Limpar Dados</a>
+                </div>
+                
+                <!-- Modal para confirmação de senha -->
+                <div id="passwordModal" class="password-modal">
+                    <div class="password-modal-content">
+                        <span class="close-modal">&times;</span>
+                        <h3>Proteção de Segurança</h3>
+                        <p>Digite a senha para confirmar a exclusão de todos os dados:</p>
+                        <input type="password" id="securityPassword" class="password-input">
+                        <div class="modal-buttons">
+                            <button class="btn btn-secondary" onclick="closePasswordModal()">Cancelar</button>
+                            <button class="btn btn-danger" onclick="submitPassword()">Confirmar Exclusão</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal para confirmação de exclusão do último registro -->
+                <div id="deleteLastModal" class="password-modal">
+                    <div class="password-modal-content">
+                        <span class="close-modal" onclick="closeDeleteLastModal()">&times;</span>
+                        <h3>Confirmação de Exclusão</h3>
+                        <p>Tem certeza que deseja apagar o último cadastro?</p>
+                        <p><strong>Paciente: <span id="lastPatientName">Carregando...</span></strong></p>
+                        <div class="modal-buttons">
+                            <button class="btn btn-secondary" onclick="closeDeleteLastModal()">Cancelar</button>
+                            <button class="btn btn-warning" onclick="deleteLastRecord()">Confirmar Exclusão</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="no-data">
+                <p>Nenhum dado disponível para exibição.</p>
+                <p>Cadastre cirurgias para visualizar estatísticas.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script>
+    // Define color scheme for dark theme
+    const chartColors = {
+        blue: '#36A2EB',
+        pink: '#FF6384',
+        yellow: '#FFCE56',
+        green: '#4CAF50',
+        purple: '#9C27B0',
+        orange: '#FF9800',
+        teal: '#009688',
+        navy: '#3F51B5'
+    };
+
+    // Global chart options for dark theme
+    const darkThemeOptions = {
+            responsive: true,
+            maintainAspectRatio: true, // Changed to true for better mobile display
+            devicePixelRatio: 2, // Sharper rendering on mobile
+            redraw: true, // Force redraw on update
+            plugins: {
+                legend: {
+                    display: window.innerWidth > 480 ? true : false, // Hide legend on very small screens
+                    position: 'bottom',
+                    labels: {
+                        color: '#ffffff',
+                        boxWidth: window.innerWidth < 768 ? 10 : 20, // Smaller legend boxes on mobile
+                        padding: window.innerWidth < 768 ? 5 : 10 // Less padding on mobile
+                    }
+                },
+                title: {
+                    color: '#ffffff',
+                    font: {
+                        size: window.innerWidth < 768 ? 14 : 16 // Smaller title on mobile
+                    }
+                },
+                datalabels: {
+                    color: '#ffffff',
+                    font: {
+                        weight: 'bold',
+                        size: window.innerWidth < 768 ? 9 : 12 // Smaller labels on mobile
+                    },
+                    formatter: Math.round,
+                    display: window.innerWidth < 480 ? false : true // Hide datalabels on very small screens
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#ffffff',
+                        font: {
+                            size: window.innerWidth < 768 ? 9 : 12 // Smaller ticks on mobile
+                        },
+                        maxRotation: 90, // Allow vertical labels on mobile
+                        autoSkip: true, // Skip labels that don't fit
+                        autoSkipPadding: 10 // Space between labels
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#ffffff',
+                        font: {
+                            size: window.innerWidth < 768 ? 9 : 12 // Smaller ticks on mobile
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    beginAtZero: true
+                }
+            }
+        };
+
+    // Add event listeners when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize charts
+        initializeCharts();
+
+        // Atualizar os valores grandes no carregamento da página
+        document.getElementById('big-total-surgeries').textContent = {{ data.total_surgeries or 0 }};
+        document.getElementById('big-avg-follicles').textContent = {{ data.avg_follicles or 0 }};
+        document.getElementById('big-avg-density').textContent = {{ data.avg_density or 0 }};
+    });
+
+    function initializeCharts() {
+        {% if data %}
+        // Monthly surgeries chart
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: {{ data.labels | tojson }},
+                datasets: {{ data.datasets | tojson }}.map((dataset, index) => ({
+                    ...dataset,
+                    backgroundColor: Object.values(chartColors)[index % Object.keys(chartColors).length],
+                    borderColor: Object.values(chartColors)[index % Object.keys(chartColors).length],
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: false
+                }))
+            },
+            options: darkThemeOptions
+        });
+
+        // Unit distribution chart
+        const unitCtx = document.getElementById('unitChart').getContext('2d');
+        new Chart(unitCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Ribeirão Preto', 'Campinas'],
+                datasets: [{
+                    data: computeUnitDistribution(),
+                    backgroundColor: [chartColors.blue, chartColors.pink],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                ...darkThemeOptions,
+                plugins: {
+                    ...darkThemeOptions.plugins,
+                    legend: {
+                        ...darkThemeOptions.plugins.legend,
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribuição por Unidade',
+                        color: '#ffffff',
+                        font: {
+                            size: 16
+                        }
+                    }
+                }
+            }
+        });
+
+        // Density chart
+        const densityCtx = document.getElementById('densityChart').getContext('2d');
+        new Chart(densityCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ (data.follicles_data.labels if data.follicles_data and data.follicles_data.labels else []) | tojson }},
+                datasets: [{
+                    label: 'Densidade de Extração (fios/cm²)',
+                    data: {{ (data.follicles_data.le_density if data.follicles_data and data.follicles_data.le_density else []) | tojson }},
+                    backgroundColor: chartColors.purple,
+                    borderColor: 'rgba(156, 39, 176, 0.8)',
+                    borderWidth: 1
+                }]
+            },
+            options: darkThemeOptions
+        });
+
+        // Trend chart
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: {{ data.labels | tojson }},
+                datasets: [
+                    {
+                        label: 'Cirurgias',
+                        data: {{ data.datasets[0].data | tojson if data.datasets and data.datasets[0] else [] | tojson }},
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: chartColors.blue,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Folículos',
+                        data: {{ (data.follicles_data.averages if data.follicles_data and data.follicles_data.averages else []) | tojson }},
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: chartColors.pink,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                ...darkThemeOptions,
+                scales: {
+                    ...darkThemeOptions.scales,
+                    y: {
+                        ...darkThemeOptions.scales.y,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Cirurgias',
+                            color: '#ffffff'
+                        }
+                    },
+                    y1: {
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Folículos',
+                            color: '#ffffff'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#ffffff'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Equipe chart
+        const equipeCtx = document.getElementById('equipeChart').getContext('2d');
+        new Chart(equipeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Aline', 'Natália', 'Ana', 'Juliana', 'Gabriela'],
+                datasets: [{
+                    data: computeEquipeDistribution(),
+                    backgroundColor: [chartColors.teal, chartColors.orange, chartColors.blue, chartColors.pink, chartColors.green],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                ...darkThemeOptions,
+                plugins: {
+                    ...darkThemeOptions.plugins,
+                    legend: {
+                        ...darkThemeOptions.plugins.legend,
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        {% endif %}
+    }
+
+    function computeUnitDistribution() {
+        // Função simplificada para distribuição por unidade
+        return [60, 40]; // Valores de exemplo: 60% Ribeirão, 40% Campinas
+    }
+
+    function computeEquipeDistribution() {
+        // Função simplificada para distribuição por equipe
+        return [30, 20, 10, 25, 15]; // Valores de exemplo para cada membro da equipe
+    }
+
+    function exportToPdf() {
+        window.print();
+    }
+    
+    // Funções para o modal de senha
+    function confirmClearData() {
+        document.getElementById('passwordModal').style.display = 'flex';
+    }
+    
+    function closePasswordModal() {
+        document.getElementById('passwordModal').style.display = 'none';
+        document.getElementById('securityPassword').value = '';
+    }
+    
+    function submitPassword() {
+        const password = document.getElementById('securityPassword').value;
+        if (password) {
+            // Envia a senha para verificação
+            fetch('/clear_data_protected', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ Dados limpos com sucesso!');
+                    window.location.reload();
+                } else {
+                    alert('❌ Senha incorreta ou erro ao limpar dados.');
+                }
+                closePasswordModal();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Erro ao processar solicitação.');
+                closePasswordModal();
+            });
+        } else {
+            alert('Por favor, digite a senha.');
+        }
+    }
+    
+    // Fecha o modal quando o usuário clica no X
+    document.querySelector('.close-modal').addEventListener('click', closePasswordModal);
+    
+    // Fecha o modal quando o usuário clica fora dele
+    window.addEventListener('click', function(event) {
+        const passwordModal = document.getElementById('passwordModal');
+        const deleteLastModal = document.getElementById('deleteLastModal');
+        
+        if (event.target == passwordModal) {
+            closePasswordModal();
+        }
+        
+        if (event.target == deleteLastModal) {
+            closeDeleteLastModal();
+        }
+    });
+    
+    // Funções para exclusão do último registro
+    function confirmDeleteLastRecord() {
+        // Buscar informações do último registro
+        fetch('/get_last_record')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('lastPatientName').textContent = data.patient_name;
+                    document.getElementById('deleteLastModal').style.display = 'flex';
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Erro ao buscar o último registro.');
+            });
+    }
+    
+    function closeDeleteLastModal() {
+        document.getElementById('deleteLastModal').style.display = 'none';
+    }
+    
+    function deleteLastRecord() {
+        fetch('/delete_last_record', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ ' + data.message);
+                window.location.reload();
+            } else {
+                alert('❌ ' + data.message);
+            }
+            closeDeleteLastModal();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Erro ao excluir o último registro.');
+            closeDeleteLastModal();
+        });
+    }
+</script>
+
+<style>
+/* Estilos para o botão vermelho */
+.btn-danger {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+/* Estilos para o botão amarelo */
+.btn-warning {
+    background-color: #f39c12;
+    color: white;
+}
+
+.btn-warning:hover {
+    background-color: #d35400;
+}
+
+/* Estilos para o modal de senha */
+.password-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+}
+
+.password-modal-content {
+    background-color: #27293d;
+    padding: 25px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.close-modal:hover {
+    color: #fff;
+}
+
+.password-input {
+    width: 100%;
+    padding: 10px;
+    margin: 15px 0;
+    border-radius: 5px;
+    background-color: #1e1e2f;
+    color: #ffffff;
+    border: 1px solid #444444;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .modal-buttons .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,16 @@
+Checkpoint criado em: 10/03/2025 20:51:56
+Aplicativo funcionando perfeitamente
+Arquivos incluídos neste checkpoint:
+- app.py
+- main.py
+- utils.py
+- cirurgias.xlsx
+- necroses.xlsx
+- import_data.py
+- import_attached_data.py
+
+Templates:
+- templates/necrose.html
+- templates/base.html
+- templates/form.html
+- templates/dashboard.html
