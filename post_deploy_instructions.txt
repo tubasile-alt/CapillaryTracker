@@ -1,0 +1,7 @@
+
+============================================================
+✅ DEPLOYMENT CONCLUÍDO! AGORA RESTAURE OS DADOS:
+
+Execute o seguinte comando para restaurar os dados existentes:
+    python restore_deployment_data.py
+============================================================
