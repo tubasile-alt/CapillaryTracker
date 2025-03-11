@@ -1,6 +1,7 @@
 import os
 import logging
 import traceback
+import re
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import pandas as pd
 from datetime import datetime
@@ -669,41 +670,42 @@ def get_equipe_data():
             # Processar membros da equipe regular
             equipe_counts = {}
             
+            # Identificar todas as colunas que podem conter membros da equipe
+            equipe_columns = ['equipe']
+            
+            # Verificar colunas de técnicas extras
+            for col in df.columns:
+                if col.startswith('extra_person_') or col.startswith('tecnica_extra'):
+                    equipe_columns.append(col)
+            
+            logger.info(f"Colunas de equipe encontradas: {equipe_columns}")
+            
             # Iterar sobre cada linha para contar participações
             for _, row in df.iterrows():
-                unidade = row['unidade']
+                unidade = row['unidade'] if pd.notna(row['unidade']) else "Não especificada"
                 
-                # Processar equipe regular (pode ser uma string ou lista)
-                equipe_str = str(row['equipe'])
-                
-                # Dividir a string em nomes individuais (assumindo que estão separados por vírgula ou outros caracteres)
-                equipe_members = [name.strip() for name in equipe_str.replace(',', ';').replace('|', ';').split(';')]
-                
-                for member in equipe_members:
-                    if member and len(member) > 1:  # Ignorar entradas vazias ou muito curtas
-                        key = f"{member}|{unidade}"
-                        if key in equipe_counts:
-                            equipe_counts[key] += 1
-                        else:
-                            equipe_counts[key] = 1
-                
-                # Processar técnica extra 1 se existir e tiver valor
-                if 'tecnica_extra1' in df.columns and pd.notna(row['tecnica_extra1']) and str(row['tecnica_extra1']).strip():
-                    tecnica_extra = str(row['tecnica_extra1']).strip()
-                    key = f"{tecnica_extra}|{unidade}"
-                    if key in equipe_counts:
-                        equipe_counts[key] += 1
-                    else:
-                        equipe_counts[key] = 1
-                
-                # Processar técnica extra 2 se existir e tiver valor
-                if 'tecnica_extra2' in df.columns and pd.notna(row['tecnica_extra2']) and str(row['tecnica_extra2']).strip():
-                    tecnica_extra = str(row['tecnica_extra2']).strip()
-                    key = f"{tecnica_extra}|{unidade}"
-                    if key in equipe_counts:
-                        equipe_counts[key] += 1
-                    else:
-                        equipe_counts[key] = 1
+                # Processar todas as colunas relevantes
+                for col in equipe_columns:
+                    if col in row and pd.notna(row[col]):
+                        # Limpar e dividir valores
+                        value_str = str(row[col])
+                        
+                        # Verificar se há menção de "(extra)" e remover
+                        value_str = value_str.replace('(extra)', '').strip()
+                        
+                        # Dividir a string em nomes individuais
+                        members = [name.strip() for name in value_str.replace(',', ';').replace('|', ';').split(';')]
+                        
+                        for member in members:
+                            # Remover parênteses e seu conteúdo
+                            member = re.sub(r'\s*\([^)]*\)', '', member).strip()
+                            
+                            if member and len(member) > 1:  # Ignorar entradas vazias ou muito curtas
+                                key = f"{member}|{unidade}"
+                                if key in equipe_counts:
+                                    equipe_counts[key] += 1
+                                else:
+                                    equipe_counts[key] = 1
             
             # Converter o dicionário para o formato esperado
             for key, count in equipe_counts.items():
@@ -716,6 +718,8 @@ def get_equipe_data():
             
             # Ordenar por quantidade (decrescente) e depois por nome
             equipe_data.sort(key=lambda x: (-x['quantidade'], x['nome']))
+            
+            logger.info(f"Dados de equipe processados: {len(equipe_data)} membros encontrados")
             
         # Se não houver dados suficientes, usar dados de exemplo
         if len(equipe_data) < 2:
