@@ -1,0 +1,844 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-container dark-theme">
+    <div class="dashboard-layout no-sidebar">
+        <!-- Main dashboard content -->
+        <div class="dashboard-main">
+            <h2>Dashboard de Cirurgias Capilares</h2>
+
+            {% if error %}
+            <div class="alert alert-error">
+                <p>⚠️ {{ error }}</p>
+                <p>Tente cadastrar novos dados para visualizar o dashboard.</p>
+            </div>
+            {% endif %}
+
+            {% if data %}
+            <div class="dashboard-info">
+                <div class="dashboard-summary">
+                    <div class="dashboard-card combined-stats-card">
+                        <h3>Resumo Geral</h3>
+                        <div class="stats-container">
+                            <div class="stat-item">
+                                <div class="stat-label">Total de Cirurgias</div>
+                                <div class="stat-value" id="big-total-surgeries">{{ data.total_surgeries }}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Média de Folículos</div>
+                                <div class="stat-value" id="big-avg-follicles">{{ data.avg_follicles }}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Média de Densidade</div>
+                                <div class="stat-value" id="big-avg-density">{{ data.avg_density }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Layout simplificado -->
+                <div class="dashboard-card wide-card">
+                    <h3>Cirurgias por Equipe (Total por Pessoa)</h3>
+                    <div class="cirurgias-table-container">
+                        <table class="cirurgias-table" id="equipeTable">
+                            <thead>
+                                <tr>
+                                    <th>Membro da Equipe</th>
+                                    <th>Quantidade</th>
+                                    <th>Unidades Atendidas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dados serão preenchidos via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Terceira linha - Velocímetro de Meta -->
+                <div class="dashboard-card wide-card">
+                    <h3>Meta de Cirurgias por Unidade</h3>
+                    <div class="filter-container">
+                        <div class="filter-group">
+                            <label for="unitFilter">Unidade:</label>
+                            <select id="unitFilter" onchange="updateGaugeChart()">
+                                <!-- Será preenchido via JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                    <div id="gaugeContainer" class="gauge-container">
+                        <div class="gauge-meta-label">Meta: <span id="metaValue">--</span></div>
+                        <div class="new-gauge">
+                            <div class="gauge-track">
+                                <div class="gauge-fill" id="gaugeFill"></div>
+                            </div>
+                            <div class="gauge-marker" id="gaugeMarker"></div>
+                            <div class="gauge-value-box">
+                                <div class="gauge-value" id="gaugeValue">--</div>
+                            </div>
+                        </div>
+                        <div class="gauge-cirurgias-label">Cirurgias: <span id="cirurgiasValue">--</span></div>
+                        <div class="gauge-percent-label">Percentual: <span id="percentValue">--</span>%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-footer">
+                <p>📊 Dados extraídos da planilha de cirurgias. Última atualização: {{ data.update_time }}</p>
+                <div class="dashboard-actions">
+                    <a href="#" class="btn btn-primary" onclick="exportToPdf()">Exportar PDF</a>
+                    <a href="{{ url_for('download_excel') }}" class="btn btn-secondary">Baixar Excel</a>
+                    <a href="#" class="btn btn-warning" onclick="confirmDeleteLastRecord()">Apagar Último Cadastro</a>
+                    <a href="#" class="btn btn-danger" onclick="confirmClearData()">Limpar Dados</a>
+                </div>
+
+                <!-- Modal para confirmação de senha -->
+                <div id="passwordModal" class="password-modal">
+                    <div class="password-modal-content">
+                        <span class="close-modal">&times;</span>
+                        <h3>Proteção de Segurança</h3>
+                        <p>Digite a senha para confirmar a exclusão de todos os dados:</p>
+                        <input type="password" id="securityPassword" class="password-input">
+                        <div class="modal-buttons">
+                            <button class="btn btn-secondary" onclick="closePasswordModal()">Cancelar</button>
+                            <button class="btn btn-danger" onclick="submitPassword()">Confirmar Exclusão</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal para confirmação de exclusão do último registro -->
+                <div id="deleteLastModal" class="password-modal">
+                    <div class="password-modal-content">
+                        <span class="close-modal" onclick="closeDeleteLastModal()">&times;</span>
+                        <h3>Confirmação de Exclusão</h3>
+                        <p>Tem certeza que deseja apagar o último cadastro?</p>
+                        <p><strong>Paciente: <span id="lastPatientName">Carregando...</span></strong></p>
+                        <div class="modal-buttons">
+                            <button class="btn btn-secondary" onclick="closeDeleteLastModal()">Cancelar</button>
+                            <button class="btn btn-warning" onclick="deleteLastRecord()">Confirmar Exclusão</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="no-data">
+                <p>Nenhum dado disponível para exibição.</p>
+                <p>Cadastre cirurgias para visualizar estatísticas.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-gauge@0.3.0"></script>
+<script>
+    // Define color scheme for dark theme
+    const chartColors = {
+        blue: '#36A2EB',
+        pink: '#FF6384',
+        yellow: '#FFCE56',
+        green: '#4CAF50',
+        purple: '#9C27B0',
+        orange: '#FF9800',
+        teal: '#009688',
+        navy: '#3F51B5'
+    };
+
+    // Metas por unidade
+    const metasPorUnidade = {
+        'Ribeirão Preto': 35,
+        'Campinas': 25,
+        'Rio de Janeiro': 20
+    };
+
+    // Dados simulados para a tabela de técnicas
+    const dadosTecnicas = [
+        { tecnica: 'FUE', quantidade: 45 },
+        { tecnica: 'FUT', quantidade: 23 },
+        { tecnica: 'Body Hair', quantidade: 12 },
+        { tecnica: 'Refinamento', quantidade: 8 }
+    ];
+
+    // Global chart options for dark theme
+    const darkThemeOptions = {
+            responsive: true,
+            maintainAspectRatio: true, // Changed to true for better mobile display
+            devicePixelRatio: 2, // Sharper rendering on mobile
+            redraw: true, // Force redraw on update
+            plugins: {
+                legend: {
+                    display: window.innerWidth > 480 ? true : false, // Hide legend on very small screens
+                    position: 'bottom',
+                    labels: {
+                        color: '#ffffff',
+                        boxWidth: window.innerWidth < 768 ? 10 : 20, // Smaller legend boxes on mobile
+                        padding: window.innerWidth < 768 ? 5 : 10 // Less padding on mobile
+                    }
+                },
+                title: {
+                    color: '#ffffff',
+                    font: {
+                        size: window.innerWidth < 768 ? 14 : 16 // Smaller title on mobile
+                    }
+                },
+                datalabels: {
+                    color: '#ffffff',
+                    font: {
+                        weight: 'bold',
+                        size: window.innerWidth < 768 ? 9 : 12 // Smaller labels on mobile
+                    },
+                    formatter: Math.round,
+                    display: window.innerWidth < 480 ? false : true // Hide datalabels on very small screens
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#ffffff',
+                        font: {
+                            size: window.innerWidth < 768 ? 9 : 12 // Smaller ticks on mobile
+                        },
+                        maxRotation: 90, // Allow vertical labels on mobile
+                        autoSkip: true, // Skip labels that don't fit
+                        autoSkipPadding: 10 // Space between labels
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#ffffff',
+                        font: {
+                            size: window.innerWidth < 768 ? 9 : 12 // Smaller ticks on mobile
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    beginAtZero: true
+                }
+            }
+        };
+
+    // Add event listeners when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Carregar unidades disponíveis para os filtros
+        loadAvailableUnits();
+
+        // Initialize charts
+        initializeCharts();
+
+        // Preencher a tabela de equipe
+        populateEquipeTable();
+
+        // Atualizar os valores grandes no carregamento da página
+        document.getElementById('big-total-surgeries').textContent = {{ data.total_surgeries or 0 }};
+        document.getElementById('big-avg-follicles').textContent = {{ data.avg_follicles or 0 }};
+        document.getElementById('big-avg-density').textContent = {{ data.avg_density or 0 }};
+    });
+
+    // Função para carregar unidades disponíveis
+    function loadAvailableUnits() {
+        const unitFilter = document.getElementById('unitFilter');
+
+        unitFilter.innerHTML = '<option value="">Carregando...</option>';
+
+        fetch('/get_available_units')
+            .then(response => response.json())
+            .then(data => {
+                // Limpar e repopular o select
+                unitFilter.innerHTML = '';
+
+                if (data.units && data.units.length > 0) {
+                    data.units.forEach(unit => {
+                        // Para o filtro de velocímetro
+                        const option = document.createElement('option');
+                        option.value = unit;
+                        option.textContent = unit;
+                        unitFilter.appendChild(option);
+                    });
+
+                    // Inicializar o velocímetro após carregar as unidades
+                    updateGaugeChart();
+                } else {
+                    // Unidades padrão em caso de erro
+                    const defaultUnits = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'];
+                    defaultUnits.forEach(unit => {
+                        // Para o filtro de velocímetro
+                        const option = document.createElement('option');
+                        option.value = unit;
+                        option.textContent = unit;
+                        unitFilter.appendChild(option);
+                    });
+
+                    // Inicializar o velocímetro
+                    updateGaugeChart();
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar unidades:', error);
+
+                // Unidades padrão em caso de erro
+                unitFilter.innerHTML = '';
+
+                const defaultUnits = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'];
+                defaultUnits.forEach(unit => {
+                    // Para o filtro de velocímetro
+                    const option = document.createElement('option');
+                    option.value = unit;
+                    option.textContent = unit;
+                    unitFilter.appendChild(option);
+                });
+
+                // Inicializar o velocímetro
+                updateGaugeChart();
+            });
+    }
+
+    function initializeCharts() {
+        // Removidos os gráficos conforme solicitado
+        // Permaneceram apenas a tabela de equipes e o velocímetro de meta
+    }
+
+    // Função para preencher a tabela de técnicas
+    function populateTecnicasTable() {
+        const tableBody = document.querySelector("#tecnicasTable tbody");
+        tableBody.innerHTML = '<tr><td colspan="2">Carregando dados...</td></tr>';
+
+        fetch('/get_tecnicas_data')
+            .then(response => response.json())
+            .then(data => {
+                tableBody.innerHTML = '';
+
+                if (data.tecnicas && data.tecnicas.length > 0) {
+                    data.tecnicas.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.tecnica}</td>
+                            <td>${item.quantidade}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="2">Nenhum dado disponível</td></tr>';
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao obter dados de técnicas:', error);
+                tableBody.innerHTML = '<tr><td colspan="2">Erro ao carregar dados</td></tr>';
+
+                // Em caso de erro, usar dados de exemplo
+                setTimeout(() => {
+                    tableBody.innerHTML = '';
+                    dadosTecnicas.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.tecnica} (exemplo)</td>
+                            <td>${item.quantidade}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }, 2000);
+            });
+    }
+
+    // Função simplificada para atualizar o velocímetro de meta
+    function updateGaugeChart() {
+        const selectedUnit = document.getElementById('unitFilter').value || 'Rio de Janeiro';
+        const fillElement = document.getElementById('gaugeFill');
+        const markerElement = document.getElementById('gaugeMarker');
+        const metaElement = document.getElementById('metaValue');
+        const cirurgiasElement = document.getElementById('cirurgiasValue');
+        const percentElement = document.getElementById('percentValue');
+
+        // Buscar dados da API
+        fetch(`/get_unit_progress?unit=${encodeURIComponent(selectedUnit)}`)
+            .then(response => response.json())
+            .then(data => {
+                // Extrair dados
+                const meta = data.meta || 0;
+                const atual = data.atual || 0;
+                const percentual = data.percentual || 0;
+
+                // Atualizar elementos visuais
+                metaElement.textContent = meta;
+                cirurgiasElement.textContent = atual;
+                percentElement.textContent = percentual;
+
+                // Atualizar a barra de progresso
+                fillElement.style.width = `${Math.min(percentual, 100)}%`;
+                markerElement.style.left = `${Math.min(percentual, 100)}%`;
+
+                // Alterar cor com base no percentual
+                if (percentual >= 90) {
+                    fillElement.style.backgroundColor = '#4CAF50'; // Verde
+                } else if (percentual >= 50) {
+                    fillElement.style.backgroundColor = '#8A2BE2'; // Roxo
+                } else if (percentual >= 25) {
+                    fillElement.style.backgroundColor = '#FF9800'; // Laranja
+                } else {
+                    fillElement.style.backgroundColor = '#F44336'; // Vermelho
+                }
+
+                // Auto atualizar a cada 30 segundos
+                setTimeout(updateGaugeChart, 30000);
+            })
+            .catch(error => {
+                console.error('Erro ao obter dados de progresso:', error);
+
+                // Em caso de erro, mostrar valores zerados
+                metaElement.textContent = '0';
+                cirurgiasElement.textContent = '0';
+                percentElement.textContent = '0';
+                fillElement.style.width = '0%';
+                markerElement.style.left = '0%';
+
+                // Tentar novamente após 1 minuto
+                setTimeout(updateGaugeChart, 60000);
+            });
+    }
+
+    // Adicionar atualização automática
+    document.addEventListener('DOMContentLoaded', function() {
+        // Carregar unidades disponíveis
+        loadAvailableUnits();
+
+        // Iniciar atualização automática do velocímetro
+        updateGaugeChart();
+
+        // Atualizar automaticamente a cada 30 segundos
+        setInterval(updateGaugeChart, 30000);
+    });
+
+    // Função para preencher a tabela de equipe
+    function populateEquipeTable() {
+        const tableBody = document.querySelector("#equipeTable tbody");
+        tableBody.innerHTML = '<tr><td colspan="3">Carregando dados...</td></tr>';
+
+        fetch('/get_equipe_data')
+            .then(response => response.json())
+            .then(data => {
+                tableBody.innerHTML = '';
+
+                if (!data.equipe || data.equipe.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="3">Nenhum dado disponível</td></tr>';
+                    return;
+                }
+
+                // Ordenar por quantidade (decrescente)
+                const sortedData = data.equipe.sort((a, b) => b.quantidade - a.quantidade);
+
+                // Preencher a tabela com todos os dados
+                sortedData.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.nome}</td>
+                        <td>${item.quantidade}</td>
+                        <td>${item.unidades}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao obter dados de equipe:', error);
+                tableBody.innerHTML = '<tr><td colspan="3">Erro ao carregar dados</td></tr>';
+
+                // Dados de exemplo em caso de erro
+                const exemploData = [
+                    {nome: 'Aline', quantidade: 15, unidades: 'Ribeirão Preto, Rio de Janeiro'},
+                    {nome: 'Natália', quantidade: 12, unidades: 'Ribeirão Preto, Campinas'},
+                    {nome: 'Ana', quantidade: 18, unidades: 'Ribeirão Preto'},
+                    {nome: 'Juliana', quantidade: 10, unidades: 'Campinas'},
+                    {nome: 'Gabriela', quantidade: 9, unidades: 'Campinas, Rio de Janeiro'},
+                    {nome: 'Mariana Moro', quantidade: 14, unidades: 'Rio de Janeiro'},
+                    {nome: 'Mariana Silva', quantidade: 11, unidades: 'Rio de Janeiro, Campinas'},
+                    {nome: 'Dayane', quantidade: 7, unidades: 'Rio de Janeiro'}
+                ];
+
+                // Preencher a tabela com dados de exemplo após um breve atraso
+                setTimeout(() => {
+                    tableBody.innerHTML = '';
+                    exemploData.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.nome}</td>
+                            <td>${item.quantidade}</td>
+                            <td>${item.unidades}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }, 1000);
+            });
+    }
+
+    function exportToPdf() {
+        window.print();
+    }
+
+    // Funções para o modal de senha
+    function confirmClearData() {
+        document.getElementById('passwordModal').style.display = 'flex';
+    }
+
+    function closePasswordModal() {
+        document.getElementById('passwordModal').style.display = 'none';
+        document.getElementById('securityPassword').value = '';
+    }
+
+    function submitPassword() {
+        const password = document.getElementById('securityPassword').value;
+        if (password) {
+            // Envia a senha para verificação
+            fetch('/clear_data_protected', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ Dados limpos com sucesso!');
+                    window.location.reload();
+                } else {
+                    alert('❌ Senha incorreta ou erro ao limpar dados.');
+                }
+                closePasswordModal();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Erro ao processar solicitação.');
+                closePasswordModal();
+            });
+        } else {
+            alert('Por favor, digite a senha.');
+        }
+    }
+
+    // Fecha o modal quando o usuário clica no X
+    document.querySelector('.close-modal').addEventListener('click', closePasswordModal);
+
+    // Fecha o modal quando o usuário clica fora dele
+    window.addEventListener('click', function(event) {
+        const passwordModal = document.getElementById('passwordModal');
+        const deleteLastModal = document.getElementById('deleteLastModal');
+
+        if (event.target == passwordModal) {
+            closePasswordModal();
+        }
+
+        if (event.target == deleteLastModal) {
+            closeDeleteLastModal();
+        }
+    });
+
+    // Funções para exclusão do último registro
+    function confirmDeleteLastRecord() {
+        // Buscar informações do último registro
+        fetch('/get_last_record')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('lastPatientName').textContent = data.patient_name;
+                    document.getElementById('deleteLastModal').style.display = 'flex';
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Erro ao buscar o último registro.');
+            });
+    }
+
+    function closeDeleteLastModal() {
+        document.getElementById('deleteLastModal').style.display = 'none';
+    }
+
+    function deleteLastRecord() {
+        fetch('/delete_last_record', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ ' + data.message);
+                window.location.reload();
+            } else {
+                alert('❌ ' + data.message);
+            }
+            closeDeleteLastModal();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Erro ao excluir o último registro.');
+            closeDeleteLastModal();
+        });
+    }
+</script>
+
+<style>
+/* Estilos para o botão vermelho */
+.btn-danger {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+/* Estilos para o botão amarelo */
+.btn-warning {
+    background-color: #f39c12;
+    color: white;
+}
+
+.btn-warning:hover {
+    background-color: #d35400;
+}
+
+/* Estilos para o modal de senha */
+.password-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+}
+
+.password-modal-content {
+    background-color: #27293d;
+    padding: 25px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.close-modal:hover {
+    color: #fff;
+}
+
+.password-input {
+    width: 100%;
+    padding: 10px;
+    margin: 15px 0;
+    border-radius: 5px;
+    background-color: #1e1e2f;
+    color: #ffffff;
+    border: 1px solid #444444;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .modal-buttons .btn {
+        width: 100%;
+    }
+}
+
+/* Estilos para o filtro de unidade */
+.filter-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    margin-right: 15px;
+}
+
+.filter-group label {
+    margin-right: 8px;
+    color: #ffffff;
+}
+
+.filter-group select {
+    padding: 6px 10px;
+    border-radius: 5px;
+    background-color: #1e1e2f;
+    border: 1px solid #444;
+    color: #ffffff;
+}
+
+/* Estilos para o velocímetro simples baseado em HTML/CSS */
+#gaugeContainer {
+    width: 100%;
+    margin: 20px auto;
+    padding: 0 20px;
+    min-height: 180px; /* Altura mínima para evitar layout shift */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.gauge-loading {
+    color: #cccccc;
+    text-align: center;
+    font-style: italic;
+    padding: 30px;
+    width: 100%;
+    animation: pulse 1.5s infinite alternate;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+.gauge-meter {
+    padding: 20px;
+    text-align: center;
+    width: 100%;
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.gauge-background {
+    height: 40px;
+    background-color: rgba(100, 100, 100, 0.2);
+    border-radius: 20px;
+    margin: 20px auto;
+    max-width: 80%;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.gauge-fill {
+    background-color: #4CAF50;
+    height: 100%;
+    border-radius: 20px;
+    transition: width 1s ease-in-out, background-color 1s ease-in-out;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    animation: slideIn 1s ease-out;
+    transform-origin: left;
+}
+
+@keyframes slideIn {
+    0% { transform: scaleX(0); }
+    100% { transform: scaleX(1); }
+}
+
+.gauge-value-container {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.gauge-percentage {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    animation: countUp 1s ease-out;
+}
+
+@keyframes countUp {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.gauge-count {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 10px;
+}
+
+.gauge-unit {
+    font-size: 16px;
+    color: #cccccc;
+    margin-bottom: 5px;
+}
+
+.gauge-error {
+    color: #e74c3c;
+    font-size: 12px;
+    margin-top: 10px;
+    padding: 5px;
+    border-radius: 4px;
+    background-color: rgba(231, 76, 60, 0.1);
+}
+
+/* Estilos responsivos para o velocímetro */
+@media (max-width: 768px) {
+    .gauge-percentage {
+        font-size: 28px;
+    }
+
+    .gauge-count {
+        font-size: 16px;
+    }
+
+    .gauge-background {
+        height: 30px;
+    }
+}
+
+/* Estilos para a tabela de técnicas */
+.cirurgias-table-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+.cirurgias-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #ffffff;
+}
+
+.cirurgias-table th, 
+.cirurgias-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cirurgias-table th {
+    background-color: rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+}
+
+.cirurgias-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+</style>
+{% endblock %}
