@@ -13,17 +13,39 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+print("Starting application initialization...")
+
 # Create Flask app
 app = Flask(__name__)
 CORS(app)
 
 # Configure the SQLAlchemy part of the app instance
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+database_url = os.environ.get('DATABASE_URL')
+if database_url and database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+
+logger.info(f"Using database URL: {database_url.split('@')[1] if database_url else 'None'}")
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+    'connect_args': {
+        'sslmode': 'prefer'  # Changed from 'require' to 'prefer' for better compatibility
+    }
+}
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
 # Initialize SQLAlchemy with the app
 db.init_app(app)
+logger.info("Database initialized")
+
+@app.route('/ping')
+def ping():
+    """Basic connectivity test endpoint"""
+    logger.info("Ping endpoint accessed")
+    return "OK", 200
 
 @app.route('/')
 def index():
@@ -209,10 +231,82 @@ def get_equipe(unidade):
     return jsonify({'equipe': equipe_por_unidade.get(unidade, [])})
 
 
-# Placeholder for dashboard route and other endpoints that need database interaction
 @app.route('/dashboard')
 def dashboard():
-    return jsonify({"message": "Dashboard endpoint not yet implemented"})
+    """Dashboard route to display surgery data"""
+    logger.info("Accessing dashboard route")
+    try:
+        # Get surgeries from database
+        cirurgias = Cirurgia.query.all()
+
+        # Process data for dashboard
+        dashboard_data = {
+            'labels': [],
+            'datasets': [],
+            'has_follicle_data': True,
+            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+            'total_surgeries': len(cirurgias),
+            'avg_follicles': 0,
+            'avg_density': 0,
+            'update_time': datetime.now().strftime('%d/%m/%Y %H:%M')
+        }
+
+        # Calculate averages
+        if cirurgias:
+            total_foliculos = sum(c.total_foliculos or 0 for c in cirurgias)
+            total_densidade = sum(c.densidade_scketh or 0 for c in cirurgias)
+            dashboard_data['avg_follicles'] = int(total_foliculos / len(cirurgias))
+            dashboard_data['avg_density'] = int(total_densidade / len(cirurgias))
+
+            # Group by month/year
+            cirurgias_por_mes = {}
+            for cirurgia in cirurgias:
+                mes_ano = cirurgia.data.strftime('%m/%Y')
+                if mes_ano not in cirurgias_por_mes:
+                    cirurgias_por_mes[mes_ano] = {
+                        'count': 0,
+                        'foliculos': 0,
+                        'densidade': 0
+                    }
+                cirurgias_por_mes[mes_ano]['count'] += 1
+                cirurgias_por_mes[mes_ano]['foliculos'] += cirurgia.total_foliculos or 0
+                cirurgias_por_mes[mes_ano]['densidade'] += cirurgia.densidade_scketh or 0
+
+            # Sort months
+            meses_ordenados = sorted(cirurgias_por_mes.keys())
+
+            # Prepare data for charts
+            dashboard_data['labels'] = meses_ordenados
+            dashboard_data['datasets'].append({
+                'label': 'Total de Cirurgias',
+                'data': [cirurgias_por_mes[mes]['count'] for mes in meses_ordenados]
+            })
+
+            # Prepare follicle data
+            dashboard_data['follicles_data']['labels'] = meses_ordenados
+            dashboard_data['follicles_data']['averages'] = [
+                int(cirurgias_por_mes[mes]['foliculos'] / cirurgias_por_mes[mes]['count'])
+                for mes in meses_ordenados
+            ]
+            dashboard_data['follicles_data']['le_density'] = [
+                int(cirurgias_por_mes[mes]['densidade'] / cirurgias_por_mes[mes]['count'])
+                for mes in meses_ordenados
+            ]
+
+        return render_template('dashboard.html', data=dashboard_data)
+
+    except Exception as e:
+        logger.error(f"Error in dashboard route: {str(e)}")
+        flash(f"❌ Erro ao carregar dashboard: {str(e)}", "error")
+        return render_template('dashboard.html', data={
+            'labels': [],
+            'datasets': [{'label': 'Cirurgias', 'data': []}],
+            'has_follicle_data': False,
+            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+            'total_surgeries': 0,
+            'avg_follicles': 0,
+            'avg_density': 0
+        })
 
 @app.route('/filter_dashboard')
 def filter_dashboard():
@@ -241,7 +335,6 @@ def save_necrose():
 @app.route('/get_available_units')
 def get_available_units():
     return jsonify({"message": "Get available units endpoint not yet implemented"})
-
 
 @app.route('/get_unit_progress')
 def get_unit_progress():
