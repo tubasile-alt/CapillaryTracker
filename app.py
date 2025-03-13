@@ -1,5 +1,6 @@
 import os
 import logging
+import pandas as pd
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_cors import CORS
@@ -246,7 +247,6 @@ def get_available_units():
 def get_unit_progress():
     return jsonify({"message": "Get unit progress endpoint not yet implemented"})
 
-
 @app.route('/get_tecnicas_data')
 def get_tecnicas_data():
     return jsonify({"message": "Get tecnicas data endpoint not yet implemented"})
@@ -255,7 +255,100 @@ def get_tecnicas_data():
 def get_equipe_data():
     return jsonify({"message": "Get equipe data endpoint not yet implemented"})
 
+@app.route('/import_excel', methods=['POST'])
+def import_excel():
+    """Import data from Excel file to PostgreSQL database"""
+    try:
+        logger.info("Starting Excel data import")
 
+        # Read Excel file
+        df = pd.read_excel('attached_assets/relatorio_cirurgias.xlsx')
+        logger.info(f"Successfully read Excel file with {len(df)} rows")
+
+        # Import each row to database
+        for index, row in df.iterrows():
+            try:
+                # Convert date string to date object
+                data = pd.to_datetime(row['data']).date() if pd.notna(row['data']) else datetime.now().date()
+
+                # Create new Cirurgia instance with proper type conversions
+                cirurgia = Cirurgia(
+                    data=data,
+                    nome=str(row.get('nome', '')),
+                    unidade=str(row.get('unidade', '')),
+                    medico=str(row.get('medico', '')),
+                    equipe=str(row.get('equipe', '')),
+                    hora_cirurgia=str(row.get('hora_cirurgia', '')),
+                    tempo_cirurgia=float(row.get('tempo_cirurgia', 0) or 0),
+                    total_foliculos=int(float(row.get('total_foliculos', 0) or 0)),
+                    frente=int(float(row.get('frente', 0) or 0)),
+                    densidade_scketh=float(row.get('densidade_scketh', 0) or 0),
+                    coroa=int(float(row.get('coroa', 0) or 0)),
+                    scalpe=int(float(row.get('scalpe', 0) or 0)),
+                    peninsula_direita=int(float(row.get('peninsula_direita', 0) or 0)),
+                    peninsula_esquerda=int(float(row.get('peninsula_esquerda', 0) or 0)),
+                    safira=str(row.get('safira', '')),
+                    punch=str(row.get('punch', '')),
+                    solucao_frente=float(row.get('solucao_frente', 0) or 0),
+                    solucao_coroa=float(row.get('solucao_coroa', 0) or 0),
+                    solucao_xilo_frente=float(row.get('solucao_xilo_frente', 0) or 0),
+                    q1_area=float(row.get('q1_area', 0) or 0),
+                    q1_furos=int(float(row.get('q1_furos', 0) or 0)),
+                    q1_fios=int(float(row.get('q1_fios', 0) or 0)),
+                    q2_area=float(row.get('q2_area', 0) or 0),
+                    q2_furos=int(float(row.get('q2_furos', 0) or 0)),
+                    q2_fios=int(float(row.get('q2_fios', 0) or 0)),
+                    q3_area=float(row.get('q3_area', 0) or 0),
+                    q3_furos=int(float(row.get('q3_furos', 0) or 0)),
+                    q3_fios=int(float(row.get('q3_fios', 0) or 0)),
+                    q4_area=float(row.get('q4_area', 0) or 0),
+                    q4_furos=int(float(row.get('q4_furos', 0) or 0)),
+                    q4_fios=int(float(row.get('q4_fios', 0) or 0)),
+                    infiltracao=int(float(row.get('infiltracao', 0) or 0)),
+                    sedacao=int(float(row.get('sedacao', 0) or 0)),
+                    sangramento=int(float(row.get('sangramento', 0) or 0)),
+                    implante_secundario=str(row.get('implante_secundario', '')),
+                    transamin=str(row.get('transamin', '')),
+                    tadalafila=str(row.get('tadalafila', '')),
+                    diprospam=str(row.get('diprospam', '')),
+                    fumante=str(row.get('fumante', '')),
+                    antecedentes=str(row.get('antecedentes', '')),
+                    comentarios=str(row.get('comentarios', ''))
+                )
+
+                # Calculate derived fields
+                if cirurgia.q1_area > 0:
+                    cirurgia.q1_densidade = cirurgia.q1_furos / cirurgia.q1_area
+                    cirurgia.q1_taxa_quebra = (1 - cirurgia.q1_fios / cirurgia.q1_furos) * 100 if cirurgia.q1_furos > 0 else 0
+
+                if cirurgia.q2_area > 0:
+                    cirurgia.q2_densidade = cirurgia.q2_furos / cirurgia.q2_area
+                    cirurgia.q2_taxa_quebra = (1 - cirurgia.q2_fios / cirurgia.q2_furos) * 100 if cirurgia.q2_furos > 0 else 0
+
+                if cirurgia.q3_area > 0:
+                    cirurgia.q3_densidade = cirurgia.q3_furos / cirurgia.q3_area
+                    cirurgia.q3_taxa_quebra = (1 - cirurgia.q3_fios / cirurgia.q3_furos) * 100 if cirurgia.q3_furos > 0 else 0
+
+                if cirurgia.q4_area > 0:
+                    cirurgia.q4_densidade = cirurgia.q4_furos / cirurgia.q4_area
+                    cirurgia.q4_taxa_quebra = (1 - cirurgia.q4_fios / cirurgia.q4_furos) * 100 if cirurgia.q4_furos > 0 else 0
+
+                db.session.add(cirurgia)
+                logger.info(f"Successfully processed row {index + 1}")
+
+            except Exception as row_error:
+                logger.error(f"Error processing row {index + 1}: {str(row_error)}")
+                continue
+
+        # Commit all changes
+        db.session.commit()
+        logger.info("Excel data imported successfully to database")
+        return jsonify({"success": True, "message": "Dados importados com sucesso!"})
+
+    except Exception as e:
+        logger.error(f"Error importing Excel data: {str(e)}")
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Erro ao importar dados: {str(e)}"})
 
 # Create database tables within app context
 with app.app_context():
