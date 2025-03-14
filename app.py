@@ -347,7 +347,28 @@ def get_available_units():
 
 @app.route('/get_unit_progress')
 def get_unit_progress():
-    return jsonify({"message": "Get unit progress endpoint not yet implemented"})
+    """Get progress data for a specific unit"""
+    try:
+        unit = request.args.get('unit')
+        if not unit:
+            return jsonify({"error": "Unidade não especificada"}), 400
+
+        # Get surgeries for this unit
+        cirurgias = Cirurgia.query.filter_by(unidade=unit).all()
+        total_cirurgias = len(cirurgias)
+
+        # For now, set a fixed target of 20 surgeries per month
+        meta_mensal = 20
+
+        return jsonify({
+            "meta": meta_mensal,
+            "cirurgias": total_cirurgias,
+            "percentual": (total_cirurgias / meta_mensal * 100) if meta_mensal > 0 else 0
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting unit progress: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/get_tecnicas_data')
 def get_tecnicas_data():
@@ -355,7 +376,41 @@ def get_tecnicas_data():
 
 @app.route('/get_equipe_data')
 def get_equipe_data():
-    return jsonify({"message": "Get equipe data endpoint not yet implemented"})
+    """Get surgery data grouped by team members"""
+    try:
+        # Get all surgeries and group by team members
+        cirurgias = Cirurgia.query.all()
+        equipe_data = {}
+
+        for cirurgia in cirurgias:
+            # Split team members (assuming they're comma-separated)
+            membros = [membro.strip() for membro in cirurgia.equipe.split(',')]
+
+            # Count surgeries for each team member
+            for membro in membros:
+                if membro not in equipe_data:
+                    equipe_data[membro] = {
+                        'quantidade': 0,
+                        'unidades': set()
+                    }
+                equipe_data[membro]['quantidade'] += 1
+                equipe_data[membro]['unidades'].add(cirurgia.unidade)
+
+        # Format data for response
+        formatted_data = [
+            {
+                'membro': membro,
+                'quantidade': data['quantidade'],
+                'unidades_atendidas': len(data['unidades'])
+            }
+            for membro, data in equipe_data.items()
+        ]
+
+        return jsonify(formatted_data)
+
+    except Exception as e:
+        logger.error(f"Error getting team data: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/import_excel', methods=['POST'])
 def import_excel():
