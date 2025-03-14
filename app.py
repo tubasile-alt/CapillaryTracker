@@ -238,6 +238,8 @@ def dashboard():
     try:
         # Get surgeries from database
         cirurgias = Cirurgia.query.all()
+        total_cirurgias = len(cirurgias)
+        logger.info(f"Retrieved {total_cirurgias} surgeries from database")
 
         # Process data for dashboard
         dashboard_data = {
@@ -245,7 +247,7 @@ def dashboard():
             'datasets': [],
             'has_follicle_data': True,
             'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-            'total_surgeries': len(cirurgias),
+            'total_surgeries': total_cirurgias,  # Use actual count
             'avg_follicles': 0,
             'avg_density': 0,
             'update_time': datetime.now().strftime('%d/%m/%Y %H:%M')
@@ -255,8 +257,8 @@ def dashboard():
         if cirurgias:
             total_foliculos = sum(c.total_foliculos or 0 for c in cirurgias)
             total_densidade = sum(c.densidade_scketh or 0 for c in cirurgias)
-            dashboard_data['avg_follicles'] = int(total_foliculos / len(cirurgias))
-            dashboard_data['avg_density'] = int(total_densidade / len(cirurgias))
+            dashboard_data['avg_follicles'] = int(total_foliculos / total_cirurgias) if total_cirurgias > 0 else 0
+            dashboard_data['avg_density'] = int(total_densidade / total_cirurgias) if total_cirurgias > 0 else 0
 
             # Group by month/year
             cirurgias_por_mes = {}
@@ -293,6 +295,7 @@ def dashboard():
                 for mes in meses_ordenados
             ]
 
+        logger.info(f"Dashboard data prepared with {total_cirurgias} surgeries")
         return render_template('dashboard.html', data=dashboard_data)
 
     except Exception as e:
@@ -361,6 +364,11 @@ def import_excel():
         logger.info(f"DataFrame shape: {df.shape}")
         logger.info("First few rows of data:")
         logger.info(df.head().to_string())
+
+        # Clear existing records before import
+        Cirurgia.query.delete()
+        db.session.commit()
+        logger.info("Cleared existing records from database")
 
         # Import each row to database
         successful_imports = 0
