@@ -357,56 +357,71 @@ def import_excel():
         # Read Excel file
         df = pd.read_excel('attached_assets/relatorio_cirurgias.xlsx')
         logger.info(f"Successfully read Excel file with {len(df)} rows")
+        logger.info(f"DataFrame columns: {df.columns.tolist()}")
+        logger.info(f"DataFrame shape: {df.shape}")
+        logger.info("First few rows of data:")
+        logger.info(df.head().to_string())
 
         # Import each row to database
+        successful_imports = 0
         for index, row in df.iterrows():
             try:
                 # Convert date string to date object
                 data = pd.to_datetime(row['data']).date() if pd.notna(row['data']) else datetime.now().date()
 
+                # Function to safely convert values
+                def safe_convert(value, type_func, default=0):
+                    try:
+                        if pd.isna(value):
+                            return default
+                        return type_func(value)
+                    except (ValueError, TypeError):
+                        logger.warning(f"Error converting value '{value}' to {type_func.__name__}")
+                        return default
+
                 # Create new Cirurgia instance with proper type conversions
                 cirurgia = Cirurgia(
                     data=data,
-                    nome=str(row.get('nome', '')),
-                    unidade=str(row.get('unidade', '')),
-                    medico=str(row.get('medico', '')),
-                    equipe=str(row.get('equipe', '')),
-                    hora_cirurgia=str(row.get('hora_cirurgia', '')),
-                    tempo_cirurgia=float(row.get('tempo_cirurgia', 0) or 0),
-                    total_foliculos=int(float(row.get('total_foliculos', 0) or 0)),
-                    frente=int(float(row.get('frente', 0) or 0)),
-                    densidade_scketh=float(row.get('densidade_scketh', 0) or 0),
-                    coroa=int(float(row.get('coroa', 0) or 0)),
-                    scalpe=int(float(row.get('scalpe', 0) or 0)),
-                    peninsula_direita=int(float(row.get('peninsula_direita', 0) or 0)),
-                    peninsula_esquerda=int(float(row.get('peninsula_esquerda', 0) or 0)),
-                    safira=str(row.get('safira', '')),
-                    punch=str(row.get('punch', '')),
-                    solucao_frente=float(row.get('solucao_frente', 0) or 0),
-                    solucao_coroa=float(row.get('solucao_coroa', 0) or 0),
-                    solucao_xilo_frente=float(row.get('solucao_xilo_frente', 0) or 0),
-                    q1_area=float(row.get('q1_area', 0) or 0),
-                    q1_furos=int(float(row.get('q1_furos', 0) or 0)),
-                    q1_fios=int(float(row.get('q1_fios', 0) or 0)),
-                    q2_area=float(row.get('q2_area', 0) or 0),
-                    q2_furos=int(float(row.get('q2_furos', 0) or 0)),
-                    q2_fios=int(float(row.get('q2_fios', 0) or 0)),
-                    q3_area=float(row.get('q3_area', 0) or 0),
-                    q3_furos=int(float(row.get('q3_furos', 0) or 0)),
-                    q3_fios=int(float(row.get('q3_fios', 0) or 0)),
-                    q4_area=float(row.get('q4_area', 0) or 0),
-                    q4_furos=int(float(row.get('q4_furos', 0) or 0)),
-                    q4_fios=int(float(row.get('q4_fios', 0) or 0)),
-                    infiltracao=int(float(row.get('infiltracao', 0) or 0)),
-                    sedacao=int(float(row.get('sedacao', 0) or 0)),
-                    sangramento=int(float(row.get('sangramento', 0) or 0)),
-                    implante_secundario=str(row.get('implante_secundario', '')),
-                    transamin=str(row.get('transamin', '')),
-                    tadalafila=str(row.get('tadalafila', '')),
-                    diprospam=str(row.get('diprospam', '')),
-                    fumante=str(row.get('fumante', '')),
-                    antecedentes=str(row.get('antecedentes', '')),
-                    comentarios=str(row.get('comentarios', ''))
+                    nome=str(row.get('nome', '')).strip(),
+                    unidade=str(row.get('unidade', '')).strip(),
+                    medico=str(row.get('medico', '')).strip(),
+                    equipe=str(row.get('equipe', '')).strip(),
+                    hora_cirurgia=str(row.get('hora_cirurgia', '')).strip(),
+                    tempo_cirurgia=safe_convert(row.get('tempo_cirurgia'), float),
+                    total_foliculos=safe_convert(row.get('total_foliculos'), int),
+                    frente=safe_convert(row.get('frente'), int),
+                    densidade_scketh=safe_convert(row.get('densidade_scketh'), float),
+                    coroa=safe_convert(row.get('coroa'), int),
+                    scalpe=safe_convert(row.get('scalpe'), int),
+                    peninsula_direita=safe_convert(row.get('peninsula_direita'), int),
+                    peninsula_esquerda=safe_convert(row.get('peninsula_esquerda'), int),
+                    safira=str(row.get('safira', '')).strip(),
+                    punch=str(row.get('punch', '')).strip(),
+                    solucao_frente=safe_convert(row.get('solucao_frente'), float),
+                    solucao_coroa=safe_convert(row.get('solucao_coroa'), float),
+                    solucao_xilo_frente=safe_convert(row.get('solucao_xilo_frente'), float),
+                    q1_area=safe_convert(row.get('q1_area'), float),
+                    q1_furos=safe_convert(row.get('q1_furos'), int),
+                    q1_fios=safe_convert(row.get('q1_fios'), int),
+                    q2_area=safe_convert(row.get('q2_area'), float),
+                    q2_furos=safe_convert(row.get('q2_furos'), int),
+                    q2_fios=safe_convert(row.get('q2_fios'), int),
+                    q3_area=safe_convert(row.get('q3_area'), float),
+                    q3_furos=safe_convert(row.get('q3_furos'), int),
+                    q3_fios=safe_convert(row.get('q3_fios'), int),
+                    q4_area=safe_convert(row.get('q4_area'), float),
+                    q4_furos=safe_convert(row.get('q4_furos'), int),
+                    q4_fios=safe_convert(row.get('q4_fios'), int),
+                    infiltracao=safe_convert(row.get('infiltracao'), int),
+                    sedacao=safe_convert(row.get('sedacao'), int),
+                    sangramento=safe_convert(row.get('sangramento'), int),
+                    implante_secundario=str(row.get('implante_secundario', '')).strip(),
+                    transamin=str(row.get('transamin', '')).strip(),
+                    tadalafila=str(row.get('tadalafila', '')).strip(),
+                    diprospam=str(row.get('diprospam', '')).strip(),
+                    fumante=str(row.get('fumante', '')).strip(),
+                    antecedentes=str(row.get('antecedentes', '')).strip(),
+                    comentarios=str(row.get('comentarios', '')).strip()
                 )
 
                 # Calculate derived fields
@@ -427,16 +442,19 @@ def import_excel():
                     cirurgia.q4_taxa_quebra = (1 - cirurgia.q4_fios / cirurgia.q4_furos) * 100 if cirurgia.q4_furos > 0 else 0
 
                 db.session.add(cirurgia)
+                successful_imports += 1
                 logger.info(f"Successfully processed row {index + 1}")
 
             except Exception as row_error:
-                logger.error(f"Error processing row {index + 1}: {str(row_error)}")
+                logger.error(f"Error processing row {index + 1}:")
+                logger.error(f"Row data: {row.to_dict()}")
+                logger.error(f"Error details: {str(row_error)}")
                 continue
 
         # Commit all changes
         db.session.commit()
-        logger.info("Excel data imported successfully to database")
-        return jsonify({"success": True, "message": "Dados importados com sucesso!"})
+        logger.info(f"Excel data imported successfully to database. Imported {successful_imports} out of {len(df)} rows.")
+        return jsonify({"success": True, "message": f"Dados importados com sucesso! ({successful_imports} registros)"})
 
     except Exception as e:
         logger.error(f"Error importing Excel data: {str(e)}")
