@@ -257,8 +257,11 @@ def dashboard():
         if cirurgias:
             total_foliculos = sum(c.total_foliculos or 0 for c in cirurgias)
             total_densidade = sum(c.densidade_scketh or 0 for c in cirurgias)
+            logger.info(f"Total folículos: {total_foliculos}, Total densidade: {total_densidade}")
+
             dashboard_data['avg_follicles'] = int(total_foliculos / total_cirurgias) if total_cirurgias > 0 else 0
             dashboard_data['avg_density'] = int(total_densidade / total_cirurgias) if total_cirurgias > 0 else 0
+            logger.info(f"Média de folículos: {dashboard_data['avg_follicles']}, Média de densidade: {dashboard_data['avg_density']}")
 
             # Group by month/year
             cirurgias_por_mes = {}
@@ -274,8 +277,11 @@ def dashboard():
                 cirurgias_por_mes[mes_ano]['foliculos'] += cirurgia.total_foliculos or 0
                 cirurgias_por_mes[mes_ano]['densidade'] += cirurgia.densidade_scketh or 0
 
+            logger.info(f"Dados agrupados por mês: {cirurgias_por_mes}")
+
             # Sort months
             meses_ordenados = sorted(cirurgias_por_mes.keys())
+            logger.info(f"Meses ordenados: {meses_ordenados}")
 
             # Prepare data for charts
             dashboard_data['labels'] = meses_ordenados
@@ -295,7 +301,7 @@ def dashboard():
                 for mes in meses_ordenados
             ]
 
-        logger.info(f"Dashboard data prepared with {total_cirurgias} surgeries")
+        logger.info(f"Dashboard data prepared: {dashboard_data}")
         return render_template('dashboard.html', data=dashboard_data)
 
     except Exception as e:
