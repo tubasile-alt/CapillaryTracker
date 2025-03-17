@@ -4,6 +4,7 @@ import shutil
 import logging
 import json
 import pandas as pd
+from datetime import datetime
 
 # Configurar logging
 logging.basicConfig(
@@ -32,7 +33,6 @@ def restore_deployment_data():
             with open(manifest_file, "r") as f:
                 manifest = json.load(f)
             logger.info(f"Manifesto de deployment carregado: {manifest}")
-            # Obter a contagem esperada de pacientes do manifesto
             expected_patient_count = manifest.get("patient_count", 0)
             if expected_patient_count > 0:
                 logger.info(f"✓ De acordo com o manifesto, devemos restaurar {expected_patient_count} pacientes")
@@ -68,8 +68,8 @@ def restore_deployment_data():
                                     logger.warning(f"⚠️ Arquivo atual {file} tem mais registros ({len(df_current)}) que o backup de deploy ({len(df_deploy)}). Mantendo arquivo atual.")
                                     restored_files.append((file, "mantido", len(df_current)))
                                     continue
-                            except:
-                                pass
+                            except Exception as e:
+                                logger.error(f"⚠️ Erro ao ler arquivo atual {file}: {str(e)}")
                         
                         # Restaurar arquivo
                         shutil.copy2(deploy_file, file)
@@ -136,7 +136,6 @@ def restore_deployment_data():
         # Verificar se a contagem de pacientes foi restaurada corretamente
         if success and expected_patient_count > 0:
             # Verificar quantos pacientes foram restaurados
-            import pandas as pd
             actual_count = 0
             if os.path.exists("cirurgias.xlsx"):
                 try:
@@ -181,7 +180,7 @@ if __name__ == "__main__":
     print("🔄 INICIANDO RESTAURAÇÃO DE DADOS PÓS-DEPLOYMENT 🔄")
     print("==================================================\n")
     
-    success = restore_deployment_data()
+    success, restored_files = restore_deployment_data()
     
     if success:
         print("\n==================================================")
