@@ -532,6 +532,17 @@ def import_excel():
 # Create database tables within app context
 with app.app_context():
     db.create_all()
+    
+    # Verify and restore data after deployment
+    try:
+        from restore_deployment_data import restore_deployment_data
+        success, restored_files = restore_deployment_data()
+        if success:
+            logger.info("✅ Dados restaurados com sucesso após deployment")
+        else:
+            logger.warning("⚠️ Não foi possível restaurar os dados automaticamente")
+    except Exception as e:
+        logger.error(f"❌ Erro ao restaurar dados: {str(e)}")
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 3000))
