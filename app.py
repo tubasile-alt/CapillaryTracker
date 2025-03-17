@@ -397,16 +397,14 @@ def get_equipe_data():
                 equipe_data[membro]['unidades'].add(cirurgia.unidade)
 
         # Format data for response
-        formatted_data = {
-            'equipe': [
-                {
-                    'nome': membro,
-                    'quantidade': data['quantidade'],
-                    'unidades': len(data['unidades'])
-                }
-                for membro, data in equipe_data.items()
-            ]
-        }
+        formatted_data = [
+            {
+                'membro': membro,
+                'quantidade': data['quantidade'],
+                'unidades_atendidas': len(data['unidades'])
+            }
+            for membro, data in equipe_data.items()
+        ]
 
         return jsonify(formatted_data)
 
