@@ -5,9 +5,6 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_cors import CORS
 from models import db, Cirurgia
-from sqlalchemy import create_engine, text
-from sqlalchemy.exc import OperationalError
-import time
 
 # Configure logging
 logging.basicConfig(
@@ -29,47 +26,20 @@ if database_url and database_url.startswith('postgres://'):
 
 logger.info(f"Using database URL: {database_url.split('@')[1] if database_url else 'None'}")
 
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///cirurgias.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,
     'pool_recycle': 300,
-    'pool_timeout': 20,
-    'pool_size': 30,
-    'max_overflow': 20
+    'connect_args': {
+        'sslmode': 'prefer'  # Changed from 'require' to 'prefer' for better compatibility
+    }
 }
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
 # Initialize SQLAlchemy with the app
 db.init_app(app)
 logger.info("Database initialized")
-
-# Function to test database connection
-def test_db_connection(max_retries=5, delay=1):
-    """Test database connection with retry mechanism"""
-    for attempt in range(max_retries):
-        try:
-            # Try to make a simple query
-            with app.app_context():
-                Cirurgia.query.first()
-            logger.info("Database connection successful")
-            return True
-        except OperationalError as e:
-            if attempt < max_retries - 1:
-                logger.warning(f"Database connection attempt {attempt + 1} failed, retrying in {delay} seconds...")
-                time.sleep(delay)
-                delay *= 2  # Exponential backoff
-            else:
-                logger.error(f"Failed to connect to database after {max_retries} attempts: {str(e)}")
-                return False
-        except Exception as e:
-            logger.error(f"Unexpected error testing database connection: {str(e)}")
-            return False
-
-# Test database connection on startup
-if not test_db_connection():
-    logger.error("Unable to establish database connection")
-
 
 @app.route('/ping')
 def ping():
@@ -186,7 +156,7 @@ def novo_cadastro():
         'fields': [
             {'name': 'data', 'label': 'Data da Cirurgia', 'type': 'date', 'required': True},
             {'name': 'nome', 'label': 'Nome do Paciente', 'type': 'text', 'required': True},
-            {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True,
+            {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True, 
              'options': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']},
             {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'required': True},
             {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'required': True},
@@ -238,7 +208,7 @@ def novo_cadastro():
             {'name': 'comentarios', 'label': 'Comentários', 'type': 'textarea', 'required': False}
         ]
     }
-    return render_template('form.html', form=form_data, data={})
+    return render_template('form.html', form=form_data)
 
 @app.route('/get_medicos/<unidade>')
 def get_medicos(unidade):
@@ -261,55 +231,91 @@ def get_equipe(unidade):
     return jsonify({'equipe': equipe_por_unidade.get(unidade, [])})
 
 
-@app.route('/health')
-def health_check():
-    """Health check endpoint to verify database connectivity"""
-    try:
-        # Try to count records
-        count = db.session.query(Cirurgia).count()
-        logger.info(f"Health check successful. Found {count} records.")
-        return jsonify({
-            "status": "healthy",
-            "database": "connected",
-            "records_count": count
-        })
-    except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        return jsonify({
-            "status": "unhealthy",
-            "error": str(e)
-        }), 500
-
 @app.route('/dashboard')
 def dashboard():
     """Dashboard route to display surgery data"""
     logger.info("Accessing dashboard route")
     try:
-        # Get summary data with a simple query
-        summary_sql = text("""
-        SELECT 
-            COUNT(*) as total_cirurgias,
-            ROUND(AVG(total_foliculos)) as media_foliculos,
-            ROUND(AVG(densidade_scketh)) as media_densidade
-        FROM cirurgias;
-        """)
-        summary = db.session.execute(summary_sql).fetchone()
-        logger.info(f"Summary query result: {summary}")
+        # Get surgeries from database
+        cirurgias = Cirurgia.query.all()
+        total_cirurgias = len(cirurgias)
+        logger.info(f"Retrieved {total_cirurgias} surgeries from database")
 
-        # Create dashboard data structure
+        # Process data for dashboard
         dashboard_data = {
-            'total_surgeries': summary.total_cirurgias,
-            'avg_follicles': int(summary.media_foliculos or 0),
-            'avg_density': int(summary.media_densidade or 0),
+            'labels': [],
+            'datasets': [],
+            'has_follicle_data': True,
+            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+            'total_surgeries': total_cirurgias,  # Use actual count
+            'avg_follicles': 0,
+            'avg_density': 0,
             'update_time': datetime.now().strftime('%d/%m/%Y %H:%M')
         }
-        logger.info(f"Dashboard summary data: {dashboard_data}")
 
+        # Calculate averages
+        if cirurgias:
+            total_foliculos = sum(c.total_foliculos or 0 for c in cirurgias)
+            total_densidade = sum(c.densidade_scketh or 0 for c in cirurgias)
+            logger.info(f"Total folículos: {total_foliculos}, Total densidade: {total_densidade}")
+
+            dashboard_data['avg_follicles'] = int(total_foliculos / total_cirurgias) if total_cirurgias > 0 else 0
+            dashboard_data['avg_density'] = int(total_densidade / total_cirurgias) if total_cirurgias > 0 else 0
+            logger.info(f"Média de folículos: {dashboard_data['avg_follicles']}, Média de densidade: {dashboard_data['avg_density']}")
+
+            # Group by month/year
+            cirurgias_por_mes = {}
+            for cirurgia in cirurgias:
+                mes_ano = cirurgia.data.strftime('%m/%Y')
+                if mes_ano not in cirurgias_por_mes:
+                    cirurgias_por_mes[mes_ano] = {
+                        'count': 0,
+                        'foliculos': 0,
+                        'densidade': 0
+                    }
+                cirurgias_por_mes[mes_ano]['count'] += 1
+                cirurgias_por_mes[mes_ano]['foliculos'] += cirurgia.total_foliculos or 0
+                cirurgias_por_mes[mes_ano]['densidade'] += cirurgia.densidade_scketh or 0
+
+            logger.info(f"Dados agrupados por mês: {cirurgias_por_mes}")
+
+            # Sort months
+            meses_ordenados = sorted(cirurgias_por_mes.keys())
+            logger.info(f"Meses ordenados: {meses_ordenados}")
+
+            # Prepare data for charts
+            dashboard_data['labels'] = meses_ordenados
+            dashboard_data['datasets'].append({
+                'label': 'Total de Cirurgias',
+                'data': [cirurgias_por_mes[mes]['count'] for mes in meses_ordenados]
+            })
+
+            # Prepare follicle data
+            dashboard_data['follicles_data']['labels'] = meses_ordenados
+            dashboard_data['follicles_data']['averages'] = [
+                int(cirurgias_por_mes[mes]['foliculos'] / cirurgias_por_mes[mes]['count'])
+                for mes in meses_ordenados
+            ]
+            dashboard_data['follicles_data']['le_density'] = [
+                int(cirurgias_por_mes[mes]['densidade'] / cirurgias_por_mes[mes]['count'])
+                for mes in meses_ordenados
+            ]
+
+        logger.info(f"Dashboard data prepared: {dashboard_data}")
         return render_template('dashboard.html', data=dashboard_data)
 
     except Exception as e:
-        logger.error(f"Error in dashboard route: {str(e)}", exc_info=True)
-        return render_template('dashboard.html', error="Erro ao carregar dados do dashboard")
+        logger.error(f"Error in dashboard route: {str(e)}")
+        flash(f"❌ Erro ao carregar dashboard: {str(e)}", "error")
+        return render_template('dashboard.html', data={
+            'labels': [],
+            'datasets': [{'label': 'Cirurgias', 'data': []}],
+            'has_follicle_data': False,
+            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+            'total_surgeries': 0,
+            'avg_follicles': 0,
+            'avg_density': 0
+        })
 
 @app.route('/filter_dashboard')
 def filter_dashboard():
@@ -339,54 +345,29 @@ def save_necrose():
 def get_available_units():
     return jsonify({"message": "Get available units endpoint not yet implemented"})
 
-# Adicionar logs detalhados na função get_unit_progress
 @app.route('/get_unit_progress')
 def get_unit_progress():
     """Get progress data for a specific unit"""
     try:
         unit = request.args.get('unit')
-        logger.debug(f"Unit requested: {unit}") #Added log
         if not unit:
-            logger.error("Unidade não especificada") #Added log
             return jsonify({"error": "Unidade não especificada"}), 400
 
-        # Get current month and year
-        today = datetime.now()
-        start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        logger.debug(f"Start of month: {start_of_month}") #Added log
-
-        # Get surgeries for this unit in the current month
-        cirurgias = Cirurgia.query.filter(
-            Cirurgia.unidade == unit,
-            Cirurgia.data >= start_of_month
-        ).all()
-        logger.debug(f"Number of surgeries found: {len(cirurgias)}") #Added log
-
+        # Get surgeries for this unit
+        cirurgias = Cirurgia.query.filter_by(unidade=unit).all()
         total_cirurgias = len(cirurgias)
-        logger.info(f"Unidade {unit}: {total_cirurgias} cirurgias em {start_of_month.strftime('%B/%Y')}")
 
-        # Meta mensal por unidade
-        metas = {
-            'Ribeirão Preto': 35,
-            'Campinas': 25,
-            'Rio de Janeiro': 20
-        }
-        meta_mensal = metas.get(unit, 20)
-        logger.debug(f"Meta mensal for {unit}: {meta_mensal}") #Added log
+        # For now, set a fixed target of 20 surgeries per month
+        meta_mensal = 20
 
-        # Calcular percentual
-        percentual = round((total_cirurgias / meta_mensal * 100), 1) if meta_mensal > 0 else 0
-
-        response_data = {
+        return jsonify({
             "meta": meta_mensal,
-            "atual": total_cirurgias,
-            "percentual": percentual
-        }
-        logger.info(f"Progress data for {unit}: {response_data}")
-        return jsonify(response_data)
+            "cirurgias": total_cirurgias,
+            "percentual": (total_cirurgias / meta_mensal * 100) if meta_mensal > 0 else 0
+        })
 
     except Exception as e:
-        logger.exception(f"Error getting unit progress: {str(e)}") #Added exception log
+        logger.error(f"Error getting unit progress: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/get_tecnicas_data')
@@ -399,13 +380,11 @@ def get_equipe_data():
     try:
         # Get all surgeries and group by team members
         cirurgias = Cirurgia.query.all()
-        logger.debug(f"Number of surgeries retrieved: {len(cirurgias)}")
         equipe_data = {}
 
         for cirurgia in cirurgias:
             # Split team members (assuming they're comma-separated)
             membros = [membro.strip() for membro in cirurgia.equipe.split(',')]
-            logger.debug(f"Team members for surgery {cirurgia.id}: {membros}")
 
             # Count surgeries for each team member
             for membro in membros:
@@ -428,12 +407,11 @@ def get_equipe_data():
                 for membro, data in equipe_data.items()
             ]
         }
-        logger.debug(f"Formatted equipe data: {formatted_data}")
 
         return jsonify(formatted_data)
 
     except Exception as e:
-        logger.exception(f"Error getting team data: {str(e)}")
+        logger.error(f"Error getting team data: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/import_excel', methods=['POST'])
@@ -552,27 +530,14 @@ def import_excel():
     except Exception as e:
         logger.error(f"Error importing Excel data: {str(e)}")
         db.session.rollback()
-        return jsonify({
-            "success": False, 
-            "message": f"Erro ao importar dados: {str(e)}"        })
+        return jsonify({"success": False, "message": f"Erro ao importar dados: {str(e)}"})
 
 # Create database tables within app context
 with app.app_context():
     db.create_all()
 
-    # Verify and restore data after deployment
-    try:
-        from restore_deployment_data import restore_deployment_data
-        success, restored_files = restore_deployment_data()
-        if success:
-            logger.info("✅ Dados restaurados com sucesso após deployment")
-        else:
-            logger.warning("⚠️ Não foi possível restaurar os dados automaticamente")
-    except Exception as e:
-        logger.error(f"❌ Erro ao restaurar dados: {str(e)}")
-
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 3000))
     try:
         logger.info(f"Starting server on port {port}")
         app.run(host='0.0.0.0', port=port, debug=True)
