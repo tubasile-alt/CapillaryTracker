@@ -342,24 +342,29 @@ def save_necrose():
 def get_available_units():
     return jsonify({"message": "Get available units endpoint not yet implemented"})
 
+# Adicionar logs detalhados na função get_unit_progress
 @app.route('/get_unit_progress')
 def get_unit_progress():
     """Get progress data for a specific unit"""
     try:
         unit = request.args.get('unit')
+        logger.debug(f"Unit requested: {unit}") #Added log
         if not unit:
+            logger.error("Unidade não especificada") #Added log
             return jsonify({"error": "Unidade não especificada"}), 400
 
         # Get current month and year
         today = datetime.now()
         start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        logger.debug(f"Start of month: {start_of_month}") #Added log
 
         # Get surgeries for this unit in the current month
         cirurgias = Cirurgia.query.filter(
             Cirurgia.unidade == unit,
             Cirurgia.data >= start_of_month
         ).all()
-        
+        logger.debug(f"Number of surgeries found: {len(cirurgias)}") #Added log
+
         total_cirurgias = len(cirurgias)
         logger.info(f"Unidade {unit}: {total_cirurgias} cirurgias em {start_of_month.strftime('%B/%Y')}")
 
@@ -370,6 +375,7 @@ def get_unit_progress():
             'Rio de Janeiro': 20
         }
         meta_mensal = metas.get(unit, 20)
+        logger.debug(f"Meta mensal for {unit}: {meta_mensal}") #Added log
 
         # Calcular percentual
         percentual = round((total_cirurgias / meta_mensal * 100), 1) if meta_mensal > 0 else 0
@@ -383,7 +389,7 @@ def get_unit_progress():
         return jsonify(response_data)
 
     except Exception as e:
-        logger.error(f"Error getting unit progress: {str(e)}")
+        logger.exception(f"Error getting unit progress: {str(e)}") #Added exception log
         return jsonify({"error": str(e)}), 500
 
 @app.route('/get_tecnicas_data')
@@ -396,11 +402,13 @@ def get_equipe_data():
     try:
         # Get all surgeries and group by team members
         cirurgias = Cirurgia.query.all()
+        logger.debug(f"Number of surgeries retrieved: {len(cirurgias)}") 
         equipe_data = {}
 
         for cirurgia in cirurgias:
             # Split team members (assuming they're comma-separated)
             membros = [membro.strip() for membro in cirurgia.equipe.split(',')]
+            logger.debug(f"Team members for surgery {cirurgia.id}: {membros}") 
 
             # Count surgeries for each team member
             for membro in membros:
@@ -423,11 +431,12 @@ def get_equipe_data():
                 for membro, data in equipe_data.items()
             ]
         }
+        logger.debug(f"Formatted equipe data: {formatted_data}") 
 
         return jsonify(formatted_data)
 
     except Exception as e:
-        logger.error(f"Error getting team data: {str(e)}")
+        logger.exception(f"Error getting team data: {str(e)}") 
         return jsonify({"error": str(e)}), 500
 
 @app.route('/import_excel', methods=['POST'])
@@ -564,7 +573,7 @@ with app.app_context():
         logger.error(f"❌ Erro ao restaurar dados: {str(e)}")
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 3000))
+    port = int(os.environ.get('PORT', 5000))
     try:
         logger.info(f"Starting server on port {port}")
         app.run(host='0.0.0.0', port=port, debug=True)
