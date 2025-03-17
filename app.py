@@ -30,10 +30,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///cirurgias.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,
-    'pool_recycle': 300,
-    'connect_args': {
-        'sslmode': 'prefer'  # Changed from 'require' to 'prefer' for better compatibility
-    }
+    'pool_recycle': 300
 }
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
@@ -537,7 +534,7 @@ with app.app_context():
     db.create_all()
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 3000))
     try:
         logger.info(f"Starting server on port {port}")
         app.run(host='0.0.0.0', port=port, debug=True)
