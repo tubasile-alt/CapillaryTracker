@@ -186,7 +186,7 @@ def novo_cadastro():
         'fields': [
             {'name': 'data', 'label': 'Data da Cirurgia', 'type': 'date', 'required': True},
             {'name': 'nome', 'label': 'Nome do Paciente', 'type': 'text', 'required': True},
-            {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True, 
+            {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True,
              'options': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']},
             {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'required': True},
             {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'required': True},
@@ -261,13 +261,32 @@ def get_equipe(unidade):
     return jsonify({'equipe': equipe_por_unidade.get(unidade, [])})
 
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint to verify database connectivity"""
+    try:
+        # Try to count records
+        count = db.session.query(Cirurgia).count()
+        logger.info(f"Health check successful. Found {count} records.")
+        return jsonify({
+            "status": "healthy",
+            "database": "connected",
+            "records_count": count
+        })
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return jsonify({
+            "status": "unhealthy",
+            "error": str(e)
+        }), 500
+
 @app.route('/dashboard')
 def dashboard():
     """Dashboard route to display surgery data"""
     logger.info("Accessing dashboard route")
     try:
-        # Get surgeries from database
-        cirurgias = Cirurgia.query.all()
+        # Get surgeries from database using simpler query
+        cirurgias = db.session.query(Cirurgia).all()
         total_cirurgias = len(cirurgias)
         logger.info(f"Retrieved {total_cirurgias} surgeries from database")
 
@@ -277,14 +296,14 @@ def dashboard():
             'datasets': [],
             'has_follicle_data': True,
             'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-            'total_surgeries': total_cirurgias,  # Use actual count
+            'total_surgeries': total_cirurgias,
             'avg_follicles': 0,
             'avg_density': 0,
             'update_time': datetime.now().strftime('%d/%m/%Y %H:%M')
         }
 
-        # Calculate averages
         if cirurgias:
+            # Calculate averages
             total_foliculos = sum(c.total_foliculos or 0 for c in cirurgias)
             total_densidade = sum(c.densidade_scketh or 0 for c in cirurgias)
             logger.info(f"Total folículos: {total_foliculos}, Total densidade: {total_densidade}")
@@ -435,13 +454,13 @@ def get_equipe_data():
     try:
         # Get all surgeries and group by team members
         cirurgias = Cirurgia.query.all()
-        logger.debug(f"Number of surgeries retrieved: {len(cirurgias)}") 
+        logger.debug(f"Number of surgeries retrieved: {len(cirurgias)}")
         equipe_data = {}
 
         for cirurgia in cirurgias:
             # Split team members (assuming they're comma-separated)
             membros = [membro.strip() for membro in cirurgia.equipe.split(',')]
-            logger.debug(f"Team members for surgery {cirurgia.id}: {membros}") 
+            logger.debug(f"Team members for surgery {cirurgia.id}: {membros}")
 
             # Count surgeries for each team member
             for membro in membros:
@@ -464,12 +483,12 @@ def get_equipe_data():
                 for membro, data in equipe_data.items()
             ]
         }
-        logger.debug(f"Formatted equipe data: {formatted_data}") 
+        logger.debug(f"Formatted equipe data: {formatted_data}")
 
         return jsonify(formatted_data)
 
     except Exception as e:
-        logger.exception(f"Error getting team data: {str(e)}") 
+        logger.exception(f"Error getting team data: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/import_excel', methods=['POST'])
