@@ -544,7 +544,7 @@ def import_excel():
 # Create database tables within app context
 with app.app_context():
     db.create_all()
-    
+
     # Verify and restore data after deployment
     try:
         from restore_deployment_data import restore_deployment_data
