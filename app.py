@@ -5,6 +5,9 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_cors import CORS
 from models import db, Cirurgia
+from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
+import time
 
 # Configure logging
 logging.basicConfig(
@@ -30,13 +33,43 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///cirurgias.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,
-    'pool_recycle': 300
+    'pool_recycle': 300,
+    'pool_timeout': 20,
+    'pool_size': 30,
+    'max_overflow': 20
 }
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
 # Initialize SQLAlchemy with the app
 db.init_app(app)
 logger.info("Database initialized")
+
+# Function to test database connection
+def test_db_connection(max_retries=5, delay=1):
+    """Test database connection with retry mechanism"""
+    for attempt in range(max_retries):
+        try:
+            # Try to make a simple query
+            with app.app_context():
+                Cirurgia.query.first()
+            logger.info("Database connection successful")
+            return True
+        except OperationalError as e:
+            if attempt < max_retries - 1:
+                logger.warning(f"Database connection attempt {attempt + 1} failed, retrying in {delay} seconds...")
+                time.sleep(delay)
+                delay *= 2  # Exponential backoff
+            else:
+                logger.error(f"Failed to connect to database after {max_retries} attempts: {str(e)}")
+                return False
+        except Exception as e:
+            logger.error(f"Unexpected error testing database connection: {str(e)}")
+            return False
+
+# Test database connection on startup
+if not test_db_connection():
+    logger.error("Unable to establish database connection")
+
 
 @app.route('/ping')
 def ping():
