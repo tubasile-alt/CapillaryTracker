@@ -350,17 +350,29 @@ def get_unit_progress():
         if not unit:
             return jsonify({"error": "Unidade não especificada"}), 400
 
-        # Get surgeries for this unit
-        cirurgias = Cirurgia.query.filter_by(unidade=unit).all()
+        # Get surgeries for this unit in the current month
+        current_month = datetime.now().replace(day=1).date()
+        cirurgias = Cirurgia.query.filter(
+            Cirurgia.unidade == unit,
+            Cirurgia.data >= current_month
+        ).all()
         total_cirurgias = len(cirurgias)
 
-        # For now, set a fixed target of 20 surgeries per month
-        meta_mensal = 20
+        # Meta mensal por unidade
+        metas = {
+            'Ribeirão Preto': 35,
+            'Campinas': 25,
+            'Rio de Janeiro': 20
+        }
+        meta_mensal = metas.get(unit, 20)
+
+        # Calcular percentual
+        percentual = (total_cirurgias / meta_mensal * 100) if meta_mensal > 0 else 0
 
         return jsonify({
             "meta": meta_mensal,
-            "cirurgias": total_cirurgias,
-            "percentual": (total_cirurgias / meta_mensal * 100) if meta_mensal > 0 else 0
+            "atual": total_cirurgias,
+            "percentual": percentual
         })
 
     except Exception as e:
