@@ -205,7 +205,7 @@ def novo_cadastro():
             {'name': 'comentarios', 'label': 'Comentários', 'type': 'textarea', 'required': False}
         ]
     }
-    return render_template('form.html', form=form_data)
+    return render_template('form.html', form=form_data, data={})
 
 @app.route('/get_medicos/<unidade>')
 def get_medicos(unidade):
