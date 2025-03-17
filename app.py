@@ -353,10 +353,12 @@ def get_unit_progress():
         # Get surgeries for this unit in the current month
         current_month = datetime.now().replace(day=1).date()
         cirurgias = Cirurgia.query.filter(
-            Cirurgia.unidade == unit,
-            Cirurgia.data >= current_month
+            Cirurgia.unidade == unit
         ).all()
-        total_cirurgias = len(cirurgias)
+        
+        # Contar cirurgias deste mês
+        total_cirurgias = len([c for c in cirurgias if c.data >= current_month])
+        logger.info(f"Unidade {unit}: {total_cirurgias} cirurgias neste mês")
 
         # Meta mensal por unidade
         metas = {
@@ -367,13 +369,15 @@ def get_unit_progress():
         meta_mensal = metas.get(unit, 20)
 
         # Calcular percentual
-        percentual = (total_cirurgias / meta_mensal * 100) if meta_mensal > 0 else 0
+        percentual = round((total_cirurgias / meta_mensal * 100), 1) if meta_mensal > 0 else 0
 
-        return jsonify({
+        response_data = {
             "meta": meta_mensal,
             "atual": total_cirurgias,
             "percentual": percentual
-        })
+        }
+        logger.info(f"Progress data for {unit}: {response_data}")
+        return jsonify(response_data)
 
     except Exception as e:
         logger.error(f"Error getting unit progress: {str(e)}")
