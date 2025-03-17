@@ -285,7 +285,7 @@ def dashboard():
     """Dashboard route to display surgery data"""
     logger.info("Accessing dashboard route")
     try:
-        # Get summary data
+        # Get summary data with a simple query
         summary_sql = """
         SELECT 
             COUNT(*) as total_cirurgias,
@@ -293,65 +293,23 @@ def dashboard():
             ROUND(AVG(densidade_scketh)) as media_densidade
         FROM cirurgias;
         """
-        summary_result = db.session.execute(summary_sql)
-        summary = summary_result.fetchone()
-        logger.info(f"Summary data: {summary}")
+        summary = db.session.execute(summary_sql).fetchone()
+        logger.info(f"Summary query result: {summary}")
 
-        # Get monthly data
-        monthly_sql = """
-        SELECT 
-            COUNT(*) as total_cirurgias,
-            ROUND(AVG(total_foliculos)) as media_foliculos,
-            ROUND(AVG(densidade_scketh)) as media_densidade,
-            to_char(data, 'MM/YYYY') as mes_ano
-        FROM cirurgias
-        GROUP BY to_char(data, 'MM/YYYY')
-        ORDER BY mes_ano;
-        """
-        monthly_result = db.session.execute(monthly_sql)
-        monthly_rows = monthly_result.fetchall()
-        logger.info(f"Monthly data rows: {len(monthly_rows)}")
-
-        # Prepare dashboard data
+        # Create dashboard data structure
         dashboard_data = {
-            'labels': [],
-            'datasets': [],
-            'has_follicle_data': True,
-            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
             'total_surgeries': summary.total_cirurgias,
             'avg_follicles': int(summary.media_foliculos or 0),
             'avg_density': int(summary.media_densidade or 0),
             'update_time': datetime.now().strftime('%d/%m/%Y %H:%M')
         }
+        logger.info(f"Dashboard summary data: {dashboard_data}")
 
-        # Process monthly data
-        for row in monthly_rows:
-            dashboard_data['labels'].append(row.mes_ano)
-            dashboard_data['follicles_data']['labels'].append(row.mes_ano)
-            dashboard_data['follicles_data']['averages'].append(int(row.media_foliculos or 0))
-            dashboard_data['follicles_data']['le_density'].append(int(row.media_densidade or 0))
-
-        # Add surgery counts dataset
-        dashboard_data['datasets'].append({
-            'label': 'Total de Cirurgias',
-            'data': [row.total_cirurgias for row in monthly_rows]
-        })
-
-        logger.info(f"Dashboard data prepared: {dashboard_data}")
         return render_template('dashboard.html', data=dashboard_data)
 
     except Exception as e:
-        logger.error(f"Error in dashboard route: {str(e)}")
-        return render_template('dashboard.html', data={
-            'labels': [],
-            'datasets': [{'label': 'Cirurgias', 'data': []}],
-            'has_follicle_data': False,
-            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-            'total_surgeries': 0,
-            'avg_follicles': 0,
-            'avg_density': 0,
-            'update_time': datetime.now().strftime('%d/%m/%Y %H:%M')
-        })
+        logger.error(f"Error in dashboard route: {str(e)}", exc_info=True)
+        return render_template('dashboard.html', error="Erro ao carregar dados do dashboard")
 
 @app.route('/filter_dashboard')
 def filter_dashboard():
