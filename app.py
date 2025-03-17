@@ -5,7 +5,7 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_cors import CORS
 from models import db, Cirurgia
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 import time
 
@@ -286,13 +286,13 @@ def dashboard():
     logger.info("Accessing dashboard route")
     try:
         # Get summary data with a simple query
-        summary_sql = """
+        summary_sql = text("""
         SELECT 
             COUNT(*) as total_cirurgias,
             ROUND(AVG(total_foliculos)) as media_foliculos,
             ROUND(AVG(densidade_scketh)) as media_densidade
         FROM cirurgias;
-        """
+        """)
         summary = db.session.execute(summary_sql).fetchone()
         logger.info(f"Summary query result: {summary}")
 
