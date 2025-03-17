@@ -285,77 +285,85 @@ def dashboard():
     """Dashboard route to display surgery data"""
     logger.info("Accessing dashboard route")
     try:
-        # Get surgeries from database using simpler query
-        cirurgias = db.session.query(Cirurgia).all()
-        total_cirurgias = len(cirurgias)
-        logger.info(f"Retrieved {total_cirurgias} surgeries from database")
+        # Use raw SQL for better performance and debugging
+        sql = """
+        SELECT COUNT(*) as total_cirurgias,
+               COALESCE(AVG(total_foliculos), 0) as media_foliculos,
+               COALESCE(AVG(densidade_scketh), 0) as media_densidade,
+               unidade,
+               to_char(data, 'MM/YYYY') as mes_ano
+        FROM cirurgias
+        GROUP BY unidade, to_char(data, 'MM/YYYY')
+        ORDER BY mes_ano;
+        """
+        result = db.session.execute(sql)
+        rows = result.fetchall()
+        logger.info(f"SQL query returned {len(rows)} rows")
 
-        # Process data for dashboard
+        total_cirurgias = 0
+        total_foliculos = 0
+        total_densidade = 0
+        cirurgias_por_mes = {}
+
+        for row in rows:
+            total_cirurgias += row.total_cirurgias
+            total_foliculos += (row.media_foliculos * row.total_cirurgias)
+            total_densidade += (row.media_densidade * row.total_cirurgias)
+
+            mes_ano = row.mes_ano
+            if mes_ano not in cirurgias_por_mes:
+                cirurgias_por_mes[mes_ano] = {
+                    'count': 0,
+                    'foliculos': 0,
+                    'densidade': 0
+                }
+            cirurgias_por_mes[mes_ano]['count'] += row.total_cirurgias
+            cirurgias_por_mes[mes_ano]['foliculos'] += (row.media_foliculos * row.total_cirurgias)
+            cirurgias_por_mes[mes_ano]['densidade'] += (row.media_densidade * row.total_cirurgias)
+
+        logger.info(f"Total cirurgias: {total_cirurgias}")
+        logger.info(f"Dados por mês: {cirurgias_por_mes}")
+
+        # Prepare dashboard data
         dashboard_data = {
             'labels': [],
             'datasets': [],
             'has_follicle_data': True,
             'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
             'total_surgeries': total_cirurgias,
-            'avg_follicles': 0,
-            'avg_density': 0,
+            'avg_follicles': int(total_foliculos / total_cirurgias) if total_cirurgias > 0 else 0,
+            'avg_density': int(total_densidade / total_cirurgias) if total_cirurgias > 0 else 0,
             'update_time': datetime.now().strftime('%d/%m/%Y %H:%M')
         }
 
-        if cirurgias:
-            # Calculate averages
-            total_foliculos = sum(c.total_foliculos or 0 for c in cirurgias)
-            total_densidade = sum(c.densidade_scketh or 0 for c in cirurgias)
-            logger.info(f"Total folículos: {total_foliculos}, Total densidade: {total_densidade}")
+        # Sort months
+        meses_ordenados = sorted(cirurgias_por_mes.keys())
+        dashboard_data['labels'] = meses_ordenados
 
-            dashboard_data['avg_follicles'] = int(total_foliculos / total_cirurgias) if total_cirurgias > 0 else 0
-            dashboard_data['avg_density'] = int(total_densidade / total_cirurgias) if total_cirurgias > 0 else 0
-            logger.info(f"Média de folículos: {dashboard_data['avg_follicles']}, Média de densidade: {dashboard_data['avg_density']}")
+        # Add surgery counts
+        dashboard_data['datasets'].append({
+            'label': 'Total de Cirurgias',
+            'data': [cirurgias_por_mes[mes]['count'] for mes in meses_ordenados]
+        })
 
-            # Group by month/year
-            cirurgias_por_mes = {}
-            for cirurgia in cirurgias:
-                mes_ano = cirurgia.data.strftime('%m/%Y')
-                if mes_ano not in cirurgias_por_mes:
-                    cirurgias_por_mes[mes_ano] = {
-                        'count': 0,
-                        'foliculos': 0,
-                        'densidade': 0
-                    }
-                cirurgias_por_mes[mes_ano]['count'] += 1
-                cirurgias_por_mes[mes_ano]['foliculos'] += cirurgia.total_foliculos or 0
-                cirurgias_por_mes[mes_ano]['densidade'] += cirurgia.densidade_scketh or 0
-
-            logger.info(f"Dados agrupados por mês: {cirurgias_por_mes}")
-
-            # Sort months
-            meses_ordenados = sorted(cirurgias_por_mes.keys())
-            logger.info(f"Meses ordenados: {meses_ordenados}")
-
-            # Prepare data for charts
-            dashboard_data['labels'] = meses_ordenados
-            dashboard_data['datasets'].append({
-                'label': 'Total de Cirurgias',
-                'data': [cirurgias_por_mes[mes]['count'] for mes in meses_ordenados]
-            })
-
-            # Prepare follicle data
-            dashboard_data['follicles_data']['labels'] = meses_ordenados
-            dashboard_data['follicles_data']['averages'] = [
-                int(cirurgias_por_mes[mes]['foliculos'] / cirurgias_por_mes[mes]['count'])
-                for mes in meses_ordenados
-            ]
-            dashboard_data['follicles_data']['le_density'] = [
-                int(cirurgias_por_mes[mes]['densidade'] / cirurgias_por_mes[mes]['count'])
-                for mes in meses_ordenados
-            ]
+        # Add follicle data
+        dashboard_data['follicles_data']['labels'] = meses_ordenados
+        dashboard_data['follicles_data']['averages'] = [
+            int(cirurgias_por_mes[mes]['foliculos'] / cirurgias_por_mes[mes]['count'])
+            if cirurgias_por_mes[mes]['count'] > 0 else 0
+            for mes in meses_ordenados
+        ]
+        dashboard_data['follicles_data']['le_density'] = [
+            int(cirurgias_por_mes[mes]['densidade'] / cirurgias_por_mes[mes]['count'])
+            if cirurgias_por_mes[mes]['count'] > 0 else 0
+            for mes in meses_ordenados
+        ]
 
         logger.info(f"Dashboard data prepared: {dashboard_data}")
         return render_template('dashboard.html', data=dashboard_data)
 
     except Exception as e:
         logger.error(f"Error in dashboard route: {str(e)}")
-        flash(f"❌ Erro ao carregar dashboard: {str(e)}", "error")
         return render_template('dashboard.html', data={
             'labels': [],
             'datasets': [{'label': 'Cirurgias', 'data': []}],
