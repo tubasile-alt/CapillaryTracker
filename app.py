@@ -350,15 +350,18 @@ def get_unit_progress():
         if not unit:
             return jsonify({"error": "Unidade não especificada"}), 400
 
+        # Get current month and year
+        today = datetime.now()
+        start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
         # Get surgeries for this unit in the current month
-        current_month = datetime.now().replace(day=1).date()
         cirurgias = Cirurgia.query.filter(
-            Cirurgia.unidade == unit
+            Cirurgia.unidade == unit,
+            Cirurgia.data >= start_of_month
         ).all()
         
-        # Contar cirurgias deste mês
-        total_cirurgias = len([c for c in cirurgias if c.data >= current_month])
-        logger.info(f"Unidade {unit}: {total_cirurgias} cirurgias neste mês")
+        total_cirurgias = len(cirurgias)
+        logger.info(f"Unidade {unit}: {total_cirurgias} cirurgias em {start_of_month.strftime('%B/%Y')}")
 
         # Meta mensal por unidade
         metas = {
