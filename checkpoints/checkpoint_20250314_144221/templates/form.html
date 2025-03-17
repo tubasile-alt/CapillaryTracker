@@ -1,0 +1,926 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container">
+    <h2>{{ form.title }}</h2>
+    <form method="post" id="cirurgia-form">
+        <!-- Paginação -->
+        <div class="form-pagination">
+            <span class="pagination-step active" data-page="1">Página 1</span>
+            <span class="pagination-step" data-page="2">Página 2</span>
+        </div>
+
+        <!-- Página 1 -->
+        <div class="form-page" id="page-1">
+            <h3>Dados Gerais da Cirurgia</h3>
+            <div class="form-section">
+                {% for field in form.fields[:7] %}
+                    <div class="form-group">
+                        <label for="{{ field.name }}">
+                            {{ field.label }}
+                            {% if field.required %}*{% endif %}
+                        </label>
+
+                        {% if field.type == 'select' %}
+                            <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}
+                                    {% if field.name == 'unidade' %}onchange="updateMedicos(this.value); updateEquipe(this.value)"{% endif %}>
+                                <option value="">Selecione...</option>
+                                {% for option in field.options %}
+                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                        {{ option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.type == 'select_dynamic' %}
+                            {% if field.name == 'equipe' %}
+                                <div id="{{ field.name }}_container" class="checkbox-group">
+                                    <p class="select-message">Selecione a unidade primeiro...</p>
+                                </div>
+                                <div class="extra-people-fields">
+                                    <label for="extra_person_1">Técnica Extra 1:</label>
+                                    <input type="text" name="extra_person_1" id="extra_person_1">
+                                    <label for="extra_person_2">Técnica Extra 2:</label>
+                                    <input type="text" name="extra_person_2" id="extra_person_2">
+                                </div>
+                            {% else %}
+                                <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                                    <option value="">Selecione a unidade primeiro...</option>
+                                </select>
+                            {% endif %}
+                        {% elif field.type == 'textarea' %}
+                            <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
+                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                        {% elif field.name == 'data' %}
+                            <input type="date" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                            <input type="hidden" name="data_formatted" id="data_formatted">
+                        {% elif field.type == 'time' %}
+                            <input type="time" id="{{ field.name }}" name="{{ field.name }}" 
+                                   {% if field.required %}required{% endif %}
+                                   value="{{ data[field.name] if data and field.name in data else field.default if 'default' in field else '08:00' }}">
+                        {% elif field.name == 'tempo_cirurgia' %}
+                            <div class="time-input-container">
+                                <input type="number" name="{{ field.name }}" id="{{ field.name }}" value="5" min="0" step="0.5" {% if field.required %}required{% endif %}>
+                                <div class="time-buttons">
+                                    <button type="button" class="time-btn" onclick="adjustTime('add')">+</button>
+                                    <button type="button" class="time-btn" onclick="adjustTime('subtract')">-</button>
+                                </div>
+                            </div>
+                            <small class="form-text">Ajuste em intervalos de 30 minutos (0.5 hora)</small>
+                        {% else %}
+                            <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <h3>Informações do Implante</h3>
+            <div class="form-section">
+                {% for field in form.fields[7:14] %}
+                    <div class="form-group">
+                        <label for="{{ field.name }}">
+                            {{ field.label }}
+                            {% if field.required %}*{% endif %}
+                        </label>
+
+                        {% if field.type == 'select' %}
+                            <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                                <option value="">Selecione...</option>
+                                {% for option in field.options %}
+                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                        {{ option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.type == 'textarea' %}
+                            <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
+                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                        {% else %}
+                            <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <h3>Procedimentos e Ferramentas</h3>
+            <div class="form-section">
+                {% for field in form.fields[14:19] %}
+                    <div class="form-group">
+                        <label for="{{ field.name }}">
+                            {% if field.name == 'solucao_frente' %}
+                                Solução Frente (seringas)
+                            {% elif field.name == 'solucao_coroa' %}
+                                Solução Coroa (seringas)
+                            {% elif field.name == 'solucao_xilo_frente' %}
+                                Solução Xilo Frente (seringas)
+                            {% else %}
+                                {{ field.label }}
+                            {% endif %}
+                            {% if field.required %}*{% endif %}
+                        </label>
+
+                        {% if field.type == 'select' %}
+                            <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                                <option value="">Selecione...</option>
+                                {% for option in field.options %}
+                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                        {{ option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.type == 'textarea' %}
+                            <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
+                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                        {% else %}
+                            <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                
+                <!-- Campo de Bloqueio -->
+                <div class="form-group">
+                    <label for="bloqueio">Bloqueio</label>
+                    <select name="bloqueio" id="bloqueio" onchange="toggleBloqueioSeringas(this.value)">
+                        <option value="Não" selected>Não</option>
+                        <option value="Xilo sem vaso">Xilo sem vaso</option>
+                        <option value="Xilo com vaso">Xilo com vaso</option>
+                    </select>
+                </div>
+                
+                <!-- Campo de seringas do bloqueio (inicialmente oculto) -->
+                <div id="bloqueio_seringas_container" class="form-group" style="display: none;">
+                    <label for="bloqueio_seringas">Quantidade de seringas</label>
+                    <input type="number" name="bloqueio_seringas" id="bloqueio_seringas" min="0" step="1">
+                </div>
+                
+                <!-- Campo de comentários do bloqueio (inicialmente oculto) -->
+                <div id="bloqueio_comentarios_container" class="form-group" style="display: none;">
+                    <label for="bloqueio_comentarios">Comentários sobre o bloqueio</label>
+                    <textarea name="bloqueio_comentarios" id="bloqueio_comentarios" rows="2"></textarea>
+                </div>
+            </div>
+
+            <!-- Botões de navegação da página 1 -->
+            <div class="nav-buttons">
+                <button type="button" class="btn btn-primary" onclick="goToPage(2)">Próximo</button>
+            </div>
+        </div>
+
+        <!-- Página 2 -->
+        <div class="form-page" id="page-2" style="display: none;">
+            <h3>Extração</h3>
+            <div class="form-section">
+                <div class="body-hair-section">
+                    <div class="form-group">
+                        <label for="body-hair-check">
+                            <input type="checkbox" id="body-hair-check" name="body_hair_check" onchange="toggleBodyHairFields()">
+                            BODY HAIR
+                        </label>
+                    </div>
+                    
+                    <div id="body-hair-fields" style="display: none;">
+                        <div class="body-hair-options">
+                            <div class="body-hair-option">
+                                <input type="checkbox" id="barba-check" name="barba_check" onchange="toggleSourceFields('barba')">
+                                <label for="barba-check">Barba</label>
+                                <div id="barba-fields" class="source-fields" style="display: none;">
+                                    <div class="form-group-compact">
+                                        <label for="barba-furos">Furos:</label>
+                                        <input type="number" id="barba-furos" name="barba_furos" min="0">
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label for="barba-fios">Fios:</label>
+                                        <input type="number" id="barba-fios" name="barba_fios" min="0">
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label for="barba-comentarios">Comentários:</label>
+                                        <textarea id="barba-comentarios" name="barba_comentarios" rows="2"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="body-hair-option">
+                                <input type="checkbox" id="peitoral-check" name="peitoral_check" onchange="toggleSourceFields('peitoral')">
+                                <label for="peitoral-check">Peitoral</label>
+                                <div id="peitoral-fields" class="source-fields" style="display: none;">
+                                    <div class="form-group-compact">
+                                        <label for="peitoral-furos">Furos:</label>
+                                        <input type="number" id="peitoral-furos" name="peitoral_furos" min="0">
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label for="peitoral-fios">Fios:</label>
+                                        <input type="number" id="peitoral-fios" name="peitoral_fios" min="0">
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label for="peitoral-comentarios">Comentários:</label>
+                                        <textarea id="peitoral-comentarios" name="peitoral_comentarios" rows="2"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="body-hair-option">
+                                <input type="checkbox" id="abdome-check" name="abdome_check" onchange="toggleSourceFields('abdome')">
+                                <label for="abdome-check">Abdome</label>
+                                <div id="abdome-fields" class="source-fields" style="display: none;">
+                                    <div class="form-group-compact">
+                                        <label for="abdome-furos">Furos:</label>
+                                        <input type="number" id="abdome-furos" name="abdome_furos" min="0">
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label for="abdome-fios">Fios:</label>
+                                        <input type="number" id="abdome-fios" name="abdome_fios" min="0">
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label for="abdome-comentarios">Comentários:</label>
+                                        <textarea id="abdome-comentarios" name="abdome_comentarios" rows="2"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="body-hair-option">
+                                <input type="checkbox" id="dorso-check" name="dorso_check" onchange="toggleSourceFields('dorso')">
+                                <label for="dorso-check">Dorso</label>
+                                <div id="dorso-fields" class="source-fields" style="display: none;">
+                                    <div class="form-group-compact">
+                                        <label for="dorso-furos">Furos:</label>
+                                        <input type="number" id="dorso-furos" name="dorso_furos" min="0">
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label for="dorso-fios">Fios:</label>
+                                        <input type="number" id="dorso-fios" name="dorso_fios" min="0">
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label for="dorso-comentarios">Comentários:</label>
+                                        <textarea id="dorso-comentarios" name="dorso_comentarios" rows="2"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="quadrantes-container">
+                    <div class="quadrante-box">
+                        <h4>Quadrante 1</h4>
+                        <div class="quadrante-inputs">
+                            {% for field in form.fields[19:22] %}
+                                <div class="form-group-compact">
+                                    <label for="{{ field.name }}">
+                                        {{ field.label.replace('Quadrante 1 - ', '') }}
+                                        {% if field.required %}*{% endif %}
+                                    </label>
+                                    <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                        value="{{ data.get(field.name, '') }}"
+                                        {% if field.required %}required{% endif %}>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="quadrante-box">
+                        <h4>Quadrante 2</h4>
+                        <div class="quadrante-inputs">
+                            {% for field in form.fields[22:25] %}
+                                <div class="form-group-compact">
+                                    <label for="{{ field.name }}">
+                                        {{ field.label.replace('Quadrante 2 - ', '') }}
+                                        {% if field.required %}*{% endif %}
+                                    </label>
+                                    <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                        value="{{ data.get(field.name, '') }}"
+                                        {% if field.required %}required{% endif %}>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="quadrante-box">
+                        <h4>Quadrante 3</h4>
+                        <div class="quadrante-inputs">
+                            {% for field in form.fields[25:28] %}
+                                <div class="form-group-compact">
+                                    <label for="{{ field.name }}">
+                                        {{ field.label.replace('Quadrante 3 - ', '') }}
+                                        {% if field.required %}*{% endif %}
+                                    </label>
+                                    <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                        value="{{ data.get(field.name, '') }}"
+                                        {% if field.required %}required{% endif %}>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="quadrante-box">
+                        <h4>Quadrante 4</h4>
+                        <div class="quadrante-inputs">
+                            {% for field in form.fields[28:31] %}
+                                <div class="form-group-compact">
+                                    <label for="{{ field.name }}">
+                                        {{ field.label.replace('Quadrante 4 - ', '') }}
+                                        {% if field.required %}*{% endif %}
+                                    </label>
+                                    <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                        value="{{ data.get(field.name, '') }}"
+                                        {% if field.required %}required{% endif %}>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="results-container">
+                    <h4>Resultados Calculados (serão salvos automaticamente)</h4>
+                    <div class="result-grid">
+                        <div>
+                            <p>Densidade de Extração Q1: <span id="q1_densidade_result">-</span> fios/cm²</p>
+                            <p>Taxa de Quebra Q1: <span id="q1_taxa_quebra_result">-</span>%</p>
+                        </div>
+                        <div>
+                            <p>Densidade de Extração Q2: <span id="q2_densidade_result">-</span> fios/cm²</p>
+                            <p>Taxa de Quebra Q2: <span id="q2_taxa_quebra_result">-</span>%</p>
+                        </div>
+                        <div>
+                            <p>Densidade de Extração Q3: <span id="q3_densidade_result">-</span> fios/cm²</p>
+                            <p>Taxa de Quebra Q3: <span id="q3_taxa_quebra_result">-</span>%</p>
+                        </div>
+                        <div>
+                            <p>Densidade de Extração Q4: <span id="q4_densidade_result">-</span> fios/cm²</p>
+                            <p>Taxa de Quebra Q4: <span id="q4_taxa_quebra_result">-</span>%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Avaliação Intraoperatória</h3>
+            <div class="form-section">
+                {% for field in form.fields[31:34] %}
+                    <div class="form-group">
+                        <label for="{{ field.name }}">
+                            {{ field.label }}
+                            {% if field.required %}*{% endif %}
+                        </label>
+
+                        {% if field.type == 'select' %}
+                            <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                                <option value="">Selecione...</option>
+                                {% for option in field.options %}
+                                    <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
+                                        {{ option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.type == 'textarea' %}
+                            <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
+                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                        {% else %}
+                            <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <h3>Histórico do Paciente</h3>
+            <div class="form-section">
+                {% for field in form.fields[34:40] %}
+                    <div class="form-group">
+                        <label for="{{ field.name }}">
+                            {{ field.label }}
+                            {% if field.required %}*{% endif %}
+                        </label>
+
+                        {% if field.type == 'select' %}
+                            <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                                <option value="">Selecione...</option>
+                                {% for option in field.options %}
+                                    <option value="{{ option }}" 
+                                        {% if data.get(field.name) == option %}
+                                            selected
+                                        {% elif field.label == 'Implante Secundário?' and option == 'Não' and not data.get(field.name) %}
+                                            selected
+                                        {% endif %}>
+                                        {{ option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.type == 'textarea' %}
+                            <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
+                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                        {% else %}
+                            <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <h3>Comentários e Finalização</h3>
+            <div class="form-section">
+                {% for field in form.fields[40:] %}
+                    <div class="form-group">
+                        <label for="{{ field.name }}">
+                            {{ field.label }}
+                            {% if field.required %}*{% endif %}
+                        </label>
+
+                        {% if field.type == 'textarea' %}
+                            <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
+                                {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                        {% else %}
+                            <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                {% if field.required %}required{% endif %}>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+
+
+            <!-- Botões de navegação da página 2 -->
+            <div class="nav-buttons">
+                <button type="button" class="btn btn-secondary" onclick="goToPage(1)">Anterior</button>
+                <button type="submit" class="btn btn-primary">Salvar Dados</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    .extra-people-fields {
+        margin-top: 15px;
+        padding: 10px;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .extra-people-fields label {
+        display: block;
+        margin-top: 8px;
+        font-size: 0.9em;
+        color: #555;
+    }
+
+    .extra-people-fields input {
+        width: 100%;
+        padding: 6px;
+        margin: 3px 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    
+    /* Estilos para Body Hair */
+    .body-hair-section {
+        margin-bottom: 20px;
+        border: 1px solid #e0e0e0;
+        padding: 15px;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+    
+    .body-hair-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-top: 10px;
+    }
+    
+    .body-hair-option {
+        flex: 1;
+        min-width: 250px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        background-color: white;
+    }
+    
+    .body-hair-option label {
+        font-weight: bold;
+        margin-left: 5px;
+    }
+    
+    .source-fields {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #ccc;
+    }
+    
+    .source-fields input[type="number"] {
+        width: 100%;
+        padding: 5px;
+        margin-bottom: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    
+    .source-fields textarea {
+        width: 100%;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .time-buttons {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .time-btn {
+        border: none;
+        background-color: #f0f0f0;
+        cursor: pointer;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        text-align: center;
+        font-weight: bold;
+    }
+</style>
+
+<script>
+    // Funções para controlar campos de Body Hair
+    function toggleBodyHairFields() {
+        const bodyHairCheck = document.getElementById('body-hair-check');
+        const bodyHairFields = document.getElementById('body-hair-fields');
+        
+        if (bodyHairCheck.checked) {
+            bodyHairFields.style.display = 'block';
+        } else {
+            bodyHairFields.style.display = 'none';
+            
+            // Desmarcar todos os checkboxes de fontes
+            document.getElementById('barba-check').checked = false;
+            document.getElementById('peitoral-check').checked = false;
+            document.getElementById('abdome-check').checked = false;
+            document.getElementById('dorso-check').checked = false;
+            
+            // Esconder todos os campos de detalhes
+            document.getElementById('barba-fields').style.display = 'none';
+            document.getElementById('peitoral-fields').style.display = 'none';
+            document.getElementById('abdome-fields').style.display = 'none';
+            document.getElementById('dorso-fields').style.display = 'none';
+        }
+    }
+    
+    function toggleSourceFields(source) {
+        const sourceCheck = document.getElementById(`${source}-check`);
+        const sourceFields = document.getElementById(`${source}-fields`);
+        
+        if (sourceCheck.checked) {
+            sourceFields.style.display = 'block';
+        } else {
+            sourceFields.style.display = 'none';
+            
+            // Limpar os campos
+            document.getElementById(`${source}-furos`).value = '';
+            document.getElementById(`${source}-fios`).value = '';
+            document.getElementById(`${source}-comentarios`).value = '';
+        }
+    }
+    
+    // Set today's date as default
+    window.addEventListener('load', function() {
+        var dateInput = document.getElementById('data');
+        if (dateInput) {
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0');
+            var yyyy = today.getFullYear();
+            dateInput.value = yyyy + '-' + mm + '-' + dd;
+        }
+
+        // If unidade is already selected, update medicos and equipe
+        var unidadeSelect = document.getElementById('unidade');
+        if (unidadeSelect && unidadeSelect.value) {
+            updateMedicos(unidadeSelect.value);
+            updateEquipe(unidadeSelect.value);
+        }
+
+        // Setup calculation of extraction data
+        setupExtractionCalculations();
+    });
+
+    // Format date before form submission and validate required fields
+    document.getElementById('cirurgia-form').addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent default submission to validate first
+
+        // Validate all required fields
+        let isValid = true;
+        let missingFields = [];
+
+        const allRequiredFields = document.querySelectorAll('[required]');
+        allRequiredFields.forEach(field => {
+            if (!field.value) {
+                isValid = false;
+                field.classList.add('field-error');
+                const label = document.querySelector(`label[for="${field.id}"]`);
+                if (label) {
+                    missingFields.push(label.textContent.replace('*', '').trim());
+                }
+            } else {
+                field.classList.remove('field-error');
+            }
+        });
+
+        if (!isValid) {
+            alert(`Por favor, preencha os seguintes campos obrigatórios:\n- ${missingFields.join('\n- ')}`);
+            return;
+        }
+
+        // Format date
+        var dateInput = document.getElementById('data');
+        if (dateInput) {
+            var date = new Date(dateInput.value);
+            var dd = String(date.getDate()).padStart(2, '0');
+            var mm = String(date.getMonth() + 1).padStart(2, '0');
+            var yyyy = date.getFullYear();
+
+            // Create a hidden input if it doesn't exist
+            let dataFormatted = document.getElementById('data_formatted');
+            if (!dataFormatted) {
+                dataFormatted = document.createElement('input');
+                dataFormatted.type = 'hidden';
+                dataFormatted.id = 'data_formatted';
+                dataFormatted.name = 'data_formatted';
+                document.getElementById('cirurgia-form').appendChild(dataFormatted);
+            }
+            dataFormatted.value = dd + '/' + mm + '/' + yyyy;
+        }
+
+        // Get selected equipe values from checkboxes
+        var checkboxes = document.querySelectorAll('input[name="equipe"]:checked');
+        var selectedEquipe = [];
+        
+        if (checkboxes.length > 0) {
+            selectedEquipe = Array.from(checkboxes).map(checkbox => checkbox.value);
+        }
+        
+        // Adicionar técnicas extras à equipe se estiverem preenchidas
+        var extraPerson1 = document.getElementById('extra_person_1').value;
+        var extraPerson2 = document.getElementById('extra_person_2').value;
+        
+        if (extraPerson1) {
+            selectedEquipe.push(extraPerson1 + ' (extra)');
+        }
+        
+        if (extraPerson2) {
+            selectedEquipe.push(extraPerson2 + ' (extra)');
+        }
+        
+        if (selectedEquipe.length > 0) {
+            // Create a hidden input to store the comma-separated values
+            var hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'equipe_values';
+            hiddenInput.value = selectedEquipe.join(', ');
+            document.getElementById('cirurgia-form').appendChild(hiddenInput);
+        }
+        
+        // Adicionar dados de bloqueio
+        const bloqueioSelect = document.getElementById('bloqueio');
+        const bloqueioValue = bloqueioSelect.value;
+        
+        let bloqueioData = {
+            tipo: bloqueioValue,
+            seringas: '',
+            comentarios: ''
+        };
+        
+        if (bloqueioValue !== 'Não') {
+            bloqueioData.seringas = document.getElementById('bloqueio_seringas').value;
+            bloqueioData.comentarios = document.getElementById('bloqueio_comentarios').value;
+        }
+        
+        const bloqueioInput = document.createElement('input');
+        bloqueioInput.type = 'hidden';
+        bloqueioInput.name = 'bloqueio_data';
+        bloqueioInput.value = JSON.stringify(bloqueioData);
+        document.getElementById('cirurgia-form').appendChild(bloqueioInput);
+        
+        // Prepara os dados de Body Hair, se aplicável
+        if (document.getElementById('body-hair-check').checked) {
+            const bodyHairSources = ['barba', 'peitoral', 'abdome', 'dorso'];
+            let bodyHairData = {};
+            
+            bodyHairSources.forEach(source => {
+                if (document.getElementById(`${source}-check`).checked) {
+                    const furos = document.getElementById(`${source}-furos`).value;
+                    const fios = document.getElementById(`${source}-fios`).value;
+                    const comentarios = document.getElementById(`${source}-comentarios`).value;
+                    
+                    bodyHairData[source] = {
+                        furos: furos,
+                        fios: fios,
+                        comentarios: comentarios
+                    };
+                }
+            });
+            
+            if (Object.keys(bodyHairData).length > 0) {
+                const bodyHairInput = document.createElement('input');
+                bodyHairInput.type = 'hidden';
+                bodyHairInput.name = 'body_hair_data';
+                bodyHairInput.value = JSON.stringify(bodyHairData);
+                document.getElementById('cirurgia-form').appendChild(bodyHairInput);
+            }
+        }
+
+        // Show success message with emoji
+        const successMessage = document.createElement('div');
+        successMessage.className = 'success-message';
+        successMessage.innerHTML = '✅ Dados salvos com sucesso! 🎉';
+        document.body.appendChild(successMessage);
+
+        console.log('Enviando formulário...');
+
+        // Garantir que o formulário seja enviado corretamente
+        const form = this;
+        this.removeEventListener('submit', arguments.callee);
+
+        // Usar um timeout maior para garantir que todos os dados estejam prontos
+        setTimeout(() => {
+            try {
+                form.submit();
+            } catch (err) {
+                console.error('Erro ao enviar formulário:', err);
+                alert('Erro ao enviar formulário. Por favor, tente novamente.');
+                location.reload();
+            }
+        }, 1000);
+    });
+
+    // Update medicos based on selected unidade
+    function updateMedicos(unidade) {
+        if (!unidade) return;
+
+        fetch('/get_medicos/' + unidade)
+            .then(response => response.json())
+            .then(data => {
+                var medicoSelect = document.getElementById('medico');
+                medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
+                data.medicos.forEach(medico => {
+                    var option = document.createElement('option');
+                    option.value = medico;
+                    option.textContent = medico;
+                    medicoSelect.appendChild(option);
+                });
+            });
+    }
+
+    // Update equipe based on selected unidade
+    function updateEquipe(unidade) {
+        if (!unidade) return;
+
+        fetch('/get_equipe/' + unidade)
+            .then(response => response.json())
+            .then(data => {
+                var equipeContainer = document.getElementById('equipe_container');
+                equipeContainer.innerHTML = '';
+
+                if (data.equipe.length === 0) {
+                    var message = document.createElement('p');
+                    message.className = 'select-message';
+                    message.textContent = 'Nenhuma equipe disponível para esta unidade';
+                    equipeContainer.appendChild(message);
+                    return;
+                }
+
+                data.equipe.forEach(membro => {
+                    var checkboxDiv = document.createElement('div');
+                    checkboxDiv.className = 'checkbox-item';
+
+                    var checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'equipe';
+                    checkbox.value = membro;
+                    checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
+
+                    var label = document.createElement('label');
+                    label.htmlFor = checkbox.id;
+                    label.textContent = membro;
+
+                    checkboxDiv.appendChild(checkbox);
+                    checkboxDiv.appendChild(label);
+                    equipeContainer.appendChild(checkboxDiv);
+                });
+            });
+    }
+
+    // Setup calculation of extraction data
+    function setupExtractionCalculations() {
+        const quadrantes = ['q1', 'q2', 'q3', 'q4'];
+
+        quadrantes.forEach(q => {
+            const areaInput = document.getElementById(`${q}_area`);
+            const furosInput = document.getElementById(`${q}_furos`);
+            const fiosInput = document.getElementById(`${q}_fios`);
+
+            if (areaInput && furosInput && fiosInput) {
+                const updateCalculations = () => {
+                    const area = parseFloat(areaInput.value) || 0;
+                    const furos = parseFloat(furosInput.value) || 0;
+                    const fios = parseFloat(fiosInput.value) || 0;
+
+                    // Calcular densidade (furos/área) e arredondar para baixo
+                    const densidade = area > 0 ? furos / area : 0;
+                    document.getElementById(`${q}_densidade_result`).textContent = Math.floor(densidade);
+
+                    // Calcular taxa de quebra ((furos-fios)/furos * 100) e arredondar para baixo
+                    const taxaQuebra = furos > 0 ? ((furos - fios) / furos) * 100 : 0;
+                    document.getElementById(`${q}_taxa_quebra_result`).textContent = Math.floor(taxaQuebra);
+                };
+
+                areaInput.addEventListener('input', updateCalculations);
+                furosInput.addEventListener('input', updateCalculations);
+                fiosInput.addEventListener('input', updateCalculations);
+            }
+        });
+    }
+
+    // Função para navegar entre páginas
+    function goToPage(pageNumber) {
+        // Se estiver indo para a página 2, validar campos obrigatórios da página 1
+        if (pageNumber === 2) {
+            let isValid = true;
+            let missingFields = [];
+
+            // Verificar todos os campos obrigatórios da página 1
+            const requiredFields = document.querySelectorAll('#page-1 [required]');
+            requiredFields.forEach(field => {
+                if (!field.value) {
+                    isValid = false;
+                    field.classList.add('field-error');
+                    const label = document.querySelector(`label[for="${field.id}"]`);
+                    if (label) {
+                        missingFields.push(label.textContent.replace('*', '').trim());
+                    }
+                } else {
+                    field.classList.remove('field-error');
+                }
+            });
+
+            if (!isValid) {
+                alert(`Por favor, preencha os seguintes campos obrigatórios:\n- ${missingFields.join('\n- ')}`);
+                return;
+            }
+        }
+
+        // Ocultar todas as páginas
+        document.querySelectorAll('.form-page').forEach(page => {
+            page.style.display = 'none';
+        });
+
+        // Mostrar a página selecionada
+        document.getElementById('page-' + pageNumber).style.display = 'block';
+
+        // Atualizar indicadores de paginação
+        document.querySelectorAll('.pagination-step').forEach(step => {
+            step.classList.remove('active');
+            if (parseInt(step.getAttribute('data-page')) === pageNumber) {
+                step.classList.add('active');
+            }
+        });
+
+        // Rolar para o topo
+        window.scrollTo(0, 0);
+    }
+
+    function adjustTime(action) {
+        const tempoCirurgiaInput = document.getElementById('tempo_cirurgia');
+        let currentTime = parseFloat(tempoCirurgiaInput.value);
+
+        if (action === 'add') {
+            currentTime += 0.5;
+        } else if (action === 'subtract') {
+            currentTime -= 0.5;
+            currentTime = Math.max(0, currentTime); // Prevent negative values
+        }
+
+        tempoCirurgiaInput.value = currentTime;
+    }
+    
+    // Função para mostrar/ocultar campo de seringas do bloqueio
+    function toggleBloqueioSeringas(value) {
+        const seringasContainer = document.getElementById('bloqueio_seringas_container');
+        const comentariosContainer = document.getElementById('bloqueio_comentarios_container');
+        
+        if (value === "Não") {
+            seringasContainer.style.display = 'none';
+            comentariosContainer.style.display = 'none';
+            document.getElementById('bloqueio_seringas').value = '';
+            document.getElementById('bloqueio_comentarios').value = '';
+        } else {
+            seringasContainer.style.display = 'block';
+            comentariosContainer.style.display = 'block';
+        }
+    }
+</script>
+{% endblock %}
