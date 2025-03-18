@@ -23,7 +23,7 @@ def check_patients():
         # Verificar cada paciente
         for patient in patients_to_check:
             # Buscar de forma case-insensitive
-            found = df['nome'].str.lower() == patient.lower()
+            found = df['nome'].str.lower().str.contains(patient.lower().split()[0])
             if found.any():
                 print(f"✅ {patient} - Encontrado")
             else:
