@@ -537,7 +537,7 @@ def process_dashboard_data(df):
         'has_follicle_data': False,
         'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
         'update_time': datetime.now().strftime('%d/%m/%Y %H:%M'),
-        'version': '2.0'  # Added version number
+        'version': '2.1'  # Updated version number
     }
 
     # Return empty structure if DataFrame is empty
@@ -550,16 +550,26 @@ def process_dashboard_data(df):
 
         # Calculate follicle averages if the data exists
         if 'total_foliculos' in df.columns:
+            # Convert to numeric, forcing invalid values to NaN
             total_foliculos = pd.to_numeric(df['total_foliculos'], errors='coerce')
-            dashboard_data['avg_follicles'] = int(total_foliculos.mean())
+            # Calculate mean ignoring NaN values
+            media_foliculos = total_foliculos.mean()
+            if pd.notna(media_foliculos):  # Check if mean is not NaN
+                dashboard_data['avg_follicles'] = int(round(media_foliculos))
+                dashboard_data['has_follicle_data'] = True
 
         # Calculate density averages if the data exists
         if 'densidade_scketh' in df.columns:
+            # Convert to numeric, forcing invalid values to NaN
             densidade = pd.to_numeric(df['densidade_scketh'], errors='coerce')
-            dashboard_data['avg_density'] = int(densidade.mean())
+            # Calculate mean ignoring NaN values
+            media_densidade = densidade.mean()
+            if pd.notna(media_densidade):  # Check if mean is not NaN
+                dashboard_data['avg_density'] = int(round(media_densidade))
 
         # Process dates
         if 'data' in df.columns:
+            # Convert dates properly
             df['mes_ano'] = pd.to_datetime(df['data']).dt.strftime('%m/%Y')
 
             # Group by month
@@ -586,22 +596,30 @@ def process_dashboard_data(df):
                         'data': merged['count'].tolist()
                     })
 
-        # Process follicle data if available
-        if 'total_foliculos' in df.columns:
-            dashboard_data['has_follicle_data'] = True
-            follicles_by_month = df.groupby('mes_ano')['total_foliculos'].mean().round(0).astype(int)
-            dashboard_data['follicles_data']['labels'] = follicles_by_month.index.tolist()
-            dashboard_data['follicles_data']['averages'] = follicles_by_month.values.tolist()
+            # Process follicle data by month
+            if dashboard_data['has_follicle_data']:
+                # Calculate monthly averages for follicles
+                follicles_by_month = df.groupby('mes_ano').agg({
+                    'total_foliculos': lambda x: int(round(pd.to_numeric(x, errors='coerce').mean()))
+                }).reset_index()
 
-            if 'densidade_scketh' in df.columns:
-                density_by_month = df.groupby('mes_ano')['densidade_scketh'].mean().round(0).astype(int)
-                dashboard_data['follicles_data']['le_density'] = density_by_month.values.tolist()
+                dashboard_data['follicles_data']['labels'] = follicles_by_month['mes_ano'].tolist()
+                dashboard_data['follicles_data']['averages'] = follicles_by_month['total_foliculos'].tolist()
+
+                # Calculate monthly averages for density if available
+                if 'densidade_scketh' in df.columns:
+                    density_by_month = df.groupby('mes_ano').agg({
+                        'densidade_scketh': lambda x: int(round(pd.to_numeric(x, errors='coerce').mean()))
+                    }).reset_index()
+                    dashboard_data['follicles_data']['le_density'] = density_by_month['densidade_scketh'].tolist()
+
+        logger.info(f"Dashboard data processed successfully: {dashboard_data}")
+        return dashboard_data
 
     except Exception as e:
         logger.error(f"Error processing dashboard data: {str(e)}")
         logger.error(traceback.format_exc())
-
-    return dashboard_data
+        return dashboard_data
 
 @app.route('/dashboard')
 def dashboard():
@@ -631,8 +649,7 @@ def dashboard():
                     'coroa': surgery.coroa,
                     'scalpe': surgery.scalpe,
                     'peninsula_direita': surgery.peninsula_direita,
-                    'peninsula_esquerda': surgery.peninsula_esquerda
-                }
+                    'peninsula_esquerda': surgery.peninsula_esquerda                }
                 records.append(record)
 
             df = pd.DataFrame(records)
