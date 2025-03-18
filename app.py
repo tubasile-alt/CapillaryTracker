@@ -319,27 +319,6 @@ def get_medicos(unidade):
 
 
 
-@app.route('/load_from_attachment', methods=['GET', 'POST'])
-def load_from_attachment_route():
-    """Carrega dados diretamente do arquivo anexado (attached_assets/relatorio_cirurgias.xlsx)"""
-    if request.method == 'POST':
-        try:
-            from load_from_attachment import load_from_attachment
-            success = load_from_attachment()
-            
-            if success:
-                flash("✅ Dados carregados com sucesso do arquivo anexado!", "success")
-            else:
-                flash("❌ Erro ao carregar dados do arquivo anexado.", "error")
-            
-            return redirect(url_for('index'))
-        except Exception as e:
-            logger.error(f"Erro ao carregar dados do anexo: {str(e)}\n{traceback.format_exc()}")
-            flash(f"❌ Erro ao carregar dados: {str(e)}", "error")
-            return redirect(url_for('index'))
-    
-    return redirect(url_for('index'))
-
 @app.route('/import_data', methods=['GET', 'POST'])
 def import_data():
     """Importa dados de um arquivo Excel para o banco de dados"""

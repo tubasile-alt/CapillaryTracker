@@ -1,9 +1,9 @@
 {
-  "timestamp": "2025-03-11 13:28:16",
+  "timestamp": "2025-03-11 18:46:29",
   "data_files": [
     "cirurgias.xlsx"
   ],
-  "version": "20250311132816",
+  "version": "20250311184629",
   "include_data": true,
-  "patient_count": 1
+  "patient_count": 2
 }
