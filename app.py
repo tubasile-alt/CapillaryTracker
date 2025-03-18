@@ -1153,5 +1153,3 @@ if __name__ == '__main__':
     except Exception as e:
         logger.error(f"Failed to start Flask server: {str(e)}\n{traceback.format_exc()}")
         raise
-        logger.error(f"Failed to start Flask server: {str(e)}\n{traceback.format_exc()}")
-        raise
