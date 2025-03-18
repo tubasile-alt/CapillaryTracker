@@ -33,8 +33,15 @@ def clear_and_import_data():
         # Carregar a planilha de origem
         df_source = pd.read_excel(source_file, engine='openpyxl')
 
-        # Salvar no arquivo de destino
-        df_source.to_excel("cirurgias.xlsx", index=False, engine='openpyxl')
+        # Ler dados atuais
+        df_current = pd.read_excel("cirurgias.xlsx")
+        
+        # Combinar dados atuais com novos
+        df_combined = pd.concat([df_current, df_source], ignore_index=True)
+        df_combined = df_combined.drop_duplicates(subset=['nome', 'data'], keep='last')
+        
+        # Salvar dados combinados
+        df_combined.to_excel("cirurgias.xlsx", index=False, engine='openpyxl')
 
         num_records = len(df_source)
         logger.info(f"✅ Dados importados com sucesso! {num_records} registros adicionados.")
