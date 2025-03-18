@@ -539,10 +539,10 @@ with app.app_context():
     db.create_all()
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 3000))
+    port = int(os.environ.get('PORT', 5000))
     try:
         logger.info(f"Starting server on port {port}")
-        app.run(host='0.0.0.0', port=port, debug=True)
+        app.run(host='0.0.0.0', port=port)
     except Exception as e:
         logger.exception("Failed to start server:")
         raise
