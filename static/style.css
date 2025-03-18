@@ -53,6 +53,27 @@
     }
 }
 
+/* Ajustar layout do header */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    position: relative;
+}
+
+.version-text {
+    font-size: 0.8rem;
+    color: #666;
+    margin-left: 10px;
+    background-color: #f0f0f0;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -95,15 +116,6 @@ body {
     h1 {
         font-size: 1.3rem;
     }
-}
-
-.header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
 }
 
 .company-logo {

@@ -527,122 +527,79 @@ def get_equipe(unidade):
 
 def process_dashboard_data(df):
     """Process dataframe into dashboard-ready data"""
-    # Lidar com valores vazios
-    df = df.fillna(0)
-
-    # Garantir que colunas numéricas tenham valores zerados quando vazios
-    numeric_columns = df.select_dtypes(include=['number']).columns
-    for col in numeric_columns:
-        df[col] = df[col].fillna(0).replace('', 0)
-
-    # Estrutura para armazenar os dados do dashboard
+    # Initialize dashboard data structure
     dashboard_data = {
+        'total_surgeries': 0,
+        'avg_follicles': 0,
+        'avg_density': 0,
         'labels': [],
         'datasets': [],
         'has_follicle_data': False,
         'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-        'total_surgeries': 0,
-        'avg_follicles': 0,
-        'avg_density': 0,
-        'update_time': datetime.now().strftime('%d/%m/%Y %H:%M')
+        'update_time': datetime.now().strftime('%d/%m/%Y %H:%M'),
+        'version': '2.0'  # Added version number
     }
 
+    # Return empty structure if DataFrame is empty
     if df.empty:
         return dashboard_data
 
-    # Processar datas e criar coluna mes_ano
     try:
-        if 'data' in df.columns:
-            df['mes_ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.strftime('%m/%Y')
-            # Extrair ano e mês para filtragem
-            df['ano'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.year
-            df['mes'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce').dt.month
-        else:
-            # Se não houver coluna 'data', usar uma data padrão
-            df['mes_ano'] = datetime.now().strftime('%m/%Y')
-            df['ano'] = datetime.now().year
-            df['mes'] = datetime.now().month
-    except Exception as e:
-        logger.error(f"Error processing dates: {str(e)}")
-        df['mes_ano'] = datetime.now().strftime('%m/%Y')
-        df['ano'] = datetime.now().year
-        df['mes'] = datetime.now().month
+        # Calculate basic statistics
+        dashboard_data['total_surgeries'] = len(df)
 
-    # Calcular estatísticas gerais
-    dashboard_data['total_surgeries'] = len(df)
+        # Calculate follicle averages if the data exists
+        if 'total_foliculos' in df.columns:
+            total_foliculos = pd.to_numeric(df['total_foliculos'], errors='coerce')
+            dashboard_data['avg_follicles'] = int(total_foliculos.mean())
 
-    # 1. Cirurgias por mês (total)
-    cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
-    cirurgias_por_mes['count'] = cirurgias_por_mes['count'].fillna(0).astype(int)
-
-    dashboard_data['labels'] = cirurgias_por_mes['mes_ano'].tolist()
-
-    # Adicionar dataset principal
-    dashboard_data['datasets'].append({
-        'label': 'Total de Cirurgias',
-        'data': cirurgias_por_mes['count'].tolist()
-    })
-
-    # 2. Cirurgias por mês por unidade
-    if 'unidade' in df.columns:
-        # Substituir valores vazios na coluna unidade
-        df['unidade'] = df['unidade'].fillna('Não especificada')
-
-        cirurgias_por_mes_unidade = df.groupby(['mes_ano', 'unidade']).size().reset_index(name='count')
-        cirurgias_por_mes_unidade['count'] = cirurgias_por_mes_unidade['count'].fillna(0).astype(int)
-
-        # Preparar datasets por unidade
-        unidades = df['unidade'].unique()
-
-        for unidade in unidades:
-            dados_unidade = cirurgias_por_mes_unidade[cirurgias_por_mes_unidade['unidade'] == unidade]
-            # Mapa para todas as datas possíveis
-            dados_completos = pd.DataFrame({
-                'mes_ano': cirurgias_por_mes['mes_ano'].unique()
-            })
-            # Juntar com dados existentes
-            merged = dados_completos.merge(dados_unidade, on='mes_ano', how='left')
-            # Tratar valores nulos corretamente
-            merged['count'] = merged['count'].fillna(0).astype(int)
-
-            dashboard_data['datasets'].append({
-                'label': f'Cirurgias - {unidade}',
-                'data': merged['count'].tolist()
-            })
-
-    # 3. Verificar se existem dados de folículos
-    has_follicle_data = 'total_foliculos' in df.columns
-
-    # Se temos dados de folículos, processar
-    if has_follicle_data:
-        # Converter coluna para numérico, tratando erros
-        df['total_foliculos'] = pd.to_numeric(df['total_foliculos'], errors='coerce').fillna(0)
-
-        # Média geral de folículos
-        dashboard_data['avg_follicles'] = int(df['total_foliculos'].mean())
-
-        # Média de folículos por mês
-        folliculo_medio = df.groupby('mes_ano')['total_foliculos'].mean().reset_index()
-
-        # Preparar dados para gráficos
-        dashboard_data['follicles_data']['labels'] = folliculo_medio['mes_ano'].tolist()
-        dashboard_data['follicles_data']['averages'] = folliculo_medio['total_foliculos'].round(0).astype(int).tolist()
-
-        # Se tiver dado de densidade, calcular média
+        # Calculate density averages if the data exists
         if 'densidade_scketh' in df.columns:
-            # Converter coluna para numérico, tratando erros
-            df['densidade_scketh'] = pd.to_numeric(df['densidade_scketh'], errors='coerce').fillna(0)
+            densidade = pd.to_numeric(df['densidade_scketh'], errors='coerce')
+            dashboard_data['avg_density'] = int(densidade.mean())
 
-            # Média geral de densidade
-            dashboard_data['avg_density'] = int(df['densidade_scketh'].mean())
+        # Process dates
+        if 'data' in df.columns:
+            df['mes_ano'] = pd.to_datetime(df['data']).dt.strftime('%m/%Y')
 
-            densidade_media = df.groupby('mes_ano')['densidade_scketh'].mean().reset_index()
-            dashboard_data['follicles_data']['le_density'] = densidade_media['densidade_scketh'].round(0).astype(int).tolist()
+            # Group by month
+            cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
+            dashboard_data['labels'] = cirurgias_por_mes['mes_ano'].tolist()
+            dashboard_data['datasets'].append({
+                'label': 'Total de Cirurgias',
+                'data': cirurgias_por_mes['count'].tolist()
+            })
 
-        dashboard_data['has_follicle_data'] = True
+            # Group by unit if unit data exists
+            if 'unidade' in df.columns:
+                for unidade in df['unidade'].unique():
+                    df_unidade = df[df['unidade'] == unidade]
+                    cirurgias_unidade = df_unidade.groupby('mes_ano').size().reset_index(name='count')
 
-    # Adicionar timestamp de atualização
-    dashboard_data['update_time'] =datetime.now().strftime('%d/%m/%Y %H:%M')
+                    # Create complete dataset with all months
+                    dados_completos = pd.DataFrame({'mes_ano': dashboard_data['labels']})
+                    merged = dados_completos.merge(cirurgias_unidade, on='mes_ano', how='left')
+                    merged['count'] = merged['count'].fillna(0).astype(int)
+
+                    dashboard_data['datasets'].append({
+                        'label': f'Cirurgias - {unidade}',
+                        'data': merged['count'].tolist()
+                    })
+
+        # Process follicle data if available
+        if 'total_foliculos' in df.columns:
+            dashboard_data['has_follicle_data'] = True
+            follicles_by_month = df.groupby('mes_ano')['total_foliculos'].mean().round(0).astype(int)
+            dashboard_data['follicles_data']['labels'] = follicles_by_month.index.tolist()
+            dashboard_data['follicles_data']['averages'] = follicles_by_month.values.tolist()
+
+            if 'densidade_scketh' in df.columns:
+                density_by_month = df.groupby('mes_ano')['densidade_scketh'].mean().round(0).astype(int)
+                dashboard_data['follicles_data']['le_density'] = density_by_month.values.tolist()
+
+    except Exception as e:
+        logger.error(f"Error processing dashboard data: {str(e)}")
+        logger.error(traceback.format_exc())
 
     return dashboard_data
 
@@ -700,7 +657,7 @@ def dashboard():
 
 @app.route('/get_available_units')
 def get_available_units():
-    """Endpoint para obter todas as unidades disponíveis no banco de dados"""
+    """Endpoint para obter todas asunidades disponíveis no banco de dados"""
     logger.info("Obtendo unidades disponíveis")
     try:
         with app.app_context():
@@ -1154,7 +1111,6 @@ def save_necrose():
     except Exception as e:
         logger.error(f"Error saving necrose data: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'error': str(e)})
-
 
 # Configure Flask app
 app.config['ENV'] = 'production'
