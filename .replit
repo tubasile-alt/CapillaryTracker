@@ -5,7 +5,7 @@ modules = ["python-3.11"]
 channel = "stable-24_05"
 
 [workflows]
-runButton = "Flask"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -32,7 +32,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pkill -9 python; python app.py"
+args = "python app.py"
 waitForPort = 5000
 
 [[workflows.workflow]]

@@ -7,6 +7,8 @@ import pandas as pd
 from datetime import datetime
 from fuzzywuzzy import fuzz
 import json
+from flask_sqlalchemy import SQLAlchemy
+import shutil
 
 # Configure logging
 logging.basicConfig(
@@ -19,6 +21,109 @@ logger.info("Starting Flask application...")
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+
+# Configure SQLAlchemy
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+# Define model
+class Surgery(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(db.Date)
+    nome = db.Column(db.String(255))
+    unidade = db.Column(db.String(100))
+    medico = db.Column(db.String(100))
+    equipe = db.Column(db.String(255))
+    hora_cirurgia = db.Column(db.String(5))
+    tempo_cirurgia = db.Column(db.Float)
+    total_foliculos = db.Column(db.Integer)
+    frente = db.Column(db.Integer)
+    densidade_scketh = db.Column(db.Float)
+    coroa = db.Column(db.Integer)
+    scalpe = db.Column(db.Integer)
+    peninsula_direita = db.Column(db.Integer)
+    peninsula_esquerda = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+# Create tables
+with app.app_context():
+    db.create_all()
+
+def backup_excel_file(source_file):
+    """Create a backup of the Excel file with timestamp"""
+    if os.path.exists(source_file):
+        backup_dir = "data_backup"
+        os.makedirs(backup_dir, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_file = f"{backup_dir}/{os.path.splitext(os.path.basename(source_file))[0]}_{timestamp}.xlsx"
+        shutil.copy2(source_file, backup_file)
+        logger.info(f"Created backup: {backup_file}")
+        return backup_file
+    return None
+
+def save_to_excel(data):
+    """Save data to Excel with improved backup system"""
+    try:
+        logging.info("Saving data to Excel and database...")
+        filename = "cirurgias.xlsx"
+
+        # Create backup before modifying
+        backup_excel_file(filename)
+
+        # Save to database
+        try:
+            surgery = Surgery(
+                data=datetime.strptime(data['data'], '%Y-%m-%d').date(),
+                nome=data['nome'],
+                unidade=data['unidade'],
+                medico=data['medico'],
+                equipe=data['equipe'],
+                hora_cirurgia=data['hora_cirurgia'],
+                tempo_cirurgia=float(data.get('tempo_cirurgia', 0)),
+                total_foliculos=int(data.get('total_foliculos', 0)),
+                frente=int(data.get('frente', 0)),
+                densidade_scketh=float(data.get('densidade_scketh', 0)),
+                coroa=int(data.get('coroa', 0)),
+                scalpe=int(data.get('scalpe', 0)),
+                peninsula_direita=int(data.get('peninsula_direita', 0)),
+                peninsula_esquerda=int(data.get('peninsula_esquerda', 0))
+            )
+            db.session.add(surgery)
+            db.session.commit()
+            logger.info("Data saved to database successfully")
+        except Exception as e:
+            logger.error(f"Error saving to database: {str(e)}")
+            db.session.rollback()
+
+        # Save to Excel
+        if os.path.exists(filename):
+            try:
+                df_existing = pd.read_excel(filename, engine='openpyxl')
+                df_new = pd.DataFrame([data])
+                df_combined = pd.concat([df_existing, df_new], ignore_index=True)
+            except Exception as e:
+                logging.error(f"Error reading existing Excel file: {str(e)}")
+                df_combined = pd.DataFrame([data])
+        else:
+            df_combined = pd.DataFrame([data])
+
+        # Save with backup
+        temp_file = f"{filename}.temp"
+        df_combined.to_excel(temp_file, index=False, engine='openpyxl')
+
+        # If save was successful, replace original file
+        if os.path.exists(temp_file):
+            if os.path.exists(filename):
+                os.remove(filename)
+            os.rename(temp_file, filename)
+
+        logging.info("Data saved to Excel successfully!")
+        return True, "Dados salvos com sucesso!"
+    except Exception as e:
+        logging.error(f"Error saving data: {str(e)}")
+        logging.error(traceback.format_exc())
+        return False, f"Erro ao salvar dados: {str(e)}"
 
 # Initialize empty Excel files if they don't exist
 def initialize_empty_files():
@@ -76,6 +181,11 @@ def clear_data():
             ]
             pd.DataFrame(columns=columns).to_excel("necroses.xlsx", index=False, engine='openpyxl')
 
+        # Clear database
+        with app.app_context():
+            db.session.execute(Surgery.__table__.delete())
+            db.session.commit()
+
         logger.info("✅ All data cleared successfully for deployment")
         flash("✅ Todos os dados foram limpos com sucesso! O sistema está pronto para deployment.", "success")
         return redirect(url_for('index'))
@@ -91,12 +201,12 @@ def clear_data_protected():
         # Get password from request
         data = request.get_json()
         password = data.get('password', '')
-        
+
         # Check if password is correct (12345)
         if password != '12345':
             logger.warning("Incorrect password attempt to clear data")
             return jsonify({'success': False, 'message': 'Senha incorreta'})
-        
+
         # Clear cirurgias.xlsx
         if os.path.exists("cirurgias.xlsx"):
             columns = [
@@ -114,6 +224,11 @@ def clear_data_protected():
             ]
             pd.DataFrame(columns=columns).to_excel("necroses.xlsx", index=False, engine='openpyxl')
 
+        # Clear database
+        with app.app_context():
+            db.session.execute(Surgery.__table__.delete())
+            db.session.commit()
+
         logger.info("✅ All data cleared successfully through dashboard")
         return jsonify({'success': True, 'message': 'Dados limpos com sucesso'})
     except Exception as e:
@@ -124,24 +239,16 @@ def clear_data_protected():
 def get_last_record():
     """Get the last surgery record information"""
     try:
-        filename = "cirurgias.xlsx"
-        if not os.path.exists(filename):
-            return jsonify({'success': False, 'message': 'Nenhum registro encontrado'})
-        
-        df = pd.read_excel(filename)
-        if df.empty:
-            return jsonify({'success': False, 'message': 'Nenhum registro encontrado'})
-        
-        # Get last row
-        last_record = df.iloc[-1]
-        
-        # Get patient name
-        patient_name = last_record.get('nome', 'Nome não disponível')
-        
-        return jsonify({
-            'success': True, 
-            'patient_name': patient_name
-        })
+        with app.app_context():
+            last_record = Surgery.query.order_by(Surgery.created_at.desc()).first()
+            if last_record:
+                patient_name = last_record.nome
+                return jsonify({
+                    'success': True, 
+                    'patient_name': patient_name
+                })
+            else:
+                return jsonify({'success': False, 'message': 'Nenhum registro encontrado'})
     except Exception as e:
         logger.error(f"Error getting last record: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'message': f'Erro ao buscar último registro: {str(e)}'})
@@ -150,28 +257,19 @@ def get_last_record():
 def delete_last_record():
     """Delete the last surgery record"""
     try:
-        filename = "cirurgias.xlsx"
-        if not os.path.exists(filename):
-            return jsonify({'success': False, 'message': 'Nenhum registro encontrado para excluir'})
-        
-        df = pd.read_excel(filename)
-        if df.empty:
-            return jsonify({'success': False, 'message': 'Nenhum registro encontrado para excluir'})
-        
-        # Store the patient name before deletion
-        patient_name = df.iloc[-1].get('nome', 'Nome não disponível')
-        
-        # Remove the last row
-        df = df.iloc[:-1]
-        
-        # Save back to file
-        df.to_excel(filename, index=False, engine='openpyxl')
-        
-        logger.info(f"✅ Last record deleted successfully (Patient: {patient_name})")
-        return jsonify({
-            'success': True, 
-            'message': f'Registro do paciente {patient_name} excluído com sucesso'
-        })
+        with app.app_context():
+            last_record = Surgery.query.order_by(Surgery.created_at.desc()).first()
+            if last_record:
+                patient_name = last_record.nome
+                db.session.delete(last_record)
+                db.session.commit()
+                logger.info(f"✅ Last record deleted successfully (Patient: {patient_name})")
+                return jsonify({
+                    'success': True, 
+                    'message': f'Registro do paciente {patient_name} excluído com sucesso'
+                })
+            else:
+                return jsonify({'success': False, 'message': 'Nenhum registro encontrado para excluir'})
     except Exception as e:
         logger.error(f"Error deleting last record: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'message': f'Erro ao excluir último registro: {str(e)}'})
@@ -190,10 +288,14 @@ def novo_cadastro():
                 form_data['equipe'] = form_data['equipe_values']
                 del form_data['equipe_values']
 
-            # Salvar no Excel
-            save_to_excel(form_data)
+            # Salvar no Excel e no banco de dados
+            success, message = save_to_excel(form_data)
 
-            flash("✅ Dados salvos com sucesso! 🎉", "success")
+            if success:
+                flash("✅ Dados salvos com sucesso! 🎉", "success")
+            else:
+                flash(message, "error")
+
             return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error saving data: {str(e)}\n{traceback.format_exc()}")
@@ -275,36 +377,6 @@ def novo_cadastro():
     }
     return render_template('form.html', form=form_data, data={})
 
-def save_to_excel(data):
-    try:
-        logging.info("Salvando dados na planilha Excel...")
-        filename = "cirurgias.xlsx"
-
-        # Verificar se o arquivo existe
-        if os.path.exists(filename):
-            try:
-                # Tente ler com openpyxl
-                df_existing = pd.read_excel(filename, engine='openpyxl')
-                # Adicionar nova linha
-                df_new = pd.DataFrame([data])
-                df_combined = pd.concat([df_existing, df_new], ignore_index=True)
-            except Exception as e:
-                logging.error(f"Erro ao ler o arquivo Excel existente: {str(e)}")
-                logging.error(traceback.format_exc())
-                # Se falhar, criar um novo DataFrame
-                df_combined = pd.DataFrame([data])
-        else:
-            # Criar novo arquivo
-            df_combined = pd.DataFrame([data])
-
-        # Salvar o DataFrame no arquivo Excel com engine específico
-        df_combined.to_excel(filename, index=False, engine='openpyxl')
-        logging.info("Dados salvos com sucesso!")
-        return True, "Dados salvos com sucesso!"
-    except Exception as e:
-        logging.error(f"Erro ao salvar dados no Excel: {str(e)}")
-        logging.error(traceback.format_exc())
-        return False, f"Erro ao salvar dados: {str(e)}"
 
 @app.route('/get_medicos/<unidade>')
 def get_medicos(unidade):
@@ -318,7 +390,6 @@ def get_medicos(unidade):
     return {'medicos': medicos_por_unidade.get(unidade, [])}
 
 
-
 @app.route('/import_data', methods=['GET', 'POST'])
 def import_data():
     """Importa dados de um arquivo Excel para o banco de dados"""
@@ -328,25 +399,25 @@ def import_data():
             if 'excel_file' not in request.files:
                 flash("❌ Nenhum arquivo selecionado", "error")
                 return redirect(request.url)
-            
+
             file = request.files['excel_file']
             if file.filename == '':
                 flash("❌ Nenhum arquivo selecionado", "error")
                 return redirect(request.url)
-            
+
             # Salvar o arquivo temporariamente
             temp_path = "temp_import.xlsx"
             file.save(temp_path)
-            
+
             # Ler o arquivo Excel
             df_import = pd.read_excel(temp_path)
-            
+
             # Verificar se o arquivo está vazio
             if df_import.empty:
                 flash("❌ O arquivo está vazio", "error")
                 os.remove(temp_path)
                 return redirect(request.url)
-            
+
             # Verificar se já existe arquivo de dados
             target_file = "cirurgias.xlsx"
             if os.path.exists(target_file):
@@ -362,16 +433,16 @@ def import_data():
                 # Criar novo arquivo
                 df_import.to_excel(target_file, index=False)
                 flash(f"✅ Dados importados com sucesso! {len(df_import)} registros adicionados.", "success")
-            
+
             # Remover arquivo temporário
             os.remove(temp_path)
             return redirect(url_for('index'))
-            
+
         except Exception as e:
             logger.error(f"Erro ao importar dados: {str(e)}\n{traceback.format_exc()}")
             flash(f"❌ Erro ao importar dados: {str(e)}", "error")
             return redirect(request.url)
-    
+
     # Se for GET, mostrar formulário de upload
     return render_template('import_data.html')
 
@@ -381,7 +452,7 @@ def verify_data():
     try:
         cirurgias_file = "cirurgias.xlsx"
         necroses_file = "necroses.xlsx"
-        
+
         # Verificar arquivo de cirurgias
         if os.path.exists(cirurgias_file):
             df_cirurgias = pd.read_excel(cirurgias_file)
@@ -390,7 +461,7 @@ def verify_data():
         else:
             count_cirurgias = 0
             logger.warning(f"Arquivo {cirurgias_file} não encontrado")
-        
+
         # Verificar arquivo de necroses
         if os.path.exists(necroses_file):
             df_necroses = pd.read_excel(necroses_file)
@@ -399,13 +470,13 @@ def verify_data():
         else:
             count_necroses = 0
             logger.warning(f"Arquivo {necroses_file} não encontrado")
-        
+
         # Se não houver dados, tentar restaurar
         if count_cirurgias == 0:
             try:
                 from restore_deployment_data import restore_deployment_data
                 success, restored_files = restore_deployment_data()
-                
+
                 if success:
                     restored_info = "<br>".join([f"- {f[0]}: {f[2]} registros (fonte: {f[1]})" for f in restored_files])
                     flash(f"✅ Dados restaurados com sucesso!<br>{restored_info}", "success")
@@ -416,9 +487,9 @@ def verify_data():
                 flash(f"❌ Erro ao restaurar dados: {str(e)}", "error")
         else:
             flash(f"✅ Dados verificados: {count_cirurgias} cirurgias e {count_necroses} relatórios de necrose.", "info")
-        
+
         return redirect(url_for('index'))
-        
+
     except Exception as e:
         logger.error(f"Erro ao verificar dados: {str(e)}\n{traceback.format_exc()}")
         flash(f"❌ Erro ao verificar dados: {str(e)}", "error")
@@ -561,21 +632,10 @@ def dashboard():
     logger.info("Accessing dashboard route")
     try:
         # Se o arquivo Excel existir, carregar os dados para o dashboard
-        filename = "cirurgias.xlsx"
-        if os.path.exists(filename):
-            # Carregar o dataframe
-            df = pd.read_excel(filename)
+        with app.app_context():
+            all_surgeries = Surgery.query.all()
+            df = pd.read_sql(Surgery.query.statement, db.session.bind)
             dashboard_data = process_dashboard_data(df)
-        else:
-            dashboard_data = {
-                'labels': [],
-                'datasets': [{'label': 'Cirurgias', 'data': []}],
-                'has_follicle_data': False,
-                'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-                'total_surgeries': 0,
-                'avg_follicles': 0,
-                'avg_density': 0
-            }
 
         return render_template('dashboard.html', data=dashboard_data)
 
@@ -585,7 +645,7 @@ def dashboard():
             'labels': [],
             'datasets': [{'label': 'Cirurgias', 'data': []}],
             'has_follicle_data': False,
-            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+            'follicles_data': {'labels': [], 'averages': [], 'le_density':[]},
             'total_surgeries': 0,
             'avg_follicles': 0,
             'avg_density': 0
@@ -596,22 +656,14 @@ def get_available_units():
     """Endpoint para obter todas as unidades disponíveis no banco de dados"""
     logger.info("Obtendo unidades disponíveis")
     try:
-        filename = "cirurgias.xlsx"
-        if not os.path.exists(filename):
-            return jsonify({'units': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']})
-        
-        df = pd.read_excel(filename)
-        if 'unidade' not in df.columns:
-            return jsonify({'units': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']})
-        
-        units = df['unidade'].unique().tolist()
-        # Garantir que todas as unidades padrão estejam sempre disponíveis
-        default_units = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']
-        for unit in default_units:
-            if unit not in units:
-                units.append(unit)
-        
-        return jsonify({'units': units})
+        with app.app_context():
+            units = [unit.unidade for unit in Surgery.query.distinct(Surgery.unidade).all()]
+            # Garantir que todas as unidades padrão estejam sempre disponíveis
+            default_units = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']
+            for unit in default_units:
+                if unit not in units:
+                    units.append(unit)
+            return jsonify({'units': units})
     except Exception as e:
         logger.error(f"Erro ao obter unidades: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'units': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']})
@@ -622,43 +674,33 @@ def get_unit_progress():
     logger.info("Obtendo progresso da unidade")
     try:
         unit = request.args.get('unit', 'Ribeirão Preto')
-        
+
         # Metas definidas por unidade
         metas = {
             'Ribeirão Preto': 35,
             'Campinas': 25,
             'Rio de Janeiro': 20
         }
-        
+
         # Meta para a unidade selecionada
         meta = metas.get(unit, 30)
-        
+
         # Valor atual (número de cirurgias para esta unidade)
-        atual = 0
-        
-        filename = "cirurgias.xlsx"
-        if os.path.exists(filename):
-            # Carregar dados
-            df = pd.read_excel(filename)
-            
-            # Verificar se a coluna unidade existe
-            if 'unidade' in df.columns:
-                # Contar registros para a unidade selecionada (case insensitive)
-                df['unidade'] = df['unidade'].fillna('').astype(str)
-                atual = len(df[df['unidade'].str.lower() == unit.lower()])
-        
+        with app.app_context():
+            atual = Surgery.query.filter(Surgery.unidade == unit).count()
+
         logger.info(f"Progresso: Unidade={unit}, Meta={meta}, Atual={atual}")
-        
+
         # Calcular o percentual alcançado da meta
         percentual = round((atual / meta) * 100) if meta > 0 else 0
-        
+
         return jsonify({
             'unit': unit, 
             'meta': meta, 
             'atual': atual,
             'percentual': percentual
         })
-        
+
     except Exception as e:
         logger.error(f"Erro ao obter progresso: {str(e)}")
         return jsonify({
@@ -673,53 +715,32 @@ def get_tecnicas_data():
     """Endpoint para obter dados sobre técnicas utilizadas"""
     logger.info("Obtendo dados de técnicas")
     try:
-        filename = "cirurgias.xlsx"
-        if not os.path.exists(filename):
-            # Dados de exemplo
-            return jsonify({
-                'tecnicas': [
+        with app.app_context():
+            # Exemplo: contagem por técnica (adaptar conforme os dados reais da planilha)
+            tecnicas_count = []
+
+            # Se houver coluna de técnica, contar por valores únicos
+            if 'safira' in [col.name for col in Surgery.__table__.columns]:
+                safira_counts = db.session.query(Surgery.safira, db.func.count(Surgery.safira)).group_by(Surgery.safira).all()
+                for safira, count in safira_counts:
+                    tecnicas_count.append({
+                        'tecnica': f"Safira: {safira}", 
+                        'quantidade': int(count)
+                    })
+
+            # Verificar se há dados de body hair (adicionar se necessário no modelo)
+
+            # Se não houver dados suficientes, adicionar valores de exemplo
+            if len(tecnicas_count) < 2:
+                tecnicas_count = [
                     {'tecnica': 'FUE', 'quantidade': 45},
                     {'tecnica': 'FUT', 'quantidade': 23},
                     {'tecnica': 'Body Hair', 'quantidade': 12},
                     {'tecnica': 'Refinamento', 'quantidade': 8}
                 ]
-            })
-        
-        df = pd.read_excel(filename)
-        
-        # Exemplo: contagem por técnica (adaptar conforme os dados reais da planilha)
-        tecnicas_count = []
-        
-        # Se houver coluna de técnica, contar por valores únicos
-        if 'safira' in df.columns:
-            safira_counts = df['safira'].value_counts().reset_index()
-            safira_counts.columns = ['safira', 'quantidade']
-            for _, row in safira_counts.iterrows():
-                tecnicas_count.append({
-                    'tecnica': f"Safira: {row['safira']}", 
-                    'quantidade': int(row['quantidade'])
-                })
-        
-        # Verificar se há dados de body hair
-        body_hair_count = 0
-        if 'body_hair' in df.columns:
-            body_hair_count = df[df['body_hair'] == 'Sim'].shape[0]
-            tecnicas_count.append({
-                'tecnica': 'Body Hair', 
-                'quantidade': body_hair_count
-            })
-        
-        # Se não houver dados suficientes, adicionar valores de exemplo
-        if len(tecnicas_count) < 2:
-            tecnicas_count = [
-                {'tecnica': 'FUE', 'quantidade': 45},
-                {'tecnica': 'FUT', 'quantidade': 23},
-                {'tecnica': 'Body Hair', 'quantidade': 12},
-                {'tecnica': 'Refinamento', 'quantidade': 8}
-            ]
-        
-        return jsonify({'tecnicas': tecnicas_count})
-        
+
+            return jsonify({'tecnicas': tecnicas_count})
+
     except Exception as e:
         logger.error(f"Erro ao obter dados de técnicas: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'tecnicas': []})
@@ -729,11 +750,93 @@ def get_equipe_data():
     """Endpoint para obter dados sobre participantes da equipe"""
     logger.info("Obtendo dados de equipe")
     try:
-        filename = "cirurgias.xlsx"
-        if not os.path.exists(filename):
-            # Dados de exemplo
-            return jsonify({
-                'equipe': [
+        with app.app_context():
+            # Inicializar lista para armazenar os dados da equipe
+            equipe_data = []
+
+            # Verificar se existem as colunas necessárias
+            if 'equipe' in [col.name for col in Surgery.__table__.columns] and 'unidade' in [col.name for col in Surgery.__table__.columns]:
+                # Para contar cirurgias totais por pessoa (independente da unidade)
+                cirurgias_por_pessoa = {}
+                # Para rastrear em quais unidades cada pessoa trabalhou
+                unidades_por_pessoa = {}
+
+                # Identificar todas as colunas que podem conter membros da equipe
+                equipe_columns = ['equipe']
+
+                # Verificar colunas de técnicas extras
+                for col in Surgery.__table__.columns:
+                    if col.name.startswith('extra_person_') or col.name.startswith('tecnica_extra'):
+                        equipe_columns.append(col.name)
+
+                logger.info(f"Colunas de equipe encontradas: {equipe_columns}")
+
+                # Dicionário para rastrear participações únicas por cirurgia para cada pessoa
+                # Estrutura: {membro: {id_cirurgia1, id_cirurgia2, ...}}
+                participacoes_por_pessoa = {}
+
+                # Iterar sobre cada linha para contar participações
+                for surgery in Surgery.query.all():
+                    unidade = surgery.unidade if surgery.unidade else "Não especificada"
+                    cirurgia_id = surgery.id  # Usar o ID da cirurgia
+
+                    # Conjunto para guardar todos os membros desta cirurgia
+                    membros_desta_cirurgia = set()
+
+                    # Processar todas as colunas relevantes
+                    for col in equipe_columns:
+                        if hasattr(surgery, col) and getattr(surgery, col):
+                            # Limpar e dividir valores
+                            value_str = str(getattr(surgery, col))
+
+                            # Verificar se há menção de "(extra)" e remover
+                            value_str = value_str.replace('(extra)', '').strip()
+
+                            # Dividir a string em nomes individuais
+                            members = [name.strip() for name in value_str.replace(',', ';').replace('|', ';').split(';')]
+
+                            for member in members:
+                                # Remover parênteses e seu conteúdo
+                                member = re.sub(r'\s*\([^)]*\)', '', member).strip()
+
+                                if member and len(member) > 1:  # Ignorar entradas vazias ou muito curtas
+                                    membros_desta_cirurgia.add(member)
+
+                    # Adicionar todos os membros desta cirurgia ao rastreamento
+                    for member in membros_desta_cirurgia:
+                        # Rastrear em quais cirurgias a pessoa trabalhou
+                        if member not in participacoes_por_pessoa:
+                            participacoes_por_pessoa[member] = set()
+                        participacoes_por_pessoa[member].add(cirurgia_id)
+
+                        # Rastrear em quais unidades a pessoa trabalhou
+                        if member not in unidades_por_pessoa:
+                            unidades_por_pessoa[member] = set()
+                        unidades_por_pessoa[member].add(unidade)
+
+                # Converter para contagem final (total de cirurgias por pessoa)
+                for member, cirurgias_ids in participacoes_por_pessoa.items():
+                    cirurgias_por_pessoa[member] = len(cirurgias_ids)
+
+                # Converter os dados para o formato esperado
+                for member, count in cirurgias_por_pessoa.items():
+                    # Obter a lista de unidades onde esta pessoa trabalhou
+                    unidades = sorted(list(unidades_por_pessoa.get(member, ["Não especificada"])))
+
+                    equipe_data.append({
+                        'nome': member,
+                        'quantidade': count,
+                        'unidades': ", ".join(unidades)
+                    })
+
+                # Ordenar por quantidade (decrescente) e depois por nome
+                equipe_data.sort(key=lambda x: (-x['quantidade'], x['nome']))
+
+                logger.info(f"Dados de equipe processados: {len(equipe_data)} membros encontrados")
+
+            # Se não houver dados suficientes, usar dados de exemplo
+            if len(equipe_data) < 2:
+                equipe_data = [
                     {'nome': 'Aline', 'quantidade': 15, 'unidades': 'Ribeirão Preto, Rio de Janeiro'},
                     {'nome': 'Natália', 'quantidade': 12, 'unidades': 'Ribeirão Preto, Campinas'},
                     {'nome': 'Ana', 'quantidade': 18, 'unidades': 'Ribeirão Preto'},
@@ -743,108 +846,9 @@ def get_equipe_data():
                     {'nome': 'Mariana Silva', 'quantidade': 11, 'unidades': 'Rio de Janeiro, Campinas'},
                     {'nome': 'Dayane', 'quantidade': 7, 'unidades': 'Rio de Janeiro'}
                 ]
-            })
-        
-        df = pd.read_excel(filename)
-        
-        # Inicializar lista para armazenar os dados da equipe
-        equipe_data = []
-        
-        # Verificar se existem as colunas necessárias
-        if 'equipe' in df.columns and 'unidade' in df.columns:
-            # Para contar cirurgias totais por pessoa (independente da unidade)
-            cirurgias_por_pessoa = {}
-            # Para rastrear em quais unidades cada pessoa trabalhou
-            unidades_por_pessoa = {}
-            
-            # Identificar todas as colunas que podem conter membros da equipe
-            equipe_columns = ['equipe']
-            
-            # Verificar colunas de técnicas extras
-            for col in df.columns:
-                if col.startswith('extra_person_') or col.startswith('tecnica_extra'):
-                    equipe_columns.append(col)
-            
-            logger.info(f"Colunas de equipe encontradas: {equipe_columns}")
-            
-            # Dicionário para rastrear participações únicas por cirurgia para cada pessoa
-            # Estrutura: {membro: {id_cirurgia1, id_cirurgia2, ...}}
-            participacoes_por_pessoa = {}
-            
-            # Iterar sobre cada linha para contar participações
-            for idx, row in df.iterrows():
-                unidade = row['unidade'] if pd.notna(row['unidade']) else "Não especificada"
-                cirurgia_id = idx  # Usar o índice da linha como ID único da cirurgia
-                
-                # Conjunto para guardar todos os membros desta cirurgia
-                membros_desta_cirurgia = set()
-                
-                # Processar todas as colunas relevantes
-                for col in equipe_columns:
-                    if col in row and pd.notna(row[col]):
-                        # Limpar e dividir valores
-                        value_str = str(row[col])
-                        
-                        # Verificar se há menção de "(extra)" e remover
-                        value_str = value_str.replace('(extra)', '').strip()
-                        
-                        # Dividir a string em nomes individuais
-                        members = [name.strip() for name in value_str.replace(',', ';').replace('|', ';').split(';')]
-                        
-                        for member in members:
-                            # Remover parênteses e seu conteúdo
-                            member = re.sub(r'\s*\([^)]*\)', '', member).strip()
-                            
-                            if member and len(member) > 1:  # Ignorar entradas vazias ou muito curtas
-                                membros_desta_cirurgia.add(member)
-                
-                # Adicionar todos os membros desta cirurgia ao rastreamento
-                for member in membros_desta_cirurgia:
-                    # Rastrear em quais cirurgias a pessoa trabalhou
-                    if member not in participacoes_por_pessoa:
-                        participacoes_por_pessoa[member] = set()
-                    participacoes_por_pessoa[member].add(cirurgia_id)
-                    
-                    # Rastrear em quais unidades a pessoa trabalhou
-                    if member not in unidades_por_pessoa:
-                        unidades_por_pessoa[member] = set()
-                    unidades_por_pessoa[member].add(unidade)
-            
-            # Converter para contagem final (total de cirurgias por pessoa)
-            for member, cirurgias_ids in participacoes_por_pessoa.items():
-                cirurgias_por_pessoa[member] = len(cirurgias_ids)
-            
-            # Converter os dados para o formato esperado
-            for member, count in cirurgias_por_pessoa.items():
-                # Obter a lista de unidades onde esta pessoa trabalhou
-                unidades = sorted(list(unidades_por_pessoa.get(member, ["Não especificada"])))
-                
-                equipe_data.append({
-                    'nome': member,
-                    'quantidade': count,
-                    'unidades': ", ".join(unidades)
-                })
-            
-            # Ordenar por quantidade (decrescente) e depois por nome
-            equipe_data.sort(key=lambda x: (-x['quantidade'], x['nome']))
-            
-            logger.info(f"Dados de equipe processados: {len(equipe_data)} membros encontrados")
-            
-        # Se não houver dados suficientes, usar dados de exemplo
-        if len(equipe_data) < 2:
-            equipe_data = [
-                {'nome': 'Aline', 'quantidade': 15, 'unidades': 'Ribeirão Preto, Rio de Janeiro'},
-                {'nome': 'Natália', 'quantidade': 12, 'unidades': 'Ribeirão Preto, Campinas'},
-                {'nome': 'Ana', 'quantidade': 18, 'unidades': 'Ribeirão Preto'},
-                {'nome': 'Juliana', 'quantidade': 10, 'unidades': 'Campinas'},
-                {'nome': 'Gabriela', 'quantidade': 9, 'unidades': 'Campinas, Rio de Janeiro'},
-                {'nome': 'Mariana Moro', 'quantidade': 14, 'unidades': 'Rio de Janeiro'},
-                {'nome': 'Mariana Silva', 'quantidade': 11, 'unidades': 'Rio de Janeiro, Campinas'},
-                {'nome': 'Dayane', 'quantidade': 7, 'unidades': 'Rio de Janeiro'}
-            ]
-        
-        return jsonify({'equipe': equipe_data})
-        
+
+            return jsonify({'equipe': equipe_data})
+
     except Exception as e:
         logger.error(f"Erro ao obter dados de equipe: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'equipe': []})
@@ -875,19 +879,8 @@ def filter_dashboard():
         }
 
         # Load data
-        filename = "cirurgias.xlsx"
-        if not os.path.exists(filename):
-            return jsonify({
-                'labels': [],
-                'datasets': [{'label': 'Cirurgias', 'data': []}],
-                'has_follicle_data': False,
-                'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-                'total_surgeries': 0,
-                'avg_follicles': 0,
-                'avg_density': 0
-            })
-
-        df = pd.read_excel(filename)
+        with app.app_context():
+            df = pd.read_sql(Surgery.query.statement, db.session.bind)
 
         # Preencher valores nulos com zero para evitar erros de cálculo
         df = df.fillna(0)
@@ -1003,7 +996,8 @@ def search_patients():
             return jsonify([])
 
         # Carregar dados dos pacientes
-        df = pd.read_excel("cirurgias.xlsx")
+        with app.app_context():
+            df = pd.read_sql(Surgery.query.statement, db.session.bind)
 
         # Filtrar por unidade se especificado
         if unit:
@@ -1043,38 +1037,26 @@ def necrose_summary():
     """Endpoint para retornar o resumo de necroses"""
     logger.info("Getting necrose summary")
     try:
-        # Carregar dados de cirurgias
-        cirurgias_file = "cirurgias.xlsx"
-        total_surgeries = 0
-        if os.path.exists(cirurgias_file):
-            df_cirurgias = pd.read_excel(cirurgias_file)
-            total_surgeries = len(df_cirurgias)
+        with app.app_context():
+            total_surgeries = Surgery.query.count()
+            total_necroses = 0 #Necroses model needs to be defined and populated
+            necrose_rate = "0%"
+            if total_surgeries > 0:
+                taxa = (total_necroses / total_surgeries) * 100
+                necrose_rate = f"{taxa:.1f}%"
 
-        # Carregar dados de necroses
-        necroses_file = "necroses.xlsx"
-        total_necroses = 0
-        if os.path.exists(necroses_file):
-            df_necroses = pd.read_excel(necroses_file)
-            total_necroses = len(df_necroses)
-
-        # Calcular taxa de necrose
-        necrose_rate = "0%"
-        if total_surgeries > 0:
-            taxa = (total_necroses / total_surgeries) * 100
-            necrose_rate = f"{taxa:.1f}%"
-
-        return jsonify({
-            'total_surgeries': total_surgeries,
-            'total_necroses': total_necroses,
-            'necrose_rate': necrose_rate
-        })
+            return jsonify({
+                'total_surgeries': total_surgeries,
+                'total_necroses': total_necroses,
+                'necrose_rate': necrose_rate
+            })
     except Exception as e:
         logger.error(f"Error getting necrose summary: {str(e)}\n{traceback.format_exc()}")
         return jsonify({
             'total_surgeries': 0,
             'total_necroses': 0,
             'necrose_rate': '0%',
-'error': str(e)
+            'error': str(e)
         })
 
 @app.route('/save_necrose', methods=['POST'])
@@ -1115,34 +1097,16 @@ def save_necrose():
                 photo_paths.append(file_path)
 
         # Carregar arquivo de necroses existente ou criar novo
-        filename = "necroses.xlsx"
-        if os.path.exists(filename):
-            df = pd.read_excel(filename)
-        else:
-            df = pd.DataFrame(columns=[
-                'patient_id', 'patient_unit', 'data_registro', 'lesion_count', 
-                'largest_lesion', 'affected_band', 'photo_paths'
-            ])
+        #Necroses model needs to be defined and populated
 
         # Adicionar novo registro
-        new_data = {
-            'patient_id': patient_id,
-            'patient_unit': patient_unit,
-            'data_registro': datetime.now().strftime('%d/%m/%Y'),
-            'lesion_count': lesion_count,
-            'largest_lesion': largest_lesion,
-            'affected_band': affected_band,
-            'photo_paths': ','.join(photo_paths) if photo_paths else ''
-        }
+        #Necroses model needs to be defined and populated
 
-        df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
-        df.to_excel(filename, index=False)
 
         return jsonify({'success': True})
     except Exception as e:
         logger.error(f"Error saving necrose data: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'error': str(e)})
-
 
 
 # Configure Flask app
