@@ -9,6 +9,7 @@ from fuzzywuzzy import fuzz
 import json
 from flask_sqlalchemy import SQLAlchemy
 import shutil
+from sqlalchemy import text
 
 # Configure logging
 logging.basicConfig(
@@ -71,8 +72,9 @@ def save_to_excel(data):
         # Create backup before modifying
         backup_excel_file(filename)
 
-        # Save to database
+        # Save to database first
         try:
+            logger.info("Saving to database...")
             surgery = Surgery(
                 data=datetime.strptime(data['data'], '%Y-%m-%d').date(),
                 nome=data['nome'],
@@ -89,14 +91,18 @@ def save_to_excel(data):
                 peninsula_direita=int(data.get('peninsula_direita', 0)),
                 peninsula_esquerda=int(data.get('peninsula_esquerda', 0))
             )
+            logger.info("Surgery object created, committing to database...")
             db.session.add(surgery)
             db.session.commit()
-            logger.info("Data saved to database successfully")
+            logger.info("✅ Data saved to database successfully")
         except Exception as e:
             logger.error(f"Error saving to database: {str(e)}")
+            logger.error(traceback.format_exc())
             db.session.rollback()
+            raise e
 
-        # Save to Excel
+        # Then save to Excel
+        logger.info("Saving to Excel...")
         if os.path.exists(filename):
             try:
                 df_existing = pd.read_excel(filename, engine='openpyxl')
@@ -118,7 +124,7 @@ def save_to_excel(data):
                 os.remove(filename)
             os.rename(temp_file, filename)
 
-        logging.info("Data saved to Excel successfully!")
+        logger.info("✅ Data saved to Excel successfully!")
         return True, "Dados salvos com sucesso!"
     except Exception as e:
         logging.error(f"Error saving data: {str(e)}")
@@ -633,9 +639,13 @@ def dashboard():
     try:
         # Se o arquivo Excel existir, carregar os dados para o dashboard
         with app.app_context():
-            # Usar SQLAlchemy para criar um DataFrame do pandas
-            query = db.session.query(Surgery).statement
-            df = pd.read_sql(query, db.session.get_bind())
+            logger.info("Querying database for dashboard data...")
+            # Usar text() para converter a query em string SQL
+            from sqlalchemy import text
+            sql = text("SELECT * FROM surgery")
+            result = db.session.execute(sql)
+            df = pd.DataFrame(result.fetchall(), columns=result.keys())
+            logger.info(f"Found {len(df)} records in database")
             dashboard_data = process_dashboard_data(df)
 
         return render_template('dashboard.html', data=dashboard_data)
