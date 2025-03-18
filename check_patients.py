@@ -1,4 +1,7 @@
 
+from unidecode import unidecode
+
+
 import pandas as pd
 
 def check_patients():
@@ -23,7 +26,10 @@ def check_patients():
         # Verificar cada paciente
         for patient in patients_to_check:
             # Buscar de forma case-insensitive
-            found = df['nome'].str.lower().str.contains(patient.lower().split()[0])
+            # Normalize names to handle accents
+            patient_name = unidecode(patient.lower())
+            df_names = df['nome'].apply(lambda x: unidecode(str(x).lower()))
+            found = df_names.str.contains(patient_name.split()[0])
             if found.any():
                 print(f"✅ {patient} - Encontrado")
             else:
