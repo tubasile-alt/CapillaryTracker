@@ -633,8 +633,9 @@ def dashboard():
     try:
         # Se o arquivo Excel existir, carregar os dados para o dashboard
         with app.app_context():
-            all_surgeries = Surgery.query.all()
-            df = pd.read_sql(Surgery.query.statement, db.session.bind)
+            # Usar SQLAlchemy para criar um DataFrame do pandas
+            query = db.session.query(Surgery).statement
+            df = pd.read_sql(query, db.session.get_bind())
             dashboard_data = process_dashboard_data(df)
 
         return render_template('dashboard.html', data=dashboard_data)
@@ -880,7 +881,7 @@ def filter_dashboard():
 
         # Load data
         with app.app_context():
-            df = pd.read_sql(Surgery.query.statement, db.session.bind)
+            df = pd.read_sql(Surgery.query.statement, db.session.get_bind())
 
         # Preencher valores nulos com zero para evitar erros de cálculo
         df = df.fillna(0)
@@ -997,7 +998,7 @@ def search_patients():
 
         # Carregar dados dos pacientes
         with app.app_context():
-            df = pd.read_sql(Surgery.query.statement, db.session.bind)
+            df = pd.read_sql(Surgery.query.statement, db.session.get_bind())
 
         # Filtrar por unidade se especificado
         if unit:
