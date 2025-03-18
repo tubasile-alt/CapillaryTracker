@@ -24,7 +24,11 @@ database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
 
-logger.info(f"Using database URL: {database_url.split('@')[1] if database_url else 'None'}")
+# Default to SQLite if no database URL is provided
+if not database_url:
+    database_url = 'sqlite:///deploy_data/database.sqlite'
+
+logger.info(f"Using database URL: {database_url}")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
