@@ -1145,11 +1145,18 @@ def save_necrose():
 
 
 
+# Configure Flask app
+app.config['ENV'] = 'production'
+app.config['DEBUG'] = False
+
+# Use environment variable for secret key
+app.secret_key = os.environ.get('SESSION_SECRET', os.urandom(24))
+
 if __name__ == '__main__':
     try:
-        port = 3000
+        port = 5000
         logger.info(f"Starting Flask server on port {port}...")
-        app.run(host='0.0.0.0', port=port, debug=True)
+        app.run(host='0.0.0.0', port=port, debug=False)
     except Exception as e:
         logger.error(f"Failed to start Flask server: {str(e)}\n{traceback.format_exc()}")
         raise
