@@ -16,15 +16,16 @@ def delete_specific_patients():
         # Read data
         df = pd.read_excel("cirurgias.xlsx")
         
-        # Remove Arthur
+        # Remove Arthur and keep only first Douglas
+        initial_count = len(df)
         df = df[df['nome'].str.lower() != 'arthur']
-        
-        # Keep only first occurrence of Douglas
         df = df.drop_duplicates(subset=['nome'], keep='first')
+        final_count = len(df)
         
         # Save changes
         df.to_excel("cirurgias.xlsx", index=False)
-        print("✅ Patients removed successfully")
+        print(f"✅ Removed {initial_count - final_count} entries")
+        print(f"✅ Current total patients: {final_count}")
         
     except Exception as e:
         print(f"❌ Error: {str(e)}")
