@@ -1147,8 +1147,7 @@ def save_necrose():
 
 if __name__ == '__main__':
     try:
-        # ALWAYS serve the app on port 5000
-        port = 5000
+        port = 3000
         logger.info(f"Starting Flask server on port {port}...")
         app.run(host='0.0.0.0', port=port, debug=True)
     except Exception as e:
