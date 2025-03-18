@@ -23,9 +23,10 @@ logger.info("Starting Flask application...")
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# Configure SQLAlchemy
+# Configure SQLAlchemy with detailed logging
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ECHO'] = True  # Enable SQL query logging
 db = SQLAlchemy(app)
 
 # Define model
@@ -50,6 +51,7 @@ class Surgery(db.Model):
 # Create tables
 with app.app_context():
     db.create_all()
+    logger.info("✅ Database tables created successfully")
 
 def backup_excel_file(source_file):
     """Create a backup of the Excel file with timestamp"""
@@ -64,9 +66,9 @@ def backup_excel_file(source_file):
     return None
 
 def save_to_excel(data):
-    """Save data to Excel with improved backup system"""
+    """Save data to Excel and database with improved error handling"""
     try:
-        logging.info("Saving data to Excel and database...")
+        logging.info("Starting data save process...")
         filename = "cirurgias.xlsx"
 
         # Create backup before modifying
@@ -74,27 +76,38 @@ def save_to_excel(data):
 
         # Save to database first
         try:
-            logger.info("Saving to database...")
+            logger.info(f"Saving to database: {data}")
+
+            # Convert date string to date object
+            data_date = datetime.strptime(data['data'], '%Y-%m-%d').date()
+
+            # Create Surgery object with proper type conversion
             surgery = Surgery(
-                data=datetime.strptime(data['data'], '%Y-%m-%d').date(),
-                nome=data['nome'],
-                unidade=data['unidade'],
-                medico=data['medico'],
-                equipe=data['equipe'],
-                hora_cirurgia=data['hora_cirurgia'],
-                tempo_cirurgia=float(data.get('tempo_cirurgia', 0)),
-                total_foliculos=int(data.get('total_foliculos', 0)),
-                frente=int(data.get('frente', 0)),
-                densidade_scketh=float(data.get('densidade_scketh', 0)),
-                coroa=int(data.get('coroa', 0)),
-                scalpe=int(data.get('scalpe', 0)),
-                peninsula_direita=int(data.get('peninsula_direita', 0)),
-                peninsula_esquerda=int(data.get('peninsula_esquerda', 0))
+                data=data_date,
+                nome=str(data['nome']),
+                unidade=str(data['unidade']),
+                medico=str(data['medico']),
+                equipe=str(data['equipe']),
+                hora_cirurgia=str(data['hora_cirurgia']),
+                tempo_cirurgia=float(data.get('tempo_cirurgia', 0) or 0),
+                total_foliculos=int(data.get('total_foliculos', 0) or 0),
+                frente=int(data.get('frente', 0) or 0),
+                densidade_scketh=float(data.get('densidade_scketh', 0) or 0),
+                coroa=int(data.get('coroa', 0) or 0),
+                scalpe=int(data.get('scalpe', 0) or 0),
+                peninsula_direita=int(data.get('peninsula_direita', 0) or 0),
+                peninsula_esquerda=int(data.get('peninsula_esquerda', 0) or 0)
             )
+
             logger.info("Surgery object created, committing to database...")
             db.session.add(surgery)
             db.session.commit()
             logger.info("✅ Data saved to database successfully")
+
+            # Verify the save by querying the database
+            saved_surgery = Surgery.query.get(surgery.id)
+            logger.info(f"Verified saved surgery: {saved_surgery.nome} (ID: {saved_surgery.id})")
+
         except Exception as e:
             logger.error(f"Error saving to database: {str(e)}")
             logger.error(traceback.format_exc())
@@ -286,15 +299,16 @@ def novo_cadastro():
     logger.info("Accessing novo_cadastro route")
     if request.method == 'POST':
         try:
-            # Processar os dados do formulário
+            # Process form data
             form_data = request.form.to_dict()
+            logger.info(f"Received form data: {form_data}")
 
-            # Processar checkboxes múltiplos
+            # Process multiple checkboxes
             if 'equipe_values' in form_data:
                 form_data['equipe'] = form_data['equipe_values']
                 del form_data['equipe_values']
 
-            # Salvar no Excel e no banco de dados
+            # Save to Excel and database
             success, message = save_to_excel(form_data)
 
             if success:
@@ -307,7 +321,7 @@ def novo_cadastro():
             logger.error(f"Error saving data: {str(e)}\n{traceback.format_exc()}")
             flash(f"Erro ao salvar dados: {str(e)}", "error")
 
-    # Estrutura do formulário completo
+    # Complete form structure
     form_data = {
         'title': 'Cadastro de Cirurgia Capilar',
         'fields': [
@@ -382,7 +396,6 @@ def novo_cadastro():
         ]
     }
     return render_template('form.html', form=form_data, data={})
-
 
 @app.route('/get_medicos/<unidade>')
 def get_medicos(unidade):
@@ -629,7 +642,7 @@ def process_dashboard_data(df):
         dashboard_data['has_follicle_data'] = True
 
     # Adicionar timestamp de atualização
-    dashboard_data['update_time'] = datetime.now().strftime('%d/%m/%Y %H:%M')
+    dashboard_data['update_time'] =datetime.now().strftime('%d/%m/%Y %H:%M')
 
     return dashboard_data
 
@@ -637,16 +650,39 @@ def process_dashboard_data(df):
 def dashboard():
     logger.info("Accessing dashboard route")
     try:
-        # Se o arquivo Excel existir, carregar os dados para o dashboard
         with app.app_context():
             logger.info("Querying database for dashboard data...")
-            # Usar text() para converter a query em string SQL
-            from sqlalchemy import text
-            sql = text("SELECT * FROM surgery")
-            result = db.session.execute(sql)
-            df = pd.DataFrame(result.fetchall(), columns=result.keys())
-            logger.info(f"Found {len(df)} records in database")
+
+            # Get all surgeries
+            surgeries = Surgery.query.all()
+            logger.info(f"Found {len(surgeries)} surgeries in database")
+
+            # Convert to DataFrame
+            records = []
+            for surgery in surgeries:
+                record = {
+                    'data': surgery.data,
+                    'nome': surgery.nome,
+                    'unidade': surgery.unidade,
+                    'medico': surgery.medico,
+                    'equipe': surgery.equipe,
+                    'hora_cirurgia': surgery.hora_cirurgia,
+                    'tempo_cirurgia': surgery.tempo_cirurgia,
+                    'total_foliculos': surgery.total_foliculos,
+                    'frente': surgery.frente,
+                    'densidade_scketh': surgery.densidade_scketh,
+                    'coroa': surgery.coroa,
+                    'scalpe': surgery.scalpe,
+                    'peninsula_direita': surgery.peninsula_direita,
+                    'peninsula_esquerda': surgery.peninsula_esquerda
+                }
+                records.append(record)
+
+            df = pd.DataFrame(records)
+            logger.info(f"Created DataFrame with {len(df)} records")
+
             dashboard_data = process_dashboard_data(df)
+            logger.info("Dashboard data processed successfully")
 
         return render_template('dashboard.html', data=dashboard_data)
 
@@ -656,7 +692,7 @@ def dashboard():
             'labels': [],
             'datasets': [{'label': 'Cirurgias', 'data': []}],
             'has_follicle_data': False,
-            'follicles_data': {'labels': [], 'averages': [], 'le_density':[]},
+            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
             'total_surgeries': 0,
             'avg_follicles': 0,
             'avg_density': 0
