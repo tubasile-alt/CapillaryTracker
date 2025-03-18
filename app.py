@@ -24,11 +24,7 @@ database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
 
-# Default to SQLite if no database URL is provided
-if not database_url:
-    database_url = 'sqlite:///deploy_data/database.sqlite'
-
-logger.info(f"Using database URL: {database_url}")
+logger.info(f"Using database URL: {database_url.split('@')[1] if database_url else 'None'}")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -401,14 +397,16 @@ def get_equipe_data():
                 equipe_data[membro]['unidades'].add(cirurgia.unidade)
 
         # Format data for response
-        formatted_data = [
-            {
-                'membro': membro,
-                'quantidade': data['quantidade'],
-                'unidades_atendidas': len(data['unidades'])
-            }
-            for membro, data in equipe_data.items()
-        ]
+        formatted_data = {
+            'equipe': [
+                {
+                    'nome': membro,
+                    'quantidade': data['quantidade'],
+                    'unidades': len(data['unidades'])
+                }
+                for membro, data in equipe_data.items()
+            ]
+        }
 
         return jsonify(formatted_data)
 
@@ -539,10 +537,10 @@ with app.app_context():
     db.create_all()
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 3000))
     try:
         logger.info(f"Starting server on port {port}")
-        app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
+        app.run(host='0.0.0.0', port=port, debug=True)
     except Exception as e:
         logger.exception("Failed to start server:")
         raise
