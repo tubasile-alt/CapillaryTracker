@@ -143,7 +143,7 @@
                         {% endif %}
                     </div>
                 {% endfor %}
-                
+
                 <!-- Campo de Bloqueio -->
                 <div class="form-group">
                     <label for="bloqueio">Bloqueio</label>
@@ -153,13 +153,13 @@
                         <option value="Xilo com vaso">Xilo com vaso</option>
                     </select>
                 </div>
-                
+
                 <!-- Campo de seringas do bloqueio (inicialmente oculto) -->
                 <div id="bloqueio_seringas_container" class="form-group" style="display: none;">
                     <label for="bloqueio_seringas">Quantidade de seringas</label>
                     <input type="number" name="bloqueio_seringas" id="bloqueio_seringas" min="0" step="1">
                 </div>
-                
+
                 <!-- Campo de comentários do bloqueio (inicialmente oculto) -->
                 <div id="bloqueio_comentarios_container" class="form-group" style="display: none;">
                     <label for="bloqueio_comentarios">Comentários sobre o bloqueio</label>
@@ -184,7 +184,7 @@
                             BODY HAIR
                         </label>
                     </div>
-                    
+
                     <div id="body-hair-fields" style="display: none;">
                         <div class="body-hair-options">
                             <div class="body-hair-option">
@@ -205,7 +205,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="body-hair-option">
                                 <input type="checkbox" id="peitoral-check" name="peitoral_check" onchange="toggleSourceFields('peitoral')">
                                 <label for="peitoral-check">Peitoral</label>
@@ -224,7 +224,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="body-hair-option">
                                 <input type="checkbox" id="abdome-check" name="abdome_check" onchange="toggleSourceFields('abdome')">
                                 <label for="abdome-check">Abdome</label>
@@ -243,7 +243,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="body-hair-option">
                                 <input type="checkbox" id="dorso-check" name="dorso_check" onchange="toggleSourceFields('dorso')">
                                 <label for="dorso-check">Dorso</label>
@@ -265,7 +265,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="quadrantes-container">
                     <div class="quadrante-box">
                         <h4>Quadrante 1</h4>
@@ -477,7 +477,7 @@
         border: 1px solid #ccc;
         border-radius: 4px;
     }
-    
+
     /* Estilos para Body Hair */
     .body-hair-section {
         margin-bottom: 20px;
@@ -486,14 +486,14 @@
         border-radius: 5px;
         background-color: #f9f9f9;
     }
-    
+
     .body-hair-options {
         display: flex;
         flex-wrap: wrap;
         gap: 20px;
         margin-top: 10px;
     }
-    
+
     .body-hair-option {
         flex: 1;
         min-width: 250px;
@@ -502,18 +502,18 @@
         padding: 10px;
         background-color: white;
     }
-    
+
     .body-hair-option label {
         font-weight: bold;
         margin-left: 5px;
     }
-    
+
     .source-fields {
         margin-top: 10px;
         padding-top: 10px;
         border-top: 1px dashed #ccc;
     }
-    
+
     .source-fields input[type="number"] {
         width: 100%;
         padding: 5px;
@@ -521,7 +521,7 @@
         border: 1px solid #ccc;
         border-radius: 4px;
     }
-    
+
     .source-fields textarea {
         width: 100%;
         padding: 5px;
@@ -550,18 +550,18 @@
     function toggleBodyHairFields() {
         const bodyHairCheck = document.getElementById('body-hair-check');
         const bodyHairFields = document.getElementById('body-hair-fields');
-        
+
         if (bodyHairCheck.checked) {
             bodyHairFields.style.display = 'block';
         } else {
             bodyHairFields.style.display = 'none';
-            
+
             // Desmarcar todos os checkboxes de fontes
             document.getElementById('barba-check').checked = false;
             document.getElementById('peitoral-check').checked = false;
             document.getElementById('abdome-check').checked = false;
             document.getElementById('dorso-check').checked = false;
-            
+
             // Esconder todos os campos de detalhes
             document.getElementById('barba-fields').style.display = 'none';
             document.getElementById('peitoral-fields').style.display = 'none';
@@ -569,23 +569,23 @@
             document.getElementById('dorso-fields').style.display = 'none';
         }
     }
-    
+
     function toggleSourceFields(source) {
         const sourceCheck = document.getElementById(`${source}-check`);
         const sourceFields = document.getElementById(`${source}-fields`);
-        
+
         if (sourceCheck.checked) {
             sourceFields.style.display = 'block';
         } else {
             sourceFields.style.display = 'none';
-            
+
             // Limpar os campos
             document.getElementById(`${source}-furos`).value = '';
             document.getElementById(`${source}-fios`).value = '';
             document.getElementById(`${source}-comentarios`).value = '';
         }
     }
-    
+
     // Set today's date as default
     window.addEventListener('load', function() {
         var dateInput = document.getElementById('data');
@@ -610,158 +610,157 @@
 
     // Format date before form submission and validate required fields
     document.getElementById('cirurgia-form').addEventListener('submit', function(e) {
-        e.preventDefault(); // Prevent default submission to validate first
+        try {
+            e.preventDefault(); // Prevent default submission to validate first
 
-        // Validate all required fields
-        let isValid = true;
-        let missingFields = [];
+            // Validate all required fields
+            let isValid = true;
+            let missingFields = [];
 
-        const allRequiredFields = document.querySelectorAll('[required]');
-        allRequiredFields.forEach(field => {
-            if (!field.value) {
-                isValid = false;
-                field.classList.add('field-error');
-                const label = document.querySelector(`label[for="${field.id}"]`);
-                if (label) {
-                    missingFields.push(label.textContent.replace('*', '').trim());
-                }
-            } else {
-                field.classList.remove('field-error');
-            }
-        });
-
-        if (!isValid) {
-            alert(`Por favor, preencha os seguintes campos obrigatórios:\n- ${missingFields.join('\n- ')}`);
-            return;
-        }
-
-        // Format date
-        var dateInput = document.getElementById('data');
-        if (dateInput) {
-            var date = new Date(dateInput.value);
-            var dd = String(date.getDate()).padStart(2, '0');
-            var mm = String(date.getMonth() + 1).padStart(2, '0');
-            var yyyy = date.getFullYear();
-
-            // Create a hidden input if it doesn't exist
-            let dataFormatted = document.getElementById('data_formatted');
-            if (!dataFormatted) {
-                dataFormatted = document.createElement('input');
-                dataFormatted.type = 'hidden';
-                dataFormatted.id = 'data_formatted';
-                dataFormatted.name = 'data_formatted';
-                document.getElementById('cirurgia-form').appendChild(dataFormatted);
-            }
-            dataFormatted.value = dd + '/' + mm + '/' + yyyy;
-        }
-
-        // Get selected equipe values from checkboxes
-        var checkboxes = document.querySelectorAll('input[name="equipe"]:checked');
-        var selectedEquipe = [];
-        
-        if (checkboxes.length > 0) {
-            selectedEquipe = Array.from(checkboxes).map(checkbox => checkbox.value);
-        }
-        
-        // Adicionar técnicas extras à equipe se estiverem preenchidas
-        var extraPerson1 = document.getElementById('extra_person_1').value;
-        var extraPerson2 = document.getElementById('extra_person_2').value;
-        
-        if (extraPerson1) {
-            selectedEquipe.push(extraPerson1 + ' (extra)');
-        }
-        
-        if (extraPerson2) {
-            selectedEquipe.push(extraPerson2 + ' (extra)');
-        }
-        
-        if (selectedEquipe.length > 0) {
-            // Create a hidden input to store the comma-separated values
-            var hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'equipe_values';
-            hiddenInput.value = selectedEquipe.join(', ');
-            document.getElementById('cirurgia-form').appendChild(hiddenInput);
-        }
-        
-        // Adicionar dados de bloqueio
-        const bloqueioSelect = document.getElementById('bloqueio');
-        const bloqueioValue = bloqueioSelect.value;
-        
-        let bloqueioData = {
-            tipo: bloqueioValue,
-            seringas: '',
-            comentarios: ''
-        };
-        
-        if (bloqueioValue !== 'Não') {
-            bloqueioData.seringas = document.getElementById('bloqueio_seringas').value;
-            bloqueioData.comentarios = document.getElementById('bloqueio_comentarios').value;
-        }
-        
-        const bloqueioInput = document.createElement('input');
-        bloqueioInput.type = 'hidden';
-        bloqueioInput.name = 'bloqueio_data';
-        bloqueioInput.value = JSON.stringify(bloqueioData);
-        document.getElementById('cirurgia-form').appendChild(bloqueioInput);
-        
-        // Prepara os dados de Body Hair, se aplicável
-        if (document.getElementById('body-hair-check').checked) {
-            const bodyHairSources = ['barba', 'peitoral', 'abdome', 'dorso'];
-            let bodyHairData = {};
-            
-            bodyHairSources.forEach(source => {
-                if (document.getElementById(`${source}-check`).checked) {
-                    const furos = document.getElementById(`${source}-furos`).value;
-                    const fios = document.getElementById(`${source}-fios`).value;
-                    const comentarios = document.getElementById(`${source}-comentarios`).value;
-                    
-                    bodyHairData[source] = {
-                        furos: furos,
-                        fios: fios,
-                        comentarios: comentarios
-                    };
+            const allRequiredFields = document.querySelectorAll('[required]');
+            allRequiredFields.forEach(field => {
+                if (!field.value) {
+                    isValid = false;
+                    field.classList.add('field-error');
+                    const label = document.querySelector(`label[for="${field.id}"]`);
+                    if (label) {
+                        missingFields.push(label.textContent.replace('*', '').trim());
+                    }
+                } else {
+                    field.classList.remove('field-error');
                 }
             });
-            
-            if (Object.keys(bodyHairData).length > 0) {
-                const bodyHairInput = document.createElement('input');
-                bodyHairInput.type = 'hidden';
-                bodyHairInput.name = 'body_hair_data';
-                bodyHairInput.value = JSON.stringify(bodyHairData);
-                document.getElementById('cirurgia-form').appendChild(bodyHairInput);
+
+            if (!isValid) {
+                alert(`Por favor, preencha os seguintes campos obrigatórios:\n- ${missingFields.join('\n- ')}`);
+                return;
             }
-        }
 
-        // Preparar os dados do formulário
-        const form = this;
-        const formData = new FormData(form);
+            // Format date
+            var dateInput = document.getElementById('data');
+            if (dateInput) {
+                var date = new Date(dateInput.value);
+                var dd = String(date.getDate()).padStart(2, '0');
+                var mm = String(date.getMonth() + 1).padStart(2, '0');
+                var yyyy = date.getFullYear();
 
-        // Enviar o formulário via fetch
-        fetch(form.action, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (response.ok) {
-                const successMessage = document.createElement('div');
-                successMessage.className = 'success-message';
-                successMessage.innerHTML = '✅ Dados salvos com sucesso! 🎉';
-                document.body.appendChild(successMessage);
-                
-                // Redirecionar após 1 segundo
-                setTimeout(() => {
+                // Create a hidden input if it doesn't exist
+                let dataFormatted = document.getElementById('data_formatted');
+                if (!dataFormatted) {
+                    dataFormatted = document.createElement('input');
+                    dataFormatted.type = 'hidden';
+                    dataFormatted.id = 'data_formatted';
+                    dataFormatted.name = 'data_formatted';
+                    document.getElementById('cirurgia-form').appendChild(dataFormatted);
+                }
+                dataFormatted.value = dd + '/' + mm + '/' + yyyy;
+            }
+
+            // Get selected equipe values from checkboxes
+            var checkboxes = document.querySelectorAll('input[name="equipe"]:checked');
+            var selectedEquipe = [];
+
+            if (checkboxes.length > 0) {
+                selectedEquipe = Array.from(checkboxes).map(checkbox => checkbox.value);
+            }
+
+            // Adicionar técnicas extras à equipe se estiverem preenchidas
+            var extraPerson1 = document.getElementById('extra_person_1').value;
+            var extraPerson2 = document.getElementById('extra_person_2').value;
+
+            if (extraPerson1) {
+                selectedEquipe.push(extraPerson1 + ' (extra)');
+            }
+
+            if (extraPerson2) {
+                selectedEquipe.push(extraPerson2 + ' (extra)');
+            }
+
+            if (selectedEquipe.length > 0) {
+                // Create a hidden input to store the comma-separated values
+                var hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'equipe_values';
+                hiddenInput.value = selectedEquipe.join(', ');
+                document.getElementById('cirurgia-form').appendChild(hiddenInput);
+            }
+
+            // Adicionar dados de bloqueio
+            const bloqueioSelect = document.getElementById('bloqueio');
+            const bloqueioValue = bloqueioSelect.value;
+
+            let bloqueioData = {
+                tipo: bloqueioValue,
+                seringas: '',
+                comentarios: ''
+            };
+
+            if (bloqueioValue !== 'Não') {
+                bloqueioData.seringas = document.getElementById('bloqueio_seringas').value;
+                bloqueioData.comentarios = document.getElementById('bloqueio_comentarios').value;
+            }
+
+            const bloqueioInput = document.createElement('input');
+            bloqueioInput.type = 'hidden';
+            bloqueioInput.name = 'bloqueio_data';
+            bloqueioInput.value = JSON.stringify(bloqueioData);
+            document.getElementById('cirurgia-form').appendChild(bloqueioInput);
+
+            // Prepara os dados de Body Hair, se aplicável
+            if (document.getElementById('body-hair-check').checked) {
+                const bodyHairSources = ['barba', 'peitoral', 'abdome', 'dorso'];
+                let bodyHairData = {};
+
+                bodyHairSources.forEach(source => {
+                    if (document.getElementById(`${source}-check`).checked) {
+                        const furos = document.getElementById(`${source}-furos`).value;
+                        const fios = document.getElementById(`${source}-fios`).value;
+                        const comentarios = document.getElementById(`${source}-comentarios`).value;
+
+                        bodyHairData[source] = {
+                            furos: furos,
+                            fios: fios,
+                            comentarios: comentarios
+                        };
+                    }
+                });
+
+                if (Object.keys(bodyHairData).length > 0) {
+                    const bodyHairInput = document.createElement('input');
+                    bodyHairInput.type = 'hidden';
+                    bodyHairInput.name = 'body_hair_data';
+                    bodyHairInput.value = JSON.stringify(bodyHairData);
+                    document.getElementById('cirurgia-form').appendChild(bodyHairInput);
+                }
+            }
+
+            // Preparar os dados do formulário
+            const form = this;
+            const formData = new FormData(form);
+
+            // Enviar o formulário via fetch
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Mostrar mensagem de sucesso e redirecionar
+                    alert('Dados salvos com sucesso!');
                     window.location.href = '/';
-                }, 1000);
-            } else {
-                throw new Error('Erro ao salvar dados');
-            }
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            alert('Erro ao salvar dados. Por favor, tente novamente.');
-        });
-    });
+                } else {
+                    throw new Error('Erro ao salvar dados');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao salvar dados. Por favor, tente novamente.');
+            });
+    } catch (error) {
+        console.error('Erro ao processar formulário:', error);
+        alert('Erro ao processar formulário. Por favor, tente novamente.');
+    }
+});
 
     // Update medicos based on selected unidade
     function updateMedicos(unidade) {
@@ -912,12 +911,12 @@
 
         tempoCirurgiaInput.value = currentTime;
     }
-    
+
     // Função para mostrar/ocultar campo de seringas do bloqueio
     function toggleBloqueioSeringas(value) {
         const seringasContainer = document.getElementById('bloqueio_seringas_container');
         const comentariosContainer = document.getElementById('bloqueio_comentarios_container');
-        
+
         if (value === "Não") {
             seringasContainer.style.display = 'none';
             comentariosContainer.style.display = 'none';
