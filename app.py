@@ -70,13 +70,64 @@ class UnitProgress(db.Model):
 with app.app_context():
     db.create_all()
     logger.info("✅ Database tables created successfully")
+    # Insert test data if database is empty
+    try:
+        count = Surgery.query.count()
+        if count == 0:
+            logger.info("Database is empty, inserting test data...")
+            test_data = [
+                Surgery(
+                    data=datetime.now().date(),
+                    nome="Paciente Teste",
+                    unidade="Ribeirão Preto",
+                    medico="Dr. Arthur",
+                    equipe="Aline",
+                    hora_cirurgia="08:00",
+                    tempo_cirurgia=2.5,
+                    total_foliculos=3500,
+                    frente=1000,
+                    densidade_scketh=85,
+                    coroa=800,
+                    scalpe=500,
+                    peninsula_direita=600,
+                    peninsula_esquerda=600
+                )
+            ]
+            db.session.bulk_save_objects(test_data)
+            db.session.commit()
+            logger.info("✅ Test data inserted successfully")
+    except Exception as e:
+        logger.error(f"Error inserting test data: {str(e)}")
+        db.session.rollback()
 
 @app.route('/dashboard')
 def dashboard():
     logger.info("Accessing dashboard route")
     try:
         with app.app_context():
-            # Usar consulta SQL direta para evitar problemas de conexão
+            # Usar consulta SQL direta para debugging
+            sql = text("""
+                SELECT COUNT(*) as total
+                FROM surgery;
+            """)
+            result = db.session.execute(sql)
+            total_count = result.scalar()
+            logger.info(f"Total records in database: {total_count}")
+
+            if total_count == 0:
+                logger.warning("No records found in database")
+                return render_template('dashboard.html', data={
+                    'total_surgeries': 0,
+                    'avg_follicles': 0,
+                    'avg_density': 0,
+                    'labels': [],
+                    'datasets': [],
+                    'has_follicle_data': False,
+                    'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+                    'version': '2.1'
+                }, error="Nenhum registro encontrado no banco de dados. Por favor, cadastre alguns dados.")
+
+            # Buscar dados completos
             sql = text("""
                 SELECT 
                     data, 
@@ -84,39 +135,41 @@ def dashboard():
                     COALESCE(total_foliculos, 0) as total_foliculos,
                     COALESCE(densidade_scketh, 0) as densidade_scketh
                 FROM surgery
+                ORDER BY data DESC;
             """)
 
             result = db.session.execute(sql)
             rows = result.fetchall()
             logger.info(f"Found {len(rows)} records in database")
 
+            # Debug: exibir primeiras linhas dos dados
+            if rows:
+                sample_data = rows[0]
+                logger.info(f"Sample data: {sample_data}")
+
             # Converter para DataFrame com tratamento de valores nulos
             df = pd.DataFrame(rows, columns=['data', 'unidade', 'total_foliculos', 'densidade_scketh'])
-            logger.info(f"Created DataFrame with {len(df)} records")
+            df['total_foliculos'] = pd.to_numeric(df['total_foliculos'], errors='coerce').fillna(0)
+            df['densidade_scketh'] = pd.to_numeric(df['densidade_scketh'], errors='coerce').fillna(0)
 
-            # Inicializar dados do dashboard com valores seguros
+            logger.info(f"DataFrame info:\n{df.info()}")
+            logger.info(f"DataFrame head:\n{df.head()}")
+
+            # Inicializar dados do dashboard
             dashboard_data = {
                 'total_surgeries': len(df),
-                'avg_follicles': 0,
-                'avg_density': 0,
+                'avg_follicles': int(round(df['total_foliculos'].mean())),
+                'avg_density': int(round(df['densidade_scketh'].mean())),
                 'labels': [],
                 'datasets': [],
-                'has_follicle_data': False,
+                'has_follicle_data': True,
                 'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
                 'update_time': datetime.now().strftime('%d/%m/%Y %H:%M'),
                 'version': '2.1'
             }
 
+            # Processar dados por mês
             if not df.empty:
-                # Calcular médias com tratamento seguro de NaN
-                follicles_mean = df['total_foliculos'].replace([np.inf, -np.inf], np.nan).fillna(0).mean()
-                density_mean = df['densidade_scketh'].replace([np.inf, -np.inf], np.nan).fillna(0).mean()
-
-                dashboard_data['avg_follicles'] = int(round(follicles_mean))
-                dashboard_data['avg_density'] = int(round(density_mean))
-                dashboard_data['has_follicle_data'] = True
-
-                # Processar dados por mês
                 df['mes_ano'] = pd.to_datetime(df['data']).dt.strftime('%m/%Y')
                 cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
 
@@ -140,14 +193,10 @@ def dashboard():
                         'data': merged['count'].tolist()
                     })
 
-                # Processar dados de folículos por mês
-                def safe_mean(x):
-                    values = pd.to_numeric(x, errors='coerce').replace([np.inf, -np.inf], np.nan).fillna(0)
-                    return int(round(values.mean()))
-
+                # Processar médias mensais
                 monthly_stats = df.groupby('mes_ano').agg({
-                    'total_foliculos': safe_mean,
-                    'densidade_scketh': safe_mean
+                    'total_foliculos': lambda x: int(round(x.mean())),
+                    'densidade_scketh': lambda x: int(round(x.mean()))
                 }).reset_index()
 
                 dashboard_data['follicles_data']['labels'] = monthly_stats['mes_ano'].tolist()
@@ -155,7 +204,7 @@ def dashboard():
                 dashboard_data['follicles_data']['le_density'] = monthly_stats['densidade_scketh'].tolist()
 
             logger.info("Dashboard data processed successfully")
-            logger.info(f"Dashboard summary: {dashboard_data['total_surgeries']} surgeries, {dashboard_data['avg_follicles']} avg follicles")
+            logger.info(f"Final dashboard data: {dashboard_data}")
 
             return render_template('dashboard.html', data=dashboard_data)
 
