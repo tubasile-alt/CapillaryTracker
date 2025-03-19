@@ -542,11 +542,17 @@ def process_dashboard_data(df):
 
     # Return empty structure if DataFrame is empty
     if df.empty:
+        logger.warning("Empty DataFrame received in process_dashboard_data")
         return dashboard_data
 
     try:
+        logger.info("Processing dashboard data...")
+        logger.info(f"DataFrame shape: {df.shape}")
+        logger.info(f"DataFrame columns: {df.columns.tolist()}")
+
         # Calculate basic statistics
         dashboard_data['total_surgeries'] = len(df)
+        logger.info(f"Total surgeries: {dashboard_data['total_surgeries']}")
 
         # Calculate follicle averages if the data exists
         if 'total_foliculos' in df.columns:
@@ -557,6 +563,7 @@ def process_dashboard_data(df):
             if pd.notna(media_foliculos):  # Check if mean is not NaN
                 dashboard_data['avg_follicles'] = int(round(media_foliculos))
                 dashboard_data['has_follicle_data'] = True
+                logger.info(f"Average follicles: {dashboard_data['avg_follicles']}")
 
         # Calculate density averages if the data exists
         if 'densidade_scketh' in df.columns:
@@ -566,9 +573,11 @@ def process_dashboard_data(df):
             media_densidade = densidade.mean()
             if pd.notna(media_densidade):  # Check if mean is not NaN
                 dashboard_data['avg_density'] = int(round(media_densidade))
+                logger.info(f"Average density: {dashboard_data['avg_density']}")
 
         # Process dates
         if 'data' in df.columns:
+            logger.info("Processing date-based data...")
             # Convert dates properly
             df['mes_ano'] = pd.to_datetime(df['data']).dt.strftime('%m/%Y')
 
@@ -598,6 +607,7 @@ def process_dashboard_data(df):
 
             # Process follicle data by month
             if dashboard_data['has_follicle_data']:
+                logger.info("Processing follicle data by month...")
                 # Calculate monthly averages for follicles
                 follicles_by_month = df.groupby('mes_ano').agg({
                     'total_foliculos': lambda x: int(round(pd.to_numeric(x, errors='coerce').mean()))
@@ -632,26 +642,30 @@ def dashboard():
             surgeries = Surgery.query.all()
             logger.info(f"Found {len(surgeries)} surgeries in database")
 
-            # Convert to DataFrame with proper numeric types
+            # Convert to DataFrame with proper type conversion
             records = []
             for surgery in surgeries:
-                record = {
-                    'data': surgery.data,
-                    'nome': surgery.nome,
-                    'unidade': surgery.unidade,
-                    'medico': surgery.medico,
-                    'equipe': surgery.equipe,
-                    'hora_cirurgia': surgery.hora_cirurgia,
-                    'tempo_cirurgia': float(surgery.tempo_cirurgia or 0),
-                    'total_foliculos': int(surgery.total_foliculos or 0),
-                    'frente': int(surgery.frente or 0),
-                    'densidade_scketh': float(surgery.densidade_scketh or 0),
-                    'coroa': int(surgery.coroa or 0),
-                    'scalpe': int(surgery.scalpe or 0),
-                    'peninsula_direita': int(surgery.peninsula_direita or 0),
-                    'peninsula_esquerda': int(surgery.peninsula_esquerda or 0)
-                }
-                records.append(record)
+                try:
+                    record = {
+                        'data': surgery.data,
+                        'nome': str(surgery.nome),
+                        'unidade': str(surgery.unidade),
+                        'medico': str(surgery.medico),
+                        'equipe': str(surgery.equipe),
+                        'hora_cirurgia': str(surgery.hora_cirurgia),
+                        'tempo_cirurgia': float(surgery.tempo_cirurgia or 0),
+                        'total_foliculos': int(surgery.total_foliculos or 0),
+                        'frente': int(surgery.frente or 0),
+                        'densidade_scketh': float(surgery.densidade_scketh or 0),
+                        'coroa': int(surgery.coroa or 0),
+                        'scalpe': int(surgery.scalpe or 0),
+                        'peninsula_direita': int(surgery.peninsula_direita or 0),
+                        'peninsula_esquerda': int(surgery.peninsula_esquerda or 0)
+                    }
+                    records.append(record)
+                except Exception as e:
+                    logger.error(f"Error converting surgery record: {str(e)}")
+                    continue
 
             df = pd.DataFrame(records)
             logger.info(f"Created DataFrame with {len(df)} records")
@@ -676,23 +690,6 @@ def dashboard():
             'avg_density': 0
         }, error=f"Erro ao carregar dashboard: {str(e)}")
 
-@app.route('/get_available_units')
-def get_available_units():
-    """Endpoint para obter todas asunidades disponíveis no banco de dados"""
-    logger.info("Obtendo unidades disponíveis")
-    try:
-        with app.app_context():
-            units = [unit.unidade for unit in Surgery.query.distinct(Surgery.unidade).all()]
-            # Garantir que todas as unidades padrão estejam sempre disponíveis
-            default_units = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']
-            for unit in default_units:
-                if unit not in units:
-                    units.append(unit)
-            return jsonify({'units': units})
-    except Exception as e:
-        logger.error(f"Erro ao obter unidades: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({'units': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']})
-
 @app.route('/get_unit_progress')
 def get_unit_progress():
     """Endpoint para obter o progresso atual em relação à meta de unidade"""
@@ -700,12 +697,10 @@ def get_unit_progress():
     try:
         unit = request.args.get('unit', 'Ribeirão Preto')
 
-        # Metas definidas por unidade
-        metas = {
-            'Ribeirão Preto': 35,
-            'Campinas': 25,
-            'Rio de Janeiro': 20
-        }
+        # Metas definidas por unidade -  Obtidas do banco de dados
+        with app.app_context():
+            unit_progress = db.session.execute(text("SELECT unidade, meta FROM unit_progress")).fetchall()
+            metas = {unit_data.unidade: unit_data.meta for unit_data in unit_progress}
 
         # Meta para a unidade selecionada
         meta = metas.get(unit, 30)
@@ -734,6 +729,23 @@ def get_unit_progress():
             'atual': 0,
             'percentual': 0
         })
+
+@app.route('/get_available_units')
+def get_available_units():
+    """Endpoint para obter todas asunidades disponíveis no banco de dados"""
+    logger.info("Obtendo unidades disponíveis")
+    try:
+        with app.app_context():
+            units = [unit.unidade for unit in Surgery.query.distinct(Surgery.unidade).all()]
+            # Garantir que todas as unidades padrão estejam sempre disponíveis
+            default_units = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']
+            for unit in default_units:
+                if unit not in units:
+                    units.append(unit)
+            return jsonify({'units': units})
+    except Exception as e:
+        logger.error(f"Erro ao obter unidades: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'units': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']})
 
 @app.route('/get_tecnicas_data')
 def get_tecnicas_data():
