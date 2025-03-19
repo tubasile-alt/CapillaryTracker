@@ -39,9 +39,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_timeout': 30,
     'pool_size': 5,
     'max_overflow': 10,
-    'connect_args': {
-        'connect_timeout': 10
-    }
+    'connect_args': {}
 }
 
 db = SQLAlchemy(app)
@@ -1262,7 +1260,7 @@ app.secret_key = os.environ.get('SESSION_SECRET', os.urandom(24))
 
 if __name__ == '__main__':
     try:
-        port = 5000
+        port = int(os.environ.get('PORT', 3000))
         logger.info(f"Starting Flask server on port {port}...")
         app.run(host='0.0.0.0', port=port, debug=False)
     except Exception as e:
