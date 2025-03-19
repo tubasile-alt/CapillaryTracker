@@ -34,14 +34,13 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True  # Enable SQL query logging
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_pre_ping': True,  # Enable connection health checks
-    'pool_recycle': 300,    # Recycle connections every 5 minutes
-    'pool_timeout': 30,     # Connection timeout of 30 seconds
-    'pool_size': 5,         # Maximum pool size
-    'max_overflow': 10,     # Maximum number of connections to overflow
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+    'pool_timeout': 30,
+    'pool_size': 5,
+    'max_overflow': 10,
     'connect_args': {
-        'sslmode': 'require',  # Require SSL
-        'connect_timeout': 10   # Connection timeout in seconds
+        'connect_timeout': 10
     }
 }
 
