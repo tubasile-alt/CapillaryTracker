@@ -645,7 +645,7 @@ def process_dashboard_data(df):
 
             # Process follicle data by month
             if dashboard_data['has_follicle_data']:
-                logger.info("Processing follicle data by month...")
+                logger.info("Processingfollicle data by month...")
                 # Calculate monthly averages for follicles
                 follicles_by_month = df.groupby('mes_ano').agg({
                     'total_foliculos': lambda x: int(round(pd.to_numeric(x, errors='coerce').mean()))
@@ -688,15 +688,19 @@ def dashboard():
             rows = result.fetchall()
             logger.info(f"Found {len(rows)} records in database")
 
-            # Converter para DataFrame
+            # Converter para DataFrame com tratamento de valores nulos
             df = pd.DataFrame(rows, columns=['data', 'unidade', 'total_foliculos', 'densidade_scketh'])
             logger.info(f"Created DataFrame with {len(df)} records")
+
+            # Tratar valores nulos antes de processar
+            df['total_foliculos'] = pd.to_numeric(df['total_foliculos'], errors='coerce').fillna(0)
+            df['densidade_scketh'] = pd.to_numeric(df['densidade_scketh'], errors='coerce').fillna(0)
 
             # Processar dados para o dashboard
             dashboard_data = {
                 'total_surgeries': len(df),
-                'avg_follicles': int(pd.to_numeric(df['total_foliculos'], errors='coerce').mean() or 0),
-                'avg_density': int(pd.to_numeric(df['densidade_scketh'], errors='coerce').mean() or 0),
+                'avg_follicles': round(float(df['total_foliculos'].mean() or 0)),
+                'avg_density': round(float(df['densidade_scketh'].mean() or 0)),
                 'labels': [],
                 'datasets': [],
                 'has_follicle_data': True,
@@ -732,14 +736,14 @@ def dashboard():
 
                 # Processar dados de folículos e densidade
                 follicles_by_month = df.groupby('mes_ano').agg({
-                    'total_foliculos': lambda x: int(pd.to_numeric(x, errors='coerce').mean() or 0)
+                    'total_foliculos': lambda x: round(float(x.mean() or 0))
                 }).reset_index()
 
                 dashboard_data['follicles_data']['labels'] = follicles_by_month['mes_ano'].tolist()
                 dashboard_data['follicles_data']['averages'] = follicles_by_month['total_foliculos'].tolist()
 
                 density_by_month = df.groupby('mes_ano').agg({
-                    'densidade_scketh': lambda x: int(pd.to_numeric(x, errors='coerce').mean() or 0)
+                    'densidade_scketh': lambda x: round(float(x.mean() or 0))
                 }).reset_index()
                 dashboard_data['follicles_data']['le_density'] = density_by_month['densidade_scketh'].tolist()
 
@@ -751,13 +755,14 @@ def dashboard():
     except Exception as e:
         logger.error(f"Error in dashboard route: {str(e)}\n{traceback.format_exc()}")
         return render_template('dashboard.html', data={
+            'total_surgeries': 0,
+            'avg_follicles': 0,
+            'avg_density': 0,
             'labels': [],
             'datasets': [{'label': 'Cirurgias', 'data': []}],
             'has_follicle_data': False,
             'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-            'total_surgeries': 0,
-            'avg_follicles': 0,
-            'avg_density': 0
+            'version': '2.1'
         }, error=f"Erro ao carregar dashboard: {str(e)}")
 
 @app.route('/get_unit_progress')
