@@ -129,7 +129,7 @@ def dashboard():
                     'datasets': [],
                     'has_follicle_data': False,
                     'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-                    'version': '2.1'
+                    'version': '2.2'
                 }, error="Nenhum registro encontrado no banco de dados.")
 
             # Buscar dados detalhados
@@ -215,7 +215,7 @@ def dashboard():
             'datasets': [{'label': 'Cirurgias', 'data': []}],
             'has_follicle_data': False,
             'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-            'version': '2.1'
+            'version': '2.2'
         }, error=f"Erro ao carregar dashboard: {str(e)}")
 
 def backup_excel_file(source_file):

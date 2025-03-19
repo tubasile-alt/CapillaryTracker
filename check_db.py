@@ -57,3 +57,26 @@ with app.app_context():
         db.session.add(test_surgery)
         db.session.commit()
         logger.info("Added test record")
+import os
+from app import db, app
+from sqlalchemy import text
+
+def check_database():
+    try:
+        with app.app_context():
+            # Test database connection
+            result = db.session.execute(text('SELECT 1'))
+            print("✅ Database connection successful")
+            
+            # Get surgery count
+            result = db.session.execute(text('SELECT COUNT(*) FROM surgery'))
+            count = result.scalar()
+            print(f"Total records in database: {count}")
+            
+            return True
+    except Exception as e:
+        print(f"❌ Database error: {str(e)}")
+        return False
+
+if __name__ == "__main__":
+    check_database()
