@@ -1,46 +1,64 @@
+
 import os
+import logging
 import pandas as pd
 from app import app, db, Surgery
-import logging
+from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def check_deployment_consistency():
-    logger.info("Verificando consistência dos dados de deployment...")
+    """Verifica consistência dos dados após deployment"""
+    logger.info("Verificando consistência dos dados...")
 
-    # Check local database
-    with app.app_context():
-        local_count = Surgery.query.count()
-        logger.info(f"Registros no banco local: {local_count}")
+    try:
+        # Verificar banco de dados local
+        with app.app_context():
+            local_count = Surgery.query.count()
+            logger.info(f"Registros no banco local: {local_count}")
 
-        # Get local data
-        local_surgeries = Surgery.query.all()
-        local_names = [s.nome for s in local_surgeries]
+        # Verificar arquivo Excel local
+        if os.path.exists("cirurgias.xlsx"):
+            df_local = pd.read_excel("cirurgias.xlsx")
+            excel_count = len(df_local)
+            logger.info(f"Registros no Excel local: {excel_count}")
+        else:
+            excel_count = 0
+            logger.warning("Arquivo cirurgias.xlsx não encontrado")
 
-    # Check deployment data
-    deploy_file = os.path.join("deploy_data", "cirurgias.xlsx")
-    if os.path.exists(deploy_file):
-        df_deploy = pd.read_excel(deploy_file)
-        deploy_count = len(df_deploy)
-        logger.info(f"Registros nos dados de deployment: {deploy_count}")
+        # Verificar dados de deployment
+        deploy_file = os.path.join("deploy_data", "cirurgias.xlsx")
+        if os.path.exists(deploy_file):
+            df_deploy = pd.read_excel(deploy_file)
+            deploy_count = len(df_deploy)
+            logger.info(f"Registros no deploy: {deploy_count}")
 
-        if deploy_count != local_count:
-            logger.error(f"❌ INCONSISTÊNCIA DETECTADA!")
-            logger.error(f"Local: {local_count} registros")
-            logger.error(f"Deployment: {deploy_count} registros")
+            if deploy_count != local_count or deploy_count != excel_count:
+                logger.error("❌ INCONSISTÊNCIA DETECTADA!")
+                logger.error(f"- Banco local: {local_count} registros")
+                logger.error(f"- Excel local: {excel_count} registros")
+                logger.error(f"- Deploy: {deploy_count} registros")
 
-            # Show deployment data
-            logger.info("\nDados no arquivo de deployment:")
-            for _, row in df_deploy.iterrows():
-                logger.info(f"- {row['nome']} ({row['unidade']}) - {row['data']}")
+                # Tentar restaurar dados se necessário
+                from restore_deployment_data import restore_deployment_data
+                success, restored = restore_deployment_data()
+                if success:
+                    logger.info("✅ Dados restaurados automaticamente")
+                    return True
+                else:
+                    logger.error("❌ Falha na restauração automática")
+                    return False
+            else:
+                logger.info("✅ Dados consistentes")
+                return True
+        else:
+            logger.error("❌ Arquivo de deployment não encontrado")
+            return False
 
-            # Show local data
-            logger.info("\nDados locais:")
-            for surgery in local_surgeries:
-                logger.info(f"- {surgery.nome} ({surgery.unidade}) - {surgery.data}")
-    else:
-        logger.error("❌ Arquivo de deployment não encontrado!")
+    except Exception as e:
+        logger.error(f"❌ Erro na verificação: {str(e)}")
+        return False
 
 if __name__ == "__main__":
     check_deployment_consistency()
