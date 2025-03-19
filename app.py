@@ -100,6 +100,7 @@ with app.app_context():
         logger.error(f"Error inserting test data: {str(e)}")
         db.session.rollback()
 
+# Modificar a rota do dashboard para processar os dados corretamente
 @app.route('/dashboard')
 def dashboard():
     logger.info("Accessing dashboard route")
@@ -107,14 +108,16 @@ def dashboard():
         with app.app_context():
             # Usar consulta SQL direta para debugging
             sql = text("""
-                SELECT COUNT(*) as total
+                SELECT count(*) AS total, 
+                       avg(total_foliculos) as avg_foliculos,
+                       avg(densidade_scketh) as avg_densidade
                 FROM surgery;
             """)
             result = db.session.execute(sql)
-            total_count = result.scalar()
-            logger.info(f"Total records in database: {total_count}")
+            stats = result.fetchone()
+            logger.info(f"Database stats: {stats}")
 
-            if total_count == 0:
+            if not stats or stats.total == 0:
                 logger.warning("No records found in database")
                 return render_template('dashboard.html', data={
                     'total_surgeries': 0,
@@ -125,41 +128,34 @@ def dashboard():
                     'has_follicle_data': False,
                     'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
                     'version': '2.1'
-                }, error="Nenhum registro encontrado no banco de dados. Por favor, cadastre alguns dados.")
+                }, error="Nenhum registro encontrado no banco de dados.")
 
-            # Buscar dados completos
+            # Buscar dados detalhados
             sql = text("""
                 SELECT 
                     data, 
                     unidade,
-                    COALESCE(total_foliculos, 0) as total_foliculos,
-                    COALESCE(densidade_scketh, 0) as densidade_scketh
+                    total_foliculos,
+                    densidade_scketh
                 FROM surgery
-                ORDER BY data DESC;
+                ORDER BY data ASC;
             """)
 
             result = db.session.execute(sql)
             rows = result.fetchall()
-            logger.info(f"Found {len(rows)} records in database")
 
-            # Debug: exibir primeiras linhas dos dados
-            if rows:
-                sample_data = rows[0]
-                logger.info(f"Sample data: {sample_data}")
-
-            # Converter para DataFrame com tratamento de valores nulos
+            # Criar DataFrame e tratar valores nulos
             df = pd.DataFrame(rows, columns=['data', 'unidade', 'total_foliculos', 'densidade_scketh'])
             df['total_foliculos'] = pd.to_numeric(df['total_foliculos'], errors='coerce').fillna(0)
             df['densidade_scketh'] = pd.to_numeric(df['densidade_scketh'], errors='coerce').fillna(0)
 
-            logger.info(f"DataFrame info:\n{df.info()}")
-            logger.info(f"DataFrame head:\n{df.head()}")
+            logger.info(f"Data summary:\n{df.describe()}")
 
             # Inicializar dados do dashboard
             dashboard_data = {
-                'total_surgeries': len(df),
-                'avg_follicles': int(round(df['total_foliculos'].mean())),
-                'avg_density': int(round(df['densidade_scketh'].mean())),
+                'total_surgeries': int(stats.total),
+                'avg_follicles': int(round(stats.avg_foliculos or 0)),
+                'avg_density': int(round(stats.avg_densidade or 0)),
                 'labels': [],
                 'datasets': [],
                 'has_follicle_data': True,
@@ -168,44 +164,43 @@ def dashboard():
                 'version': '2.1'
             }
 
-            # Processar dados por mês
             if not df.empty:
+                # Processar dados por mês
                 df['mes_ano'] = pd.to_datetime(df['data']).dt.strftime('%m/%Y')
-                cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
 
-                dashboard_data['labels'] = cirurgias_por_mes['mes_ano'].tolist()
+                # Agrupar por mês
+                monthly_data = df.groupby('mes_ano').agg({
+                    'data': 'count',  # contagem de cirurgias
+                    'total_foliculos': 'mean',  # média de folículos
+                    'densidade_scketh': 'mean'   # média de densidade
+                }).round(2)
+
+                # Dados gerais por mês
+                dashboard_data['labels'] = monthly_data.index.tolist()
                 dashboard_data['datasets'].append({
                     'label': 'Total de Cirurgias',
-                    'data': cirurgias_por_mes['count'].tolist()
+                    'data': monthly_data['data'].tolist()
                 })
 
-                # Processar dados por unidade
+                # Dados por unidade
                 for unidade in df['unidade'].unique():
-                    df_unidade = df[df['unidade'] == unidade]
-                    cirurgias_unidade = df_unidade.groupby('mes_ano').size().reset_index(name='count')
+                    df_unit = df[df['unidade'] == unidade]
+                    unit_data = df_unit.groupby('mes_ano')['data'].count()
 
-                    dados_completos = pd.DataFrame({'mes_ano': dashboard_data['labels']})
-                    merged = dados_completos.merge(cirurgias_unidade, on='mes_ano', how='left')
-                    merged['count'] = merged['count'].fillna(0).astype(int)
+                    # Preencher meses faltantes com zero
+                    unit_data = unit_data.reindex(monthly_data.index, fill_value=0)
 
                     dashboard_data['datasets'].append({
                         'label': f'Cirurgias - {unidade}',
-                        'data': merged['count'].tolist()
+                        'data': unit_data.tolist()
                     })
 
-                # Processar médias mensais
-                monthly_stats = df.groupby('mes_ano').agg({
-                    'total_foliculos': lambda x: int(round(x.mean())),
-                    'densidade_scketh': lambda x: int(round(x.mean()))
-                }).reset_index()
+                # Dados de folículos e densidade por mês
+                dashboard_data['follicles_data']['labels'] = monthly_data.index.tolist()
+                dashboard_data['follicles_data']['averages'] = monthly_data['total_foliculos'].round().astype(int).tolist()
+                dashboard_data['follicles_data']['le_density'] = monthly_data['densidade_scketh'].round().astype(int).tolist()
 
-                dashboard_data['follicles_data']['labels'] = monthly_stats['mes_ano'].tolist()
-                dashboard_data['follicles_data']['averages'] = monthly_stats['total_foliculos'].tolist()
-                dashboard_data['follicles_data']['le_density'] = monthly_stats['densidade_scketh'].tolist()
-
-            logger.info("Dashboard data processed successfully")
-            logger.info(f"Final dashboard data: {dashboard_data}")
-
+            logger.info(f"Processed dashboard data: {dashboard_data}")
             return render_template('dashboard.html', data=dashboard_data)
 
     except Exception as e:
@@ -668,7 +663,7 @@ def verify_data():
                     restored_info = "<br>".join([f"- {f[0]}: {f[2]} registros (fonte: {f[1]})" for f in restored_files])
                     flash(f"✅ Dados restaurados com sucesso!<br>{restored_info}", "success")
                 else:
-                    flash("⚠️ Não foi possível restaurar os dados automaticamente. Execute 'python restore_deployment_data.py'", "warning")
+                    flash("⚠️ Não foi possível restaurar os dados automaticamente. Execute`python restore_deployment_data.py'", "warning")
             except Exception as e:
                 logger.error(f"Erro ao restaurar dados: {str(e)}")
                 flash(f"❌ Erro ao restaurar dados: {str(e)}", "error")
