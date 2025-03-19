@@ -15,22 +15,28 @@ def check_deployment_consistency():
     try:
         # 1. Verificar banco de dados local
         with app.app_context():
-            local_count = Surgery.query.count()
-            logger.info(f"Registros no banco local: {local_count}")
+            db_records = Surgery.query.all()
+            db_count = len(db_records)
+            logger.info(f"Registros no banco local: {db_count}")
             
-            # Get actual records for detailed comparison
-            local_records = Surgery.query.all()
-            local_names = [r.nome for r in local_records]
-            logger.info(f"Nomes no banco local: {local_names}")
+            if db_count > 0:
+                db_data = pd.DataFrame([{
+                    'nome': r.nome,
+                    'data': r.data,
+                    'unidade': r.unidade,
+                    'total_foliculos': r.total_foliculos
+                } for r in db_records])
+                logger.info("Primeiros registros do banco:")
+                logger.info(db_data.head())
 
-        # 2. Verificar arquivo Excel local
-        local_excel_data = None
+        # 2. Verificar Excel local
+        excel_data = None
         if os.path.exists("cirurgias.xlsx"):
-            df_local = pd.read_excel("cirurgias.xlsx")
-            excel_count = len(df_local)
+            excel_data = pd.read_excel("cirurgias.xlsx")
+            excel_count = len(excel_data)
             logger.info(f"Registros no Excel local: {excel_count}")
-            local_excel_data = df_local
-            logger.info(f"Nomes no Excel local: {df_local['nome'].tolist()}")
+            logger.info("Primeiros registros do Excel local:")
+            logger.info(excel_data.head())
         else:
             excel_count = 0
             logger.warning("Arquivo cirurgias.xlsx não encontrado")
@@ -39,39 +45,59 @@ def check_deployment_consistency():
         deploy_data = None
         deploy_file = os.path.join("deploy_data", "cirurgias.xlsx")
         if os.path.exists(deploy_file):
-            df_deploy = pd.read_excel(deploy_file)
-            deploy_count = len(df_deploy)
+            deploy_data = pd.read_excel(deploy_file)
+            deploy_count = len(deploy_data)
             logger.info(f"Registros no deploy: {deploy_count}")
-            deploy_data = df_deploy
-            logger.info(f"Nomes no deploy: {df_deploy['nome'].tolist()}")
+            logger.info("Primeiros registros do deploy:")
+            logger.info(deploy_data.head())
 
-            # Detailed comparison
-            if local_excel_data is not None and deploy_data is not None:
-                logger.info("Comparando dados detalhadamente...")
-                # Compare records
-                missing_in_deploy = set(local_excel_data['nome']) - set(df_deploy['nome'])
-                missing_in_local = set(df_deploy['nome']) - set(local_excel_data['nome'])
+            # Comparação detalhada
+            if deploy_count > 0:
+                # Verificar estrutura dos dados
+                if db_count > 0 and deploy_count != db_count:
+                    logger.error(f"❌ Diferença no número de registros: BD={db_count}, Deploy={deploy_count}")
                 
-                if missing_in_deploy:
-                    logger.error(f"Registros faltando no deploy: {missing_in_deploy}")
-                if missing_in_local:
-                    logger.error(f"Registros faltando no local: {missing_in_local}")
+                if excel_data is not None:
+                    # Comparar dados do Excel com deploy
+                    try:
+                        deploy_data['data'] = pd.to_datetime(deploy_data['data'])
+                        excel_data['data'] = pd.to_datetime(excel_data['data'])
+                        
+                        # Ordenar ambos os dataframes
+                        deploy_data = deploy_data.sort_values(['data', 'nome'])
+                        excel_data = excel_data.sort_values(['data', 'nome'])
+                        
+                        # Resetar índices para comparação
+                        deploy_data = deploy_data.reset_index(drop=True)
+                        excel_data = excel_data.reset_index(drop=True)
+                        
+                        # Comparar apenas colunas comuns
+                        common_columns = list(set(deploy_data.columns) & set(excel_data.columns))
+                        if not deploy_data[common_columns].equals(excel_data[common_columns]):
+                            logger.error("❌ Dados diferentes entre Excel local e deploy")
+                            
+                            # Identificar diferenças
+                            for col in common_columns:
+                                if not deploy_data[col].equals(excel_data[col]):
+                                    logger.error(f"Diferenças na coluna {col}")
+                                    
+                        else:
+                            logger.info("✅ Dados iguais entre Excel local e deploy")
+                            
+                    except Exception as e:
+                        logger.error(f"Erro na comparação: {str(e)}")
 
-            if deploy_count != local_count or deploy_count != excel_count:
-                logger.error("❌ INCONSISTÊNCIA DETECTADA!")
-                logger.error(f"- Banco local: {local_count} registros")
-                logger.error(f"- Excel local: {excel_count} registros")
-                logger.error(f"- Deploy: {deploy_count} registros")
-
-                # Tentar restaurar dados se necessário
-                from restore_deployment_data import restore_deployment_data
-                success, restored = restore_deployment_data()
-                if success:
-                    logger.info("✅ Dados restaurados automaticamente")
-                    return True
-                else:
-                    logger.error("❌ Falha na restauração automática")
-                    return False
+                # Tentar restaurar se necessário
+                if db_count == 0 or deploy_count != db_count:
+                    from restore_deployment_data import restore_deployment_data
+                    logger.info("Tentando restaurar dados...")
+                    success, restored = restore_deployment_data()
+                    if success:
+                        logger.info("✅ Dados restaurados automaticamente")
+                        return True
+                    else:
+                        logger.error("❌ Falha na restauração automática")
+                        return False
             else:
                 logger.info("✅ Dados consistentes")
                 return True
