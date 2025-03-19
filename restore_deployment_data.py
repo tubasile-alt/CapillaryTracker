@@ -1,3 +1,4 @@
+
 import os
 import shutil
 import logging
@@ -48,12 +49,47 @@ def restore_deployment_data():
                             shutil.copy2(file, backup_file)
                             logger.info(f"✅ Backup criado: {backup_file}")
 
+                            # Comparar dados antes de restaurar
+                            df_local = pd.read_excel(file)
+                            if len(df_local) > len(df_deploy):
+                                logger.warning(f"⚠️ Arquivo local tem mais registros ({len(df_local)}) que deploy ({len(df_deploy)})")
+                                continue
+
                         # Restaurar arquivo
                         shutil.copy2(deploy_file, file)
                         logger.info(f"✅ Dados restaurados: {deploy_file} → {file} ({len(df_deploy)} registros)")
                         restored_files.append((file, "deploy_data", len(df_deploy)))
                 except Exception as e:
                     logger.error(f"⚠️ Erro ao processar {deploy_file}: {str(e)}")
+
+        # Verificar se a restauração foi bem-sucedida
+        if restored_files:
+            from app import app, db, Surgery
+            with app.app_context():
+                # Limpar dados existentes
+                db.session.query(Surgery).delete()
+                
+                # Recarregar dados do Excel
+                df = pd.read_excel("cirurgias.xlsx")
+                for _, row in df.iterrows():
+                    surgery = Surgery(
+                        data=pd.to_datetime(row['data']).date(),
+                        nome=row['nome'],
+                        unidade=row['unidade'],
+                        medico=row['medico'],
+                        equipe=row['equipe'],
+                        hora_cirurgia=row['hora_cirurgia'],
+                        tempo_cirurgia=float(row['tempo_cirurgia']),
+                        total_foliculos=int(row['total_foliculos']),
+                        frente=int(row['frente']),
+                        densidade_scketh=float(row['densidade_scketh']),
+                        coroa=int(row['coroa']),
+                        scalpe=int(row['scalpe']),
+                        peninsula_direita=int(row['peninsula_direita']),
+                        peninsula_esquerda=int(row['peninsula_esquerda'])
+                    )
+                    db.session.add(surgery)
+                db.session.commit()
 
         return True, restored_files
 
