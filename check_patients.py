@@ -1,44 +1,43 @@
 
-from unidecode import unidecode
-
-
 import pandas as pd
+from app import app, Surgery, db
 
-def check_patients():
-    # Lista de pacientes a verificar
-    patients_to_check = [
-        "Carlos Eduardo Milani",
-        "Jonas Galatti Carbonera", 
-        "adnan jamil el homoui",
-        "Hygor Henrique Bonfante",
-        "Eduardo Roncaglia de Carvalho",
-        "Weslei Diego Pavini",
-        "Mauricio Ronaldo Ribeiro",
-        "José Antônio Tonetto Neto"
-    ]
+# Check Excel file
+excel_df = pd.read_excel("cirurgias.xlsx")
+excel_count = len(excel_df)
+print(f"Pacientes no arquivo Excel: {excel_count}")
+
+# Check database
+with app.app_context():
+    db_count = Surgery.query.count()
+    print(f"Pacientes no banco de dados: {db_count}")
+
+if excel_count != db_count:
+    print("\nDiscrepância detectada! Vamos importar os dados do Excel para o banco:")
     
-    try:
-        # Carregar banco de dados atual
-        df = pd.read_excel("cirurgias.xlsx")
+    # Import data from Excel to DB
+    with app.app_context():
+        # Clear existing data
+        Surgery.query.delete()
         
-        print("\n=== Verificação de Pacientes ===\n")
-        
-        # Verificar cada paciente
-        for patient in patients_to_check:
-            # Buscar de forma case-insensitive
-            # Normalize names to handle accents
-            patient_name = unidecode(patient.lower())
-            df_names = df['nome'].apply(lambda x: unidecode(str(x).lower()))
-            found = df_names.str.contains(patient_name.split()[0])
-            if found.any():
-                print(f"✅ {patient} - Encontrado")
-            else:
-                print(f"❌ {patient} - Não encontrado")
-                
-        print("\n=============================")
-        
-    except Exception as e:
-        print(f"Erro ao verificar pacientes: {str(e)}")
-
-if __name__ == "__main__":
-    check_patients()
+        # Import from Excel
+        for _, row in excel_df.iterrows():
+            surgery = Surgery(
+                data=pd.to_datetime(row['data']).date(),
+                nome=row['nome'],
+                unidade=row['unidade'],
+                medico=row['medico'],
+                equipe=row['equipe'],
+                hora_cirurgia=row['hora_cirurgia'],
+                tempo_cirurgia=float(row['tempo_cirurgia']) if pd.notna(row['tempo_cirurgia']) else 0,
+                total_foliculos=int(row['total_foliculos']) if pd.notna(row['total_foliculos']) else 0,
+                frente=int(row['frente']) if pd.notna(row['frente']) else 0,
+                densidade_scketh=float(row['densidade_scketh']) if pd.notna(row['densidade_scketh']) else 0,
+                coroa=int(row['coroa']) if pd.notna(row['coroa']) else 0,
+                scalpe=int(row['scalpe']) if pd.notna(row['scalpe']) else 0,
+                peninsula_direita=int(row['peninsula_direita']) if pd.notna(row['peninsula_direita']) else 0,
+                peninsula_esquerda=int(row['peninsula_esquerda']) if pd.notna(row['peninsula_esquerda']) else 0
+            )
+            db.session.add(surgery)
+        db.session.commit()
+        print("✅ Dados importados com sucesso! Por favor, recarregue a página do dashboard.")
