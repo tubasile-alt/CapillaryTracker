@@ -163,7 +163,7 @@ def dashboard():
                 'has_follicle_data': True,
                 'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
                 'update_time': datetime.now().strftime('%d/%m/%Y %H:%M'),
-                'version': '2.1'
+                'version': '2.2'
             }
 
             if not df.empty:
@@ -702,7 +702,7 @@ def process_dashboard_data(df):
         'has_follicle_data': False,
         'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
         'update_time': datetime.now().strftime('%d/%m/%Y %H:%M'),
-        'version': '2.1'  # Updated version number
+        'version': '2.2'  # Updated version number
     }
 
     # Return empty structure if DataFrame is empty
