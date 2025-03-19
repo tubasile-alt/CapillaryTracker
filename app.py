@@ -66,31 +66,111 @@ class UnitProgress(db.Model):
     unidade = db.Column(db.String(100), unique=True)
     meta = db.Column(db.Integer)
 
-# Create tables and insert default unit goals
+# Create tables
 with app.app_context():
     db.create_all()
-
-    # Insert default unit goals if they don't exist
-    default_goals = {
-        'Ribeirão Preto': 35,
-        'Campinas': 25,
-        'Rio de Janeiro': 20
-    }
-
-    for unidade, meta in default_goals.items():
-        exists = UnitProgress.query.filter_by(unidade=unidade).first()
-        if not exists:
-            unit_progress = UnitProgress(unidade=unidade, meta=meta)
-            db.session.add(unit_progress)
-
-    try:
-        db.session.commit()
-        logger.info("✅ Default unit goals added successfully")
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Error adding default unit goals: {str(e)}")
-
     logger.info("✅ Database tables created successfully")
+
+@app.route('/dashboard')
+def dashboard():
+    logger.info("Accessing dashboard route")
+    try:
+        with app.app_context():
+            # Usar consulta SQL direta para evitar problemas de conexão
+            sql = text("""
+                SELECT 
+                    data, 
+                    unidade,
+                    COALESCE(total_foliculos, 0) as total_foliculos,
+                    COALESCE(densidade_scketh, 0) as densidade_scketh
+                FROM surgery
+            """)
+
+            result = db.session.execute(sql)
+            rows = result.fetchall()
+            logger.info(f"Found {len(rows)} records in database")
+
+            # Converter para DataFrame com tratamento de valores nulos
+            df = pd.DataFrame(rows, columns=['data', 'unidade', 'total_foliculos', 'densidade_scketh'])
+            logger.info(f"Created DataFrame with {len(df)} records")
+
+            # Inicializar dados do dashboard com valores seguros
+            dashboard_data = {
+                'total_surgeries': len(df),
+                'avg_follicles': 0,
+                'avg_density': 0,
+                'labels': [],
+                'datasets': [],
+                'has_follicle_data': False,
+                'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+                'update_time': datetime.now().strftime('%d/%m/%Y %H:%M'),
+                'version': '2.1'
+            }
+
+            if not df.empty:
+                # Calcular médias com tratamento seguro de NaN
+                follicles_mean = df['total_foliculos'].replace([np.inf, -np.inf], np.nan).fillna(0).mean()
+                density_mean = df['densidade_scketh'].replace([np.inf, -np.inf], np.nan).fillna(0).mean()
+
+                dashboard_data['avg_follicles'] = int(round(follicles_mean))
+                dashboard_data['avg_density'] = int(round(density_mean))
+                dashboard_data['has_follicle_data'] = True
+
+                # Processar dados por mês
+                df['mes_ano'] = pd.to_datetime(df['data']).dt.strftime('%m/%Y')
+                cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
+
+                dashboard_data['labels'] = cirurgias_por_mes['mes_ano'].tolist()
+                dashboard_data['datasets'].append({
+                    'label': 'Total de Cirurgias',
+                    'data': cirurgias_por_mes['count'].tolist()
+                })
+
+                # Processar dados por unidade
+                for unidade in df['unidade'].unique():
+                    df_unidade = df[df['unidade'] == unidade]
+                    cirurgias_unidade = df_unidade.groupby('mes_ano').size().reset_index(name='count')
+
+                    dados_completos = pd.DataFrame({'mes_ano': dashboard_data['labels']})
+                    merged = dados_completos.merge(cirurgias_unidade, on='mes_ano', how='left')
+                    merged['count'] = merged['count'].fillna(0).astype(int)
+
+                    dashboard_data['datasets'].append({
+                        'label': f'Cirurgias - {unidade}',
+                        'data': merged['count'].tolist()
+                    })
+
+                # Processar dados de folículos por mês
+                def safe_mean(x):
+                    values = pd.to_numeric(x, errors='coerce').replace([np.inf, -np.inf], np.nan).fillna(0)
+                    return int(round(values.mean()))
+
+                monthly_stats = df.groupby('mes_ano').agg({
+                    'total_foliculos': safe_mean,
+                    'densidade_scketh': safe_mean
+                }).reset_index()
+
+                dashboard_data['follicles_data']['labels'] = monthly_stats['mes_ano'].tolist()
+                dashboard_data['follicles_data']['averages'] = monthly_stats['total_foliculos'].tolist()
+                dashboard_data['follicles_data']['le_density'] = monthly_stats['densidade_scketh'].tolist()
+
+            logger.info("Dashboard data processed successfully")
+            logger.info(f"Dashboard summary: {dashboard_data['total_surgeries']} surgeries, {dashboard_data['avg_follicles']} avg follicles")
+
+            return render_template('dashboard.html', data=dashboard_data)
+
+    except Exception as e:
+        logger.error(f"Error in dashboard route: {str(e)}\n{traceback.format_exc()}")
+        return render_template('dashboard.html', data={
+            'total_surgeries': 0,
+            'avg_follicles': 0,
+            'avg_density': 0,
+            'labels': [],
+            'datasets': [{'label': 'Cirurgias', 'data': []}],
+            'has_follicle_data': False,
+            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+            'version': '2.1'
+        }, error=f"Erro ao carregar dashboard: {str(e)}")
 
 def backup_excel_file(source_file):
     """Create a backup of the Excel file with timestamp"""
@@ -649,7 +729,7 @@ def process_dashboard_data(df):
                 logger.info("Processingfollicle data by month...")
                 # Calculate monthly averages for follicles
                 follicles_by_month = df.groupby('mes_ano').agg({
-                    'total_foliculos': lambda x: int(round(pd.to_numeric(x, errors='coerce').mean()))
+                    'total_foliculos': lambda x: round(pd.to_numeric(x, errors='coerce').mean())
                 }).reset_index()
 
                 dashboard_data['follicles_data']['labels'] = follicles_by_month['mes_ano'].tolist()
@@ -669,107 +749,6 @@ def process_dashboard_data(df):
         logger.error(f"Error processing dashboard data: {str(e)}")
         logger.error(traceback.format_exc())
         return dashboard_data
-
-@app.route('/dashboard')
-def dashboard():
-    logger.info("Accessing dashboard route")
-    try:
-        with app.app_context():
-            # Usar consulta SQL direta para evitar problemas de conexão
-            sql = text("""
-                SELECT 
-                    data, 
-                    unidade,
-                    COALESCE(total_foliculos, 0) as total_foliculos,
-                    COALESCE(densidade_scketh, 0) as densidade_scketh
-                FROM surgery
-            """)
-
-            result = db.session.execute(sql)
-            rows = result.fetchall()
-            logger.info(f"Found {len(rows)} records in database")
-
-            # Converter para DataFrame com tratamento de valores nulos
-            df = pd.DataFrame(rows, columns=['data', 'unidade', 'total_foliculos', 'densidade_scketh'])
-            logger.info(f"Created DataFrame with {len(df)} records")
-
-            # Inicializar dados do dashboard com valores seguros
-            dashboard_data = {
-                'total_surgeries': len(df),
-                'avg_follicles': 0,
-                'avg_density': 0,
-                'labels': [],
-                'datasets': [],
-                'has_follicle_data': False,
-                'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-                'update_time': datetime.now().strftime('%d/%m/%Y %H:%M'),
-                'version': '2.1'
-            }
-
-            if not df.empty:
-                # Calcular médias com tratamento seguro de NaN
-                follicles_mean = df['total_foliculos'].replace([np.inf, -np.inf], np.nan).fillna(0).mean()
-                density_mean = df['densidade_scketh'].replace([np.inf, -np.inf], np.nan).fillna(0).mean()
-
-                dashboard_data['avg_follicles'] = int(round(follicles_mean))
-                dashboard_data['avg_density'] = int(round(density_mean))
-                dashboard_data['has_follicle_data'] = True
-
-                # Processar dados por mês
-                df['mes_ano'] = pd.to_datetime(df['data']).dt.strftime('%m/%Y')
-                cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
-
-                dashboard_data['labels'] = cirurgias_por_mes['mes_ano'].tolist()
-                dashboard_data['datasets'].append({
-                    'label': 'Total de Cirurgias',
-                    'data': cirurgias_por_mes['count'].tolist()
-                })
-
-                # Processar dados por unidade
-                for unidade in df['unidade'].unique():
-                    df_unidade = df[df['unidade'] == unidade]
-                    cirurgias_unidade = df_unidade.groupby('mes_ano').size().reset_index(name='count')
-
-                    dados_completos = pd.DataFrame({'mes_ano': dashboard_data['labels']})
-                    merged = dados_completos.merge(cirurgias_unidade, on='mes_ano', how='left')
-                    merged['count'] = merged['count'].fillna(0).astype(int)
-
-                    dashboard_data['datasets'].append({
-                        'label': f'Cirurgias - {unidade}',
-                        'data': merged['count'].tolist()
-                    })
-
-                # Processar dados de folículos por mês
-                def safe_mean(x):
-                    values = pd.to_numeric(x, errors='coerce').replace([np.inf, -np.inf], np.nan).fillna(0)
-                    return int(round(values.mean()))
-
-                monthly_stats = df.groupby('mes_ano').agg({
-                    'total_foliculos': safe_mean,
-                    'densidade_scketh': safe_mean
-                }).reset_index()
-
-                dashboard_data['follicles_data']['labels'] = monthly_stats['mes_ano'].tolist()
-                dashboard_data['follicles_data']['averages'] = monthly_stats['total_foliculos'].tolist()
-                dashboard_data['follicles_data']['le_density'] = monthly_stats['densidade_scketh'].tolist()
-
-            logger.info("Dashboard data processed successfully")
-            logger.info(f"Dashboard summary: {dashboard_data['total_surgeries']} surgeries, {dashboard_data['avg_follicles']} avg follicles")
-
-            return render_template('dashboard.html', data=dashboard_data)
-
-    except Exception as e:
-        logger.error(f"Error in dashboard route: {str(e)}\n{traceback.format_exc()}")
-        return render_template('dashboard.html', data={
-            'total_surgeries': 0,
-            'avg_follicles': 0,
-            'avg_density': 0,
-            'labels': [],
-            'datasets': [{'label': 'Cirurgias', 'data': []}],
-            'has_follicle_data': False,
-            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-            'version': '2.1'
-        }, error=f"Erro ao carregar dashboard: {str(e)}")
 
 @app.route('/get_unit_progress')
 def get_unit_progress():

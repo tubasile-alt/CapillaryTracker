@@ -14,4 +14,6 @@ dependencies = [
     "unidecode>=1.3.8",
     "psycopg2-binary>=2.9.10",
     "sqlalchemy>=2.0.39",
+    "flask-monitoringdashboard>=3.2.3",
+    "numpy>=2.2.3",
 ]
