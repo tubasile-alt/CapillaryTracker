@@ -23,13 +23,25 @@ logger.info("Starting Flask application...")
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# Configure SQLAlchemy with detailed logging
+# Configure SQLAlchemy with detailed logging and connection settings
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True  # Enable SQL query logging
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,  # Enable connection health checks
+    'pool_recycle': 300,    # Recycle connections every 5 minutes
+    'pool_timeout': 30,     # Connection timeout of 30 seconds
+    'pool_size': 5,         # Maximum pool size
+    'max_overflow': 10,     # Maximum number of connections to overflow
+    'connect_args': {
+        'sslmode': 'require',  # Require SSL
+        'connect_timeout': 10   # Connection timeout in seconds
+    }
+}
+
 db = SQLAlchemy(app)
 
-# Define model
+# Define models
 class Surgery(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.Date)
@@ -48,9 +60,35 @@ class Surgery(db.Model):
     peninsula_esquerda = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Create tables
+class UnitProgress(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    unidade = db.Column(db.String(100), unique=True)
+    meta = db.Column(db.Integer)
+
+# Create tables and insert default unit goals
 with app.app_context():
     db.create_all()
+
+    # Insert default unit goals if they don't exist
+    default_goals = {
+        'Ribeirão Preto': 35,
+        'Campinas': 25,
+        'Rio de Janeiro': 20
+    }
+
+    for unidade, meta in default_goals.items():
+        exists = UnitProgress.query.filter_by(unidade=unidade).first()
+        if not exists:
+            unit_progress = UnitProgress(unidade=unidade, meta=meta)
+            db.session.add(unit_progress)
+
+    try:
+        db.session.commit()
+        logger.info("✅ Default unit goals added successfully")
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error adding default unit goals: {str(e)}")
+
     logger.info("✅ Database tables created successfully")
 
 def backup_excel_file(source_file):
