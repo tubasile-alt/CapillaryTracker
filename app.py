@@ -4,6 +4,7 @@ import traceback
 import re
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import pandas as pd
+import numpy as np
 from datetime import datetime
 from fuzzywuzzy import fuzz
 import json
@@ -679,8 +680,8 @@ def dashboard():
                 SELECT 
                     data, 
                     unidade,
-                    total_foliculos,
-                    densidade_scketh
+                    COALESCE(total_foliculos, 0) as total_foliculos,
+                    COALESCE(densidade_scketh, 0) as densidade_scketh
                 FROM surgery
             """)
 
@@ -692,24 +693,28 @@ def dashboard():
             df = pd.DataFrame(rows, columns=['data', 'unidade', 'total_foliculos', 'densidade_scketh'])
             logger.info(f"Created DataFrame with {len(df)} records")
 
-            # Tratar valores nulos antes de processar
-            df['total_foliculos'] = pd.to_numeric(df['total_foliculos'], errors='coerce').fillna(0)
-            df['densidade_scketh'] = pd.to_numeric(df['densidade_scketh'], errors='coerce').fillna(0)
-
-            # Processar dados para o dashboard
+            # Inicializar dados do dashboard com valores seguros
             dashboard_data = {
                 'total_surgeries': len(df),
-                'avg_follicles': round(float(df['total_foliculos'].mean() or 0)),
-                'avg_density': round(float(df['densidade_scketh'].mean() or 0)),
+                'avg_follicles': 0,
+                'avg_density': 0,
                 'labels': [],
                 'datasets': [],
-                'has_follicle_data': True,
+                'has_follicle_data': False,
                 'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
                 'update_time': datetime.now().strftime('%d/%m/%Y %H:%M'),
                 'version': '2.1'
             }
 
             if not df.empty:
+                # Calcular médias com tratamento seguro de NaN
+                follicles_mean = df['total_foliculos'].replace([np.inf, -np.inf], np.nan).fillna(0).mean()
+                density_mean = df['densidade_scketh'].replace([np.inf, -np.inf], np.nan).fillna(0).mean()
+
+                dashboard_data['avg_follicles'] = int(round(follicles_mean))
+                dashboard_data['avg_density'] = int(round(density_mean))
+                dashboard_data['has_follicle_data'] = True
+
                 # Processar dados por mês
                 df['mes_ano'] = pd.to_datetime(df['data']).dt.strftime('%m/%Y')
                 cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
@@ -734,18 +739,19 @@ def dashboard():
                         'data': merged['count'].tolist()
                     })
 
-                # Processar dados de folículos e densidade
-                follicles_by_month = df.groupby('mes_ano').agg({
-                    'total_foliculos': lambda x: round(float(x.mean() or 0))
+                # Processar dados de folículos por mês
+                def safe_mean(x):
+                    values = pd.to_numeric(x, errors='coerce').replace([np.inf, -np.inf], np.nan).fillna(0)
+                    return int(round(values.mean()))
+
+                monthly_stats = df.groupby('mes_ano').agg({
+                    'total_foliculos': safe_mean,
+                    'densidade_scketh': safe_mean
                 }).reset_index()
 
-                dashboard_data['follicles_data']['labels'] = follicles_by_month['mes_ano'].tolist()
-                dashboard_data['follicles_data']['averages'] = follicles_by_month['total_foliculos'].tolist()
-
-                density_by_month = df.groupby('mes_ano').agg({
-                    'densidade_scketh': lambda x: round(float(x.mean() or 0))
-                }).reset_index()
-                dashboard_data['follicles_data']['le_density'] = density_by_month['densidade_scketh'].tolist()
+                dashboard_data['follicles_data']['labels'] = monthly_stats['mes_ano'].tolist()
+                dashboard_data['follicles_data']['averages'] = monthly_stats['total_foliculos'].tolist()
+                dashboard_data['follicles_data']['le_density'] = monthly_stats['densidade_scketh'].tolist()
 
             logger.info("Dashboard data processed successfully")
             logger.info(f"Dashboard summary: {dashboard_data['total_surgeries']} surgeries, {dashboard_data['avg_follicles']} avg follicles")
