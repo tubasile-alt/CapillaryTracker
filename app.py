@@ -674,47 +674,79 @@ def dashboard():
     logger.info("Accessing dashboard route")
     try:
         with app.app_context():
-            logger.info("Querying database for dashboard data...")
+            # Usar consulta SQL direta para evitar problemas de conexão
+            sql = text("""
+                SELECT 
+                    data, 
+                    unidade,
+                    total_foliculos,
+                    densidade_scketh
+                FROM surgery
+            """)
 
-            # Get all surgeries
-            surgeries = Surgery.query.all()
-            logger.info(f"Found {len(surgeries)} surgeries in database")
+            result = db.session.execute(sql)
+            rows = result.fetchall()
+            logger.info(f"Found {len(rows)} records in database")
 
-            # Convert to DataFrame with proper type conversion
-            records = []
-            for surgery in surgeries:
-                try:
-                    record = {
-                        'data': surgery.data,
-                        'nome': str(surgery.nome),
-                        'unidade': str(surgery.unidade),
-                        'medico': str(surgery.medico),
-                        'equipe': str(surgery.equipe),
-                        'hora_cirurgia': str(surgery.hora_cirurgia),
-                        'tempo_cirurgia': float(surgery.tempo_cirurgia or 0),
-                        'total_foliculos': int(surgery.total_foliculos or 0),
-                        'frente': int(surgery.frente or 0),
-                        'densidade_scketh': float(surgery.densidade_scketh or 0),
-                        'coroa': int(surgery.coroa or 0),
-                        'scalpe': int(surgery.scalpe or 0),
-                        'peninsula_direita': int(surgery.peninsula_direita or 0),
-                        'peninsula_esquerda': int(surgery.peninsula_esquerda or 0)
-                    }
-                    records.append(record)
-                except Exception as e:
-                    logger.error(f"Error converting surgery record: {str(e)}")
-                    continue
-
-            df = pd.DataFrame(records)
+            # Converter para DataFrame
+            df = pd.DataFrame(rows, columns=['data', 'unidade', 'total_foliculos', 'densidade_scketh'])
             logger.info(f"Created DataFrame with {len(df)} records")
-            logger.info(f"DataFrame columns: {df.columns.tolist()}")
-            logger.info(f"DataFrame sample: \n{df.head()}")
 
-            dashboard_data = process_dashboard_data(df)
+            # Processar dados para o dashboard
+            dashboard_data = {
+                'total_surgeries': len(df),
+                'avg_follicles': int(pd.to_numeric(df['total_foliculos'], errors='coerce').mean() or 0),
+                'avg_density': int(pd.to_numeric(df['densidade_scketh'], errors='coerce').mean() or 0),
+                'labels': [],
+                'datasets': [],
+                'has_follicle_data': True,
+                'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+                'update_time': datetime.now().strftime('%d/%m/%Y %H:%M'),
+                'version': '2.1'
+            }
+
+            if not df.empty:
+                # Processar dados por mês
+                df['mes_ano'] = pd.to_datetime(df['data']).dt.strftime('%m/%Y')
+                cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
+
+                dashboard_data['labels'] = cirurgias_por_mes['mes_ano'].tolist()
+                dashboard_data['datasets'].append({
+                    'label': 'Total de Cirurgias',
+                    'data': cirurgias_por_mes['count'].tolist()
+                })
+
+                # Processar dados por unidade
+                for unidade in df['unidade'].unique():
+                    df_unidade = df[df['unidade'] == unidade]
+                    cirurgias_unidade = df_unidade.groupby('mes_ano').size().reset_index(name='count')
+
+                    dados_completos = pd.DataFrame({'mes_ano': dashboard_data['labels']})
+                    merged = dados_completos.merge(cirurgias_unidade, on='mes_ano', how='left')
+                    merged['count'] = merged['count'].fillna(0).astype(int)
+
+                    dashboard_data['datasets'].append({
+                        'label': f'Cirurgias - {unidade}',
+                        'data': merged['count'].tolist()
+                    })
+
+                # Processar dados de folículos e densidade
+                follicles_by_month = df.groupby('mes_ano').agg({
+                    'total_foliculos': lambda x: int(pd.to_numeric(x, errors='coerce').mean() or 0)
+                }).reset_index()
+
+                dashboard_data['follicles_data']['labels'] = follicles_by_month['mes_ano'].tolist()
+                dashboard_data['follicles_data']['averages'] = follicles_by_month['total_foliculos'].tolist()
+
+                density_by_month = df.groupby('mes_ano').agg({
+                    'densidade_scketh': lambda x: int(pd.to_numeric(x, errors='coerce').mean() or 0)
+                }).reset_index()
+                dashboard_data['follicles_data']['le_density'] = density_by_month['densidade_scketh'].tolist()
+
             logger.info("Dashboard data processed successfully")
-            logger.info(f"Dashboard data: {dashboard_data}")
+            logger.info(f"Dashboard summary: {dashboard_data['total_surgeries']} surgeries, {dashboard_data['avg_follicles']} avg follicles")
 
-        return render_template('dashboard.html', data=dashboard_data)
+            return render_template('dashboard.html', data=dashboard_data)
 
     except Exception as e:
         logger.error(f"Error in dashboard route: {str(e)}\n{traceback.format_exc()}")
