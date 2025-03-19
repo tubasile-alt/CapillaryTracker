@@ -632,7 +632,7 @@ def dashboard():
             surgeries = Surgery.query.all()
             logger.info(f"Found {len(surgeries)} surgeries in database")
 
-            # Convert to DataFrame
+            # Convert to DataFrame with proper numeric types
             records = []
             for surgery in surgeries:
                 record = {
@@ -642,21 +642,25 @@ def dashboard():
                     'medico': surgery.medico,
                     'equipe': surgery.equipe,
                     'hora_cirurgia': surgery.hora_cirurgia,
-                    'tempo_cirurgia': surgery.tempo_cirurgia,
-                    'total_foliculos': surgery.total_foliculos,
-                    'frente': surgery.frente,
-                    'densidade_scketh': surgery.densidade_scketh,
-                    'coroa': surgery.coroa,
-                    'scalpe': surgery.scalpe,
-                    'peninsula_direita': surgery.peninsula_direita,
-                    'peninsula_esquerda': surgery.peninsula_esquerda                }
+                    'tempo_cirurgia': float(surgery.tempo_cirurgia or 0),
+                    'total_foliculos': int(surgery.total_foliculos or 0),
+                    'frente': int(surgery.frente or 0),
+                    'densidade_scketh': float(surgery.densidade_scketh or 0),
+                    'coroa': int(surgery.coroa or 0),
+                    'scalpe': int(surgery.scalpe or 0),
+                    'peninsula_direita': int(surgery.peninsula_direita or 0),
+                    'peninsula_esquerda': int(surgery.peninsula_esquerda or 0)
+                }
                 records.append(record)
 
             df = pd.DataFrame(records)
             logger.info(f"Created DataFrame with {len(df)} records")
+            logger.info(f"DataFrame columns: {df.columns.tolist()}")
+            logger.info(f"DataFrame sample: \n{df.head()}")
 
             dashboard_data = process_dashboard_data(df)
             logger.info("Dashboard data processed successfully")
+            logger.info(f"Dashboard data: {dashboard_data}")
 
         return render_template('dashboard.html', data=dashboard_data)
 
