@@ -90,7 +90,33 @@ with app.app_context():
     except:
         logger.info("Migrations folder already exists")
 
-    # Check if database needs initial data
+    # Initialize test data in development environment
+    if os.environ.get("FLASK_ENV") == "development":
+        if Surgery.query.count() == 0:
+            logger.info("Inserindo dados de teste no ambiente de desenvolvimento...")
+            test_data = [
+                Surgery(
+                    data=datetime.now().date(),
+                    nome="Paciente Teste Dev",
+                    unidade="Ribeirão Preto",
+                    medico="Dr. Arthur",
+                    equipe="Aline",
+                    hora_cirurgia="08:00",
+                    tempo_cirurgia=2.5,
+                    total_foliculos=3500,
+                    frente=1000,
+                    densidade_scketh=85,
+                    coroa=800,
+                    scalpe=500,
+                    peninsula_direita=600,
+                    peninsula_esquerda=600
+                )
+            ]
+            db.session.bulk_save_objects(test_data)
+            db.session.commit()
+            logger.info("✅ Dados de teste inseridos com sucesso")
+
+    # Check if database needs initial data for production
     try:
         count = Surgery.query.count()
         if count == 0:
