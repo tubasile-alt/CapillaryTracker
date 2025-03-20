@@ -70,6 +70,20 @@ def restore_deployment_data():
 
                 # Recarregar dados do Excel
                 df = pd.read_excel("cirurgias.xlsx")
+                
+                # Substituir NaN por 0 para colunas inteiras
+                integer_columns = ['total_foliculos', 'frente', 'coroa', 'scalpe', 
+                                 'peninsula_direita', 'peninsula_esquerda']
+                df[integer_columns] = df[integer_columns].fillna(0).astype(int)
+                
+                # Substituir NaN por 0 para colunas float
+                float_columns = ['tempo_cirurgia', 'densidade_scketh']
+                df[float_columns] = df[float_columns].fillna(0.0).astype(float)
+                
+                # Substituir NaN por string vazia para colunas de texto
+                text_columns = ['nome', 'unidade', 'medico', 'equipe', 'hora_cirurgia']
+                df[text_columns] = df[text_columns].fillna('')
+                
                 for _, row in df.iterrows():
                     print(f"\nProcessando linha: {row}")
                     try:

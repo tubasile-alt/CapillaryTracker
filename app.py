@@ -247,21 +247,22 @@ def save_to_excel(data):
             data_date = datetime.strptime(data['data'], '%Y-%m-%d').date()
 
             # Create Surgery object with proper type conversion
+            # Tratar valores NaN ou None antes de criar o objeto Surgery
             surgery = Surgery(
                 data=data_date,
-                nome=str(data['nome']),
-                unidade=str(data['unidade']),
-                medico=str(data['medico']),
-                equipe=str(data['equipe']),
-                hora_cirurgia=str(data['hora_cirurgia']),
-                tempo_cirurgia=float(data.get('tempo_cirurgia', 0) or 0),
-                total_foliculos=int(data.get('total_foliculos', 0) or 0),
-                frente=int(data.get('frente', 0) or 0),
-                densidade_scketh=float(data.get('densidade_scketh', 0) or 0),
-                coroa=int(data.get('coroa', 0) or 0),
-                scalpe=int(data.get('scalpe', 0) or 0),
-                peninsula_direita=int(data.get('peninsula_direita', 0) or 0),
-                peninsula_esquerda=int(data.get('peninsula_esquerda', 0) or 0)
+                nome=str(data.get('nome', '') or ''),
+                unidade=str(data.get('unidade', '') or ''),
+                medico=str(data.get('medico', '') or ''),
+                equipe=str(data.get('equipe', '') or ''),
+                hora_cirurgia=str(data.get('hora_cirurgia', '') or ''),
+                tempo_cirurgia=float(0 if pd.isna(data.get('tempo_cirurgia')) else data.get('tempo_cirurgia', 0)),
+                total_foliculos=int(0 if pd.isna(data.get('total_foliculos')) else data.get('total_foliculos', 0)),
+                frente=int(0 if pd.isna(data.get('frente')) else data.get('frente', 0)),
+                densidade_scketh=float(0 if pd.isna(data.get('densidade_scketh')) else data.get('densidade_scketh', 0)),
+                coroa=int(0 if pd.isna(data.get('coroa')) else data.get('coroa', 0)),
+                scalpe=int(0 if pd.isna(data.get('scalpe')) else data.get('scalpe', 0)),
+                peninsula_direita=int(0 if pd.isna(data.get('peninsula_direita')) else data.get('peninsula_direita', 0)),
+                peninsula_esquerda=int(0 if pd.isna(data.get('peninsula_esquerda')) else data.get('peninsula_esquerda', 0))
             )
 
             logger.info("Surgery object created, committing to database...")
