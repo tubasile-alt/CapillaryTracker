@@ -662,7 +662,8 @@ def verify_data():
                 from restore_deployment_data import restore_deployment_data
                 success, restored_files = restore_deployment_data()
 
-                if success:                    restored_info = "<br>".join([f"- {f[0]}: {f[2]} registros (fonte: {f[1]})" for f in restored_files])
+                if success:
+                    restored_info = "<br>".join([f"- {f[0]}: {f[2]} registros (fonte: {f[1]})" for f in restored_files])
                     flash(f"✅ Dados restaurados com sucesso!<br>{restored_info}", "success")
                 else:
                     flash("⚠️ Não foi possível restaurar os dados automaticamente. Execute`python restore_deployment_data.py'", "warning")
