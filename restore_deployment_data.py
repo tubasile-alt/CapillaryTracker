@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import logging
@@ -68,27 +67,32 @@ def restore_deployment_data():
             with app.app_context():
                 # Limpar dados existentes
                 db.session.query(Surgery).delete()
-                
+
                 # Recarregar dados do Excel
                 df = pd.read_excel("cirurgias.xlsx")
                 for _, row in df.iterrows():
-                    surgery = Surgery(
-                        data=pd.to_datetime(row['data']).date(),
-                        nome=row['nome'],
-                        unidade=row['unidade'],
-                        medico=row['medico'],
-                        equipe=row['equipe'],
-                        hora_cirurgia=row['hora_cirurgia'],
-                        tempo_cirurgia=float(row['tempo_cirurgia']),
-                        total_foliculos=int(row['total_foliculos']),
-                        frente=int(row['frente']),
-                        densidade_scketh=float(row['densidade_scketh']),
-                        coroa=int(row['coroa']),
-                        scalpe=int(row['scalpe']),
-                        peninsula_direita=int(row['peninsula_direita']),
-                        peninsula_esquerda=int(row['peninsula_esquerda'])
-                    )
-                    db.session.add(surgery)
+                    print(f"\nProcessando linha: {row}")
+                    try:
+                        surgery = Surgery(
+                            data=pd.to_datetime(row['data']).date(),
+                            nome=str(row['nome']),
+                            unidade=str(row['unidade']),
+                            medico=str(row['medico']),
+                            equipe=str(row['equipe']),
+                            hora_cirurgia=str(row['hora_cirurgia']),
+                            tempo_cirurgia=float(row['tempo_cirurgia'] if pd.notna(row['tempo_cirurgia']) else 0),
+                            total_foliculos=int(row['total_foliculos'] if pd.notna(row['total_foliculos']) else 0),
+                            frente=int(row['frente'] if pd.notna(row['frente']) else 0),
+                            densidade_scketh=float(row['densidade_scketh'] if pd.notna(row['densidade_scketh']) else 0),
+                            coroa=int(row['coroa'] if pd.notna(row['coroa']) else 0),
+                            scalpe=int(row['scalpe'] if pd.notna(row['scalpe']) else 0),
+                            peninsula_direita=int(row['peninsula_direita'] if pd.notna(row['peninsula_direita']) else 0),
+                            peninsula_esquerda=int(row['peninsula_esquerda'] if pd.notna(row['peninsula_esquerda']) else 0)
+                        )
+                        print("✅ Linha convertida com sucesso")
+                    except Exception as e:
+                        print(f"❌ Erro ao converter linha: {str(e)}")
+                        raise
                 db.session.commit()
 
         return True, restored_files
