@@ -69,10 +69,21 @@ class UnitProgress(db.Model):
     meta = db.Column(db.Integer)
 
 # Create tables
+from flask_migrate import Migrate
+
+migrate = Migrate(app, db)
+
+# Initialize migrations folder if needed
 with app.app_context():
-    db.create_all()
-    logger.info("✅ Database tables created successfully")
-    # Insert test data if database is empty
+    try:
+        from flask_migrate import init, stamp
+        init()  # Create migrations folder
+        stamp()  # Mark current database state without migrating
+        logger.info("✅ Database migrations initialized")
+    except:
+        logger.info("Migrations folder already exists")
+
+    # Check if database needs initial data
     try:
         count = Surgery.query.count()
         if count == 0:

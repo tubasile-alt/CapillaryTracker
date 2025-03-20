@@ -16,4 +16,5 @@ dependencies = [
     "sqlalchemy>=2.0.39",
     "flask-monitoringdashboard>=3.2.3",
     "numpy>=2.2.3",
+    "flask-migrate>=4.1.0",
 ]
