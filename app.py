@@ -82,13 +82,8 @@ migrate = Migrate(app, db)
 
 # Initialize migrations folder if needed
 with app.app_context():
-    try:
-        from flask_migrate import init, stamp
-        init()  # Create migrations folder
-        stamp()  # Mark current database state without migrating
-        logger.info("✅ Database migrations initialized")
-    except:
-        logger.info("Migrations folder already exists")
+    db.create_all()
+    logger.info("✅ Database tables created")
 
     # Initialize test data in development environment
     if os.environ.get("FLASK_ENV") == "development":
