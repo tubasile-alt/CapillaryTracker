@@ -25,12 +25,13 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
 # Configure SQLAlchemy with detailed logging and connection settings
-database_url = os.environ.get('DATABASE_URL')
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
 if database_url and database_url.startswith('postgres://'):
     # Handle Heroku-style PostgreSQL URLs
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///app.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True  # Enable SQL query logging
 
