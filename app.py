@@ -129,7 +129,7 @@ def dashboard():
                     'datasets': [],
                     'has_follicle_data': False,
                     'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-                    'version': '2.2'
+                    'version': '2.3'
                 }, error="Nenhum registro encontrado no banco de dados.")
 
             # Buscar dados detalhados
@@ -163,7 +163,7 @@ def dashboard():
                 'has_follicle_data': True,
                 'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
                 'update_time': datetime.now().strftime('%d/%m/%Y %H:%M'),
-                'version': '2.2'
+                'version': '2.3'
             }
 
             if not df.empty:
@@ -215,7 +215,7 @@ def dashboard():
             'datasets': [{'label': 'Cirurgias', 'data': []}],
             'has_follicle_data': False,
             'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-            'version': '2.2'
+            'version': '2.3'
         }, error=f"Erro ao carregar dashboard: {str(e)}")
 
 def backup_excel_file(source_file):
@@ -662,8 +662,7 @@ def verify_data():
                 from restore_deployment_data import restore_deployment_data
                 success, restored_files = restore_deployment_data()
 
-                if success:
-                    restored_info = "<br>".join([f"- {f[0]}: {f[2]} registros (fonte: {f[1]})" for f in restored_files])
+                if success:                    restored_info = "<br>".join([f"- {f[0]}: {f[2]} registros (fonte: {f[1]})" for f in restored_files])
                     flash(f"✅ Dados restaurados com sucesso!<br>{restored_info}", "success")
                 else:
                     flash("⚠️ Não foi possível restaurar os dados automaticamente. Execute`python restore_deployment_data.py'", "warning")
@@ -703,7 +702,7 @@ def process_dashboard_data(df):
         'has_follicle_data': False,
         'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
         'update_time': datetime.now().strftime('%d/%m/%Y %H:%M'),
-        'version': '2.2'  # Updated version number
+        'version': '2.3'  # Updated version number
     }
 
     # Return empty structure if DataFrame is empty
