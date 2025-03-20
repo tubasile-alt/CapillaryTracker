@@ -152,6 +152,14 @@ def dashboard():
     logger.info("Accessing dashboard route")
     try:
         with app.app_context():
+            # Check record counts
+            replit_count = Surgery.query.count()
+            deploy_count = db.session.query(Surgery).count()
+            logger.info(f"📌 Registros no Replit: {replit_count}")
+            logger.info(f"📌 Registros no deploy: {deploy_count}")
+            
+            if replit_count != deploy_count:
+                logger.warning(f"⚠️ Diferença de registros detectada: Replit={replit_count}, Deploy={deploy_count}")
             # Usar consulta SQL direta para debugging
             sql = text("""
                 SELECT count(*) AS total, 
