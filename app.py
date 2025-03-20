@@ -33,6 +33,13 @@ if database_url and database_url.startswith('postgres://'):
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True  # Enable SQL query logging
+
+# Log database connection info
+logger.info(f"📌 Database URL in use: {app.config['SQLALCHEMY_DATABASE_URI']}")
+if database_url and database_url.startswith('postgres://'):
+    logger.warning("Converting postgres:// to postgresql:// in database URL")
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,
     'pool_recycle': 300,
