@@ -111,8 +111,8 @@ def dashboard():
             # Usar consulta SQL direta para debugging
             sql = text("""
                 SELECT count(*) AS total, 
-                       avg(total_foliculos) as avg_foliculos,
-                       avg(densidade_scketh) as avg_densidade
+                       COALESCE(avg(total_foliculos), 0) as avg_foliculos,
+                       COALESCE(avg(densidade_scketh), 0) as avg_densidade
                 FROM surgery;
             """)
             result = db.session.execute(sql)
@@ -242,6 +242,11 @@ def save_to_excel(data):
         # Save to database first
         try:
             logger.info(f"Saving to database: {data}")
+
+            # Convert to DataFrame and handle NaN values
+            dados = pd.DataFrame([data])
+            dados = dados.fillna(0)
+            data = dados.iloc[0].to_dict()
 
             # Convert date string to date object
             data_date = datetime.strptime(data['data'], '%Y-%m-%d').date()
