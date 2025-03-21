@@ -76,15 +76,21 @@ class UnitProgress(db.Model):
     unidade = db.Column(db.String(100), unique=True)
     meta = db.Column(db.Integer)
 
-# Create tables
+# Configure Flask-Migrate
 from flask_migrate import Migrate
 
+# Initialize Flask-Migrate with app and db
 migrate = Migrate(app, db)
+logger.info("✅ Flask-Migrate initialized")
 
-# Initialize migrations folder if needed
+# Load models and set up tables only once
 with app.app_context():
-    db.create_all()
-    logger.info("✅ Database tables created")
+    # Não usamos db.create_all() em produção com migrações
+    # O Flask-Migrate deve gerenciar todas as alterações de tabela
+    # Este código permanece apenas para compatibilidade retroativa
+    if os.environ.get("FLASK_ENV") == "development" and not os.environ.get("USE_MIGRATIONS"):
+        db.create_all()
+        logger.info("✅ Database tables created in development mode")
 
     # Initialize test data in development environment
     if os.environ.get("FLASK_ENV") == "development":
@@ -1314,7 +1320,7 @@ app.secret_key = os.environ.get('SESSION_SECRET', os.urandom(24))
 
 if __name__ == '__main__':
     try:
-        port = int(os.environ.get('PORT', 3000))
+        port = int(os.environ.get('PORT', 5000))
         logger.info(f"Starting Flask server on port {port}...")
         app.run(host='0.0.0.0', port=port, debug=False)
     except Exception as e:
