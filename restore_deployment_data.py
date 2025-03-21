@@ -63,9 +63,21 @@ def restore_deployment_data():
 
         # Verificar se a restauração foi bem-sucedida
         if restored_files:
+            import os
+            # Configurar a variável de ambiente DATABASE_URL
+            default_db_url = 'postgresql://neondb_owner:npg_BoiquUY6v8CN@ep-flat-salad-a4j7rvot.us-east-1.aws.neon.tech/neondb?sslmode=require'
+            if 'DATABASE_URL' not in os.environ:
+                os.environ['DATABASE_URL'] = default_db_url
+                logger.info(f"⚠️ DATABASE_URL não encontrada. Usando configuração padrão para deploy: {default_db_url}")
+            
+            # Importar app após configurar a variável de ambiente
             from app import app, db, Surgery
+            
+            logger.info(f"📌 URL do banco de dados: {app.config['SQLALCHEMY_DATABASE_URI']}")
+            
             with app.app_context():
                 # Limpar dados existentes
+                logger.info("🗑️ Removendo registros existentes...")
                 db.session.query(Surgery).delete()
 
                 # Recarregar dados do Excel

@@ -1,10 +1,18 @@
 import logging
-from app import app, db, Surgery
-import pandas as pd
 import os
+import pandas as pd
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Configurar a variável de ambiente DATABASE_URL antes de importar a aplicação
+default_db_url = 'postgresql://neondb_owner:npg_BoiquUY6v8CN@ep-flat-salad-a4j7rvot.us-east-1.aws.neon.tech/neondb?sslmode=require'
+if 'DATABASE_URL' not in os.environ:
+    os.environ['DATABASE_URL'] = default_db_url
+    logger.info(f"⚠️ DATABASE_URL não encontrada. Usando configuração padrão para deploy: {default_db_url}")
+
+# Importar app após configurar a variável de ambiente
+from app import app, db, Surgery
 
 def verify_data():
     try:
@@ -65,6 +73,11 @@ def verify_data():
                     logger.info(f"Final database count: {final_count}")
                 else:
                     logger.info("✅ Data is consistent")
+    except Exception as e:
+        logger.error(f"❌ Erro na verificação dos dados: {str(e)}")
+        return False
+    
+    return True
 
 if __name__ == "__main__":
     verify_data()
