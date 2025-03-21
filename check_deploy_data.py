@@ -12,7 +12,7 @@ if 'DATABASE_URL' not in os.environ:
     logger.info(f"⚠️ DATABASE_URL não encontrada. Usando configuração padrão para deploy: {default_db_url}")
 
 # Importar app após configurar a variável de ambiente
-from app import app, db, Surgery
+from app import app, db, Surgery, UnitProgress
 
 def verify_data():
     try:
@@ -73,6 +73,17 @@ def verify_data():
                     logger.info(f"Final database count: {final_count}")
                 else:
                     logger.info("✅ Data is consistent")
+            
+            # Verificar a tabela UnitProgress
+            unit_count = UnitProgress.query.count()
+            logger.info(f"UnitProgress count: {unit_count}")
+            
+            if unit_count == 0:
+                # Adicionar unidade Ribeirão Preto com meta de 30
+                unit = UnitProgress(unidade="Ribeirão Preto", meta=30)
+                db.session.add(unit)
+                db.session.commit()
+                logger.info("✅ Adicionada unidade Ribeirão Preto com meta de 30")
     except Exception as e:
         logger.error(f"❌ Erro na verificação dos dados: {str(e)}")
         return False

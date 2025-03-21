@@ -71,7 +71,7 @@ def restore_deployment_data():
                 logger.info(f"⚠️ DATABASE_URL não encontrada. Usando configuração padrão para deploy: {default_db_url}")
             
             # Importar app após configurar a variável de ambiente
-            from app import app, db, Surgery
+            from app import app, db, Surgery, UnitProgress
             
             logger.info(f"📌 URL do banco de dados: {app.config['SQLALCHEMY_DATABASE_URI']}")
             
@@ -79,6 +79,17 @@ def restore_deployment_data():
                 # Limpar dados existentes
                 logger.info("🗑️ Removendo registros existentes...")
                 db.session.query(Surgery).delete()
+                
+                # Verificar se temos as unidades configuradas
+                unit_count = db.session.query(UnitProgress).count()
+                logger.info(f"Verificando unidades: {unit_count} unidades configuradas")
+                
+                if unit_count == 0:
+                    # Configurar unidade Ribeirão Preto com meta de 30
+                    logger.info("Configurando unidade Ribeirão Preto com meta de 30")
+                    unit = UnitProgress(unidade="Ribeirão Preto", meta=30)
+                    db.session.add(unit)
+                    db.session.commit()
 
                 # Recarregar dados do Excel
                 df = pd.read_excel("cirurgias.xlsx")
