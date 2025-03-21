@@ -25,7 +25,15 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
 # Configure SQLAlchemy with detailed logging and connection settings
-database_url = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
+database_url = os.environ.get('DATABASE_URL', None)
+
+# Se estamos em ambiente de deploy e não temos DATABASE_URL, use a conexão Neon
+if database_url is None:
+    # Configuração padrão para ambiente de deploy
+    database_url = 'postgresql://neondb_owner:npg_BoiquUY6v8CN@ep-flat-salad-a4j7rvot.us-east-1.aws.neon.tech/neondb?sslmode=require'
+    logger.info(f"⚠️ DATABASE_URL não encontrada. Usando configuração padrão para deploy.")
+
+# Transformar URLs postgres:// em postgresql://
 if database_url and database_url.startswith('postgres://'):
     # Handle Heroku-style PostgreSQL URLs
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
