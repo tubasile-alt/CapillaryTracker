@@ -1,4 +1,3 @@
-
 from app import app, db, Surgery
 from datetime import datetime
 import logging
@@ -13,31 +12,20 @@ def remove_specific_duplicates():
             initial_count = Surgery.query.count()
             logger.info(f"Initial count: {initial_count}")
 
-            # Get duplicates
+            # Get duplicates for Adnan Jamil El Homoui
             duplicates = Surgery.query.filter(
-                Surgery.nome.in_(['Luiz Henrique de Oliveira Pádua', 
-                                'Adriano Augusto Ferreira Miqueleto'])
+                Surgery.nome.ilike('%adnan%jamil%el%homoui%')
             ).order_by(Surgery.data).all()
 
-            # Group by name
-            by_name = {}
-            for record in duplicates:
-                if record.nome not in by_name:
-                    by_name[record.nome] = []
-                by_name[record.nome].append(record)
+            if duplicates:
+                # Keep first record, delete others
+                first_record = duplicates[0]
+                for record in duplicates[1:]:
+                    db.session.delete(record)
+                    logger.info(f"Deleting duplicate for {record.nome}")
 
-            # Keep first record for each name, delete others
-            for name, records in by_name.items():
-                if len(records) > 1:
-                    # Keep first record (oldest)
-                    keep = records[0]
-                    # Delete others
-                    for record in records[1:]:
-                        db.session.delete(record)
-                        logger.info(f"Deleting duplicate for {name}")
-
-            # Commit changes
-            db.session.commit()
+                # Commit changes
+                db.session.commit()
 
             # Get final count
             final_count = Surgery.query.count()
