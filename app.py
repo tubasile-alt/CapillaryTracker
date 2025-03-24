@@ -1173,17 +1173,48 @@ def download_excel():
     """Endpoint to download the Excel data file"""
     logger.info("Downloading Excel file")
     try:
-        filename = "cirurgias.xlsx"
-        if os.path.exists(filename):
-            # Return the file for download
+        # Get data from database
+        with app.app_context():
+            surgeries = Surgery.query.all()
+            
+            # Convert to DataFrame
+            data = []
+            for surgery in surgeries:
+                data.append({
+                    'data': surgery.data,
+                    'nome': surgery.nome,
+                    'unidade': surgery.unidade,
+                    'medico': surgery.medico,
+                    'equipe': surgery.equipe,
+                    'hora_cirurgia': surgery.hora_cirurgia,
+                    'tempo_cirurgia': surgery.tempo_cirurgia,
+                    'total_foliculos': surgery.total_foliculos,
+                    'frente': surgery.frente,
+                    'densidade_scketh': surgery.densidade_scketh,
+                    'coroa': surgery.coroa,
+                    'scalpe': surgery.scalpe,
+                    'peninsula_direita': surgery.peninsula_direita,
+                    'peninsula_esquerda': surgery.peninsula_esquerda
+                })
+            
+            df = pd.DataFrame(data)
+            
+            # Save to temporary file
+            temp_file = "temp_download.xlsx"
+            df.to_excel(temp_file, index=False)
+            
+            # Return file and then delete it
             from flask import send_file
-            return send_file(filename, 
-                             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                             as_attachment=True,
-                             download_name='relatorio_cirurgias.xlsx')
-        else:
-            flash("Arquivo de dados não encontrado.", "error")
-            return redirect(url_for('dashboard'))
+            return_data = send_file(
+                temp_file,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name='relatorio_cirurgias.xlsx'
+            )
+            
+            # Delete temp file after sending
+            os.remove(temp_file)
+            return return_data
     except Exception as e:
         logger.error(f"Error downloading Excel file: {str(e)}\n{traceback.format_exc()}")
         flash(f"Erro ao baixar arquivo: {str(e)}", "error")
