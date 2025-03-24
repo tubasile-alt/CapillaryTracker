@@ -3,7 +3,7 @@
 {% block content %}
 <div class="form-container">
     <h2>{{ form.title }}</h2>
-    <form method="post" id="cirurgia-form">
+    <form id="cadastroForm" method="post" action="{{ url_for('novo_cadastro') }}">
         <!-- Paginação -->
         <div class="form-pagination">
             <span class="pagination-step active" data-page="1">Página 1</span>
@@ -609,7 +609,7 @@
     });
 
     // Format date before form submission and validate required fields
-    document.getElementById('cirurgia-form').addEventListener('submit', function(e) {
+    document.getElementById('cadastroForm').addEventListener('submit', function(e) {
         try {
             e.preventDefault(); // Prevent default submission to validate first
 
@@ -651,7 +651,7 @@
                     dataFormatted.type = 'hidden';
                     dataFormatted.id = 'data_formatted';
                     dataFormatted.name = 'data_formatted';
-                    document.getElementById('cirurgia-form').appendChild(dataFormatted);
+                    document.getElementById('cadastroForm').appendChild(dataFormatted);
                 }
                 dataFormatted.value = dd + '/' + mm + '/' + yyyy;
             }
@@ -682,7 +682,7 @@
                 hiddenInput.type = 'hidden';
                 hiddenInput.name = 'equipe_values';
                 hiddenInput.value = selectedEquipe.join(', ');
-                document.getElementById('cirurgia-form').appendChild(hiddenInput);
+                document.getElementById('cadastroForm').appendChild(hiddenInput);
             }
 
             // Adicionar dados de bloqueio
@@ -704,7 +704,7 @@
             bloqueioInput.type = 'hidden';
             bloqueioInput.name = 'bloqueio_data';
             bloqueioInput.value = JSON.stringify(bloqueioData);
-            document.getElementById('cirurgia-form').appendChild(bloqueioInput);
+            document.getElementById('cadastroForm').appendChild(bloqueioInput);
 
             // Prepara os dados de Body Hair, se aplicável
             if (document.getElementById('body-hair-check').checked) {
@@ -730,7 +730,7 @@
                     bodyHairInput.type = 'hidden';
                     bodyHairInput.name = 'body_hair_data';
                     bodyHairInput.value = JSON.stringify(bodyHairData);
-                    document.getElementById('cirurgia-form').appendChild(bodyHairInput);
+                    document.getElementById('cadastroForm').appendChild(bodyHairInput);
                 }
             }
 
@@ -746,11 +746,27 @@
                             method: 'POST',
                             body: formData
                         });
-                        
+
                         if (response.ok) {
-                            alert('Dados salvos com sucesso!');
-                            window.location.href = '/';
-                            return;
+                            const data = await response.json();
+                            if (data.success) {
+                                alert('Dados salvos com sucesso!');
+                                window.location.href = '/';
+                                return;
+                            } else if (data.error === 'duplicate_patient') {
+                                alert('Paciente já cadastrado nesta data. Por favor, verifique os dados.');
+                                return;
+                            } else {
+                                alert('Erro ao salvar dados: ' + data.message);
+                                return;
+                            }
+                        } else {
+                            console.error('Tentativa ' + (i + 1) + ' falhou: Código de status ' + response.status);
+                            if (i === retries - 1) {
+                                alert('Erro ao salvar dados após várias tentativas. Por favor, tente novamente.');
+                                throw new Error('Falha na solicitação após várias tentativas.');
+                            }
+                            await new Promise(resolve => setTimeout(resolve, 1000));
                         }
                     } catch (error) {
                         console.error('Tentativa ' + (i + 1) + ' falhou:', error);
@@ -758,7 +774,6 @@
                             alert('Erro ao salvar dados após várias tentativas. Por favor, tente novamente.');
                             throw error;
                         }
-                        // Esperar um pouco antes de tentar novamente
                         await new Promise(resolve => setTimeout(resolve, 1000));
                     }
                 }
@@ -768,11 +783,11 @@
                 console.error('Erro final:', error);
                 alert('Erro ao salvar dados. Por favor, tente novamente.');
             });
-    } catch (error) {
-        console.error('Erro ao processar formulário:', error);
-        alert('Erro ao processar formulário. Por favor, tente novamente.');
-    }
-});
+        } catch (error) {
+            console.error('Erro ao processar formulário:', error);
+            alert('Erro ao processar formulário. Por favor, tente novamente.');
+        }
+    });
 
     // Update medicos based on selected unidade
     function updateMedicos(unidade) {

@@ -167,7 +167,7 @@ def dashboard():
             deploy_count = db.session.query(Surgery).count()
             logger.info(f"📌 Registros no Replit: {replit_count}")
             logger.info(f"📌 Registros no deploy: {deploy_count}")
-            
+
             if replit_count != deploy_count:
                 logger.warning(f"⚠️ Diferença de registros detectada: Replit={replit_count}, Deploy={deploy_count}")
             # Usar consulta SQL direta para debugging
@@ -666,8 +666,7 @@ def import_data():
 
             # Verificar se o arquivo está vazio
             if df_import.empty:
-                flash("❌ O arquivo está vazio", "error")
-                os.remove(temp_path)
+                flash("❌ O arquivo está vazio", "error")                os.remove(temp_path)
                 return redirect(request.url)
 
             # Verificar se já existe arquivo de dados
@@ -1176,7 +1175,7 @@ def download_excel():
         # Get data from database
         with app.app_context():
             surgeries = Surgery.query.all()
-            
+
             # Convert to DataFrame
             data = []
             for surgery in surgeries:
@@ -1196,13 +1195,13 @@ def download_excel():
                     'peninsula_direita': surgery.peninsula_direita,
                     'peninsula_esquerda': surgery.peninsula_esquerda
                 })
-            
+
             df = pd.DataFrame(data)
-            
+
             # Save to temporary file
             temp_file = "temp_download.xlsx"
             df.to_excel(temp_file, index=False)
-            
+
             # Return file and then delete it
             from flask import send_file
             return_data = send_file(
@@ -1211,7 +1210,7 @@ def download_excel():
                 as_attachment=True,
                 download_name='relatorio_cirurgias.xlsx'
             )
-            
+
             # Delete temp file after sending
             os.remove(temp_file)
             return return_data
