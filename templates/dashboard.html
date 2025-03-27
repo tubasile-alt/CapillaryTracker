@@ -89,9 +89,33 @@
                 <p>📊 Dados extraídos da planilha de cirurgias. Última atualização: {{ data.update_time }}</p>
                 <div class="dashboard-actions">
                     <a href="#" class="btn btn-primary" onclick="exportToPdf()">Exportar PDF</a>
+                    <a href="#" class="btn btn-info" onclick="viewPatientData()">Visualizar Dados</a>
                     <a href="{{ url_for('download_excel') }}" class="btn btn-secondary">Baixar Excel</a>
                     <a href="#" class="btn btn-warning" onclick="confirmDeleteLastRecord()">Apagar Último Cadastro</a>
                     <a href="#" class="btn btn-danger" onclick="confirmClearData()">Limpar Dados</a>
+                </div>
+
+                <!-- Modal para visualização de dados -->
+                <div id="viewDataModal" class="password-modal">
+                    <div class="password-modal-content" style="max-width: 800px;">
+                        <span class="close-modal" onclick="closeViewDataModal()">&times;</span>
+                        <h3>Pacientes Cadastrados</h3>
+                        <div class="patients-list-container">
+                            <table class="patients-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Nome</th>
+                                        <th>Data</th>
+                                        <th>Unidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="patientsTableBody">
+                                    <!-- Dados serão preenchidos via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Modal para confirmação de senha -->
@@ -136,6 +160,37 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-gauge@0.3.0"></script>
 <script>
+    // Função para visualizar dados dos pacientes
+    function viewPatientData() {
+        fetch('/get_patients_list')
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('patientsTableBody');
+                tableBody.innerHTML = '';
+                
+                data.patients.forEach((patient, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${patient.nome}</td>
+                        <td>${patient.data}</td>
+                        <td>${patient.unidade}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                document.getElementById('viewDataModal').style.display = 'flex';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao carregar dados dos pacientes');
+            });
+    }
+
+    function closeViewDataModal() {
+        document.getElementById('viewDataModal').style.display = 'none';
+    }
+
     // Define color scheme for dark theme
     const chartColors = {
         blue: '#36A2EB',
@@ -803,6 +858,47 @@
     .gauge-background {
         height: 30px;
     }
+}
+
+/* Estilos para a lista de pacientes */
+.patients-list-container {
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 20px 0;
+}
+
+.patients-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #ffffff;
+}
+
+.patients-table th,
+.patients-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.patients-table th {
+    background-color: rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.patients-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #138496;
 }
 
 /* Estilos para a tabela de técnicas */

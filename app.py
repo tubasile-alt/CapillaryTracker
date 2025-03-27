@@ -494,6 +494,22 @@ def clear_data_protected():
         logger.error(f"Error clearing data via dashboard: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'message': f'Erro ao limpar dados: {str(e)}'})
 
+@app.route('/get_patients_list')
+def get_patients_list():
+    """Endpoint to get list of registered patients"""
+    try:
+        with app.app_context():
+            surgeries = Surgery.query.order_by(Surgery.data.desc()).all()
+            patients = [{
+                'nome': s.nome,
+                'data': s.data.strftime('%d/%m/%Y'),
+                'unidade': s.unidade
+            } for s in surgeries]
+            return jsonify({'patients': patients})
+    except Exception as e:
+        logger.error(f"Error getting patients list: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'error': str(e), 'patients': []})
+
 @app.route('/get_last_record')
 def get_last_record():
     """Get the last surgery record information"""
