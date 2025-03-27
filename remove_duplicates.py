@@ -12,18 +12,20 @@ def remove_specific_duplicates():
             initial_count = Surgery.query.count()
             logger.info(f"Initial count: {initial_count}")
 
-            # Process Marco Aurélio duplicates
+            # Process Marco Aurélio duplicates - force delete keeping only earliest record
             marco_duplicates = Surgery.query.filter(
                 Surgery.nome == 'Marco Aurélio Abel Da Silva',
                 Surgery.data == datetime(2025, 3, 24).date()
-            ).order_by(Surgery.id).all()
+            ).order_by(Surgery.created_at.asc()).all()
 
             if len(marco_duplicates) > 1:
-                # Delete all but first record
+                earliest = marco_duplicates[0]
+                # Delete all other records
                 for record in marco_duplicates[1:]:
-                    logger.info(f"Deleting duplicate for {record.nome} from {record.data}")
+                    logger.info(f"Deleting duplicate for {record.nome} (ID: {record.id}) from {record.data}")
                     db.session.delete(record)
                 db.session.commit()
+                logger.info(f"Kept earliest record (ID: {earliest.id})")
 
             # Handle Luiz Henrique case (similar names)
             luiz_records = Surgery.query.filter(
