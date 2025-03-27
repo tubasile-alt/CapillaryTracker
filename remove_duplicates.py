@@ -12,22 +12,18 @@ def remove_specific_duplicates():
             initial_count = Surgery.query.count()
             logger.info(f"Initial count: {initial_count}")
 
-            # Process each case of duplicates
-            duplicate_cases = [
-                ('Marco Aurélio Abel Da Silva', datetime(2025, 3, 24).date())
-            ]
+            # Process Marco Aurélio duplicates
+            marco_duplicates = Surgery.query.filter(
+                Surgery.nome == 'Marco Aurélio Abel Da Silva',
+                Surgery.data == datetime(2025, 3, 24).date()
+            ).order_by(Surgery.id).all()
 
-            for nome, data in duplicate_cases:
-                duplicates = Surgery.query.filter(
-                    Surgery.nome == nome,
-                    Surgery.data == data
-                ).order_by(Surgery.id).all()
-
-                if len(duplicates) > 1:
-                    # Keep first record, delete others
-                    for record in duplicates[1:]:
-                        logger.info(f"Deleting duplicate for {record.nome} from {record.data}")
-                        db.session.delete(record)
+            if len(marco_duplicates) > 1:
+                # Delete all but first record
+                for record in marco_duplicates[1:]:
+                    logger.info(f"Deleting duplicate for {record.nome} from {record.data}")
+                    db.session.delete(record)
+                db.session.commit()
 
             # Handle Luiz Henrique case (similar names)
             luiz_records = Surgery.query.filter(
