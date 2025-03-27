@@ -496,10 +496,10 @@ def clear_data_protected():
 
 @app.route('/get_patients_list')
 def get_patients_list():
-    """Endpoint to get list of registered patients"""
+    """Endpoint to get list of registered patients sorted by unit and date"""
     try:
         with app.app_context():
-            surgeries = Surgery.query.order_by(Surgery.data.desc()).all()
+            surgeries = Surgery.query.order_by(Surgery.unidade.asc(), Surgery.data.desc()).all()
             patients = [{
                 'nome': s.nome,
                 'data': s.data.strftime('%d/%m/%Y'),
