@@ -1252,6 +1252,35 @@ def necrose():
     logger.info("Accessing necrose page")
     return render_template('necrose.html')
 
+@app.route('/check_duplicate')
+def check_duplicate():
+    """Endpoint para verificar se um paciente já existe na mesma data"""
+    try:
+        nome = request.args.get('nome', '')
+        data_str = request.args.get('data', '')
+        
+        if not nome or not data_str:
+            return jsonify({"exists": False, "error": "Nome e data são obrigatórios"})
+            
+        # Converter data de string para objeto data
+        try:
+            # Espera o formato DD/MM/AAAA
+            data = datetime.strptime(data_str, '%d/%m/%Y').date()
+        except ValueError:
+            return jsonify({"exists": False, "error": "Formato de data inválido. Use DD/MM/AAAA"})
+            
+        # Verificar se o paciente existe na mesma data
+        with app.app_context():
+            exists = Surgery.query.filter(
+                Surgery.nome == nome,
+                Surgery.data == data
+            ).first() is not None
+            
+        return jsonify({"exists": exists})
+    except Exception as e:
+        logger.error(f"Erro ao verificar duplicata: {str(e)}")
+        return jsonify({"exists": False, "error": str(e)})
+
 @app.route('/search_patients')
 def search_patients():
     """Endpoint para busca de pacientes com sugestões automáticas"""
@@ -1385,7 +1414,7 @@ app.secret_key = os.environ.get('SESSION_SECRET', os.urandom(24))
 
 if __name__ == '__main__':
     try:
-        port = int(os.environ.get('PORT', 5000))
+        port = int(os.environ.get("PORT", 5000))
         logger.info(f"Starting Flask server on port {port}...")
         app.run(host='0.0.0.0', port=port, debug=False)
     except Exception as e:

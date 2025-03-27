@@ -3,6 +3,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import pandas as pd
 from datetime import datetime
+import requests
+import json
 from utils import validate_date, validate_time, validate_numeric, validate_range
 
 # Configuração das opções por unidade
@@ -140,7 +142,17 @@ class HairSurgeryForm:
                 else:
                     widget = ttk.Entry(frame, width=30)
 
-                widget.grid(row=idx+1, column=1, padx=5, pady=2)
+                # Grade específica para campos específicos
+                if field == "Paciente" and frame_name == "Dados Gerais":
+                    # Para o campo Paciente, adicionamos um botão de verificação
+                    widget.grid(row=idx+1, column=1, padx=5, pady=2, sticky="w")
+                    check_button = ttk.Button(frame, text="Verificar Duplicata", 
+                                            command=self.verify_duplicate)
+                    check_button.grid(row=idx+1, column=2, padx=5, pady=2)
+                else:
+                    # Grade padrão para outros campos
+                    widget.grid(row=idx+1, column=1, padx=5, pady=2)
+                
                 self.entries[field] = widget
 
             # Navigation buttons
@@ -181,6 +193,26 @@ class HairSurgeryForm:
         self.frames[frame_name]["frame"].grid()
         self.current_frame = frame_name
 
+    def verify_duplicate(self):
+        """Verificar manualmente se um paciente já existe no sistema"""
+        nome = self.entries["Paciente"].get().strip()
+        data = self.entries["Data (DD/MM/AAAA)"].get().strip()
+        
+        if not nome:
+            messagebox.showerror("Erro", "Informe o nome do paciente para verificar duplicatas")
+            return
+            
+        if not validate_date(data):
+            messagebox.showerror("Erro", "Data inválida. Use o formato DD/MM/AAAA")
+            return
+            
+        if self.check_duplicate_patient(nome, data):
+            messagebox.showwarning("Paciente Duplicado", 
+                               f"ATENÇÃO: Já existe um cadastro para {nome} na data {data}.")
+        else:
+            messagebox.showinfo("Verificação de Duplicata", 
+                              f"Não foi encontrado nenhum cadastro para {nome} na data {data}.")
+            
     def validate_current_frame(self):
         config = self.frames[self.current_frame]["config"]
 
@@ -251,9 +283,55 @@ class HairSurgeryForm:
 
         return True
 
+    def check_duplicate_patient(self, nome, data):
+        """Verifica se já existe um paciente com o mesmo nome na mesma data"""
+        try:
+            # Endpoint local
+            url = f"http://localhost:5001/check_duplicate?nome={nome}&data={data}"
+            response = requests.get(url)
+            
+            if response.status_code == 200:
+                result = response.json()
+                return result.get("exists", False)
+            else:
+                # Falha na requisição - verificar arquivo local como fallback
+                messagebox.showwarning("Aviso", f"Não foi possível verificar duplicatas online. Verificando arquivo local.")
+                
+                # Verificar no arquivo Excel local
+                if os.path.exists("cirurgias.xlsx"):
+                    df = pd.read_excel("cirurgias.xlsx")
+                    
+                    # Converter a data para o formato correto
+                    df_data_str = pd.to_datetime(df["Data (DD/MM/AAAA)"]).dt.strftime('%d/%m/%Y')
+                    
+                    # Verificar se existe uma linha com o mesmo nome e data
+                    duplicates = df[(df["Paciente"].str.lower() == nome.lower()) & 
+                                   (df_data_str == data)]
+                    
+                    return len(duplicates) > 0
+        except Exception as e:
+            messagebox.showwarning("Erro", f"Erro ao verificar duplicatas: {str(e)}")
+        
+        return False
+    
     def next_frame(self, current_frame):
         if not self.validate_current_frame():
             return
+            
+        # Verificar duplicatas apenas na primeira tela (Dados Gerais)
+        if current_frame == "Dados Gerais":
+            nome = self.entries["Paciente"].get().strip()
+            data = self.entries["Data (DD/MM/AAAA)"].get().strip()
+            
+            if self.check_duplicate_patient(nome, data):
+                if messagebox.askyesno("Paciente Duplicado", 
+                                     f"Já existe um cadastro para {nome} na data {data}.\n\n" +
+                                     "Deseja continuar mesmo assim?"):
+                    # Usuário confirmou que quer continuar mesmo com duplicata
+                    pass
+                else:
+                    # Usuário escolheu não continuar
+                    return
 
         frame_order = list(self.frames.keys())
         next_idx = frame_order.index(current_frame) + 1
