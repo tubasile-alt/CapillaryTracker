@@ -13,17 +13,17 @@ def remove_specific_duplicates():
             initial_count = Surgery.query.count()
             logger.info(f"Initial count: {initial_count}")
 
-            # Find duplicate records for Marco Aurélio Abel Da Silva on 24/03/2025
+            # Find duplicate records for Douglas
             duplicates = Surgery.query.filter(
-                Surgery.nome == 'Marco Aurélio Abel Da Silva',
-                Surgery.data == datetime(2025, 3, 24).date()
-            ).order_by(Surgery.id).all()
+                Surgery.nome.in_(['Douglas Vinicius Tochio', 'Douglas Vinícius Tochio'])
+            ).order_by(Surgery.data.desc()).all()
 
+            # Keep only the most recent record
             if len(duplicates) > 1:
-                # Keep first record, delete others
+                # Keep first record (most recent due to desc order), delete others
                 for record in duplicates[1:]:
                     db.session.delete(record)
-                    logger.info(f"Deleting duplicate for {record.nome}")
+                    logger.info(f"Deleting duplicate for {record.nome} from {record.data}")
                 
                 # Commit changes
                 db.session.commit()
