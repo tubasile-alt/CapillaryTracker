@@ -13,14 +13,43 @@ def remove_specific_duplicates():
             initial_count = Surgery.query.count()
             logger.info(f"Initial count: {initial_count}")
 
-            # Find duplicate records for Marco Aurélio
-            duplicates = Surgery.query.filter(
-                Surgery.nome == 'Marco Aurélio Abel Da Silva',
-                Surgery.data == datetime(2025, 3, 24).date()
-            ).order_by(Surgery.id).all()
+            # Process each case of duplicates
+            duplicate_cases = [
+                ('Marco Aurélio Abel Da Silva', datetime(2025, 3, 24).date()),
+                ('Adriano Augusto Ferreira Miqueleto', datetime(2025, 3, 20).date())
+            ]
 
-            # Keep only the most recent record
-            if len(duplicates) > 1:
+            for nome, data in duplicate_cases:
+                duplicates = Surgery.query.filter(
+                    Surgery.nome == nome,
+                    Surgery.data == data
+                ).order_by(Surgery.id).all()
+
+                if len(duplicates) > 1:
+                    # Keep first record, delete others
+                    for record in duplicates[1:]:
+                        db.session.delete(record)
+                        logger.info(f"Deleting duplicate for {record.nome} from {record.data}")
+
+            # Handle Luiz Henrique case (similar names)
+            luiz_records = Surgery.query.filter(
+                Surgery.data == datetime(2025, 3, 20).date(),
+                db.or_(
+                    Surgery.nome == 'Luiz Henrique de Oliveira',
+                    Surgery.nome == 'Luiz Henrique de Oliveira Pádua'
+                )
+            ).all()
+
+            if len(luiz_records) > 1:
+                # Keep the more complete name version
+                keep_record = next(r for r in luiz_records if r.nome == 'Luiz Henrique de Oliveira Pádua')
+                for record in luiz_records:
+                    if record.id != keep_record.id:
+                        db.session.delete(record)
+                        logger.info(f"Deleting duplicate for {record.nome} from {record.data}")
+
+            # Commit all changes
+            db.session.commit()
                 # Keep first record (most recent due to desc order), delete others
                 for record in duplicates[1:]:
                     db.session.delete(record)
