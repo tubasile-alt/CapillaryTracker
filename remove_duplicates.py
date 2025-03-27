@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 def remove_specific_duplicates():
     try:
         with app.app_context():
-            # Get initial count
             initial_count = Surgery.query.count()
             logger.info(f"Initial count: {initial_count}")
 
@@ -28,8 +27,8 @@ def remove_specific_duplicates():
                 if len(duplicates) > 1:
                     # Keep first record, delete others
                     for record in duplicates[1:]:
-                        db.session.delete(record)
                         logger.info(f"Deleting duplicate for {record.nome} from {record.data}")
+                        db.session.delete(record)
 
             # Handle Luiz Henrique case (similar names)
             luiz_records = Surgery.query.filter(
@@ -45,20 +44,12 @@ def remove_specific_duplicates():
                 keep_record = next(r for r in luiz_records if r.nome == 'Luiz Henrique de Oliveira Pádua')
                 for record in luiz_records:
                     if record.id != keep_record.id:
-                        db.session.delete(record)
                         logger.info(f"Deleting duplicate for {record.nome} from {record.data}")
+                        db.session.delete(record)
 
             # Commit all changes
             db.session.commit()
-                # Keep first record (most recent due to desc order), delete others
-                for record in duplicates[1:]:
-                    db.session.delete(record)
-                    logger.info(f"Deleting duplicate for {record.nome} from {record.data}")
-                
-                # Commit changes
-                db.session.commit()
 
-            # Get final count
             final_count = Surgery.query.count()
             logger.info(f"Final count: {final_count}")
             logger.info(f"Removed {initial_count - final_count} duplicate entries")
