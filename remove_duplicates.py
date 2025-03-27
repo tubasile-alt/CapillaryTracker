@@ -13,10 +13,11 @@ def remove_specific_duplicates():
             initial_count = Surgery.query.count()
             logger.info(f"Initial count: {initial_count}")
 
-            # Find duplicate records for Douglas
+            # Find duplicate records for Marco Aurélio
             duplicates = Surgery.query.filter(
-                Surgery.nome.in_(['Douglas Vinicius Tochio', 'Douglas Vinícius Tochio'])
-            ).order_by(Surgery.data.desc()).all()
+                Surgery.nome == 'Marco Aurélio Abel Da Silva',
+                Surgery.data == datetime(2025, 3, 24).date()
+            ).order_by(Surgery.id).all()
 
             # Keep only the most recent record
             if len(duplicates) > 1:
