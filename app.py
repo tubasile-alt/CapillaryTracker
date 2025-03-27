@@ -689,7 +689,8 @@ def import_data():
 
             # Verificar se o arquivo está vazio
             if df_import.empty:
-                flash("❌ O arquivo está vazio", "error")                os.remove(temp_path)
+                flash("❌ O arquivo está vazio", "error")
+                os.remove(temp_path)
                 return redirect(request.url)
 
             # Verificar se já existe arquivo de dados
