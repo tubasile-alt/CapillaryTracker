@@ -40,8 +40,15 @@ if database_url and database_url.startswith('postgres://'):
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ECHO'] = True  # Enable SQL query logging
+app.config['SQLALCHEMY_POOL_RECYCLE'] = 299
+app.config['SQLALCHEMY_POOL_TIMEOUT'] = 20
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 299,
+    'pool_timeout': 20,
+    'pool_size': 5,
+    'max_overflow': 10
+}
 
 # Log database connection info
 logger.info(f"📌 Database URL in use: {app.config['SQLALCHEMY_DATABASE_URI']}")
@@ -1172,9 +1179,11 @@ def download_excel():
     """Endpoint to download the Excel data file"""
     logger.info("Downloading Excel file")
     try:
-        # Get data from database
+        # Get data from database with explicit session
         with app.app_context():
-            surgeries = Surgery.query.all()
+            db.session.expire_all()  # Clear any stale data
+            surgeries = db.session.query(Surgery).order_by(Surgery.data.desc()).all()
+            logger.info(f"Found {len(surgeries)} records")
 
             # Convert to DataFrame
             data = []
@@ -1197,6 +1206,7 @@ def download_excel():
                 })
 
             df = pd.DataFrame(data)
+            logger.info(f"DataFrame created with {len(df)} rows")
 
             # Save to temporary file
             temp_file = "temp_download.xlsx"
