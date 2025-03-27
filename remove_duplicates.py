@@ -14,8 +14,7 @@ def remove_specific_duplicates():
 
             # Process each case of duplicates
             duplicate_cases = [
-                ('Marco Aurélio Abel Da Silva', datetime(2025, 3, 24).date()),
-                ('Adriano Augusto Ferreira Miqueleto', datetime(2025, 3, 20).date())
+                ('Marco Aurélio Abel Da Silva', datetime(2025, 3, 24).date())
             ]
 
             for nome, data in duplicate_cases:
