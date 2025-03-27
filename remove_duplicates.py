@@ -12,9 +12,9 @@ def remove_specific_duplicates():
             initial_count = Surgery.query.count()
             logger.info(f"Initial count: {initial_count}")
 
-            # Get duplicates for Adnan Jamil El Homoui
+            # Get duplicates for Marco Aurélio Abel Da Silva
             duplicates = Surgery.query.filter(
-                Surgery.nome.ilike('%adnan%jamil%el%homoui%')
+                Surgery.nome.ilike('%marco%aurelio%abel%da%silva%')
             ).order_by(Surgery.data).all()
 
             if duplicates:
