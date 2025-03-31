@@ -100,6 +100,17 @@
                     <div class="password-modal-content" style="max-width: 800px;">
                         <span class="close-modal" onclick="closeViewDataModal()">&times;</span>
                         <h3>Pacientes Cadastrados</h3>
+                        <div class="filter-container">
+                            <div class="filter-group">
+                                <label for="patientUnitFilter">Unidade:</label>
+                                <select id="patientUnitFilter" onchange="filterPatients()">
+                                    <option value="all">Todas</option>
+                                    <option value="Ribeirão Preto">Ribeirão Preto</option>
+                                    <option value="Campinas">Campinas</option>
+                                    <option value="Rio de Janeiro">Rio de Janeiro</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="patients-list-container">
                             <table class="patients-table">
                                 <thead>
@@ -161,14 +172,32 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-gauge@0.3.0"></script>
 <script>
     // Função para visualizar dados dos pacientes
+    let allPatients = [];
+
     function viewPatientData() {
         fetch('/get_patients_list')
             .then(response => response.json())
             .then(data => {
-                const tableBody = document.getElementById('patientsTableBody');
-                tableBody.innerHTML = '';
+                allPatients = data.patients;
+                filterPatients();
+                document.getElementById('viewDataModal').style.display = 'flex';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao carregar dados dos pacientes');
+            });
+    }
+
+    function filterPatients() {
+        const selectedUnit = document.getElementById('patientUnitFilter').value;
+        const tableBody = document.getElementById('patientsTableBody');
+        tableBody.innerHTML = '';
+
+        const filteredPatients = selectedUnit === 'all' 
+            ? allPatients 
+            : allPatients.filter(patient => patient.unidade === selectedUnit);
                 
-                data.patients.forEach((patient, index) => {
+        filteredPatients.forEach((patient, index) => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${index + 1}</td>
