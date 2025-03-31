@@ -161,30 +161,31 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-gauge@0.3.0"></script>
 <script>
     // Função para visualizar dados dos pacientes
-    function viewPatientData() {
-        fetch('/get_patients_list')
-            .then(response => response.json())
-            .then(data => {
-                const tableBody = document.getElementById('patientsTableBody');
-                tableBody.innerHTML = '';
-                
+    async function viewPatientData() {
+        try {
+            const response = await fetch('/get_patients_list');
+            const data = await response.json();
+            const tableBody = document.getElementById('patientsTableBody');
+            tableBody.innerHTML = '';
+            
+            if (data.patients && Array.isArray(data.patients)) {
                 data.patients.forEach((patient, index) => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${index + 1}</td>
-                        <td>${patient.nome}</td>
-                        <td>${patient.data}</td>
-                        <td>${patient.unidade}</td>
+                        <td>${patient.nome || ''}</td>
+                        <td>${patient.data || ''}</td>
+                        <td>${patient.unidade || ''}</td>
                     `;
                     tableBody.appendChild(row);
                 });
-                
-                document.getElementById('viewDataModal').style.display = 'flex';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Erro ao carregar dados dos pacientes');
-            });
+            }
+            
+            document.getElementById('viewDataModal').style.display = 'flex';
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Erro ao carregar dados dos pacientes');
+        }
     }
 
     function closeViewDataModal() {
@@ -606,10 +607,30 @@
     }
 
     function closeDeleteLastModal() {
-        document.getElementById('deleteLastModal').style.display = 'none';
+        const modal = document.getElementById('deleteLastModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
     }
 
-    function deleteLastRecord() {
+    async function confirmDeleteLastRecord() {
+        try {
+            const response = await fetch('/get_last_record');
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('lastPatientName').textContent = data.patient_name;
+                document.getElementById('deleteLastModal').style.display = 'flex';
+            } else {
+                alert('❌ ' + (data.message || 'Erro ao buscar último registro'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('❌ Erro ao buscar o último registro.');
+        }
+    }
+
+    async function deleteLastRecord() {
         fetch('/delete_last_record', {
             method: 'POST'
         })
