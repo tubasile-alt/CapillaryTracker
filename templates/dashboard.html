@@ -100,6 +100,14 @@
                     <div class="password-modal-content" style="max-width: 800px;">
                         <span class="close-modal" onclick="closeViewDataModal()">&times;</span>
                         <h3>Pacientes Cadastrados</h3>
+                        <div class="filter-container">
+                            <div class="filter-group">
+                                <label for="patientUnitFilter">Unidade:</label>
+                                <select id="patientUnitFilter" onchange="filterPatients()">
+                                    <option value="">Todas</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="patients-list-container">
                             <table class="patients-table">
                                 <thead>
@@ -161,24 +169,29 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-gauge@0.3.0"></script>
 <script>
     // Função para visualizar dados dos pacientes
+    let allPatients = [];
+    
     async function viewPatientData() {
         try {
             const response = await fetch('/get_patients_list');
             const data = await response.json();
-            const tableBody = document.getElementById('patientsTableBody');
-            tableBody.innerHTML = '';
             
             if (data.patients && Array.isArray(data.patients)) {
-                data.patients.forEach((patient, index) => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${patient.nome || ''}</td>
-                        <td>${patient.data || ''}</td>
-                        <td>${patient.unidade || ''}</td>
-                    `;
-                    tableBody.appendChild(row);
+                allPatients = data.patients;
+                
+                // Populate unit filter
+                const unitFilter = document.getElementById('patientUnitFilter');
+                const units = [...new Set(allPatients.map(p => p.unidade))].filter(Boolean).sort();
+                unitFilter.innerHTML = '<option value="">Todas</option>';
+                units.forEach(unit => {
+                    const option = document.createElement('option');
+                    option.value = unit;
+                    option.textContent = unit;
+                    unitFilter.appendChild(option);
                 });
+                
+                // Display patients
+                displayFilteredPatients();
             }
             
             document.getElementById('viewDataModal').style.display = 'flex';
@@ -186,6 +199,31 @@
             console.error('Error:', error);
             alert('Erro ao carregar dados dos pacientes');
         }
+    }
+    
+    function filterPatients() {
+        displayFilteredPatients();
+    }
+    
+    function displayFilteredPatients() {
+        const selectedUnit = document.getElementById('patientUnitFilter').value;
+        const tableBody = document.getElementById('patientsTableBody');
+        tableBody.innerHTML = '';
+        
+        const filteredPatients = selectedUnit 
+            ? allPatients.filter(p => p.unidade === selectedUnit)
+            : allPatients;
+            
+        filteredPatients.forEach((patient, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${patient.nome || ''}</td>
+                <td>${patient.data || ''}</td>
+                <td>${patient.unidade || ''}</td>
+            `;
+            tableBody.appendChild(row);
+        });
     }
 
     function closeViewDataModal() {
