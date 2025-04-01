@@ -528,6 +528,32 @@ def get_last_record():
         logger.error(f"Error getting last record: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'message': f'Erro ao buscar último registro: {str(e)}'})
 
+@app.route('/delete_patient', methods=['POST'])
+def delete_patient():
+    """Delete a specific patient"""
+    try:
+        data = request.get_json()
+        patient_name = data.get('patient_name')
+        
+        if not patient_name:
+            return jsonify({'success': False, 'message': 'Nome do paciente não fornecido'})
+            
+        with app.app_context():
+            patient = Surgery.query.filter_by(nome=patient_name).first()
+            if patient:
+                db.session.delete(patient)
+                db.session.commit()
+                logger.info(f"✅ Patient deleted successfully: {patient_name}")
+                return jsonify({
+                    'success': True, 
+                    'message': f'Paciente {patient_name} excluído com sucesso'
+                })
+            else:
+                return jsonify({'success': False, 'message': 'Paciente não encontrado'})
+    except Exception as e:
+        logger.error(f"Error deleting patient: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'message': f'Erro ao excluir paciente: {str(e)}'})
+
 @app.route('/delete_last_record', methods=['POST'])
 def delete_last_record():
     """Delete the last surgery record"""
