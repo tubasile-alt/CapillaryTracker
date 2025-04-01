@@ -613,6 +613,11 @@
         try {
             e.preventDefault(); // Prevent default submission to validate first
 
+            // Disable submit button to prevent multiple submissions
+            const submitButton = this.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Salvando...';
+
             // Validate all required fields
             let isValid = true;
             let missingFields = [];
@@ -632,6 +637,8 @@
             });
 
             if (!isValid) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Salvar Dados';
                 alert(`Por favor, preencha os seguintes campos obrigatórios:\n- ${missingFields.join('\n- ')}`);
                 return;
             }
@@ -755,15 +762,21 @@
                                 return;
                             } else if (data.error === 'duplicate_patient') {
                                 alert('Paciente já cadastrado nesta data. Por favor, verifique os dados.');
+                                submitButton.disabled = false;
+                                submitButton.textContent = 'Salvar Dados';
                                 return;
                             } else {
                                 alert('Erro ao salvar dados: ' + data.message);
+                                submitButton.disabled = false;
+                                submitButton.textContent = 'Salvar Dados';
                                 return;
                             }
                         } else {
                             console.error('Tentativa ' + (i + 1) + ' falhou: Código de status ' + response.status);
                             if (i === retries - 1) {
                                 alert('Erro ao salvar dados após várias tentativas. Por favor, tente novamente.');
+                                submitButton.disabled = false;
+                                submitButton.textContent = 'Salvar Dados';
                                 throw new Error('Falha na solicitação após várias tentativas.');
                             }
                             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -772,6 +785,8 @@
                         console.error('Tentativa ' + (i + 1) + ' falhou:', error);
                         if (i === retries - 1) {
                             alert('Erro ao salvar dados após várias tentativas. Por favor, tente novamente.');
+                            submitButton.disabled = false;
+                            submitButton.textContent = 'Salvar Dados';
                             throw error;
                         }
                         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -782,10 +797,14 @@
             submitWithRetry().catch(error => {
                 console.error('Erro final:', error);
                 alert('Erro ao salvar dados. Por favor, tente novamente.');
+                submitButton.disabled = false;
+                submitButton.textContent = 'Salvar Dados';
             });
         } catch (error) {
             console.error('Erro ao processar formulário:', error);
             alert('Erro ao processar formulário. Por favor, tente novamente.');
+            submitButton.disabled = false;
+            submitButton.textContent = 'Salvar Dados';
         }
     });
 
