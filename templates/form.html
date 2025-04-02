@@ -984,72 +984,75 @@
         });
     }
 
+    function updateDependentFields(unidade) {
+        if (!unidade) {
+            resetDependentFields();
+            return;
+        }
+
+        const medicoSelect = document.getElementById('medico');
+        const equipeContainer = document.getElementById('equipe_container');
+        
+        // Show loading state
+        medicoSelect.innerHTML = '<option value="">Carregando médicos...</option>';
+        equipeContainer.innerHTML = '<p class="loading-message">Carregando equipe...</p>';
+
+        // Fetch médicos
+        fetch('/get_medicos/' + encodeURIComponent(unidade))
+            .then(response => response.json())
+            .then(data => {
+                medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
+                data.medicos.forEach(medico => {
+                    const option = document.createElement('option');
+                    option.value = medico;
+                    option.textContent = medico;
+                    medicoSelect.appendChild(option);
+                });
+                medicoSelect.disabled = false;
+            });
+
+        // Fetch equipe
+        fetch('/get_equipe/' + encodeURIComponent(unidade))
+            .then(response => response.json())
+            .then(data => {
+                equipeContainer.innerHTML = '';
+                data.equipe.forEach(membro => {
+                    const checkboxDiv = document.createElement('div');
+                    checkboxDiv.className = 'checkbox-item';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'equipe';
+                    checkbox.value = membro;
+                    checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
+
+                    const label = document.createElement('label');
+                    label.htmlFor = checkbox.id;
+                    label.textContent = membro;
+
+                    checkboxDiv.appendChild(checkbox);
+                    checkboxDiv.appendChild(label);
+                    equipeContainer.appendChild(checkboxDiv);
+                });
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                showError('Erro ao carregar médicos e equipe');
+                resetDependentFields();
+            });
+    }
+
     // Initialize event listeners
     document.addEventListener('DOMContentLoaded', function() {
         const unidadeSelect = document.getElementById('unidade');
         if (unidadeSelect) {
             unidadeSelect.addEventListener('change', function() {
-                const unidade = this.value;
-                if (!unidade) {
-                    resetDependentFields();
-                    return;
-                }
-
-                const medicoSelect = document.getElementById('medico');
-                const equipeContainer = document.getElementById('equipe_container');
-                
-                // Show loading state
-                medicoSelect.innerHTML = '<option value="">Carregando médicos...</option>';
-                equipeContainer.innerHTML = '<p class="loading-message">Carregando equipe...</p>';
-
-                // Fetch médicos
-                fetch('/get_medicos/' + encodeURIComponent(unidade))
-                    .then(response => response.json())
-                    .then(data => {
-                        medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
-                        data.medicos.forEach(medico => {
-                            const option = document.createElement('option');
-                            option.value = medico;
-                            option.textContent = medico;
-                            medicoSelect.appendChild(option);
-                        });
-                        medicoSelect.disabled = false;
-                    });
-
-                // Fetch equipe
-                fetch('/get_equipe/' + encodeURIComponent(unidade))
-                    .then(response => response.json())
-                    .then(data => {
-                        equipeContainer.innerHTML = '';
-                        data.equipe.forEach(membro => {
-                            const checkboxDiv = document.createElement('div');
-                            checkboxDiv.className = 'checkbox-item';
-
-                            const checkbox = document.createElement('input');
-                            checkbox.type = 'checkbox';
-                            checkbox.name = 'equipe';
-                            checkbox.value = membro;
-                            checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
-
-                            const label = document.createElement('label');
-                            label.htmlFor = checkbox.id;
-                            label.textContent = membro;
-
-                            checkboxDiv.appendChild(checkbox);
-                            checkboxDiv.appendChild(label);
-                            equipeContainer.appendChild(checkboxDiv);
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Erro:', error);
-                        showError('Erro ao carregar médicos e equipe');
-                        resetDependentFields();
-                    });
+                updateDependentFields(this.value);
             });
             
-            // If unit is already selected, trigger change event
+            // If unit is already selected, update fields
             if (unidadeSelect.value) {
-                unidadeSelect.dispatchEvent(new Event('change'));
+                updateDependentFields(unidadeSelect.value);
             }
         }
     });
