@@ -984,13 +984,80 @@
         });
     }
 
-    // Update event listener for unidade select
+    // Functions to handle unit change and updates
+    async function handleUnitChange(unidade) {
+        if (!unidade) {
+            resetDependentFields();
+            return;
+        }
+
+        const medicoSelect = document.getElementById('medico');
+        const equipeContainer = document.getElementById('equipe_container');
+        
+        // Show loading state
+        medicoSelect.innerHTML = '<option value="">Carregando médicos...</option>';
+        equipeContainer.innerHTML = '<p class="loading-message">Carregando equipe...</p>';
+
+        try {
+            // Fetch both médicos and equipe data
+            const [medicosResponse, equipeResponse] = await Promise.all([
+                fetch('/get_medicos/' + encodeURIComponent(unidade)),
+                fetch('/get_equipe/' + encodeURIComponent(unidade))
+            ]);
+
+            const medicosData = await medicosResponse.json();
+            const equipeData = await equipeResponse.json();
+
+            // Update médicos dropdown
+            medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
+            medicosData.medicos.forEach(medico => {
+                const option = document.createElement('option');
+                option.value = medico;
+                option.textContent = medico;
+                medicoSelect.appendChild(option);
+            });
+            medicoSelect.disabled = false;
+
+            // Update equipe checkboxes
+            equipeContainer.innerHTML = '';
+            equipeData.equipe.forEach(membro => {
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'checkbox-item';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'equipe';
+                checkbox.value = membro;
+                checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
+
+                const label = document.createElement('label');
+                label.htmlFor = checkbox.id;
+                label.textContent = membro;
+
+                checkboxDiv.appendChild(checkbox);
+                checkboxDiv.appendChild(label);
+                equipeContainer.appendChild(checkboxDiv);
+            });
+
+        } catch (error) {
+            console.error('Erro:', error);
+            showError('Erro ao carregar médicos e equipe');
+            resetDependentFields();
+        }
+    }
+
+    // Initialize event listeners
     document.addEventListener('DOMContentLoaded', function() {
         const unidadeSelect = document.getElementById('unidade');
         if (unidadeSelect) {
             unidadeSelect.addEventListener('change', function() {
                 handleUnitChange(this.value);
             });
+            
+            // If unit is already selected, load the corresponding data
+            if (unidadeSelect.value) {
+                handleUnitChange(unidadeSelect.value);
+            }
         }
     });
 
