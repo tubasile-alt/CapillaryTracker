@@ -817,10 +817,19 @@
     function updateMedicos(unidade) {
         if (!unidade) return;
 
+        // Enable médico select
+        var medicoSelect = document.getElementById('medico');
+        medicoSelect.disabled = true;
+        medicoSelect.innerHTML = '<option value="">Carregando médicos...</option>';
+
         fetch('/get_medicos/' + encodeURIComponent(unidade))
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro na resposta do servidor');
+                }
+                return response.json();
+            })
             .then(data => {
-                var medicoSelect = document.getElementById('medico');
                 medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
                 if (data.medicos && Array.isArray(data.medicos)) {
                     data.medicos.forEach(medico => {
@@ -829,11 +838,64 @@
                         option.textContent = medico;
                         medicoSelect.appendChild(option);
                     });
+                    medicoSelect.disabled = false;
+                } else {
+                    medicoSelect.innerHTML = '<option value="">Nenhum médico disponível</option>';
                 }
-                medicoSelect.disabled = false;
             })
             .catch(error => {
                 console.error('Erro ao carregar médicos:', error);
+                medicoSelect.innerHTML = '<option value="">Erro ao carregar médicos</option>';
+            });
+
+        // Also update equipe when unit changes
+        updateEquipe(unidade);
+    }
+
+    // Update equipe based on selected unidade
+    function updateEquipe(unidade) {
+        if (!unidade) return;
+
+        var equipeContainer = document.getElementById('equipe_container');
+        equipeContainer.innerHTML = '<p>Carregando equipe...</p>';
+
+        fetch('/get_equipe/' + encodeURIComponent(unidade))
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro na resposta do servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                equipeContainer.innerHTML = '';
+
+                if (!data.equipe || data.equipe.length === 0) {
+                    equipeContainer.innerHTML = '<p class="select-message">Nenhuma equipe disponível para esta unidade</p>';
+                    return;
+                }
+
+                data.equipe.forEach(membro => {
+                    var checkboxDiv = document.createElement('div');
+                    checkboxDiv.className = 'checkbox-item';
+
+                    var checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'equipe';
+                    checkbox.value = membro;
+                    checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
+
+                    var label = document.createElement('label');
+                    label.htmlFor = checkbox.id;
+                    label.textContent = membro;
+
+                    checkboxDiv.appendChild(checkbox);
+                    checkboxDiv.appendChild(label);
+                    equipeContainer.appendChild(checkboxDiv);
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar equipe:', error);
+                equipeContainer.innerHTML = '<p class="error-message">Erro ao carregar equipe</p>';
             });
     }
 
