@@ -65,7 +65,7 @@
 
                         {% if field.type == 'select' %}
                             <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}
-                                    {% if field.name == 'unidade' %}onchange="handleUnitChange(this.value)"{% endif %}>
+                                    {% if field.name == 'unidade' %}onchange="updateDependentFields(this.value)"{% endif %}>
                                 <option value="">Selecione...</option>
                                 {% for option in field.options %}
                                     <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
