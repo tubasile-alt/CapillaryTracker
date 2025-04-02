@@ -817,7 +817,7 @@
     function updateMedicos(unidade) {
         if (!unidade) return;
 
-        // Enable médico select
+        // Clear and disable médico select while loading
         var medicoSelect = document.getElementById('medico');
         medicoSelect.disabled = true;
         medicoSelect.innerHTML = '<option value="">Carregando médicos...</option>';
@@ -846,6 +846,7 @@
             .catch(error => {
                 console.error('Erro ao carregar médicos:', error);
                 medicoSelect.innerHTML = '<option value="">Erro ao carregar médicos</option>';
+                medicoSelect.disabled = true;
             });
 
         // Also update equipe when unit changes
@@ -899,46 +900,7 @@
             });
     }
 
-    // Update equipe based on selected unidade
-    function updateEquipe(unidade) {
-        if (!unidade) return;
 
-        fetch('/get_equipe/' + unidade)
-            .then(response => response.json())
-            .then(data => {
-                var equipeContainer = document.getElementById('equipe_container');
-                equipeContainer.innerHTML = '';
-
-                if (data.equipe.length === 0) {
-                    var message = document.createElement('p');
-                    message.className = 'select-message';
-                    message.textContent = 'Nenhuma equipe disponível para esta unidade';
-                    equipeContainer.appendChild(message);
-                    return;
-                }
-
-                data.equipe.forEach(membro => {
-                    var checkboxDiv = document.createElement('div');
-                    checkboxDiv.className = 'checkbox-item';
-
-                    var checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.name = 'equipe';
-                    checkbox.value = membro;
-                    checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
-
-                    var label = document.createElement('label');
-                    label.htmlFor = checkbox.id;
-                    label.textContent = membro;
-
-                    checkboxDiv.appendChild(checkbox);
-                    checkboxDiv.appendChild(label);
-                    equipeContainer.appendChild(checkboxDiv);
-                });
-            });
-    }
-
-    // Setup calculation of extraction data
     function setupExtractionCalculations() {
         const quadrantes = ['q1', 'q2', 'q3', 'q4'];
 
