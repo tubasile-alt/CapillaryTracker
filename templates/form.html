@@ -1047,12 +1047,63 @@
         const unidadeSelect = document.getElementById('unidade');
         if (unidadeSelect) {
             unidadeSelect.addEventListener('change', function() {
-                updateDependentFields(this.value);
+                const selectedUnit = this.value;
+                
+                if (!selectedUnit) {
+                    resetDependentFields();
+                    return;
+                }
+
+                // Fetch médicos
+                fetch('/get_medicos/' + encodeURIComponent(selectedUnit))
+                    .then(response => response.json())
+                    .then(data => {
+                        const medicoSelect = document.getElementById('medico');
+                        medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
+                        data.medicos.forEach(medico => {
+                            const option = document.createElement('option');
+                            option.value = medico;
+                            option.textContent = medico;
+                            medicoSelect.appendChild(option);
+                        });
+                        medicoSelect.disabled = false;
+                    });
+
+                // Fetch equipe
+                fetch('/get_equipe/' + encodeURIComponent(selectedUnit))
+                    .then(response => response.json())
+                    .then(data => {
+                        const equipeContainer = document.getElementById('equipe_container');
+                        equipeContainer.innerHTML = '';
+                        data.equipe.forEach(membro => {
+                            const checkboxDiv = document.createElement('div');
+                            checkboxDiv.className = 'checkbox-item';
+
+                            const checkbox = document.createElement('input');
+                            checkbox.type = 'checkbox';
+                            checkbox.name = 'equipe';
+                            checkbox.value = membro;
+                            checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
+
+                            const label = document.createElement('label');
+                            label.htmlFor = checkbox.id;
+                            label.textContent = membro;
+
+                            checkboxDiv.appendChild(checkbox);
+                            checkboxDiv.appendChild(label);
+                            equipeContainer.appendChild(checkboxDiv);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        showError('Erro ao carregar médicos e equipe');
+                        resetDependentFields();
+                    });
             });
             
-            // If unit is already selected, update fields
+            // If unit is already selected, trigger change event
             if (unidadeSelect.value) {
-                updateDependentFields(unidadeSelect.value);
+                unidadeSelect.dispatchEvent(new Event('change'));
             }
         }
     });
