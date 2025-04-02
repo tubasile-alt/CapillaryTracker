@@ -817,17 +817,23 @@
     function updateMedicos(unidade) {
         if (!unidade) return;
 
-        fetch('/get_medicos/' + unidade)
+        fetch('/get_medicos/' + encodeURIComponent(unidade))
             .then(response => response.json())
             .then(data => {
                 var medicoSelect = document.getElementById('medico');
                 medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
-                data.medicos.forEach(medico => {
-                    var option = document.createElement('option');
-                    option.value = medico;
-                    option.textContent = medico;
-                    medicoSelect.appendChild(option);
-                });
+                if (data.medicos && Array.isArray(data.medicos)) {
+                    data.medicos.forEach(medico => {
+                        var option = document.createElement('option');
+                        option.value = medico;
+                        option.textContent = medico;
+                        medicoSelect.appendChild(option);
+                    });
+                }
+                medicoSelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Erro ao carregar médicos:', error);
             });
     }
 
