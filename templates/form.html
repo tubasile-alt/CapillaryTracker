@@ -980,30 +980,32 @@
     }
 
     // Initialize event listeners
-    async function updateDependentFields(unidade) {
+    function updateDependentFields(unidade) {
         if (!unidade) {
             resetDependentFields();
-            return;
+            return Promise.resolve();  // Return a resolved promise
         }
 
-        try {
-            // Mostrar estado de carregamento
-            const medicoSelect = document.getElementById('medico');
-            const equipeContainer = document.getElementById('equipe_container');
-            
-            medicoSelect.innerHTML = '<option value="">Carregando médicos...</option>';
-            medicoSelect.disabled = true;
-            equipeContainer.innerHTML = '<p class="loading-message">Carregando equipe...</p>';
+        // Mostrar estado de carregamento
+        const medicoSelect = document.getElementById('medico');
+        const equipeContainer = document.getElementById('equipe_container');
+        
+        medicoSelect.innerHTML = '<option value="">Carregando médicos...</option>';
+        medicoSelect.disabled = true;
+        equipeContainer.innerHTML = '<p class="loading-message">Carregando equipe...</p>';
 
-            // Buscar médicos e equipe em paralelo
-            const [medicosResponse, equipeResponse] = await Promise.all([
-                fetch('/get_medicos/' + encodeURIComponent(unidade)),
-                fetch('/get_equipe/' + encodeURIComponent(unidade))
+        // Buscar médicos e equipe em paralelo
+        return Promise.all([
+            fetch('/get_medicos/' + encodeURIComponent(unidade)),
+            fetch('/get_equipe/' + encodeURIComponent(unidade))
+        ])
+        .then(([medicosResponse, equipeResponse]) => {
+            return Promise.all([
+                medicosResponse.json(),
+                equipeResponse.json()
             ]);
-
-            const medicosData = await medicosResponse.json();
-            const equipeData = await equipeResponse.json();
-
+        })
+        .then(([medicosData, equipeData]) => {
             // Atualizar select de médicos
             medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
             medicosData.medicos.forEach(medico => {
@@ -1034,12 +1036,12 @@
                 checkboxDiv.appendChild(label);
                 equipeContainer.appendChild(checkboxDiv);
             });
-
-        } catch (error) {
+        })
+        .catch(error => {
             console.error('Erro:', error);
             showError('Erro ao carregar médicos e equipe');
             resetDependentFields();
-        }
+        });
     }
 
     function resetDependentFields() {
