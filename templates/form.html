@@ -3,7 +3,7 @@
 {% block content %}
 <div class="form-container">
     <h2>{{ form.title }}</h2>
-    <form id="cadastroForm" method="post" action="{{ url_for('novo_cadastro') }}">
+    <form method="post" id="cadastroForm" action="{{ url_for('novo_cadastro') }}">
         <!-- Paginação -->
         <div class="form-pagination">
             <span class="pagination-step active" data-page="1">Página 1</span>
@@ -17,55 +17,13 @@
                 {% for field in form.fields[:7] %}
                     <div class="form-group">
                         <label for="{{ field.name }}">
-
-<style>
-.error-container {
-    margin-bottom: 20px;
-}
-
-.alert {
-    padding: 15px;
-    border-radius: 4px;
-    margin-bottom: 15px;
-}
-
-.alert-danger {
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
-}
-
-.loading-message {
-    color: #666;
-    font-style: italic;
-}
-
-.select-message {
-    color: #666;
-    font-style: italic;
-}
-
-.error-message {
-    color: #dc3545;
-    font-weight: bold;
-}
-
-.checkbox-item {
-    margin: 5px 0;
-}
-
-.checkbox-item input[type="checkbox"] {
-    margin-right: 8px;
-}
-</style>
-
                             {{ field.label }}
                             {% if field.required %}*{% endif %}
                         </label>
 
                         {% if field.type == 'select' %}
                             <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}
-                                    {% if field.name == 'unidade' %}onchange="updateDependentFields(this.value)"{% endif %}>
+                                    {% if field.name == 'unidade' %}onchange="updateMedicos(this.value); updateEquipe(this.value)"{% endif %}>
                                 <option value="">Selecione...</option>
                                 {% for option in field.options %}
                                     <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
@@ -488,7 +446,6 @@
             </div>
 
 
-
             <!-- Botões de navegação da página 2 -->
             <div class="nav-buttons">
                 <button type="button" class="btn btn-secondary" onclick="goToPage(1)">Anterior</button>
@@ -584,6 +541,44 @@
         line-height: 20px;
         text-align: center;
         font-weight: bold;
+    }
+    .error-container {
+        margin-bottom: 20px;
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+
+    .loading-message {
+        color: #666;
+        font-style: italic;
+    }
+
+    .select-message {
+        color: #666;
+        font-style: italic;
+    }
+
+    .error-message {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .checkbox-item {
+        margin: 5px 0;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+        margin-right: 8px;
     }
 </style>
 
