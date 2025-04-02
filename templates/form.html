@@ -1052,11 +1052,18 @@
     }
     
     // Função não-assíncrona para chamar a função assíncrona updateDependentFields
+    // Define a function to safely call the async updateDependentFields function
     function callUpdateDependentFields(unidade) {
-        updateDependentFields(unidade).catch(error => {
-            console.error('Erro ao atualizar campos dependentes:', error);
-            showError('Ocorreu um erro ao atualizar os campos dependentes');
-        });
+        try {
+            // Call the async function and handle any rejections
+            updateDependentFields(unidade).catch(error => {
+                console.error('Erro ao atualizar campos dependentes:', error);
+                showError('Ocorreu um erro ao atualizar os campos dependentes');
+            });
+        } catch (error) {
+            console.error('Erro ao chamar updateDependentFields:', error);
+            showError('Ocorreu um erro ao atualizar os campos');
+        }
     }
 
     // Initialize when document loads
