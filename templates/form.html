@@ -23,7 +23,7 @@
 
                         {% if field.type == 'select' %}
                             <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}
-                                    {% if field.name == 'unidade' %}onchange="callUpdateDependentFields(this.value)"{% endif %}>
+                                    {% if field.name == 'unidade' %}onchange="atualizarCamposUnidade(this.value)"{% endif %}>
                                 <option value="">Selecione...</option>
                                 {% for option in field.options %}
                                     <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
@@ -980,106 +980,87 @@
     }
 
     // Initialize event listeners
-    function updateDependentFields(unidade) {
-        if (!unidade) {
-            resetDependentFields();
-            return Promise.resolve();  // Return a resolved promise
-        }
-
-        // Mostrar estado de carregamento
+    function atualizarCamposUnidade(unidade) {
+        // Referências aos elementos
         const medicoSelect = document.getElementById('medico');
         const equipeContainer = document.getElementById('equipe_container');
         
+        // Resetar os campos se nenhuma unidade for selecionada
+        if (!unidade) {
+            medicoSelect.innerHTML = '<option value="">Selecione a unidade primeiro...</option>';
+            medicoSelect.disabled = true;
+            equipeContainer.innerHTML = '<p class="select-message">Selecione a unidade primeiro...</p>';
+            return;
+        }
+        
+        // Mostrar estado de carregamento
         medicoSelect.innerHTML = '<option value="">Carregando médicos...</option>';
         medicoSelect.disabled = true;
         equipeContainer.innerHTML = '<p class="loading-message">Carregando equipe...</p>';
-
-        // Buscar médicos e equipe em paralelo
-        return Promise.all([
-            fetch('/get_medicos/' + encodeURIComponent(unidade)),
-            fetch('/get_equipe/' + encodeURIComponent(unidade))
-        ])
-        .then(([medicosResponse, equipeResponse]) => {
-            return Promise.all([
-                medicosResponse.json(),
-                equipeResponse.json()
-            ]);
-        })
-        .then(([medicosData, equipeData]) => {
-            // Atualizar select de médicos
-            medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
-            medicosData.medicos.forEach(medico => {
-                const option = document.createElement('option');
-                option.value = medico;
-                option.textContent = medico;
-                medicoSelect.appendChild(option);
+        
+        // Buscar dados dos médicos
+        fetch('/get_medicos/' + encodeURIComponent(unidade))
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                // Atualizar select de médicos
+                medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
+                data.medicos.forEach(function(medico) {
+                    const option = document.createElement('option');
+                    option.value = medico;
+                    option.textContent = medico;
+                    medicoSelect.appendChild(option);
+                });
+                medicoSelect.disabled = false;
+            })
+            .catch(function(error) {
+                console.error('Erro ao carregar médicos:', error);
+                alert('Erro ao carregar a lista de médicos. Por favor, tente novamente.');
+                medicoSelect.innerHTML = '<option value="">Erro ao carregar médicos</option>';
             });
-            medicoSelect.disabled = false;
-
-            // Atualizar checkboxes da equipe
-            equipeContainer.innerHTML = '';
-            equipeData.equipe.forEach(membro => {
-                const checkboxDiv = document.createElement('div');
-                checkboxDiv.className = 'checkbox-item';
-
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.name = 'equipe';
-                checkbox.value = membro;
-                checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
-
-                const label = document.createElement('label');
-                label.htmlFor = checkbox.id;
-                label.textContent = membro;
-
-                checkboxDiv.appendChild(checkbox);
-                checkboxDiv.appendChild(label);
-                equipeContainer.appendChild(checkboxDiv);
+            
+        // Buscar dados da equipe
+        fetch('/get_equipe/' + encodeURIComponent(unidade))
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                // Atualizar checkboxes da equipe
+                equipeContainer.innerHTML = '';
+                data.equipe.forEach(function(membro) {
+                    const checkboxDiv = document.createElement('div');
+                    checkboxDiv.className = 'checkbox-item';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'equipe';
+                    checkbox.value = membro;
+                    checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = checkbox.id;
+                    label.textContent = membro;
+                    
+                    checkboxDiv.appendChild(checkbox);
+                    checkboxDiv.appendChild(label);
+                    equipeContainer.appendChild(checkboxDiv);
+                });
+            })
+            .catch(function(error) {
+                console.error('Erro ao carregar equipe:', error);
+                alert('Erro ao carregar a lista de equipe. Por favor, tente novamente.');
+                equipeContainer.innerHTML = '<p class="error-message">Erro ao carregar equipe</p>';
             });
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            showError('Erro ao carregar médicos e equipe');
-            resetDependentFields();
-        });
-    }
-
-    function resetDependentFields() {
-        const medicoSelect = document.getElementById('medico');
-        const equipeContainer = document.getElementById('equipe_container');
-
-        medicoSelect.innerHTML = '<option value="">Selecione a unidade primeiro...</option>';
-        medicoSelect.disabled = true;
-        equipeContainer.innerHTML = '<p class="select-message">Selecione a unidade primeiro...</p>';
-    }
-    
-    // Função não-assíncrona para chamar a função assíncrona updateDependentFields
-    // Define a function to safely call the async updateDependentFields function
-    function callUpdateDependentFields(unidade) {
-        try {
-            // Call the async function and handle any rejections
-            updateDependentFields(unidade).catch(error => {
-                console.error('Erro ao atualizar campos dependentes:', error);
-                showError('Ocorreu um erro ao atualizar os campos dependentes');
-            });
-        } catch (error) {
-            console.error('Erro ao chamar updateDependentFields:', error);
-            showError('Ocorreu um erro ao atualizar os campos');
-        }
     }
 
     // Initialize when document loads
     document.addEventListener('DOMContentLoaded', function() {
         const unidadeSelect = document.getElementById('unidade');
         if (unidadeSelect) {
-            // Atualizar campos quando a unidade mudar
-            unidadeSelect.addEventListener('change', function() {
-                callUpdateDependentFields(this.value);
-            });
-            
             // Se já houver uma unidade selecionada, atualizar os campos
             if (unidadeSelect.value) {
-                callUpdateDependentFields(unidadeSelect.value);
+                atualizarCamposUnidade(unidadeSelect.value);
             }
         }
     });
