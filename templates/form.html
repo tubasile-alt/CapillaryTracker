@@ -794,12 +794,17 @@
                 }
             };
 
-            submitWithRetry().catch(error => {
+            await submitWithRetry().catch(error => {
                 console.error('Erro final:', error);
                 alert('Erro ao salvar dados. Por favor, tente novamente.');
                 submitButton.disabled = false;
                 submitButton.textContent = 'Salvar Dados';
             });
+
+            const currentPage = window.location.pathname;
+            if (currentPage === '/novo_cadastro') {
+                window.location.href = '/';
+            }
         } catch (error) {
             console.error('Erro ao processar formulário:', error);
             alert('Erro ao processar formulário. Por favor, tente novamente.');
