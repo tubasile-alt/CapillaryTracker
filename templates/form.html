@@ -17,13 +17,55 @@
                 {% for field in form.fields[:7] %}
                     <div class="form-group">
                         <label for="{{ field.name }}">
+
+<style>
+.error-container {
+    margin-bottom: 20px;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.loading-message {
+    color: #666;
+    font-style: italic;
+}
+
+.select-message {
+    color: #666;
+    font-style: italic;
+}
+
+.error-message {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.checkbox-item {
+    margin: 5px 0;
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin-right: 8px;
+}
+</style>
+
                             {{ field.label }}
                             {% if field.required %}*{% endif %}
                         </label>
 
                         {% if field.type == 'select' %}
                             <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}
-                                    {% if field.name == 'unidade' %}onchange="updateMedicos(this.value); updateEquipe(this.value)"{% endif %}>
+                                    {% if field.name == 'unidade' %}onchange="handleUnitChange(this.value)"{% endif %}>
                                 <option value="">Selecione...</option>
                                 {% for option in field.options %}
                                     <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
@@ -814,91 +856,143 @@
     });
 
     // Update medicos based on selected unidade
-    function updateMedicos(unidade) {
-        if (!unidade) return;
+    // Show error message in a designated area
+    function showError(message) {
+        const errorDiv = document.getElementById('error-messages') || (() => {
+            const div = document.createElement('div');
+            div.id = 'error-messages';
+            div.className = 'error-container';
+            document.querySelector('.form-container').prepend(div);
+            return div;
+        })();
+        
+        errorDiv.innerHTML = `<div class="alert alert-danger">${message}</div>`;
+        setTimeout(() => errorDiv.innerHTML = '', 5000); // Clear after 5 seconds
+    }
 
-        // Clear and disable médico select while loading
-        var medicoSelect = document.getElementById('medico');
+    // Update both médicos and equipe when unit changes
+    async function handleUnitChange(unidade) {
+        if (!unidade) {
+            resetDependentFields();
+            return;
+        }
+
+        const medicoSelect = document.getElementById('medico');
+        const equipeContainer = document.getElementById('equipe_container');
+        
+        // Disable fields and show loading state
+        setLoadingState(true);
+
+        try {
+            // Fetch both médicos and equipe in parallel
+            const [medicosResponse, equipeResponse] = await Promise.all([
+                fetch('/get_medicos/' + encodeURIComponent(unidade)),
+                fetch('/get_equipe/' + encodeURIComponent(unidade))
+            ]);
+
+            if (!medicosResponse.ok || !equipeResponse.ok) {
+                throw new Error('Erro ao carregar dados');
+            }
+
+            const medicosData = await medicosResponse.json();
+            const equipeData = await equipeResponse.json();
+
+            // Update médicos
+            updateMedicosSelect(medicosData.medicos);
+
+            // Update equipe
+            updateEquipeCheckboxes(equipeData.equipe);
+
+        } catch (error) {
+            console.error('Erro:', error);
+            showError('Erro ao carregar médicos e equipe. Por favor, tente novamente.');
+            resetDependentFields();
+        } finally {
+            setLoadingState(false);
+        }
+    }
+
+    function setLoadingState(isLoading) {
+        const medicoSelect = document.getElementById('medico');
+        const equipeContainer = document.getElementById('equipe_container');
+        const unidadeSelect = document.getElementById('unidade');
+
+        // Disable fields during loading
+        [medicoSelect, unidadeSelect].forEach(el => {
+            if (el) el.disabled = isLoading;
+        });
+
+        if (isLoading) {
+            medicoSelect.innerHTML = '<option value="">Carregando médicos...</option>';
+            equipeContainer.innerHTML = '<p class="loading-message">Carregando equipe...</p>';
+        }
+    }
+
+    function resetDependentFields() {
+        const medicoSelect = document.getElementById('medico');
+        const equipeContainer = document.getElementById('equipe_container');
+
+        medicoSelect.innerHTML = '<option value="">Selecione a unidade primeiro...</option>';
         medicoSelect.disabled = true;
-        medicoSelect.innerHTML = '<option value="">Carregando médicos...</option>';
-
-        fetch('/get_medicos/' + encodeURIComponent(unidade))
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erro na resposta do servidor');
-                }
-                return response.json();
-            })
-            .then(data => {
-                medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
-                if (data.medicos && Array.isArray(data.medicos)) {
-                    data.medicos.forEach(medico => {
-                        var option = document.createElement('option');
-                        option.value = medico;
-                        option.textContent = medico;
-                        medicoSelect.appendChild(option);
-                    });
-                    medicoSelect.disabled = false;
-                } else {
-                    medicoSelect.innerHTML = '<option value="">Nenhum médico disponível</option>';
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao carregar médicos:', error);
-                medicoSelect.innerHTML = '<option value="">Erro ao carregar médicos</option>';
-                medicoSelect.disabled = true;
-            });
-
-        // Also update equipe when unit changes
-        updateEquipe(unidade);
+        equipeContainer.innerHTML = '<p class="select-message">Selecione a unidade primeiro...</p>';
     }
 
-    // Update equipe based on selected unidade
-    function updateEquipe(unidade) {
-        if (!unidade) return;
-
-        var equipeContainer = document.getElementById('equipe_container');
-        equipeContainer.innerHTML = '<p>Carregando equipe...</p>';
-
-        fetch('/get_equipe/' + encodeURIComponent(unidade))
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erro na resposta do servidor');
-                }
-                return response.json();
-            })
-            .then(data => {
-                equipeContainer.innerHTML = '';
-
-                if (!data.equipe || data.equipe.length === 0) {
-                    equipeContainer.innerHTML = '<p class="select-message">Nenhuma equipe disponível para esta unidade</p>';
-                    return;
-                }
-
-                data.equipe.forEach(membro => {
-                    var checkboxDiv = document.createElement('div');
-                    checkboxDiv.className = 'checkbox-item';
-
-                    var checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.name = 'equipe';
-                    checkbox.value = membro;
-                    checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
-
-                    var label = document.createElement('label');
-                    label.htmlFor = checkbox.id;
-                    label.textContent = membro;
-
-                    checkboxDiv.appendChild(checkbox);
-                    checkboxDiv.appendChild(label);
-                    equipeContainer.appendChild(checkboxDiv);
-                });
-            })
-            .catch(error => {
-                console.error('Erro ao carregar equipe:', error);
-                equipeContainer.innerHTML = '<p class="error-message">Erro ao carregar equipe</p>';
+    function updateMedicosSelect(medicos) {
+        const medicoSelect = document.getElementById('medico');
+        medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
+        
+        if (Array.isArray(medicos) && medicos.length > 0) {
+            medicos.forEach(medico => {
+                const option = document.createElement('option');
+                option.value = medico;
+                option.textContent = medico;
+                medicoSelect.appendChild(option);
             });
+            medicoSelect.disabled = false;
+        } else {
+            medicoSelect.innerHTML = '<option value="">Nenhum médico disponível</option>';
+            medicoSelect.disabled = true;
+        }
     }
+
+    function updateEquipeCheckboxes(equipe) {
+        const equipeContainer = document.getElementById('equipe_container');
+        equipeContainer.innerHTML = '';
+
+        if (!Array.isArray(equipe) || equipe.length === 0) {
+            equipeContainer.innerHTML = '<p class="select-message">Nenhuma equipe disponível para esta unidade</p>';
+            return;
+        }
+
+        equipe.forEach(membro => {
+            const checkboxDiv = document.createElement('div');
+            checkboxDiv.className = 'checkbox-item';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = 'equipe';
+            checkbox.value = membro;
+            checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
+
+            const label = document.createElement('label');
+            label.htmlFor = checkbox.id;
+            label.textContent = membro;
+
+            checkboxDiv.appendChild(checkbox);
+            checkboxDiv.appendChild(label);
+            equipeContainer.appendChild(checkboxDiv);
+        });
+    }
+
+    // Update event listener for unidade select
+    document.addEventListener('DOMContentLoaded', function() {
+        const unidadeSelect = document.getElementById('unidade');
+        if (unidadeSelect) {
+            unidadeSelect.addEventListener('change', function() {
+                handleUnitChange(this.value);
+            });
+        }
+    });
 
 
     function setupExtractionCalculations() {
