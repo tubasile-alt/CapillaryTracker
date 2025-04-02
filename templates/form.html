@@ -1043,67 +1043,89 @@
     }
 
     // Initialize event listeners
+    async function updateDependentFields(unidade) {
+        if (!unidade) {
+            resetDependentFields();
+            return;
+        }
+
+        try {
+            // Mostrar estado de carregamento
+            const medicoSelect = document.getElementById('medico');
+            const equipeContainer = document.getElementById('equipe_container');
+            
+            medicoSelect.innerHTML = '<option value="">Carregando médicos...</option>';
+            medicoSelect.disabled = true;
+            equipeContainer.innerHTML = '<p class="loading-message">Carregando equipe...</p>';
+
+            // Buscar médicos e equipe em paralelo
+            const [medicosResponse, equipeResponse] = await Promise.all([
+                fetch('/get_medicos/' + encodeURIComponent(unidade)),
+                fetch('/get_equipe/' + encodeURIComponent(unidade))
+            ]);
+
+            const medicosData = await medicosResponse.json();
+            const equipeData = await equipeResponse.json();
+
+            // Atualizar select de médicos
+            medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
+            medicosData.medicos.forEach(medico => {
+                const option = document.createElement('option');
+                option.value = medico;
+                option.textContent = medico;
+                medicoSelect.appendChild(option);
+            });
+            medicoSelect.disabled = false;
+
+            // Atualizar checkboxes da equipe
+            equipeContainer.innerHTML = '';
+            equipeData.equipe.forEach(membro => {
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'checkbox-item';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'equipe';
+                checkbox.value = membro;
+                checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
+
+                const label = document.createElement('label');
+                label.htmlFor = checkbox.id;
+                label.textContent = membro;
+
+                checkboxDiv.appendChild(checkbox);
+                checkboxDiv.appendChild(label);
+                equipeContainer.appendChild(checkboxDiv);
+            });
+
+        } catch (error) {
+            console.error('Erro:', error);
+            showError('Erro ao carregar médicos e equipe');
+            resetDependentFields();
+        }
+    }
+
+    function resetDependentFields() {
+        const medicoSelect = document.getElementById('medico');
+        const equipeContainer = document.getElementById('equipe_container');
+
+        medicoSelect.innerHTML = '<option value="">Selecione a unidade primeiro...</option>';
+        medicoSelect.disabled = true;
+        equipeContainer.innerHTML = '<p class="select-message">Selecione a unidade primeiro...</p>';
+    }
+
+    // Initialize when document loads
     document.addEventListener('DOMContentLoaded', function() {
         const unidadeSelect = document.getElementById('unidade');
         if (unidadeSelect) {
+            // Atualizar campos quando a unidade mudar
             unidadeSelect.addEventListener('change', function() {
-                const selectedUnit = this.value;
-                
-                if (!selectedUnit) {
-                    resetDependentFields();
-                    return;
-                }
-
-                // Fetch médicos
-                fetch('/get_medicos/' + encodeURIComponent(selectedUnit))
-                    .then(response => response.json())
-                    .then(data => {
-                        const medicoSelect = document.getElementById('medico');
-                        medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
-                        data.medicos.forEach(medico => {
-                            const option = document.createElement('option');
-                            option.value = medico;
-                            option.textContent = medico;
-                            medicoSelect.appendChild(option);
-                        });
-                        medicoSelect.disabled = false;
-                    });
-
-                // Fetch equipe
-                fetch('/get_equipe/' + encodeURIComponent(selectedUnit))
-                    .then(response => response.json())
-                    .then(data => {
-                        const equipeContainer = document.getElementById('equipe_container');
-                        equipeContainer.innerHTML = '';
-                        data.equipe.forEach(membro => {
-                            const checkboxDiv = document.createElement('div');
-                            checkboxDiv.className = 'checkbox-item';
-
-                            const checkbox = document.createElement('input');
-                            checkbox.type = 'checkbox';
-                            checkbox.name = 'equipe';
-                            checkbox.value = membro;
-                            checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
-
-                            const label = document.createElement('label');
-                            label.htmlFor = checkbox.id;
-                            label.textContent = membro;
-
-                            checkboxDiv.appendChild(checkbox);
-                            checkboxDiv.appendChild(label);
-                            equipeContainer.appendChild(checkboxDiv);
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Erro:', error);
-                        showError('Erro ao carregar médicos e equipe');
-                        resetDependentFields();
-                    });
+                updateDependentFields(this.value);
             });
             
-            // If unit is already selected, trigger change event
+            // Se já houver uma unidade selecionada, atualizar os campos
             if (unidadeSelect.value) {
-                unidadeSelect.dispatchEvent(new Event('change'));
+                updateDependentFields(unidadeSelect.value);
             }
         }
     });
