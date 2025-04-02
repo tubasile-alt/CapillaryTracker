@@ -23,7 +23,7 @@
 
                         {% if field.type == 'select' %}
                             <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}
-                                    {% if field.name == 'unidade' %}onchange="updateDependentFields(this.value)"{% endif %}>
+                                    {% if field.name == 'unidade' %}onchange="callUpdateDependentFields(this.value)"{% endif %}>
                                 <option value="">Selecione...</option>
                                 {% for option in field.options %}
                                     <option value="{{ option }}" {% if data.get(field.name) == option %}selected{% endif %}>
@@ -1050,6 +1050,14 @@
         medicoSelect.disabled = true;
         equipeContainer.innerHTML = '<p class="select-message">Selecione a unidade primeiro...</p>';
     }
+    
+    // Função não-assíncrona para chamar a função assíncrona updateDependentFields
+    function callUpdateDependentFields(unidade) {
+        updateDependentFields(unidade).catch(error => {
+            console.error('Erro ao atualizar campos dependentes:', error);
+            showError('Ocorreu um erro ao atualizar os campos dependentes');
+        });
+    }
 
     // Initialize when document loads
     document.addEventListener('DOMContentLoaded', function() {
@@ -1057,12 +1065,12 @@
         if (unidadeSelect) {
             // Atualizar campos quando a unidade mudar
             unidadeSelect.addEventListener('change', function() {
-                updateDependentFields(this.value);
+                callUpdateDependentFields(this.value);
             });
             
             // Se já houver uma unidade selecionada, atualizar os campos
             if (unidadeSelect.value) {
-                updateDependentFields(unidadeSelect.value);
+                callUpdateDependentFields(unidadeSelect.value);
             }
         }
     });
