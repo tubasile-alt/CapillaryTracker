@@ -583,404 +583,11 @@
 </style>
 
 <script>
-    // Funções para controlar campos de Body Hair
-    function toggleBodyHairFields() {
-        const bodyHairCheck = document.getElementById('body-hair-check');
-        const bodyHairFields = document.getElementById('body-hair-fields');
-
-        if (bodyHairCheck.checked) {
-            bodyHairFields.style.display = 'block';
-        } else {
-            bodyHairFields.style.display = 'none';
-
-            // Desmarcar todos os checkboxes de fontes
-            document.getElementById('barba-check').checked = false;
-            document.getElementById('peitoral-check').checked = false;
-            document.getElementById('abdome-check').checked = false;
-            document.getElementById('dorso-check').checked = false;
-
-            // Esconder todos os campos de detalhes
-            document.getElementById('barba-fields').style.display = 'none';
-            document.getElementById('peitoral-fields').style.display = 'none';
-            document.getElementById('abdome-fields').style.display = 'none';
-            document.getElementById('dorso-fields').style.display = 'none';
-        }
-    }
-
-    function toggleSourceFields(source) {
-        const sourceCheck = document.getElementById(`${source}-check`);
-        const sourceFields = document.getElementById(`${source}-fields`);
-
-        if (sourceCheck.checked) {
-            sourceFields.style.display = 'block';
-        } else {
-            sourceFields.style.display = 'none';
-
-            // Limpar os campos
-            document.getElementById(`${source}-furos`).value = '';
-            document.getElementById(`${source}-fios`).value = '';
-            document.getElementById(`${source}-comentarios`).value = '';
-        }
-    }
-
-    // Set today's date as default
-    window.addEventListener('load', function() {
-        var dateInput = document.getElementById('data');
-        if (dateInput) {
-            var today = new Date();
-            var dd = String(today.getDate()).padStart(2, '0');
-            var mm = String(today.getMonth() + 1).padStart(2, '0');
-            var yyyy = today.getFullYear();
-            dateInput.value = yyyy + '-' + mm + '-' + dd;
-        }
-
-        // If unidade is already selected, update medicos and equipe
-        var unidadeSelect = document.getElementById('unidade');
-        if (unidadeSelect && unidadeSelect.value) {
-            updateMedicos(unidadeSelect.value);
-            updateEquipe(unidadeSelect.value);
-        }
-
-        // Setup calculation of extraction data
-        setupExtractionCalculations();
-    });
-
-    // Format date before form submission and validate required fields
-    document.getElementById('cadastroForm').addEventListener('submit', function(e) {
-        try {
-            e.preventDefault(); // Prevent default submission to validate first
-
-            // Disable submit button to prevent multiple submissions
-            const submitButton = this.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.textContent = 'Salvando...';
-
-            // Validate all required fields
-            let isValid = true;
-            let missingFields = [];
-
-            const allRequiredFields = document.querySelectorAll('[required]');
-            allRequiredFields.forEach(field => {
-                if (!field.value) {
-                    isValid = false;
-                    field.classList.add('field-error');
-                    const label = document.querySelector(`label[for="${field.id}"]`);
-                    if (label) {
-                        missingFields.push(label.textContent.replace('*', '').trim());
-                    }
-                } else {
-                    field.classList.remove('field-error');
-                }
-            });
-
-            if (!isValid) {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Salvar Dados';
-                alert(`Por favor, preencha os seguintes campos obrigatórios:\n- ${missingFields.join('\n- ')}`);
-                return;
-            }
-
-            // Format date
-            var dateInput = document.getElementById('data');
-            if (dateInput) {
-                var date = new Date(dateInput.value);
-                var dd = String(date.getDate()).padStart(2, '0');
-                var mm = String(date.getMonth() + 1).padStart(2, '0');
-                var yyyy = date.getFullYear();
-
-                // Create a hidden input if it doesn't exist
-                let dataFormatted = document.getElementById('data_formatted');
-                if (!dataFormatted) {
-                    dataFormatted = document.createElement('input');
-                    dataFormatted.type = 'hidden';
-                    dataFormatted.id = 'data_formatted';
-                    dataFormatted.name = 'data_formatted';
-                    document.getElementById('cadastroForm').appendChild(dataFormatted);
-                }
-                dataFormatted.value = dd + '/' + mm + '/' + yyyy;
-            }
-
-            // Get selected equipe values from checkboxes
-            var checkboxes = document.querySelectorAll('input[name="equipe"]:checked');
-            var selectedEquipe = [];
-
-            if (checkboxes.length > 0) {
-                selectedEquipe = Array.from(checkboxes).map(checkbox => checkbox.value);
-            }
-
-            // Adicionar técnicas extras à equipe se estiverem preenchidas
-            var extraPerson1 = document.getElementById('extra_person_1').value;
-            var extraPerson2 = document.getElementById('extra_person_2').value;
-
-            if (extraPerson1) {
-                selectedEquipe.push(extraPerson1 + ' (extra)');
-            }
-
-            if (extraPerson2) {
-                selectedEquipe.push(extraPerson2 + ' (extra)');
-            }
-
-            if (selectedEquipe.length > 0) {
-                // Create a hidden input to store the comma-separated values
-                var hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = 'equipe_values';
-                hiddenInput.value = selectedEquipe.join(', ');
-                document.getElementById('cadastroForm').appendChild(hiddenInput);
-            }
-
-            // Adicionar dados de bloqueio
-            const bloqueioSelect = document.getElementById('bloqueio');
-            const bloqueioValue = bloqueioSelect.value;
-
-            let bloqueioData = {
-                tipo: bloqueioValue,
-                seringas: '',
-                comentarios: ''
-            };
-
-            if (bloqueioValue !== 'Não') {
-                bloqueioData.seringas = document.getElementById('bloqueio_seringas').value;
-                bloqueioData.comentarios = document.getElementById('bloqueio_comentarios').value;
-            }
-
-            const bloqueioInput = document.createElement('input');
-            bloqueioInput.type = 'hidden';
-            bloqueioInput.name = 'bloqueio_data';
-            bloqueioInput.value = JSON.stringify(bloqueioData);
-            document.getElementById('cadastroForm').appendChild(bloqueioInput);
-
-            // Prepara os dados de Body Hair, se aplicável
-            if (document.getElementById('body-hair-check').checked) {
-                const bodyHairSources = ['barba', 'peitoral', 'abdome', 'dorso'];
-                let bodyHairData = {};
-
-                bodyHairSources.forEach(source => {
-                    if (document.getElementById(`${source}-check`).checked) {
-                        const furos = document.getElementById(`${source}-furos`).value;
-                        const fios = document.getElementById(`${source}-fios`).value;
-                        const comentarios = document.getElementById(`${source}-comentarios`).value;
-
-                        bodyHairData[source] = {
-                            furos: furos,
-                            fios: fios,
-                            comentarios: comentarios
-                        };
-                    }
-                });
-
-                if (Object.keys(bodyHairData).length > 0) {
-                    const bodyHairInput = document.createElement('input');
-                    bodyHairInput.type = 'hidden';
-                    bodyHairInput.name = 'body_hair_data';
-                    bodyHairInput.value = JSON.stringify(bodyHairData);
-                    document.getElementById('cadastroForm').appendChild(bodyHairInput);
-                }
-            }
-
-            // Preparar os dados do formulário
-            const form = this;
-            const formData = new FormData(form);
-
-            // Enviar o formulário via fetch com retry
-            const submitWithRetry = async (retries = 3) => {
-                for (let i = 0; i < retries; i++) {
-                    try {
-                        const response = await fetch(form.action, {
-                            method: 'POST',
-                            body: formData
-                        });
-
-                        if (response.ok) {
-                            const data = await response.json();
-                            if (data.success) {
-                                alert('Dados salvos com sucesso!');
-                                window.location.href = '/';
-                                return;
-                            } else if (data.error === 'duplicate_patient') {
-                                alert('Paciente já cadastrado nesta data. Por favor, verifique os dados.');
-                                submitButton.disabled = false;
-                                submitButton.textContent = 'Salvar Dados';
-                                return;
-                            } else {
-                                alert('Erro ao salvar dados: ' + data.message);
-                                submitButton.disabled = false;
-                                submitButton.textContent = 'Salvar Dados';
-                                return;
-                            }
-                        } else {
-                            console.error('Tentativa ' + (i + 1) + ' falhou: Código de status ' + response.status);
-                            if (i === retries - 1) {
-                                alert('Erro ao salvar dados após várias tentativas. Por favor, tente novamente.');
-                                submitButton.disabled = false;
-                                submitButton.textContent = 'Salvar Dados';
-                                throw new Error('Falha na solicitação após várias tentativas.');
-                            }
-                            await new Promise(resolve => setTimeout(resolve, 1000));
-                        }
-                    } catch (error) {
-                        console.error('Tentativa ' + (i + 1) + ' falhou:', error);
-                        if (i === retries - 1) {
-                            alert('Erro ao salvar dados após várias tentativas. Por favor, tente novamente.');
-                            submitButton.disabled = false;
-                            submitButton.textContent = 'Salvar Dados';
-                            throw error;
-                        }
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                    }
-                }
-            };
-
-            await submitWithRetry().catch(error => {
-                console.error('Erro final:', error);
-                alert('Erro ao salvar dados. Por favor, tente novamente.');
-                submitButton.disabled = false;
-                submitButton.textContent = 'Salvar Dados';
-            });
-
-            const currentPage = window.location.pathname;
-            if (currentPage === '/novo_cadastro') {
-                window.location.href = '/';
-            }
-        } catch (error) {
-            console.error('Erro ao processar formulário:', error);
-            alert('Erro ao processar formulário. Por favor, tente novamente.');
-            submitButton.disabled = false;
-            submitButton.textContent = 'Salvar Dados';
-        }
-    });
-
-    // Update medicos based on selected unidade
-    // Show error message in a designated area
-    function showError(message) {
-        const errorDiv = document.getElementById('error-messages') || (() => {
-            const div = document.createElement('div');
-            div.id = 'error-messages';
-            div.className = 'error-container';
-            document.querySelector('.form-container').prepend(div);
-            return div;
-        })();
-        
-        errorDiv.innerHTML = `<div class="alert alert-danger">${message}</div>`;
-        setTimeout(() => errorDiv.innerHTML = '', 5000); // Clear after 5 seconds
-    }
-
-    // Update both médicos and equipe when unit changes
-    async function handleUnitChange(unidade) {
-        if (!unidade) {
-            resetDependentFields();
-            return;
-        }
-
-        const medicoSelect = document.getElementById('medico');
-        const equipeContainer = document.getElementById('equipe_container');
-        
-        // Disable fields and show loading state
-        setLoadingState(true);
-
-        try {
-            // Fetch both médicos and equipe in parallel
-            const [medicosResponse, equipeResponse] = await Promise.all([
-                fetch('/get_medicos/' + encodeURIComponent(unidade)),
-                fetch('/get_equipe/' + encodeURIComponent(unidade))
-            ]);
-
-            if (!medicosResponse.ok || !equipeResponse.ok) {
-                throw new Error('Erro ao carregar dados');
-            }
-
-            const medicosData = await medicosResponse.json();
-            const equipeData = await equipeResponse.json();
-
-            // Update médicos
-            updateMedicosSelect(medicosData.medicos);
-
-            // Update equipe
-            updateEquipeCheckboxes(equipeData.equipe);
-
-        } catch (error) {
-            console.error('Erro:', error);
-            showError('Erro ao carregar médicos e equipe. Por favor, tente novamente.');
-            resetDependentFields();
-        } finally {
-            setLoadingState(false);
-        }
-    }
-
-    function setLoadingState(isLoading) {
-        const medicoSelect = document.getElementById('medico');
-        const equipeContainer = document.getElementById('equipe_container');
-        const unidadeSelect = document.getElementById('unidade');
-
-        // Disable fields during loading
-        [medicoSelect, unidadeSelect].forEach(el => {
-            if (el) el.disabled = isLoading;
-        });
-
-        if (isLoading) {
-            medicoSelect.innerHTML = '<option value="">Carregando médicos...</option>';
-            equipeContainer.innerHTML = '<p class="loading-message">Carregando equipe...</p>';
-        }
-    }
-
-    function resetDependentFields() {
-        const medicoSelect = document.getElementById('medico');
-        const equipeContainer = document.getElementById('equipe_container');
-
-        medicoSelect.innerHTML = '<option value="">Selecione a unidade primeiro...</option>';
-        medicoSelect.disabled = true;
-        equipeContainer.innerHTML = '<p class="select-message">Selecione a unidade primeiro...</p>';
-    }
-
-    function updateMedicosSelect(medicos) {
-        const medicoSelect = document.getElementById('medico');
-        medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
-        
-        if (Array.isArray(medicos) && medicos.length > 0) {
-            medicos.forEach(medico => {
-                const option = document.createElement('option');
-                option.value = medico;
-                option.textContent = medico;
-                medicoSelect.appendChild(option);
-            });
-            medicoSelect.disabled = false;
-        } else {
-            medicoSelect.innerHTML = '<option value="">Nenhum médico disponível</option>';
-            medicoSelect.disabled = true;
-        }
-    }
-
-    function updateEquipeCheckboxes(equipe) {
-        const equipeContainer = document.getElementById('equipe_container');
-        equipeContainer.innerHTML = '';
-
-        if (!Array.isArray(equipe) || equipe.length === 0) {
-            equipeContainer.innerHTML = '<p class="select-message">Nenhuma equipe disponível para esta unidade</p>';
-            return;
-        }
-
-        equipe.forEach(membro => {
-            const checkboxDiv = document.createElement('div');
-            checkboxDiv.className = 'checkbox-item';
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.name = 'equipe';
-            checkbox.value = membro;
-            checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
-
-            const label = document.createElement('label');
-            label.htmlFor = checkbox.id;
-            label.textContent = membro;
-
-            checkboxDiv.appendChild(checkbox);
-            checkboxDiv.appendChild(label);
-            equipeContainer.appendChild(checkboxDiv);
-        });
-    }
-
-    // Initialize event listeners
+</script>
+    // Função para atualizar campos dependentes (médico e equipe) quando a unidade muda
     function atualizarCamposUnidade(unidade) {
+        console.log("Função atualizarCamposUnidade foi chamada com unidade:", unidade);
+        
         // Referências aos elementos
         const medicoSelect = document.getElementById('medico');
         const equipeContainer = document.getElementById('equipe_container');
@@ -1000,13 +607,12 @@
         
         // Buscar dados dos médicos
         fetch('/get_medicos/' + encodeURIComponent(unidade))
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(data) {
+            .then(response => response.json())
+            .then(data => {
+                console.log("Médicos carregados:", data);
                 // Atualizar select de médicos
                 medicoSelect.innerHTML = '<option value="">Selecione o médico...</option>';
-                data.medicos.forEach(function(medico) {
+                data.medicos.forEach(medico => {
                     const option = document.createElement('option');
                     option.value = medico;
                     option.textContent = medico;
@@ -1014,21 +620,19 @@
                 });
                 medicoSelect.disabled = false;
             })
-            .catch(function(error) {
+            .catch(error => {
                 console.error('Erro ao carregar médicos:', error);
-                alert('Erro ao carregar a lista de médicos. Por favor, tente novamente.');
                 medicoSelect.innerHTML = '<option value="">Erro ao carregar médicos</option>';
             });
             
         // Buscar dados da equipe
         fetch('/get_equipe/' + encodeURIComponent(unidade))
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(data) {
+            .then(response => response.json())
+            .then(data => {
+                console.log("Equipe carregada:", data);
                 // Atualizar checkboxes da equipe
                 equipeContainer.innerHTML = '';
-                data.equipe.forEach(function(membro) {
+                data.equipe.forEach(membro => {
                     const checkboxDiv = document.createElement('div');
                     checkboxDiv.className = 'checkbox-item';
                     
@@ -1047,24 +651,54 @@
                     equipeContainer.appendChild(checkboxDiv);
                 });
             })
-            .catch(function(error) {
+            .catch(error => {
                 console.error('Erro ao carregar equipe:', error);
-                alert('Erro ao carregar a lista de equipe. Por favor, tente novamente.');
                 equipeContainer.innerHTML = '<p class="error-message">Erro ao carregar equipe</p>';
             });
     }
 
-    // Initialize when document loads
-    document.addEventListener('DOMContentLoaded', function() {
-        const unidadeSelect = document.getElementById('unidade');
-        if (unidadeSelect) {
-            // Se já houver uma unidade selecionada, atualizar os campos
-            if (unidadeSelect.value) {
-                atualizarCamposUnidade(unidadeSelect.value);
-            }
-        }
-    });
+    // Funções para controlar campos de Body Hair
+    function toggleBodyHairFields() {
+        const bodyHairCheck = document.getElementById('body-hair-check');
+        const bodyHairFields = document.getElementById('body-hair-fields');
 
+        if (bodyHairCheck.checked) {
+            bodyHairFields.style.display = 'block';
+        } else {
+            bodyHairFields.style.display = 'none';
+            
+            // Reset all source field checkboxes
+            document.querySelectorAll('.body-hair-option input[type="checkbox"]').forEach(checkbox => {
+                if (checkbox.id !== 'body-hair-check') {
+                    checkbox.checked = false;
+                    const sourceId = checkbox.id.split('-')[0];
+                    toggleSourceFields(sourceId, false);
+                }
+            });
+        }
+    }
+
+    function toggleSourceFields(sourceId, show) {
+        const fieldsContainer = document.getElementById(`${sourceId}-fields`);
+        const checkbox = document.getElementById(`${sourceId}-check`);
+        
+        // If show parameter is provided, use it; otherwise use checkbox status
+        const shouldShow = show !== undefined ? show : checkbox.checked;
+        
+        if (shouldShow) {
+            fieldsContainer.style.display = 'block';
+        } else {
+            fieldsContainer.style.display = 'none';
+            
+            // Clear input values when hiding
+            fieldsContainer.querySelectorAll('input[type="number"]').forEach(input => {
+                input.value = '';
+            });
+            fieldsContainer.querySelectorAll('textarea').forEach(textarea => {
+                textarea.value = '';
+            });
+        }
+    }
 
     function setupExtractionCalculations() {
         const quadrantes = ['q1', 'q2', 'q3', 'q4'];
@@ -1173,5 +807,40 @@
             comentariosContainer.style.display = 'block';
         }
     }
-</script>
-{% endblock %}
+
+    // Inicializar quando a página carregar
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOMContentLoaded disparado");
+        const unidadeSelect = document.getElementById('unidade');
+        if (unidadeSelect) {
+            console.log("Select de unidade encontrado:", unidadeSelect);
+            
+            // Adicionar listener para mudanças futuras
+            unidadeSelect.addEventListener('change', function() {
+                console.log("Unidade alterada para:", this.value);
+                atualizarCamposUnidade(this.value);
+            });
+            
+            // Se já houver uma unidade selecionada, atualizar os campos
+            if (unidadeSelect.value) {
+                console.log("Unidade já selecionada:", unidadeSelect.value);
+                atualizarCamposUnidade(unidadeSelect.value);
+            }
+        } else {
+            console.log("Select de unidade não encontrado");
+        }
+        
+        // Inicializar outros componentes
+        setupExtractionCalculations();
+        
+        // Verificar status inicial de body hair e bloqueio
+        const bodyHairCheck = document.getElementById('body-hair-check');
+        if (bodyHairCheck && bodyHairCheck.checked) {
+            toggleBodyHairFields();
+        }
+        
+        const bloqueioSelect = document.getElementById('bloqueio');
+        if (bloqueioSelect) {
+            toggleBloqueioSeringas(bloqueioSelect.value);
+        }
+    });{% endblock %}
