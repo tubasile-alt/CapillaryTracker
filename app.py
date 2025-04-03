@@ -367,8 +367,8 @@ def save_to_excel(data):
         else:
             df_combined = pd.DataFrame([data])
 
-        # Save with backup
-        temp_file = f"{filename}.temp"
+        # Save with backup usando uma extensão válida para Excel
+        temp_file = f"{filename}.backup.xlsx"
         df_combined.to_excel(temp_file, index=False, engine='openpyxl')
 
         # If save was successful, replace original file
