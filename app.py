@@ -198,7 +198,7 @@ def dashboard():
                     'datasets': [],
                     'has_follicle_data': False,
                     'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-                    'version': '2.3'
+                    'version': '2.4'
                 }, error="Nenhum registro encontrado no banco de dados.")
 
             # Buscar dados detalhados
@@ -232,7 +232,7 @@ def dashboard():
                 'has_follicle_data': True,
                 'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
                 'update_time': datetime.now().strftime('%d/%m/%Y %H:%M'),
-                'version': '2.3'
+                'version': '2.4'
             }
 
             if not df.empty:
@@ -284,7 +284,7 @@ def dashboard():
             'datasets': [{'label': 'Cirurgias', 'data': []}],
             'has_follicle_data': False,
             'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
-            'version': '2.3'
+            'version': '2.4'
         }, error=f"Erro ao carregar dashboard: {str(e)}")
 
 def backup_excel_file(source_file):
@@ -819,7 +819,7 @@ def process_dashboard_data(df):
         'has_follicle_data': False,
         'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
         'update_time': datetime.now().strftime('%d/%m/%Y %H:%M'),
-        'version': '2.3'  # Updated version number
+        'version': '2.4'  # Updated version number
     }
 
     # Return empty structure if DataFrame is empty
