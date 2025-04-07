@@ -32,6 +32,12 @@ class HairSurgeryForm:
         # Create and store all frames
         self.frames = {}
         self.current_frame = None
+        
+        # Flag para controlar se uma operação de salvamento está em andamento
+        self.is_saving = False
+        # Referência para o botão de salvar
+        self.save_button = None
+        
         self.create_frames()
 
         # Show first frame
@@ -164,8 +170,9 @@ class HairSurgeryForm:
                           command=lambda name=frame_name: self.previous_frame(name)).pack(side=tk.LEFT, padx=5)
 
             if frame_name == "Finalização":
-                ttk.Button(button_frame, text="Salvar Dados", 
-                          command=self.save_data).pack(side=tk.LEFT, padx=5)
+                self.save_button = ttk.Button(button_frame, text="Salvar Dados", 
+                                             command=self.save_data)
+                self.save_button.pack(side=tk.LEFT, padx=5)
             else:
                 ttk.Button(button_frame, text="Próximo", 
                           command=lambda name=frame_name: self.next_frame(name)).pack(side=tk.LEFT, padx=5)
@@ -345,33 +352,84 @@ class HairSurgeryForm:
             self.show_frame(frame_order[prev_idx])
 
     def save_data(self):
+        # Se já estiver salvando, não faz nada para evitar múltiplos salvamentos
+        if self.is_saving:
+            return
+            
         if not self.validate_current_frame():
             return
+            
+        try:
+            # Marcar como salvando e desabilitar o botão
+            self.is_saving = True
+            if self.save_button:
+                self.save_button.config(state="disabled", text="Salvando...")
+                # Atualizar a interface para mostrar o botão desabilitado
+                self.root.update()
+            
+            # Prepare data for saving
+            data = {}
+            for field, widget in self.entries.items():
+                try:
+                    if isinstance(widget, tk.Listbox):
+                        data[field] = ', '.join([widget.get(idx) for idx in widget.curselection()])
+                    elif isinstance(widget, tk.Text):
+                        data[field] = widget.get("1.0", tk.END).strip()
+                    else:
+                        data[field] = widget.get()
+                except Exception as e:
+                    messagebox.showerror("Erro ao ler campo", f"Erro ao ler o campo {field}: {str(e)}")
+                    self.is_saving = False
+                    if self.save_button:
+                        self.save_button.config(state="normal", text="Salvar Dados")
+                    return
 
-        # Prepare data for saving
-        data = {}
-        for field, widget in self.entries.items():
-            if isinstance(widget, tk.Listbox):
-                data[field] = ', '.join([widget.get(idx) for idx in widget.curselection()])
-            elif isinstance(widget, tk.Text):
-                data[field] = widget.get("1.0", tk.END).strip()
-            else:
-                data[field] = widget.get()
+            # Create DataFrame
+            df_new = pd.DataFrame([data])
 
-        # Create DataFrame
-        df_new = pd.DataFrame([data])
+            # Check if file exists and append or create new
+            filename = "cirurgias.xlsx"
+            try:
+                if os.path.exists(filename):
+                    df_existing = pd.read_excel(filename)
+                    df_combined = pd.concat([df_existing, df_new], ignore_index=True)
+                    # Salvar para um arquivo temporário primeiro
+                    temp_filename = f"{filename}.temp"
+                    df_combined.to_excel(temp_filename, index=False)
+                    # Se o salvamento for bem-sucedido, renomear para o arquivo final
+                    if os.path.exists(temp_filename):
+                        if os.path.exists(filename):
+                            os.remove(filename)
+                        os.rename(temp_filename, filename)
+                else:
+                    df_new.to_excel(filename, index=False)
+            except Exception as e:
+                messagebox.showerror("Erro ao salvar", f"Erro ao salvar no arquivo Excel: {str(e)}")
+                self.is_saving = False
+                if self.save_button:
+                    self.save_button.config(state="normal", text="Salvar Dados")
+                return
 
-        # Check if file exists and append or create new
-        filename = "cirurgias.xlsx"
-        if os.path.exists(filename):
-            df_existing = pd.read_excel(filename)
-            df_combined = pd.concat([df_existing, df_new], ignore_index=True)
-            df_combined.to_excel(filename, index=False)
-        else:
-            df_new.to_excel(filename, index=False)
+            # Salvar dados no servidor, se houver conexão
+            try:
+                # Tentar enviar dados para o servidor
+                url = "http://localhost:5001/novo_cadastro"
+                response = requests.post(url, data=data)
+                if response.status_code != 200:
+                    messagebox.showwarning("Aviso", "Dados salvos localmente, mas não foi possível enviar ao servidor.")
+            except Exception as e:
+                # Erro ao enviar para o servidor, mas já salvou localmente
+                messagebox.showwarning("Aviso", f"Dados salvos localmente, mas ocorreu um erro ao enviar para o servidor: {str(e)}")
 
-        messagebox.showinfo("Sucesso", "Dados salvos com sucesso!")
-        self.root.destroy()
+            messagebox.showinfo("Sucesso", "Dados salvos com sucesso!")
+            self.root.destroy()
+            
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao salvar dados: {str(e)}")
+            # Garantir que o flag de salvamento seja redefinido em caso de erro
+            self.is_saving = False
+            if self.save_button:
+                self.save_button.config(state="normal", text="Salvar Dados")
 
 def main():
     root = tk.Tk()
