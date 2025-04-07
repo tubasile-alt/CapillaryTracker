@@ -294,7 +294,7 @@ class HairSurgeryForm:
         """Verifica se já existe um paciente com o mesmo nome na mesma data"""
         try:
             # Endpoint local
-            url = f"http://localhost:5001/check_duplicate?nome={nome}&data={data}"
+            url = f"http://localhost:5000/check_duplicate?nome={nome}&data={data}"
             response = requests.get(url)
             
             if response.status_code == 200:
@@ -413,7 +413,7 @@ class HairSurgeryForm:
             # Salvar dados no servidor, se houver conexão
             try:
                 # Tentar enviar dados para o servidor
-                url = "http://localhost:5001/novo_cadastro"
+                url = "http://localhost:5000/novo_cadastro"
                 response = requests.post(url, data=data)
                 if response.status_code != 200:
                     messagebox.showwarning("Aviso", "Dados salvos localmente, mas não foi possível enviar ao servidor.")

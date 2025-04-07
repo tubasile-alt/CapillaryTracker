@@ -318,25 +318,36 @@ def save_to_excel(data):
             data = dados.iloc[0].to_dict()
 
             # Convert date string to date object
-            data_date = datetime.strptime(data['data'], '%Y-%m-%d').date()
+            try:
+                # Verificar se o campo data está presente ou usar o campo formatado
+                if 'data' in data:
+                    data_date = datetime.strptime(data['data'], '%Y-%m-%d').date()
+                elif 'Data (DD/MM/AAAA)' in data:
+                    data_date = datetime.strptime(data['Data (DD/MM/AAAA)'], '%d/%m/%Y').date()
+                else:
+                    return jsonify({"status": "error", "message": "Campo de data não encontrado"}), 400
+            except Exception as e:
+                app.logger.error(f"Erro ao converter data: {str(e)} - Dados recebidos: {data}")
+                return jsonify({"status": "error", "message": f"Erro ao converter data: {str(e)}"}), 400
 
             # Create Surgery object with proper type conversion
             # Tratar valores NaN ou None antes de criar o objeto Surgery
+            # Mapear os campos do formulário para os campos do banco de dados
             surgery = Surgery(
                 data=data_date,
-                nome=str(data.get('nome', '') or ''),
-                unidade=str(data.get('unidade', '') or ''),
-                medico=str(data.get('medico', '') or ''),
-                equipe=str(data.get('equipe', '') or ''),
-                hora_cirurgia=str(data.get('hora_cirurgia', '') or ''),
-                tempo_cirurgia=float(data.get('tempo_cirurgia', 0) or 0),
-                total_foliculos=int(data.get('total_foliculos', 0) or 0),
-                frente=int(data.get('frente', 0) or 0),
-                densidade_scketh=float(data.get('densidade_scketh', 0) or 0),
-                coroa=int(data.get('coroa', 0) or 0),
-                scalpe=int(data.get('scalpe', 0) or 0),
-                peninsula_direita=int(data.get('peninsula_direita', 0) or 0),
-                peninsula_esquerda=int(data.get('peninsula_esquerda', 0) or 0)
+                nome=str(data.get('Paciente', data.get('nome', '')) or ''),
+                unidade=str(data.get('Unidade', data.get('unidade', '')) or ''),
+                medico=str(data.get('Médico', data.get('medico', '')) or ''),
+                equipe=str(data.get('Equipe', data.get('equipe', '')) or ''),
+                hora_cirurgia=str(data.get('Hora da Cirurgia (HH:MM)', data.get('hora_cirurgia', '')) or ''),
+                tempo_cirurgia=float(data.get('Tempo de Cirurgia (horas)', data.get('tempo_cirurgia', 0)) or 0),
+                total_foliculos=int(data.get('Total de Folículos', data.get('total_foliculos', 0)) or 0),
+                frente=int(data.get('Frente', data.get('frente', 0)) or 0),
+                densidade_scketh=float(data.get('Densidade Scketh', data.get('densidade_scketh', 0)) or 0),
+                coroa=int(data.get('Coroa', data.get('coroa', 0)) or 0),
+                scalpe=int(data.get('Scalpe', data.get('scalpe', 0)) or 0),
+                peninsula_direita=int(data.get('Península Direita', data.get('peninsula_direita', 0)) or 0),
+                peninsula_esquerda=int(data.get('Península Esquerda', data.get('peninsula_esquerda', 0)) or 0)
             )
 
             logger.info("Surgery object created, committing to database...")
