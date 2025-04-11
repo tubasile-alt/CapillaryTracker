@@ -447,6 +447,11 @@ def ping():
     logger.info("Ping route accessed")
     return "Application is running!"
 
+@app.route('/success')
+def success():
+    logger.info("Accessing success page")
+    return render_template('success.html')
+
 @app.route('/clear_data', methods=['POST'])
 def clear_data():
     """Clear all data from Excel files before deployment"""
@@ -646,7 +651,8 @@ def novo_cadastro():
                 logger.info("API call detected, returning JSON response")
                 return jsonify({"status": "success", "message": "Dados salvos com sucesso"})
             else:
-                return redirect(url_for('index'))
+                logger.info("Redirecting to success page")
+                return redirect(url_for('success'))
         except Exception as e:
             error_msg = f"Error saving data: {str(e)}"
             logger.error(f"{error_msg}\n{traceback.format_exc()}")

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="success-container">
+    <div class="success-box">
+        <h2 class="success-title">✅ Dados salvos com sucesso!</h2>
+        <p class="success-message">Os dados do paciente foram registrados no sistema.</p>
+        
+        <div class="success-actions">
+            <a href="{{ url_for('novo_cadastro') }}" class="btn btn-primary">
+                <span class="btn-icon">➕</span> Cadastrar Novo Paciente
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                <span class="btn-icon">📊</span> Ver Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
