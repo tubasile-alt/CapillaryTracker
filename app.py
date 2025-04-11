@@ -303,32 +303,50 @@ def save_to_excel(data):
     """Save data to Excel and database with improved error handling"""
     try:
         logging.info("Starting data save process...")
+        logger.info(f"Received data: {data}")
         filename = "cirurgias.xlsx"
 
         # Create backup before modifying
         backup_excel_file(filename)
+        logger.info(f"Backup created successfully")
 
         # Save to database first
         try:
-            logger.info(f"Saving to database: {data}")
+            logger.info(f"Preparing data for database insertion")
 
             # Convert to DataFrame and handle NaN values
             dados = pd.DataFrame([data])
             dados = dados.fillna(0)
             data = dados.iloc[0].to_dict()
+            logger.info(f"Data processed with fillna: {data}")
 
             # Convert date string to date object
             try:
                 # Verificar se o campo data está presente ou usar o campo formatado
-                if 'data' in data:
-                    data_date = datetime.strptime(data['data'], '%Y-%m-%d').date()
-                elif 'Data (DD/MM/AAAA)' in data:
+                logger.info(f"Data keys available: {list(data.keys())}")
+                
+                if 'data' in data and data['data']:
+                    logger.info(f"Using 'data' field: {data['data']}")
+                    try:
+                        data_date = datetime.strptime(data['data'], '%Y-%m-%d').date()
+                        logger.info(f"Parsed date (YYYY-MM-DD): {data_date}")
+                    except ValueError:
+                        # Tentativa de parsing no formato DD/MM/YYYY
+                        data_date = datetime.strptime(data['data'], '%d/%m/%Y').date()
+                        logger.info(f"Parsed date (DD/MM/YYYY): {data_date}")
+                elif 'Data (DD/MM/AAAA)' in data and data['Data (DD/MM/AAAA)']:
+                    logger.info(f"Using 'Data (DD/MM/AAAA)' field: {data['Data (DD/MM/AAAA)']}")
                     data_date = datetime.strptime(data['Data (DD/MM/AAAA)'], '%d/%m/%Y').date()
+                    logger.info(f"Parsed date: {data_date}")
                 else:
-                    return jsonify({"status": "error", "message": "Campo de data não encontrado"}), 400
+                    error_msg = "Campo de data não encontrado ou vazio"
+                    logger.error(error_msg)
+                    return False, error_msg
             except Exception as e:
-                app.logger.error(f"Erro ao converter data: {str(e)} - Dados recebidos: {data}")
-                return jsonify({"status": "error", "message": f"Erro ao converter data: {str(e)}"}), 400
+                error_msg = f"Erro ao converter data: {str(e)}"
+                logger.error(f"{error_msg} - Dados recebidos: {data}")
+                logger.error(traceback.format_exc())
+                return False, error_msg
 
             # Create Surgery object with proper type conversion
             # Tratar valores NaN ou None antes de criar o objeto Surgery
@@ -595,24 +613,49 @@ def novo_cadastro():
             # Process form data
             form_data = request.form.to_dict()
             logger.info(f"Received form data: {form_data}")
+            logger.info(f"Request headers: {dict(request.headers)}")
+            
+            # Log de detalhes específicos importantes
+            if 'Paciente' in form_data:
+                logger.info(f"Paciente: {form_data['Paciente']}")
+            if 'Data (DD/MM/AAAA)' in form_data:
+                logger.info(f"Data: {form_data['Data (DD/MM/AAAA)']}")
+            if 'Unidade' in form_data:
+                logger.info(f"Unidade: {form_data['Unidade']}")
 
             # Process multiple checkboxes
             if 'equipe_values' in form_data:
                 form_data['equipe'] = form_data['equipe_values']
                 del form_data['equipe_values']
+                logger.info(f"Processed equipe values: {form_data['equipe']}")
 
             # Save to Excel and database
+            logger.info("Calling save_to_excel function")
             success, message = save_to_excel(form_data)
+            logger.info(f"Save result: success={success}, message={message}")
 
             if success:
                 flash("✅ Dados salvos com sucesso! 🎉", "success")
+                logger.info("Flashed success message")
             else:
                 flash(message, "error")
+                logger.error(f"Flashed error message: {message}")
 
-            return redirect(url_for('index'))
+            # Se for uma chamada da API (não do formulário web)
+            if request.headers.get('Content-Type') == 'application/x-www-form-urlencoded' and not request.headers.get('X-Requested-With'):
+                logger.info("API call detected, returning JSON response")
+                return jsonify({"status": "success", "message": "Dados salvos com sucesso"})
+            else:
+                return redirect(url_for('index'))
         except Exception as e:
-            logger.error(f"Error saving data: {str(e)}\n{traceback.format_exc()}")
+            error_msg = f"Error saving data: {str(e)}"
+            logger.error(f"{error_msg}\n{traceback.format_exc()}")
             flash(f"Erro ao salvar dados: {str(e)}", "error")
+            
+            # Se for uma chamada da API (não do formulário web)
+            if request.headers.get('Content-Type') == 'application/x-www-form-urlencoded' and not request.headers.get('X-Requested-With'):
+                logger.info("API call detected, returning JSON error response")
+                return jsonify({"status": "error", "message": error_msg}), 500
 
     # Complete form structure
     form_data = {
@@ -697,7 +740,9 @@ def get_medicos(unidade):
     medicos_por_unidade = {
         'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
         'Campinas': ['Dra. Isadora', 'Dra. Adriana'],
-        'Rio de Janeiro': ['Dra. Paula', 'Dra. Ana Clara']
+        'Rio de Janeiro': ['Dra. Paula', 'Dra. Ana Clara'],
+        'São Paulo': ['Dr. Renan', 'Dra. Isabella', 'Dr. Daniel', 'Dra. Ariane', 'Dra. Talita'],
+        'Brasília': ['Dra. Natalia', 'Dra. Leticia']
     }
     return {'medicos': medicos_por_unidade.get(unidade, [])}
 
@@ -813,8 +858,13 @@ def get_equipe(unidade):
     # Equipe por unidade conforme especificação
     equipe_por_unidade = {
         'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
-        'Campinas': ['Juliana', 'Gabriela'],
-        'Rio de Janeiro': ['Mariana Moro', 'Mariana Silva', 'Dayane', 'Assistente Extra']
+        'Campinas': ['Juliana Nunes', 'Thalita Corrêa', 'Kesley Sabrina', 'Larissa Hellen', 
+                  'Isabelle de Campos', 'Bruna Galhardo', 'Dayane Andrade', 'Vitória Delino', 'Eduarda de Sousa'],
+        'Rio de Janeiro': ['Mariana Moro', 'Mariana Silva', 'Dayane', 'Assistente Extra'],
+        'São Paulo': ['Merielen Venâncio Oliveira', 'Dani Curti', 'Joyce Eugênia Da Silva', 'Ana Paula dos Santos',
+                  'Josefa Wilma Vieira', 'Gabriela Cruz', 'Thamiris Santos', 'Sabrina Crott', 'Rosana Pereira',
+                  'Adriana Almeida', 'Jaiza Valentim', 'Eliene Rodrigues', 'Thaís Paiva'],
+        'Brasília': ['Thamara Maciel', 'Angélica Sousa', 'Betânia Almeida', 'Layla Cardoso', 'Dayse Fernandes']
     }
     return {'equipe': equipe_por_unidade.get(unidade, [])}
 
@@ -1140,13 +1190,22 @@ def filter_dashboard():
         # Médicos por unidade para filtros
         medicos_por_unidade = {
             'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
-            'Campinas': ['Dra. Isadora', 'Dra. Adriana']
+            'Campinas': ['Dra. Isadora', 'Dra. Adriana'],
+            'Rio de Janeiro': ['Dra. Paula', 'Dra. Ana Clara'],
+            'São Paulo': ['Dr. Renan', 'Dra. Isabella', 'Dr. Daniel', 'Dra. Ariane', 'Dra. Talita'],
+            'Brasília': ['Dra. Natalia', 'Dra. Leticia']
         }
 
         # Equipe por unidade para filtros
         equipe_por_unidade = {
             'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
-            'Campinas': ['Juliana', 'Gabriela']
+            'Campinas': ['Juliana Nunes', 'Thalita Corrêa', 'Kesley Sabrina', 'Larissa Hellen', 
+                      'Isabelle de Campos', 'Bruna Galhardo', 'Dayane Andrade', 'Vitória Delino', 'Eduarda de Sousa'],
+            'Rio de Janeiro': ['Mariana Moro', 'Mariana Silva', 'Dayane', 'Assistente Extra'],
+            'São Paulo': ['Merielen Venâncio Oliveira', 'Dani Curti', 'Joyce Eugênia Da Silva', 'Ana Paula dos Santos',
+                      'Josefa Wilma Vieira', 'Gabriela Cruz', 'Thamiris Santos', 'Sabrina Crott', 'Rosana Pereira',
+                      'Adriana Almeida', 'Jaiza Valentim', 'Eliene Rodrigues', 'Thaís Paiva'],
+            'Brasília': ['Thamara Maciel', 'Angélica Sousa', 'Betânia Almeida', 'Layla Cardoso', 'Dayse Fernandes']
         }
 
         # Load data

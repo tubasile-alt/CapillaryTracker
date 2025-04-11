@@ -11,13 +11,20 @@ from utils import validate_date, validate_time, validate_numeric, validate_range
 UNIDADES_MEDICOS = {
     "Ribeirão Preto": ["Dr. Arthur", "Dr. Daniel"],
     "Campinas": ["Dra. Isadora", "Dra. Adriana"],
-    "Rio de Janeiro": ["Dra. Paula", "Dra. Ana Clara"]
+    "Rio de Janeiro": ["Dra. Paula", "Dra. Ana Clara"],
+    "São Paulo": ["Dr. Renan", "Dra. Isabella", "Dr. Daniel", "Dra. Ariane", "Dra. Talita"],
+    "Brasília": ["Dra. Natalia", "Dra. Leticia"]
 }
 
 UNIDADES_EQUIPES = {
     "Ribeirão Preto": ["Aline", "Natália", "Ana"],
-    "Campinas": ["Juliana", "Gabriela"],
-    "Rio de Janeiro": ["Mariana Moro", "Mariana Silva", "Dayane", "Assistente Extra"]
+    "Campinas": ["Juliana Nunes", "Thalita Corrêa", "Kesley Sabrina", "Larissa Hellen", 
+                "Isabelle de Campos", "Bruna Galhardo", "Dayane Andrade", "Vitória Delino", "Eduarda de Sousa"],
+    "Rio de Janeiro": ["Mariana Moro", "Mariana Silva", "Dayane", "Assistente Extra"],
+    "São Paulo": ["Merielen Venâncio Oliveira", "Dani Curti", "Joyce Eugênia Da Silva", "Ana Paula dos Santos",
+                "Josefa Wilma Vieira", "Gabriela Cruz", "Thamiris Santos", "Sabrina Crott", "Rosana Pereira",
+                "Adriana Almeida", "Jaiza Valentim", "Eliene Rodrigues", "Thaís Paiva"],
+    "Brasília": ["Thamara Maciel", "Angélica Sousa", "Betânia Almeida", "Layla Cardoso", "Dayse Fernandes"]
 }
 
 class HairSurgeryForm:
@@ -354,21 +361,26 @@ class HairSurgeryForm:
     def save_data(self):
         # Se já estiver salvando, não faz nada para evitar múltiplos salvamentos
         if self.is_saving:
+            print("DEBUG: Salvamento já em andamento, ignorando nova requisição")
             return
             
         if not self.validate_current_frame():
+            print("DEBUG: Validação da frame atual falhou")
             return
             
         try:
+            print("DEBUG: Iniciando salvamento de dados")
             # Marcar como salvando e desabilitar o botão
             self.is_saving = True
             if self.save_button:
                 self.save_button.config(state="disabled", text="Salvando...")
+                print("DEBUG: Botão desabilitado")
                 # Atualizar a interface para mostrar o botão desabilitado
                 self.root.update()
             
             # Prepare data for saving
             data = {}
+            print("DEBUG: Coletando dados dos campos")
             for field, widget in self.entries.items():
                 try:
                     if isinstance(widget, tk.Listbox):
@@ -377,34 +389,57 @@ class HairSurgeryForm:
                         data[field] = widget.get("1.0", tk.END).strip()
                     else:
                         data[field] = widget.get()
+                    print(f"DEBUG: Campo {field} = {data[field]}")
                 except Exception as e:
-                    messagebox.showerror("Erro ao ler campo", f"Erro ao ler o campo {field}: {str(e)}")
+                    error_msg = f"Erro ao ler o campo {field}: {str(e)}"
+                    print(f"DEBUG: {error_msg}")
+                    messagebox.showerror("Erro ao ler campo", error_msg)
                     self.is_saving = False
                     if self.save_button:
                         self.save_button.config(state="normal", text="Salvar Dados")
                     return
 
             # Create DataFrame
+            print("DEBUG: Criando DataFrame com os dados coletados")
             df_new = pd.DataFrame([data])
 
             # Check if file exists and append or create new
             filename = "cirurgias.xlsx"
             try:
                 if os.path.exists(filename):
+                    print(f"DEBUG: Arquivo {filename} encontrado, fazendo append")
                     df_existing = pd.read_excel(filename)
+                    
+                    # Verificar cabeçalhos
+                    print(f"DEBUG: Cabeçalhos do arquivo existente: {list(df_existing.columns)}")
+                    print(f"DEBUG: Cabeçalhos do novo DataFrame: {list(df_new.columns)}")
+                    
+                    # Ajustar colunas se necessário
+                    for col in df_new.columns:
+                        if col not in df_existing.columns:
+                            print(f"DEBUG: Nova coluna adicionada: {col}")
+                            df_existing[col] = None
+                    
                     df_combined = pd.concat([df_existing, df_new], ignore_index=True)
                     # Salvar para um arquivo temporário primeiro
                     temp_filename = f"{filename}.temp"
+                    print(f"DEBUG: Salvando em arquivo temporário {temp_filename}")
                     df_combined.to_excel(temp_filename, index=False)
                     # Se o salvamento for bem-sucedido, renomear para o arquivo final
                     if os.path.exists(temp_filename):
                         if os.path.exists(filename):
                             os.remove(filename)
                         os.rename(temp_filename, filename)
+                        print(f"DEBUG: Arquivo final {filename} atualizado com sucesso")
                 else:
+                    print(f"DEBUG: Arquivo {filename} não encontrado, criando novo")
+                    print(f"DEBUG: Colunas do novo arquivo: {list(df_new.columns)}")
                     df_new.to_excel(filename, index=False)
+                    print(f"DEBUG: Novo arquivo {filename} criado com sucesso")
             except Exception as e:
-                messagebox.showerror("Erro ao salvar", f"Erro ao salvar no arquivo Excel: {str(e)}")
+                error_msg = f"Erro ao salvar no arquivo Excel: {str(e)}"
+                print(f"DEBUG: {error_msg}")
+                messagebox.showerror("Erro ao salvar", error_msg)
                 self.is_saving = False
                 if self.save_button:
                     self.save_button.config(state="normal", text="Salvar Dados")
@@ -414,18 +449,63 @@ class HairSurgeryForm:
             try:
                 # Tentar enviar dados para o servidor
                 url = "http://localhost:5000/novo_cadastro"
-                response = requests.post(url, data=data)
-                if response.status_code != 200:
-                    messagebox.showwarning("Aviso", "Dados salvos localmente, mas não foi possível enviar ao servidor.")
+                print(f"DEBUG: Enviando dados para o servidor: {url}")
+                print(f"DEBUG: Dados a serem enviados: {data}")
+                
+                # Enviar dados com timeout para evitar bloqueio indefinido
+                response = requests.post(url, data=data, timeout=10)
+                print(f"DEBUG: Resposta do servidor: {response.status_code} - {response.text}")
+                
+                # Analisar a resposta JSON
+                try:
+                    resp_data = response.json()
+                    status = resp_data.get('status', 'unknown')
+                    message = resp_data.get('message', 'Sem mensagem do servidor')
+                    print(f"DEBUG: Status da resposta: {status}, Mensagem: {message}")
+                    
+                    if status == 'success':
+                        print("DEBUG: Dados enviados com sucesso ao servidor")
+                    else:
+                        error_msg = f"Dados salvos localmente, mas servidor retornou erro: {message}"
+                        print(f"DEBUG: {error_msg}")
+                        messagebox.showwarning("Aviso", error_msg)
+                except ValueError:
+                    # Não foi possível analisar resposta como JSON
+                    print("DEBUG: Não foi possível analisar resposta do servidor como JSON")
+                    if response.status_code != 200:
+                        error_msg = "Dados salvos localmente, mas não foi possível enviar ao servidor."
+                        print(f"DEBUG: {error_msg}")
+                        messagebox.showwarning("Aviso", error_msg)
+            except requests.exceptions.Timeout:
+                # Timeout na requisição
+                error_msg = "Dados salvos localmente, mas a conexão com o servidor excedeu tempo limite."
+                print(f"DEBUG: {error_msg}")
+                messagebox.showwarning("Aviso", error_msg)
             except Exception as e:
                 # Erro ao enviar para o servidor, mas já salvou localmente
-                messagebox.showwarning("Aviso", f"Dados salvos localmente, mas ocorreu um erro ao enviar para o servidor: {str(e)}")
+                error_msg = f"Dados salvos localmente, mas ocorreu um erro ao enviar para o servidor: {str(e)}"
+                print(f"DEBUG: {error_msg}")
+                messagebox.showwarning("Aviso", error_msg)
 
+            print("DEBUG: Salvamento concluído com sucesso")
             messagebox.showinfo("Sucesso", "Dados salvos com sucesso!")
+            
+            # Garantir que a flag seja redefinida antes de fechar a janela
+            # Isso é uma precaução extra, já que a janela será destruída
+            self.is_saving = False
+            if self.save_button:
+                self.save_button.config(state="normal", text="Salvar Dados")
+                
+            # Destruir a janela ao final do processo
             self.root.destroy()
             
         except Exception as e:
-            messagebox.showerror("Erro", f"Erro ao salvar dados: {str(e)}")
+            error_msg = f"Erro ao salvar dados: {str(e)}"
+            print(f"DEBUG: ERRO FATAL NO SALVAMENTO: {error_msg}")
+            print(f"DEBUG: Tipo da exceção: {type(e)}")
+            import traceback
+            print(f"DEBUG: Traceback completo: {traceback.format_exc()}")
+            messagebox.showerror("Erro", error_msg)
             # Garantir que o flag de salvamento seja redefinido em caso de erro
             self.is_saving = False
             if self.save_button:
