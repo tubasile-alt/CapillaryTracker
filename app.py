@@ -671,7 +671,7 @@ def novo_cadastro():
             {'name': 'data', 'label': 'Data da Cirurgia', 'type': 'date', 'required': True},
             {'name': 'nome', 'label': 'Nome do Paciente', 'type': 'text', 'required': True},
             {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True, 
-             'options': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']},
+             'options': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília']},
             {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'required': True},
             {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'required': True},
             {'name': 'hora_cirurgia', 'label': 'Hora da Cirurgia (HH:MM)', 'type': 'time', 'required': True, 'default': '08:00'},
