@@ -3,7 +3,7 @@
 {% block content %}
 <div class="form-container">
     <h2>{{ form.title }}</h2>
-    <form method="post" id="cadastroForm" action="{{ url_for('novo_cadastro') }}">
+    <form method="post" id="cadastroForm" action="{{ url_for('novo_cadastro') }}" data-form-type="web-form">
         <!-- Paginação -->
         <div class="form-pagination">
             <span class="pagination-step active" data-page="1">Página 1</span>
