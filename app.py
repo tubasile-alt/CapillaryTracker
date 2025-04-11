@@ -647,7 +647,7 @@ def novo_cadastro():
                 logger.error(f"Flashed error message: {message}")
 
             # Se for uma chamada da API (não do formulário web)
-            if request.headers.get('Content-Type') == 'application/x-www-form-urlencoded' and not request.headers.get('X-Requested-With'):
+            if request.headers.get('Content-Type') == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 logger.info("API call detected, returning JSON response")
                 return jsonify({"status": "success", "message": "Dados salvos com sucesso"})
             else:
@@ -659,7 +659,7 @@ def novo_cadastro():
             flash(f"Erro ao salvar dados: {str(e)}", "error")
             
             # Se for uma chamada da API (não do formulário web)
-            if request.headers.get('Content-Type') == 'application/x-www-form-urlencoded' and not request.headers.get('X-Requested-With'):
+            if request.headers.get('Content-Type') == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 logger.info("API call detected, returning JSON error response")
                 return jsonify({"status": "error", "message": error_msg}), 500
 
