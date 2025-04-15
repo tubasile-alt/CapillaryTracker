@@ -586,11 +586,11 @@
     // Função para atualizar campos dependentes (médico e equipe) quando a unidade muda
     function atualizarCamposUnidade(unidade) {
         console.log("Função atualizarCamposUnidade foi chamada com unidade:", unidade);
-        
+
         // Referências aos elementos
         const medicoSelect = document.getElementById('medico');
         const equipeContainer = document.getElementById('equipe_container');
-        
+
         // Resetar os campos se nenhuma unidade for selecionada
         if (!unidade) {
             medicoSelect.innerHTML = '<option value="">Selecione a unidade primeiro...</option>';
@@ -598,12 +598,12 @@
             equipeContainer.innerHTML = '<p class="select-message">Selecione a unidade primeiro...</p>';
             return;
         }
-        
+
         // Mostrar estado de carregamento
         medicoSelect.innerHTML = '<option value="">Carregando médicos...</option>';
         medicoSelect.disabled = true;
         equipeContainer.innerHTML = '<p class="loading-message">Carregando equipe...</p>';
-        
+
         // Buscar dados dos médicos
         fetch('/get_medicos/' + encodeURIComponent(unidade))
             .then(response => response.json())
@@ -623,7 +623,7 @@
                 console.error('Erro ao carregar médicos:', error);
                 medicoSelect.innerHTML = '<option value="">Erro ao carregar médicos</option>';
             });
-            
+
         // Buscar dados da equipe
         fetch('/get_equipe/' + encodeURIComponent(unidade))
             .then(response => response.json())
@@ -634,17 +634,17 @@
                 data.equipe.forEach(membro => {
                     const checkboxDiv = document.createElement('div');
                     checkboxDiv.className = 'checkbox-item';
-                    
+
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     checkbox.name = 'equipe';
                     checkbox.value = membro;
                     checkbox.id = 'equipe_' + membro.replace(/\s+/g, '_');
-                    
+
                     const label = document.createElement('label');
                     label.htmlFor = checkbox.id;
                     label.textContent = membro;
-                    
+
                     checkboxDiv.appendChild(checkbox);
                     checkboxDiv.appendChild(label);
                     equipeContainer.appendChild(checkboxDiv);
@@ -665,7 +665,7 @@
             bodyHairFields.style.display = 'block';
         } else {
             bodyHairFields.style.display = 'none';
-            
+
             // Reset all source field checkboxes
             document.querySelectorAll('.body-hair-option input[type="checkbox"]').forEach(checkbox => {
                 if (checkbox.id !== 'body-hair-check') {
@@ -680,15 +680,15 @@
     function toggleSourceFields(sourceId, show) {
         const fieldsContainer = document.getElementById(`${sourceId}-fields`);
         const checkbox = document.getElementById(`${sourceId}-check`);
-        
+
         // If show parameter is provided, use it; otherwise use checkbox status
         const shouldShow = show !== undefined ? show : checkbox.checked;
-        
+
         if (shouldShow) {
             fieldsContainer.style.display = 'block';
         } else {
             fieldsContainer.style.display = 'none';
-            
+
             // Clear input values when hiding
             fieldsContainer.querySelectorAll('input[type="number"]').forEach(input => {
                 input.value = '';
@@ -741,7 +741,7 @@
             requiredFields.forEach(field => {
                 if (!field.value) {
                     isValid = false;
-                    field.classList.add('field-error');
+                    field.classList.add('fielderror');
                     const label = document.querySelector(`label[for="${field.id}"]`);
                     if (label) {
                         missingFields.push(label.textContent.replace('*', '').trim());
@@ -813,13 +813,13 @@
         const unidadeSelect = document.getElementById('unidade');
         if (unidadeSelect) {
             console.log("Select de unidade encontrado:", unidadeSelect);
-            
+
             // Adicionar listener para mudanças futuras
             unidadeSelect.addEventListener('change', function() {
                 console.log("Unidade alterada para:", this.value);
                 atualizarCamposUnidade(this.value);
             });
-            
+
             // Se já houver uma unidade selecionada, atualizar os campos
             if (unidadeSelect.value) {
                 console.log("Unidade já selecionada:", unidadeSelect.value);
@@ -828,16 +828,16 @@
         } else {
             console.log("Select de unidade não encontrado");
         }
-        
+
         // Inicializar outros componentes
         setupExtractionCalculations();
-        
+
         // Verificar status inicial de body hair e bloqueio
         const bodyHairCheck = document.getElementById('body-hair-check');
         if (bodyHairCheck && bodyHairCheck.checked) {
             toggleBodyHairFields();
         }
-        
+
         const bloqueioSelect = document.getElementById('bloqueio');
         if (bloqueioSelect) {
             toggleBloqueioSeringas(bloqueioSelect.value);
