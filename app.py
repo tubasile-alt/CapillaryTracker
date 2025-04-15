@@ -690,7 +690,7 @@ def novo_cadastro():
             {'name': 'safira', 'label': 'Safira?', 'type': 'select', 'required': True,
              'options': ['Sim', 'Não']},
             {'name': 'punch', 'label': 'Punch (mm)', 'type': 'select', 'required': True,
-             'options': ['0.75', '0.85', '0.95']},
+             'options': ['0,85x3,5mm', '0,85x4mm', '0,85x5mm', '0,90x4mm', '0,90x5mm', '1,0x4mm']},
             {'name': 'solucao_frente', 'label': 'Solução Frente (ml)', 'type': 'number', 'required': True},
             {'name': 'solucao_coroa', 'label': 'Solução Coroa (ml)', 'type': 'number', 'required': False},
             {'name': 'solucao_xilo_frente', 'label': 'Solução Xilo Frente (ml)', 'type': 'number', 'required': False},
