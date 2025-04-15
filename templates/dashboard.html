@@ -213,33 +213,40 @@
 <script>
     // Função para aplicar filtros
     async function applyFilters() {
-        const unit = document.getElementById('filterUnit').value;
-        const year = document.getElementById('filterYear').value;
-        const month = document.getElementById('filterMonth').value;
-
         try {
-            const response = await fetch(`/filter_dashboard?unit=${unit}&year=${year}&month=${month}`);
+            const unit = document.getElementById('filterUnit').value;
+            const year = document.getElementById('filterYear').value;
+            const month = document.getElementById('filterMonth').value;
+
+            const queryParams = new URLSearchParams({
+                unit: unit || 'all',
+                year: year || 'all',
+                month: month || 'all'
+            });
+
+            const response = await fetch(`/filter_dashboard?${queryParams.toString()}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
-
-            // Atualizar os valores no dashboard
-            document.getElementById('big-total-surgeries').textContent = data.total_surgeries;
-            document.getElementById('big-avg-follicles').textContent = data.avg_follicles;
-            document.getElementById('big-avg-density').textContent = data.avg_density;
-
-            // Atualizar outros componentes do dashboard
-            if (data.has_follicle_data) {
-                // Atualizar dados dos folículos se disponível
-                updateFollicleData(data.follicles_data);
+            if (data.error) {
+                throw new Error(data.error);
             }
 
+            // Atualizar os valores no dashboard
+            document.getElementById('big-total-surgeries').textContent = data.total_surgeries || 0;
+            document.getElementById('big-avg-follicles').textContent = data.avg_follicles || 0;
+            document.getElementById('big-avg-density').textContent = data.avg_density || 0;
+
             // Atualizar tabela de equipe
-            populateEquipeTable();
+            await populateEquipeTable();
             
             // Atualizar velocímetro
-            updateGaugeChart();
+            await updateGaugeChart();
         } catch (error) {
             console.error('Erro ao aplicar filtros:', error);
-            alert('Erro ao aplicar filtros. Por favor, tente novamente.');
+            alert(`Erro ao aplicar filtros: ${error.message}`);
         }
     }
 
