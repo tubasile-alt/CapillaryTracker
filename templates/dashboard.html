@@ -15,6 +15,48 @@
             {% endif %}
 
             {% if data %}
+            <!-- Filtros -->
+            <div class="filter-section">
+                <div class="filter-group">
+                    <label for="filterUnit">Unidade:</label>
+                    <select id="filterUnit">
+                        <option value="all">Todas</option>
+                        <option value="Ribeirão Preto">Ribeirão Preto</option>
+                        <option value="Campinas">Campinas</option>
+                        <option value="Rio de Janeiro">Rio de Janeiro</option>
+                        <option value="São Paulo">São Paulo</option>
+                        <option value="Brasília">Brasília</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterYear">Ano:</label>
+                    <select id="filterYear">
+                        <option value="all">Todos</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterMonth">Mês:</label>
+                    <select id="filterMonth">
+                        <option value="all">Todos</option>
+                        <option value="1">Janeiro</option>
+                        <option value="2">Fevereiro</option>
+                        <option value="3">Março</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Maio</option>
+                        <option value="6">Junho</option>
+                        <option value="7">Julho</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Setembro</option>
+                        <option value="10">Outubro</option>
+                        <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
+                    </select>
+                </div>
+                <button onclick="applyFilters()" class="btn btn-primary">Aplicar Filtros</button>
+            </div>
+
             <div class="dashboard-info">
                 <div class="dashboard-summary">
                     <div class="dashboard-card combined-stats-card">
@@ -171,6 +213,38 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-gauge@0.3.0"></script>
 <script>
+    // Função para aplicar filtros
+    async function applyFilters() {
+        const unit = document.getElementById('filterUnit').value;
+        const year = document.getElementById('filterYear').value;
+        const month = document.getElementById('filterMonth').value;
+
+        try {
+            const response = await fetch(`/filter_dashboard?unit=${unit}&year=${year}&month=${month}`);
+            const data = await response.json();
+
+            // Atualizar os valores no dashboard
+            document.getElementById('big-total-surgeries').textContent = data.total_surgeries;
+            document.getElementById('big-avg-follicles').textContent = data.avg_follicles;
+            document.getElementById('big-avg-density').textContent = data.avg_density;
+
+            // Atualizar outros componentes do dashboard
+            if (data.has_follicle_data) {
+                // Atualizar dados dos folículos se disponível
+                updateFollicleData(data.follicles_data);
+            }
+
+            // Atualizar tabela de equipe
+            populateEquipeTable();
+            
+            // Atualizar velocímetro
+            updateGaugeChart();
+        } catch (error) {
+            console.error('Erro ao aplicar filtros:', error);
+            alert('Erro ao aplicar filtros. Por favor, tente novamente.');
+        }
+    }
+
     // Função para visualizar dados dos pacientes
     let allPatients = [];
 
@@ -793,6 +867,37 @@ function displayFilteredPatients() {
 </script>
 
 <style>
+/* Estilos para os filtros */
+.filter-section {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-group label {
+    color: #fff;
+    font-weight: 500;
+}
+
+.filter-group select {
+    padding: 6px 12px;
+    border-radius: 4px;
+    background: #1e1e2f;
+    color: #fff;
+    border: 1px solid #444;
+}
+
 /* Estilos para o botão vermelho */
 .btn-danger {
     background-color: #e74c3c;
