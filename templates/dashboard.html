@@ -53,8 +53,7 @@
                         <option value="12">Dezembro</option>
                     </select>
                 </div>
-                <button onclick="applyFilters()" class="btn btn-primary">Aplicar Filtros</button>
-            </div>
+                </div>
 
             <div class="dashboard-info">
                 <div class="dashboard-summary">
@@ -394,9 +393,23 @@
         };
 
     // Add event listeners when DOM is ready
+    // Função para adicionar event listeners aos filtros
+    function addFilterListeners() {
+        const filters = ['filterUnit', 'filterYear', 'filterMonth'];
+        filters.forEach(filterId => {
+            const element = document.getElementById(filterId);
+            if (element) {
+                element.addEventListener('change', applyFilters);
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // Carregar unidades disponíveis para os filtros
         loadAvailableUnits();
+        
+        // Adicionar event listeners aos filtros
+        addFilterListeners();
 
         // Initialize charts
         initializeCharts();
