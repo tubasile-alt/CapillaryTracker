@@ -4,7 +4,7 @@ modules = ["python-3.11", "postgresql-16"]
 channel = "stable-24_05"
 
 [workflows]
-runButton = "Project"
+runButton = "Preview Server"
 
 [[workflows.workflow]]
 name = "Project"
@@ -68,6 +68,15 @@ waitForPort = 5000
 
 [[workflows.workflow]]
 name = "Web App"
+author = 40048073
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python app.py"
+
+[[workflows.workflow]]
+name = "Preview Server"
 author = 40048073
 mode = "sequential"
 
