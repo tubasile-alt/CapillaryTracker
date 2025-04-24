@@ -741,7 +741,7 @@
             requiredFields.forEach(field => {
                 if (!field.value) {
                     isValid = false;
-                    field.classList.add('fielderror');
+                    field.classList.add('field-error');
                     const label = document.querySelector(`label[for="${field.id}"]`);
                     if (label) {
                         missingFields.push(label.textContent.replace('*', '').trim());
@@ -762,7 +762,8 @@
             page.style.display = 'none';
         });
 
-        // Mostrar a página selecionada        document.getElementById('page-' + pageNumber).style.display = 'block';
+        // Mostrar a página selecionada
+        document.getElementById('page-' + pageNumber).style.display = 'block';
 
         // Atualizar indicadores de paginação
         document.querySelectorAll('.pagination-step').forEach(step => {
