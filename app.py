@@ -2,7 +2,8 @@ import os
 import logging
 import traceback
 import re
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_file
+import functools
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -23,6 +24,7 @@ logger.info("Starting Flask application...")
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+app.config['ADMIN_PASSWORD'] = '12345'
 
 # Configure SQLAlchemy with detailed logging and connection settings
 database_url = os.environ.get('DATABASE_URL', None)
@@ -745,10 +747,10 @@ def get_medicos(unidade):
     # Médicos por unidade conforme especificação
     medicos_por_unidade = {
         'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
-        'Campinas': ['Dra. Isadora', 'Dra. Adriana'],
-        'Rio de Janeiro': ['Dra. Paula', 'Dra. Ana Clara'],
-        'São Paulo': ['Dr. Renan', 'Dra. Isabella', 'Dr. Daniel', 'Dra. Ariane', 'Dra. Talita', 'Dra. Thaiza'],
-        'Brasília': ['Dra. Natalia', 'Dra. Leticia']
+        'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
+        'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
+        'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
+        'Brasília': ['Dra. Leticia', 'Dra. Natalia'],
     }
     return {'medicos': medicos_por_unidade.get(unidade, [])}
 
@@ -863,14 +865,17 @@ def get_equipe(unidade):
     logger.info(f"Retrieving team for unit: {unidade}")
     # Equipe por unidade conforme especificação
     equipe_por_unidade = {
-        'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
-        'Campinas': ['Juliana Nunes', 'Thalita Corrêa', 'Kesley Sabrina', 'Larissa Hellen', 
-                  'Isabelle de Campos', 'Bruna Galhardo', 'Dayane Andrade', 'Vitória Delino', 'Eduarda de Sousa'],
-        'Rio de Janeiro': ['Mariana Moro', 'Mariana Silva', 'Dayane', 'Assistente Extra'],
-        'São Paulo': ['Merielen Venâncio Oliveira', 'Dani Curti', 'Joyce Eugênia Da Silva', 'Ana Paula dos Santos',
-                  'Josefa Wilma Vieira', 'Gabriela Cruz', 'Thamiris Santos', 'Sabrina Crott', 'Rosana Pereira',
-                  'Adriana Almeida', 'Jaiza Valentim', 'Eliene Rodrigues', 'Thaís Paiva', 'Greice Barbosa'],
-        'Brasília': ['Thamara Maciel', 'Angélica Sousa', 'Betânia Almeida', 'Layla Cardoso', 'Dayse Fernandes']
+        'Ribeirão Preto': ['Aline', 'Ana', 'Natália'],
+        'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 
+                  'Isabelle de Campos', 'Juliana Nunes', 'Kesley Sabrina', 
+                  'Larissa Hellen', 'Thalita Corrêa', 'Vitória Delino'],
+        'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
+        'São Paulo': ['Adriana Almeida', 'Ana Paula dos Santos', 'Dani Curti', 
+                  'Eliene Rodrigues', 'Gabriela Cruz', 'Greice Barbosa', 
+                  'Jaiza Valentim', 'Josefa Wilma Vieira', 'Joyce Eugênia Da Silva', 
+                  'Merielen Venâncio Oliveira', 'Rosana Pereira', 'Sabrina Crott', 
+                  'Thamiris Santos', 'Thaís Paiva'],
+        'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel'],
     }
     return {'equipe': equipe_por_unidade.get(unidade, [])}
 
@@ -1195,24 +1200,27 @@ def filter_dashboard():
 
         # Médicos por unidade para filtros
         medicos_por_unidade = {
-            'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
-            'Campinas': ['Dra. Isadora', 'Dra. Adriana'],
-            'Rio de Janeiro': ['Dra. Paula', 'Dra. Ana Clara'],
-            'São Paulo': ['Dr. Renan', 'Dra. Isabella', 'Dr. Daniel', 'Dra. Ariane', 'Dra. Talita', 'Dra. Thaiza'],
-            'Brasília': ['Dra. Natalia', 'Dra. Leticia']
-        }
+        'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
+        'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
+        'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
+        'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
+        'Brasília': ['Dra. Leticia', 'Dra. Natalia'],
+    }
 
         # Equipe por unidade para filtros
         equipe_por_unidade = {
-            'Ribeirão Preto': ['Aline', 'Natália', 'Ana'],
-            'Campinas': ['Juliana Nunes', 'Thalita Corrêa', 'Kesley Sabrina', 'Larissa Hellen', 
-                      'Isabelle de Campos', 'Bruna Galhardo', 'Dayane Andrade', 'Vitória Delino', 'Eduarda de Sousa'],
-            'Rio de Janeiro': ['Mariana Moro', 'Mariana Silva', 'Dayane', 'Assistente Extra'],
-            'São Paulo': ['Merielen Venâncio Oliveira', 'Dani Curti', 'Joyce Eugênia Da Silva', 'Ana Paula dos Santos',
-                      'Josefa Wilma Vieira', 'Gabriela Cruz', 'Thamiris Santos', 'Sabrina Crott', 'Rosana Pereira',
-                      'Adriana Almeida', 'Jaiza Valentim', 'Eliene Rodrigues', 'Thaís Paiva', 'Greice Barbosa'],
-            'Brasília': ['Thamara Maciel', 'Angélica Sousa', 'Betânia Almeida', 'Layla Cardoso', 'Dayse Fernandes']
-        }
+        'Ribeirão Preto': ['Aline', 'Ana', 'Natália'],
+        'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 
+                  'Isabelle de Campos', 'Juliana Nunes', 'Kesley Sabrina', 
+                  'Larissa Hellen', 'Thalita Corrêa', 'Vitória Delino'],
+        'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
+        'São Paulo': ['Adriana Almeida', 'Ana Paula dos Santos', 'Dani Curti', 
+                  'Eliene Rodrigues', 'Gabriela Cruz', 'Greice Barbosa', 
+                  'Jaiza Valentim', 'Josefa Wilma Vieira', 'Joyce Eugênia Da Silva', 
+                  'Merielen Venâncio Oliveira', 'Rosana Pereira', 'Sabrina Crott', 
+                  'Thamiris Santos', 'Thaís Paiva'],
+        'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel'],
+    }
 
         # Load data
         with app.app_context():

@@ -17,4 +17,6 @@ dependencies = [
     "flask-monitoringdashboard>=3.2.3",
     "numpy>=2.2.3",
     "flask-migrate>=4.1.0",
+    "flask-wtf>=1.2.2",
+    "flask-login>=0.6.3",
 ]

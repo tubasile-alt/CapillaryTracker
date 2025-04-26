@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração - ICB Hair Surgery</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .admin-section {
+            margin-bottom: 40px;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .admin-tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .admin-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #eee;
+            border: none;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+        
+        .admin-tab.active {
+            background-color: #1a73e8;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .admin-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: flex-end;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .btn-add {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 9px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .alert {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .btn-logout {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <header>
+            <div class="logo">
+                <img src="{{ url_for('static', filename='img/icb_logo.png') }}" alt="ICB Logo">
+            </div>
+            <h1>Administração do Sistema</h1>
+        </header>
+        
+        <div class="admin-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="admin-tabs">
+                <button class="admin-tab active" onclick="showTab('medicos')">Médicos</button>
+                <button class="admin-tab" onclick="showTab('equipe')">Equipe</button>
+            </div>
+            
+            <div id="medicos" class="tab-content active">
+                <div class="admin-section">
+                    <h2>Adicionar Médico</h2>
+                    <form action="{{ url_for('admin_add_medico') }}" method="post" class="admin-form">
+                        <div class="form-group">
+                            <label for="unidade_medico">Unidade</label>
+                            <select name="unidade" id="unidade_medico" required>
+                                <option value="">Selecione a Unidade</option>
+                                {% for unidade in unidades %}
+                                <option value="{{ unidade }}">{{ unidade }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="nome_medico">Nome do Médico</label>
+                            <input type="text" name="nome" id="nome_medico" required placeholder="Ex: Dr. João Silva">
+                        </div>
+                        <button type="submit" class="btn-add">Adicionar Médico</button>
+                    </form>
+                </div>
+                
+                <div class="admin-section">
+                    <h2>Lista de Médicos por Unidade</h2>
+                    
+                    {% for unidade, medicos in medicos_por_unidade.items() %}
+                    <h3>{{ unidade }}</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for medico in medicos %}
+                            <tr>
+                                <td>{{ medico }}</td>
+                                <td>
+                                    <form action="{{ url_for('admin_delete_medico') }}" method="post" class="action-buttons">
+                                        <input type="hidden" name="unidade" value="{{ unidade }}">
+                                        <input type="hidden" name="nome" value="{{ medico }}">
+                                        <button type="submit" class="btn-delete">Excluir</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div id="equipe" class="tab-content">
+                <div class="admin-section">
+                    <h2>Adicionar Membro da Equipe</h2>
+                    <form action="{{ url_for('admin_add_equipe') }}" method="post" class="admin-form">
+                        <div class="form-group">
+                            <label for="unidade_equipe">Unidade</label>
+                            <select name="unidade" id="unidade_equipe" required>
+                                <option value="">Selecione a Unidade</option>
+                                {% for unidade in unidades %}
+                                <option value="{{ unidade }}">{{ unidade }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="nome_equipe">Nome do Membro</label>
+                            <input type="text" name="nome" id="nome_equipe" required placeholder="Ex: Maria Silva">
+                        </div>
+                        <button type="submit" class="btn-add">Adicionar Membro</button>
+                    </form>
+                </div>
+                
+                <div class="admin-section">
+                    <h2>Lista de Membros por Unidade</h2>
+                    
+                    {% for unidade, equipe in equipe_por_unidade.items() %}
+                    <h3>{{ unidade }}</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for membro in equipe %}
+                            <tr>
+                                <td>{{ membro }}</td>
+                                <td>
+                                    <form action="{{ url_for('admin_delete_equipe') }}" method="post" class="action-buttons">
+                                        <input type="hidden" name="unidade" value="{{ unidade }}">
+                                        <input type="hidden" name="nome" value="{{ membro }}">
+                                        <button type="submit" class="btn-delete">Excluir</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <a href="{{ url_for('index') }}" class="btn-logout">Voltar para a Página Inicial</a>
+        </div>
+    </div>
+    
+    <script>
+        function showTab(tabId) {
+            // Esconder todas as tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remover classe ativa de todos os botões
+            document.querySelectorAll('.admin-tab').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Mostrar a tab selecionada
+            document.getElementById(tabId).classList.add('active');
+            
+            // Adicionar classe ativa ao botão clicado
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
