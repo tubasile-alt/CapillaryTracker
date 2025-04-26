@@ -84,7 +84,7 @@
                 {% endif %}
             {% endwith %}
             
-            <form action="{{ url_for('admin_login') }}" method="post">
+            <form action="{{ url_for('admin.login') }}" method="post">
                 <div class="form-group">
                     <label for="senha">Senha de Administrador</label>
                     <input type="password" id="senha" name="senha" required>

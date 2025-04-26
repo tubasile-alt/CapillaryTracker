@@ -171,7 +171,7 @@
             <div id="medicos" class="tab-content active">
                 <div class="admin-section">
                     <h2>Adicionar Médico</h2>
-                    <form action="{{ url_for('admin_add_medico') }}" method="post" class="admin-form">
+                    <form action="{{ url_for('admin.add_medico') }}" method="post" class="admin-form">
                         <div class="form-group">
                             <label for="unidade_medico">Unidade</label>
                             <select name="unidade" id="unidade_medico" required>
@@ -206,7 +206,7 @@
                             <tr>
                                 <td>{{ medico }}</td>
                                 <td>
-                                    <form action="{{ url_for('admin_delete_medico') }}" method="post" class="action-buttons">
+                                    <form action="{{ url_for('admin.delete_medico') }}" method="post" class="action-buttons">
                                         <input type="hidden" name="unidade" value="{{ unidade }}">
                                         <input type="hidden" name="nome" value="{{ medico }}">
                                         <button type="submit" class="btn-delete">Excluir</button>
@@ -223,7 +223,7 @@
             <div id="equipe" class="tab-content">
                 <div class="admin-section">
                     <h2>Adicionar Membro da Equipe</h2>
-                    <form action="{{ url_for('admin_add_equipe') }}" method="post" class="admin-form">
+                    <form action="{{ url_for('admin.add_equipe') }}" method="post" class="admin-form">
                         <div class="form-group">
                             <label for="unidade_equipe">Unidade</label>
                             <select name="unidade" id="unidade_equipe" required>
@@ -258,7 +258,7 @@
                             <tr>
                                 <td>{{ membro }}</td>
                                 <td>
-                                    <form action="{{ url_for('admin_delete_equipe') }}" method="post" class="action-buttons">
+                                    <form action="{{ url_for('admin.delete_equipe') }}" method="post" class="action-buttons">
                                         <input type="hidden" name="unidade" value="{{ unidade }}">
                                         <input type="hidden" name="nome" value="{{ membro }}">
                                         <button type="submit" class="btn-delete">Excluir</button>
