@@ -26,6 +26,10 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24)
 app.config['ADMIN_PASSWORD'] = '12345'
 
+# Importar e registrar blueprints após as configurações da app
+from admin_routes import admin_bp
+app.register_blueprint(admin_bp, url_prefix='/admin')
+
 # Configure SQLAlchemy with detailed logging and connection settings
 database_url = os.environ.get('DATABASE_URL', None)
 
