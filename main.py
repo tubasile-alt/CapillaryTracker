@@ -12,7 +12,7 @@ UNIDADES_MEDICOS = {
     "Ribeirão Preto": ["Dr. Arthur", "Dr. Daniel"],
     "Campinas": ["Dra. Isadora", "Dra. Adriana"],
     "Rio de Janeiro": ["Dra. Paula", "Dra. Ana Clara"],
-    "São Paulo": ["Dr. Renan", "Dra. Isabella", "Dr. Daniel", "Dra. Ariane", "Dra. Talita"],
+    "São Paulo": ["Dr. Renan", "Dra. Isabella", "Dr. Daniel", "Dra. Ariane", "Dra. Talita", "Dra. Thaiza"],
     "Brasília": ["Dra. Natalia", "Dra. Leticia"]
 }
 
@@ -23,7 +23,7 @@ UNIDADES_EQUIPES = {
     "Rio de Janeiro": ["Mariana Moro", "Mariana Silva", "Dayane", "Assistente Extra"],
     "São Paulo": ["Merielen Venâncio Oliveira", "Dani Curti", "Joyce Eugênia Da Silva", "Ana Paula dos Santos",
                 "Josefa Wilma Vieira", "Gabriela Cruz", "Thamiris Santos", "Sabrina Crott", "Rosana Pereira",
-                "Adriana Almeida", "Jaiza Valentim", "Eliene Rodrigues", "Thaís Paiva"],
+                "Adriana Almeida", "Jaiza Valentim", "Eliene Rodrigues", "Thaís Paiva", "Greice Barbosa"],
     "Brasília": ["Thamara Maciel", "Angélica Sousa", "Betânia Almeida", "Layla Cardoso", "Dayse Fernandes"]
 }
 
