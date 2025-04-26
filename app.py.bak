@@ -747,7 +747,7 @@ def get_medicos(unidade):
         'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
         'Campinas': ['Dra. Isadora', 'Dra. Adriana'],
         'Rio de Janeiro': ['Dra. Paula', 'Dra. Ana Clara'],
-        'São Paulo': ['Dr. Renan', 'Dra. Isabella', 'Dr. Daniel', 'Dra. Ariane', 'Dra. Talita', 'Dra. Thaiza'],
+        'São Paulo': ['Dr. Renan', 'Dra. Isabella', 'Dr. Daniel', 'Dra. Ariane', 'Dra. Talita'],
         'Brasília': ['Dra. Natalia', 'Dra. Leticia']
     }
     return {'medicos': medicos_por_unidade.get(unidade, [])}
@@ -869,7 +869,7 @@ def get_equipe(unidade):
         'Rio de Janeiro': ['Mariana Moro', 'Mariana Silva', 'Dayane', 'Assistente Extra'],
         'São Paulo': ['Merielen Venâncio Oliveira', 'Dani Curti', 'Joyce Eugênia Da Silva', 'Ana Paula dos Santos',
                   'Josefa Wilma Vieira', 'Gabriela Cruz', 'Thamiris Santos', 'Sabrina Crott', 'Rosana Pereira',
-                  'Adriana Almeida', 'Jaiza Valentim', 'Eliene Rodrigues', 'Thaís Paiva', 'Greice Barbosa'],
+                  'Adriana Almeida', 'Jaiza Valentim', 'Eliene Rodrigues', 'Thaís Paiva'],
         'Brasília': ['Thamara Maciel', 'Angélica Sousa', 'Betânia Almeida', 'Layla Cardoso', 'Dayse Fernandes']
     }
     return {'equipe': equipe_por_unidade.get(unidade, [])}
@@ -1198,7 +1198,7 @@ def filter_dashboard():
             'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
             'Campinas': ['Dra. Isadora', 'Dra. Adriana'],
             'Rio de Janeiro': ['Dra. Paula', 'Dra. Ana Clara'],
-            'São Paulo': ['Dr. Renan', 'Dra. Isabella', 'Dr. Daniel', 'Dra. Ariane', 'Dra. Talita', 'Dra. Thaiza'],
+            'São Paulo': ['Dr. Renan', 'Dra. Isabella', 'Dr. Daniel', 'Dra. Ariane', 'Dra. Talita'],
             'Brasília': ['Dra. Natalia', 'Dra. Leticia']
         }
 
@@ -1210,7 +1210,7 @@ def filter_dashboard():
             'Rio de Janeiro': ['Mariana Moro', 'Mariana Silva', 'Dayane', 'Assistente Extra'],
             'São Paulo': ['Merielen Venâncio Oliveira', 'Dani Curti', 'Joyce Eugênia Da Silva', 'Ana Paula dos Santos',
                       'Josefa Wilma Vieira', 'Gabriela Cruz', 'Thamiris Santos', 'Sabrina Crott', 'Rosana Pereira',
-                      'Adriana Almeida', 'Jaiza Valentim', 'Eliene Rodrigues', 'Thaís Paiva', 'Greice Barbosa'],
+                      'Adriana Almeida', 'Jaiza Valentim', 'Eliene Rodrigues', 'Thaís Paiva'],
             'Brasília': ['Thamara Maciel', 'Angélica Sousa', 'Betânia Almeida', 'Layla Cardoso', 'Dayse Fernandes']
         }
 
