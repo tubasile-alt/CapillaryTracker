@@ -608,7 +608,20 @@
         const tableBody = document.querySelector("#equipeTable tbody");
         tableBody.innerHTML = '<tr><td colspan="3">Carregando dados...</td></tr>';
 
-        fetch('/get_equipe_data')
+        // Obter filtros atuais
+        const unit = document.getElementById('filterUnit').value;
+        const year = document.getElementById('filterYear').value;
+        const month = document.getElementById('filterMonth').value;
+
+        // Criar query params para filtrar
+        const queryParams = new URLSearchParams({
+            unit: unit || 'all',
+            year: year || 'all',
+            month: month || 'all'
+        });
+
+        // Fazer requisição com filtros
+        fetch(`/get_equipe_data?${queryParams.toString()}`)
             .then(response => response.json())
             .then(data => {
                 tableBody.innerHTML = '';
