@@ -11,7 +11,7 @@ from fuzzywuzzy import fuzz
 import json
 from flask_sqlalchemy import SQLAlchemy
 import shutil
-from sqlalchemy import text
+from sqlalchemy import text, extract
 
 # Configure logging
 logging.basicConfig(
@@ -1087,6 +1087,13 @@ def get_equipe_data():
     logger.info("Obtendo dados de equipe")
     try:
         with app.app_context():
+            # Obter parâmetros de filtro
+            unit_filter = request.args.get('unit', 'all')
+            year_filter = request.args.get('year', 'all')
+            month_filter = request.args.get('month', 'all')
+            
+            logger.info(f"Filtros aplicados: unidade={unit_filter}, ano={year_filter}, mês={month_filter}")
+            
             # Inicializar lista para armazenar os dados da equipe
             equipe_data = []
 
@@ -1110,9 +1117,26 @@ def get_equipe_data():
                 # Dicionário para rastrear participações únicas por cirurgia para cada pessoa
                 # Estrutura: {membro: {id_cirurgia1, id_cirurgia2, ...}}
                 participacoes_por_pessoa = {}
-
+                
+                # Construir a query com filtros
+                query = Surgery.query
+                
+                # Aplicar filtro de unidade se não for 'all'
+                if unit_filter != 'all':
+                    query = query.filter(Surgery.unidade == unit_filter)
+                
+                # Aplicar filtro de ano se não for 'all'
+                if year_filter != 'all':
+                    # Extrair o ano da data
+                    query = query.filter(extract('year', Surgery.data) == int(year_filter))
+                
+                # Aplicar filtro de mês se não for 'all'
+                if month_filter != 'all':
+                    # Extrair o mês da data
+                    query = query.filter(extract('month', Surgery.data) == int(month_filter))
+                
                 # Iterar sobre cada linha para contar participações
-                for surgery in Surgery.query.all():
+                for surgery in query.all():
                     unidade = surgery.unidade if surgery.unidade else "Não especificada"
                     cirurgia_id = surgery.id  # Usar o ID da cirurgia
 
