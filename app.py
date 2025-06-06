@@ -1727,10 +1727,15 @@ def get_medicos_dashboard_data():
                             'name': unit,
                             'surgeries': 0,
                             'breakage_rate': 0,
+                            'densidade_extracao': 0,
                             'max_q1': 0,
                             'max_q2': 0,
                             'max_q3': 0,
-                            'max_q4': 0
+                            'max_q4': 0,
+                            'avg_q1': 0,
+                            'avg_q2': 0,
+                            'avg_q3': 0,
+                            'avg_q4': 0
                         })
             
             response_data = {
