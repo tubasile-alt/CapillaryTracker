@@ -216,6 +216,11 @@
             </div>
             
             <div class="chart-container">
+                <h3>Média de Furos por Quadrante por Unidade</h3>
+                <canvas id="avgHolesChart" width="400" height="200"></canvas>
+            </div>
+            
+            <div class="chart-container">
                 <h3>Detalhes por Unidade</h3>
                 <div class="table-container">
                     <table class="data-table">
@@ -243,7 +248,7 @@
     </div>
 
     <script>
-        let breakageChart, maxHolesChart;
+        let breakageChart, maxHolesChart, avgHolesChart;
         
         function updateDashboard() {
             const unit = document.getElementById('filterUnit').value;
@@ -324,6 +329,46 @@
                         label: 'Máximo de Furos',
                         data: chartData.max_holes,
                         backgroundColor: ['#feca57', '#ff9ff3', '#54a0ff', '#5f27cd'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: 'white'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'white'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de Média de Furos por Quadrante
+            if (avgHolesChart) avgHolesChart.destroy();
+            
+            const ctx3 = document.getElementById('avgHolesChart').getContext('2d');
+            avgHolesChart = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: [{
+                        label: 'Média de Furos',
+                        data: chartData.avg_holes,
+                        backgroundColor: ['#26d0ce', '#6c5ce7', '#fd79a8', '#fdcb6e'],
                         borderWidth: 1
                     }]
                 },

@@ -1696,6 +1696,12 @@ def get_medicos_dashboard_data():
                         unit_densidades = [getattr(s, 'densidade_extracao', 0) or 0 for s in unit_surgeries if getattr(s, 'densidade_extracao', None) is not None]
                         unit_avg_densidade = round(sum(unit_densidades) / len(unit_densidades), 2) if unit_densidades else 0
                         
+                        # Média de furos por quadrante da unidade
+                        avg_q1_furos = round(sum(unit_q1_furos) / len(unit_q1_furos), 1) if unit_q1_furos else 0
+                        avg_q2_furos = round(sum(unit_q2_furos) / len(unit_q2_furos), 1) if unit_q2_furos else 0
+                        avg_q3_furos = round(sum(unit_q3_furos) / len(unit_q3_furos), 1) if unit_q3_furos else 0
+                        avg_q4_furos = round(sum(unit_q4_furos) / len(unit_q4_furos), 1) if unit_q4_furos else 0
+                        
                         units_data.append({
                             'name': unit,
                             'surgeries': len(unit_surgeries),
@@ -1704,7 +1710,11 @@ def get_medicos_dashboard_data():
                             'max_q1': max(unit_q1_furos) if unit_q1_furos else 0,
                             'max_q2': max(unit_q2_furos) if unit_q2_furos else 0,
                             'max_q3': max(unit_q3_furos) if unit_q3_furos else 0,
-                            'max_q4': max(unit_q4_furos) if unit_q4_furos else 0
+                            'max_q4': max(unit_q4_furos) if unit_q4_furos else 0,
+                            'avg_q1': avg_q1_furos,
+                            'avg_q2': avg_q2_furos,
+                            'avg_q3': avg_q3_furos,
+                            'avg_q4': avg_q4_furos
                         })
                     else:
                         units_data.append({
@@ -1729,7 +1739,8 @@ def get_medicos_dashboard_data():
                 },
                 'charts': {
                     'breakage_rates': breakage_rates,
-                    'max_holes': [max_q1, max_q2, max_q3, max_q4]
+                    'max_holes': [max_q1, max_q2, max_q3, max_q4],
+                    'avg_holes': [avg_q1_furos, avg_q2_furos, avg_q3_furos, avg_q4_furos]
                 },
                 'units': units_data
             }
