@@ -1533,6 +1533,171 @@ def save_necrose():
 
         # Carregar arquivo de necroses existente ou criar novo
         #Necroses model needs to be defined and populated
+        
+        return jsonify({'success': True, 'message': 'Dados de necrose salvos com sucesso'})
+        
+    except Exception as e:
+        logger.error(f"Erro ao salvar dados de necrose: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+# Rotas do Dashboard Médicos
+@app.route('/medicos/login', methods=['GET', 'POST'])
+def login_medicos():
+    """Login para dashboard médicos"""
+    if request.method == 'POST':
+        password = request.form.get('password')
+        if password == '54321':
+            session['medicos_logged_in'] = True
+            return redirect(url_for('dashboard_medicos'))
+        else:
+            flash('Senha incorreta', 'error')
+    
+    return render_template('login_medicos.html')
+
+@app.route('/medicos/dashboard')
+def dashboard_medicos():
+    """Dashboard médicos - requer autenticação"""
+    if not session.get('medicos_logged_in'):
+        return redirect(url_for('login_medicos'))
+    
+    return render_template('dashboard_medicos.html')
+
+@app.route('/medicos/logout')
+def logout_medicos():
+    """Logout do dashboard médicos"""
+    session.pop('medicos_logged_in', None)
+    return redirect(url_for('login_medicos'))
+
+@app.route('/medicos/dashboard_data')
+def get_medicos_dashboard_data():
+    """Endpoint para dados do dashboard médicos"""
+    if not session.get('medicos_logged_in'):
+        return jsonify({'error': 'Não autorizado'}), 401
+    
+    try:
+        unit_filter = request.args.get('unit', 'all')
+        
+        with app.app_context():
+            # Construir query base
+            query = Surgery.query
+            
+            # Aplicar filtro de unidade se especificado
+            if unit_filter != 'all':
+                query = query.filter(Surgery.unidade == unit_filter)
+            
+            surgeries = query.all()
+            
+            # Calcular estatísticas
+            total_surgeries = len(surgeries)
+            
+            # Dados por quadrante (assumindo que temos campos q1_furos, q2_furos, etc.)
+            q1_data = []
+            q2_data = []
+            q3_data = []
+            q4_data = []
+            
+            # Extrair dados dos quadrantes se existirem
+            for surgery in surgeries:
+                # Verificar se os campos de quadrante existem
+                if hasattr(surgery, 'q1_furos') and surgery.q1_furos:
+                    q1_data.append(surgery.q1_furos)
+                if hasattr(surgery, 'q2_furos') and surgery.q2_furos:
+                    q2_data.append(surgery.q2_furos)
+                if hasattr(surgery, 'q3_furos') and surgery.q3_furos:
+                    q3_data.append(surgery.q3_furos)
+                if hasattr(surgery, 'q4_furos') and surgery.q4_furos:
+                    q4_data.append(surgery.q4_furos)
+            
+            # Calcular máximos
+            max_q1 = max(q1_data) if q1_data else 0
+            max_q2 = max(q2_data) if q2_data else 0
+            max_q3 = max(q3_data) if q3_data else 0
+            max_q4 = max(q4_data) if q4_data else 0
+            
+            # Calcular taxa de quebra (simulada - baseada na razão fios/furos)
+            breakage_rates = []
+            for i in range(1, 5):
+                furos_attr = f'q{i}_furos'
+                fios_attr = f'q{i}_fios'
+                
+                total_furos = 0
+                total_fios = 0
+                
+                for surgery in surgeries:
+                    if hasattr(surgery, furos_attr) and hasattr(surgery, fios_attr):
+                        furos = getattr(surgery, furos_attr) or 0
+                        fios = getattr(surgery, fios_attr) or 0
+                        
+                        total_furos += furos
+                        total_fios += fios
+                
+                # Taxa de quebra = (furos - fios) / furos * 100
+                if total_furos > 0:
+                    breakage_rate = ((total_furos - total_fios) / total_furos) * 100
+                    breakage_rates.append(round(max(0, breakage_rate), 2))
+                else:
+                    breakage_rates.append(0)
+            
+            # Taxa média de quebra
+            avg_breakage_rate = round(sum(breakage_rates) / 4, 2) if breakage_rates else 0
+            
+            # Dados por unidade
+            units_data = []
+            if unit_filter == 'all':
+                all_units = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília']
+                for unit in all_units:
+                    unit_surgeries = [s for s in surgeries if s.unidade == unit]
+                    
+                    # Calcular estatísticas para esta unidade
+                    unit_q1 = [getattr(s, 'q1_furos', 0) or 0 for s in unit_surgeries]
+                    unit_q2 = [getattr(s, 'q2_furos', 0) or 0 for s in unit_surgeries]
+                    unit_q3 = [getattr(s, 'q3_furos', 0) or 0 for s in unit_surgeries]
+                    unit_q4 = [getattr(s, 'q4_furos', 0) or 0 for s in unit_surgeries]
+                    
+                    # Calcular taxa de quebra da unidade
+                    unit_total_furos = sum(unit_q1 + unit_q2 + unit_q3 + unit_q4)
+                    unit_total_fios = 0
+                    for s in unit_surgeries:
+                        for i in range(1, 5):
+                            fios_attr = f'q{i}_fios'
+                            if hasattr(s, fios_attr):
+                                unit_total_fios += getattr(s, fios_attr) or 0
+                    
+                    unit_breakage = 0
+                    if unit_total_furos > 0:
+                        unit_breakage = round(((unit_total_furos - unit_total_fios) / unit_total_furos) * 100, 2)
+                    
+                    units_data.append({
+                        'name': unit,
+                        'surgeries': len(unit_surgeries),
+                        'breakage_rate': max(0, unit_breakage),
+                        'max_q1': max(unit_q1) if unit_q1 else 0,
+                        'max_q2': max(unit_q2) if unit_q2 else 0,
+                        'max_q3': max(unit_q3) if unit_q3 else 0,
+                        'max_q4': max(unit_q4) if unit_q4 else 0
+                    })
+            
+            response_data = {
+                'stats': {
+                    'total_surgeries': total_surgeries,
+                    'avg_breakage_rate': avg_breakage_rate,
+                    'max_q1': max_q1,
+                    'max_q2': max_q2,
+                    'max_q3': max_q3,
+                    'max_q4': max_q4
+                },
+                'charts': {
+                    'breakage_rates': breakage_rates,
+                    'max_holes': [max_q1, max_q2, max_q3, max_q4]
+                },
+                'units': units_data
+            }
+            
+            return jsonify(response_data)
+            
+    except Exception as e:
+        logger.error(f"Erro ao obter dados do dashboard médicos: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'error': str(e)}), 500
 
         # Adicionar novo registro
         #Necroses model needs to be defined and populated

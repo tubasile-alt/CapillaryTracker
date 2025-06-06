@@ -136,6 +136,16 @@
                         {% elif field.type == 'textarea' %}
                             <textarea name="{{ field.name }}" id="{{ field.name }}" rows="3"
                                 {% if field.required %}required{% endif %}>{{ data.get(field.name, '') }}</textarea>
+                        {% elif field.name == 'solucao_frente' %}
+                            <input type="number" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}" 
+                                step="1" min="0"
+                                pattern="[0-9]+" 
+                                oninput="validateInteger(this)"
+                                {% if field.required %}required{% endif %}>
+                            <div id="solucao_frente_error" class="error-message" style="display: none; color: red; font-size: 12px;">
+                                Por favor, insira apenas números inteiros (sem vírgulas ou decimais)
+                            </div>
                         {% else %}
                             <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}"
                                 value="{{ data.get(field.name, '') }}"
@@ -804,6 +814,23 @@
         } else {
             seringasContainer.style.display = 'block';
             comentariosContainer.style.display = 'block';
+        }
+    }
+
+    // Função para validar números inteiros
+    function validateInteger(input) {
+        const value = input.value;
+        const errorDiv = document.getElementById(input.id + '_error');
+        
+        // Verificar se contém vírgula ou ponto decimal
+        if (value.includes(',') || value.includes('.')) {
+            errorDiv.style.display = 'block';
+            input.setCustomValidity('Por favor, insira apenas números inteiros');
+            return false;
+        } else {
+            errorDiv.style.display = 'none';
+            input.setCustomValidity('');
+            return true;
         }
     }
 
