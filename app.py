@@ -1682,24 +1682,24 @@ def get_medicos_dashboard_data():
                     unit_surgeries = [s for s in surgeries if s.unidade == unit]
                     
                     if unit_surgeries:
-                        # Calcular estatísticas para esta unidade
-                        unit_q1_furos = [getattr(s, 'q1_furos', 0) or 0 for s in unit_surgeries if getattr(s, 'q1_furos', None) is not None]
-                        unit_q2_furos = [getattr(s, 'q2_furos', 0) or 0 for s in unit_surgeries if getattr(s, 'q2_furos', None) is not None]
-                        unit_q3_furos = [getattr(s, 'q3_furos', 0) or 0 for s in unit_surgeries if getattr(s, 'q3_furos', None) is not None]
-                        unit_q4_furos = [getattr(s, 'q4_furos', 0) or 0 for s in unit_surgeries if getattr(s, 'q4_furos', None) is not None]
+                        # Calcular estatísticas para esta unidade (apenas dados > 0)
+                        unit_q1_furos = [s.q1_furos for s in unit_surgeries if hasattr(s, 'q1_furos') and s.q1_furos is not None and s.q1_furos > 0]
+                        unit_q2_furos = [s.q2_furos for s in unit_surgeries if hasattr(s, 'q2_furos') and s.q2_furos is not None and s.q2_furos > 0]
+                        unit_q3_furos = [s.q3_furos for s in unit_surgeries if hasattr(s, 'q3_furos') and s.q3_furos is not None and s.q3_furos > 0]
+                        unit_q4_furos = [s.q4_furos for s in unit_surgeries if hasattr(s, 'q4_furos') and s.q4_furos is not None and s.q4_furos > 0]
                         
-                        # Calcular taxas de quebra médias por quadrante para esta unidade
-                        unit_q1_taxas = [getattr(s, 'q1_taxa_quebra', 0) or 0 for s in unit_surgeries if getattr(s, 'q1_taxa_quebra', None) is not None]
-                        unit_q2_taxas = [getattr(s, 'q2_taxa_quebra', 0) or 0 for s in unit_surgeries if getattr(s, 'q2_taxa_quebra', None) is not None]
-                        unit_q3_taxas = [getattr(s, 'q3_taxa_quebra', 0) or 0 for s in unit_surgeries if getattr(s, 'q3_taxa_quebra', None) is not None]
-                        unit_q4_taxas = [getattr(s, 'q4_taxa_quebra', 0) or 0 for s in unit_surgeries if getattr(s, 'q4_taxa_quebra', None) is not None]
+                        # Calcular taxas de quebra médias por quadrante para esta unidade (apenas dados > 0)
+                        unit_q1_taxas = [s.q1_taxa_quebra for s in unit_surgeries if hasattr(s, 'q1_taxa_quebra') and s.q1_taxa_quebra is not None and s.q1_taxa_quebra > 0]
+                        unit_q2_taxas = [s.q2_taxa_quebra for s in unit_surgeries if hasattr(s, 'q2_taxa_quebra') and s.q2_taxa_quebra is not None and s.q2_taxa_quebra > 0]
+                        unit_q3_taxas = [s.q3_taxa_quebra for s in unit_surgeries if hasattr(s, 'q3_taxa_quebra') and s.q3_taxa_quebra is not None and s.q3_taxa_quebra > 0]
+                        unit_q4_taxas = [s.q4_taxa_quebra for s in unit_surgeries if hasattr(s, 'q4_taxa_quebra') and s.q4_taxa_quebra is not None and s.q4_taxa_quebra > 0]
                         
                         # Taxa média de quebra geral da unidade
                         all_unit_taxas = unit_q1_taxas + unit_q2_taxas + unit_q3_taxas + unit_q4_taxas
                         unit_avg_breakage = round(sum(all_unit_taxas) / len(all_unit_taxas), 2) if all_unit_taxas else 0
                         
-                        # Densidade de extração da unidade
-                        unit_densidades = [getattr(s, 'densidade_extracao', 0) or 0 for s in unit_surgeries if getattr(s, 'densidade_extracao', None) is not None]
+                        # Densidade de extração da unidade (apenas dados > 0)
+                        unit_densidades = [s.densidade_extracao for s in unit_surgeries if hasattr(s, 'densidade_extracao') and s.densidade_extracao is not None and s.densidade_extracao > 0]
                         unit_avg_densidade = round(sum(unit_densidades) / len(unit_densidades), 2) if unit_densidades else 0
                         
                         # Média de furos por quadrante da unidade
