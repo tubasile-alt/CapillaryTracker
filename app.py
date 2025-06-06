@@ -1668,6 +1668,12 @@ def get_medicos_dashboard_data():
             
             avg_densidade_extracao = round(sum(densidades_extracao) / len(densidades_extracao), 2) if densidades_extracao else 0
             
+            # Calcular média de furos por quadrante global
+            avg_q1_furos = round(sum(q1_furos) / len(q1_furos), 1) if q1_furos else 0
+            avg_q2_furos = round(sum(q2_furos) / len(q2_furos), 1) if q2_furos else 0
+            avg_q3_furos = round(sum(q3_furos) / len(q3_furos), 1) if q3_furos else 0
+            avg_q4_furos = round(sum(q4_furos) / len(q4_furos), 1) if q4_furos else 0
+            
             # Dados por unidade
             units_data = []
             if unit_filter == 'all':
