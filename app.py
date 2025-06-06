@@ -1692,10 +1692,15 @@ def get_medicos_dashboard_data():
                         all_unit_taxas = unit_q1_taxas + unit_q2_taxas + unit_q3_taxas + unit_q4_taxas
                         unit_avg_breakage = round(sum(all_unit_taxas) / len(all_unit_taxas), 2) if all_unit_taxas else 0
                         
+                        # Densidade de extração da unidade
+                        unit_densidades = [getattr(s, 'densidade_extracao', 0) or 0 for s in unit_surgeries if getattr(s, 'densidade_extracao', None) is not None]
+                        unit_avg_densidade = round(sum(unit_densidades) / len(unit_densidades), 2) if unit_densidades else 0
+                        
                         units_data.append({
                             'name': unit,
                             'surgeries': len(unit_surgeries),
                             'breakage_rate': unit_avg_breakage,
+                            'densidade_extracao': unit_avg_densidade,
                             'max_q1': max(unit_q1_furos) if unit_q1_furos else 0,
                             'max_q2': max(unit_q2_furos) if unit_q2_furos else 0,
                             'max_q3': max(unit_q3_furos) if unit_q3_furos else 0,
@@ -1716,6 +1721,7 @@ def get_medicos_dashboard_data():
                 'stats': {
                     'total_surgeries': total_surgeries,
                     'avg_breakage_rate': avg_breakage_rate,
+                    'avg_densidade_extracao': avg_densidade_extracao,
                     'max_q1': max_q1,
                     'max_q2': max_q2,
                     'max_q3': max_q3,

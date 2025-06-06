@@ -179,6 +179,11 @@
             </div>
             
             <div class="stat-card">
+                <h3>Densidade de Extração</h3>
+                <div class="stat-value" id="avgDensidadeExtracao">-</div>
+            </div>
+            
+            <div class="stat-card">
                 <h3>Máx. Furos Q1</h3>
                 <div class="stat-value" id="maxQ1">-</div>
             </div>
@@ -219,6 +224,7 @@
                                 <th>Unidade</th>
                                 <th>Cirurgias</th>
                                 <th>Taxa Quebra (%)</th>
+                                <th>Dens. Extração</th>
                                 <th>Máx Q1</th>
                                 <th>Máx Q2</th>
                                 <th>Máx Q3</th>
@@ -257,6 +263,7 @@
         function updateStats(stats) {
             document.getElementById('totalSurgeries').textContent = stats.total_surgeries;
             document.getElementById('avgBreakageRate').textContent = stats.avg_breakage_rate + '%';
+            document.getElementById('avgDensidadeExtracao').textContent = stats.avg_densidade_extracao;
             document.getElementById('maxQ1').textContent = stats.max_q1;
             document.getElementById('maxQ2').textContent = stats.max_q2;
             document.getElementById('maxQ3').textContent = stats.max_q3;
@@ -356,6 +363,7 @@
                     <td>${unit.name}</td>
                     <td>${unit.surgeries}</td>
                     <td>${unit.breakage_rate}%</td>
+                    <td>${unit.densidade_extracao || '-'}</td>
                     <td>${unit.max_q1}</td>
                     <td>${unit.max_q2}</td>
                     <td>${unit.max_q3}</td>
