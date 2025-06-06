@@ -1362,7 +1362,7 @@ def download_excel():
             surgeries = db.session.query(Surgery).order_by(Surgery.data.desc()).all()
             logger.info(f"Found {len(surgeries)} records")
 
-            # Convert to DataFrame
+            # Convert to DataFrame with all fields
             data = []
             for surgery in surgeries:
                 data.append({
@@ -1379,7 +1379,42 @@ def download_excel():
                     'coroa': surgery.coroa,
                     'scalpe': surgery.scalpe,
                     'peninsula_direita': surgery.peninsula_direita,
-                    'peninsula_esquerda': surgery.peninsula_esquerda
+                    'peninsula_esquerda': surgery.peninsula_esquerda,
+                    # Campos da segunda página - Informações adicionais
+                    'infiltracao': getattr(surgery, 'infiltracao', ''),
+                    'tadalafila': getattr(surgery, 'tadalafila', ''),
+                    'bloqueio_seringas': getattr(surgery, 'bloqueio_seringas', ''),
+                    'fonte_1': getattr(surgery, 'fonte_1', ''),
+                    'fonte_2': getattr(surgery, 'fonte_2', ''),
+                    'fonte_3': getattr(surgery, 'fonte_3', ''),
+                    'fonte_4': getattr(surgery, 'fonte_4', ''),
+                    'fonte_5': getattr(surgery, 'fonte_5', ''),
+                    'pelos_corporais': getattr(surgery, 'pelos_corporais', ''),
+                    'tecnica': getattr(surgery, 'tecnica', ''),
+                    'solucao_frente': getattr(surgery, 'solucao_frente', ''),
+                    # Dados dos quadrantes
+                    'q1_area': getattr(surgery, 'q1_area', 0),
+                    'q1_furos': getattr(surgery, 'q1_furos', 0),
+                    'q1_fios': getattr(surgery, 'q1_fios', 0),
+                    'q1_densidade': getattr(surgery, 'q1_densidade', 0),
+                    'q1_taxa_quebra': getattr(surgery, 'q1_taxa_quebra', 0),
+                    'q2_area': getattr(surgery, 'q2_area', 0),
+                    'q2_furos': getattr(surgery, 'q2_furos', 0),
+                    'q2_fios': getattr(surgery, 'q2_fios', 0),
+                    'q2_densidade': getattr(surgery, 'q2_densidade', 0),
+                    'q2_taxa_quebra': getattr(surgery, 'q2_taxa_quebra', 0),
+                    'q3_area': getattr(surgery, 'q3_area', 0),
+                    'q3_furos': getattr(surgery, 'q3_furos', 0),
+                    'q3_fios': getattr(surgery, 'q3_fios', 0),
+                    'q3_densidade': getattr(surgery, 'q3_densidade', 0),
+                    'q3_taxa_quebra': getattr(surgery, 'q3_taxa_quebra', 0),
+                    'q4_area': getattr(surgery, 'q4_area', 0),
+                    'q4_furos': getattr(surgery, 'q4_furos', 0),
+                    'q4_fios': getattr(surgery, 'q4_fios', 0),
+                    'q4_densidade': getattr(surgery, 'q4_densidade', 0),
+                    'q4_taxa_quebra': getattr(surgery, 'q4_taxa_quebra', 0),
+                    'densidade_extracao': getattr(surgery, 'densidade_extracao', 0),
+                    'created_at': getattr(surgery, 'created_at', '')
                 })
 
             df = pd.DataFrame(data)
