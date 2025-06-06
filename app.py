@@ -1590,56 +1590,53 @@ def get_medicos_dashboard_data():
             # Calcular estatísticas
             total_surgeries = len(surgeries)
             
-            # Dados por quadrante (assumindo que temos campos q1_furos, q2_furos, etc.)
-            q1_data = []
-            q2_data = []
-            q3_data = []
-            q4_data = []
+            # Coletar dados de furos e taxa de quebra por quadrante
+            q1_furos = []
+            q2_furos = []
+            q3_furos = []
+            q4_furos = []
+            q1_taxas = []
+            q2_taxas = []
+            q3_taxas = []
+            q4_taxas = []
             
-            # Extrair dados dos quadrantes se existirem
+            # Extrair dados reais dos quadrantes
             for surgery in surgeries:
-                # Verificar se os campos de quadrante existem
-                if hasattr(surgery, 'q1_furos') and surgery.q1_furos:
-                    q1_data.append(surgery.q1_furos)
-                if hasattr(surgery, 'q2_furos') and surgery.q2_furos:
-                    q2_data.append(surgery.q2_furos)
-                if hasattr(surgery, 'q3_furos') and surgery.q3_furos:
-                    q3_data.append(surgery.q3_furos)
-                if hasattr(surgery, 'q4_furos') and surgery.q4_furos:
-                    q4_data.append(surgery.q4_furos)
+                if hasattr(surgery, 'q1_furos') and surgery.q1_furos is not None:
+                    q1_furos.append(surgery.q1_furos)
+                if hasattr(surgery, 'q2_furos') and surgery.q2_furos is not None:
+                    q2_furos.append(surgery.q2_furos)
+                if hasattr(surgery, 'q3_furos') and surgery.q3_furos is not None:
+                    q3_furos.append(surgery.q3_furos)
+                if hasattr(surgery, 'q4_furos') and surgery.q4_furos is not None:
+                    q4_furos.append(surgery.q4_furos)
+                    
+                if hasattr(surgery, 'q1_taxa_quebra') and surgery.q1_taxa_quebra is not None:
+                    q1_taxas.append(surgery.q1_taxa_quebra)
+                if hasattr(surgery, 'q2_taxa_quebra') and surgery.q2_taxa_quebra is not None:
+                    q2_taxas.append(surgery.q2_taxa_quebra)
+                if hasattr(surgery, 'q3_taxa_quebra') and surgery.q3_taxa_quebra is not None:
+                    q3_taxas.append(surgery.q3_taxa_quebra)
+                if hasattr(surgery, 'q4_taxa_quebra') and surgery.q4_taxa_quebra is not None:
+                    q4_taxas.append(surgery.q4_taxa_quebra)
             
-            # Calcular máximos
-            max_q1 = max(q1_data) if q1_data else 0
-            max_q2 = max(q2_data) if q2_data else 0
-            max_q3 = max(q3_data) if q3_data else 0
-            max_q4 = max(q4_data) if q4_data else 0
+            # Calcular máximos de furos por quadrante
+            max_q1 = max(q1_furos) if q1_furos else 0
+            max_q2 = max(q2_furos) if q2_furos else 0
+            max_q3 = max(q3_furos) if q3_furos else 0
+            max_q4 = max(q4_furos) if q4_furos else 0
             
-            # Calcular taxa de quebra (simulada - baseada na razão fios/furos)
-            breakage_rates = []
-            for i in range(1, 5):
-                furos_attr = f'q{i}_furos'
-                fios_attr = f'q{i}_fios'
-                
-                total_furos = 0
-                total_fios = 0
-                
-                for surgery in surgeries:
-                    if hasattr(surgery, furos_attr) and hasattr(surgery, fios_attr):
-                        furos = getattr(surgery, furos_attr) or 0
-                        fios = getattr(surgery, fios_attr) or 0
-                        
-                        total_furos += furos
-                        total_fios += fios
-                
-                # Taxa de quebra = (furos - fios) / furos * 100
-                if total_furos > 0:
-                    breakage_rate = ((total_furos - total_fios) / total_furos) * 100
-                    breakage_rates.append(round(max(0, breakage_rate), 2))
-                else:
-                    breakage_rates.append(0)
+            # Calcular taxa média de quebra por quadrante
+            avg_q1_taxa = round(sum(q1_taxas) / len(q1_taxas), 2) if q1_taxas else 0
+            avg_q2_taxa = round(sum(q2_taxas) / len(q2_taxas), 2) if q2_taxas else 0
+            avg_q3_taxa = round(sum(q3_taxas) / len(q3_taxas), 2) if q3_taxas else 0
+            avg_q4_taxa = round(sum(q4_taxas) / len(q4_taxas), 2) if q4_taxas else 0
             
-            # Taxa média de quebra
-            avg_breakage_rate = round(sum(breakage_rates) / 4, 2) if breakage_rates else 0
+            breakage_rates = [avg_q1_taxa, avg_q2_taxa, avg_q3_taxa, avg_q4_taxa]
+            
+            # Taxa média geral de quebra
+            all_taxas = q1_taxas + q2_taxas + q3_taxas + q4_taxas
+            avg_breakage_rate = round(sum(all_taxas) / len(all_taxas), 2) if all_taxas else 0
             
             # Dados por unidade
             units_data = []
