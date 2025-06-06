@@ -1645,34 +1645,42 @@ def get_medicos_dashboard_data():
                 for unit in all_units:
                     unit_surgeries = [s for s in surgeries if s.unidade == unit]
                     
-                    # Calcular estatísticas para esta unidade
-                    unit_q1 = [getattr(s, 'q1_furos', 0) or 0 for s in unit_surgeries]
-                    unit_q2 = [getattr(s, 'q2_furos', 0) or 0 for s in unit_surgeries]
-                    unit_q3 = [getattr(s, 'q3_furos', 0) or 0 for s in unit_surgeries]
-                    unit_q4 = [getattr(s, 'q4_furos', 0) or 0 for s in unit_surgeries]
-                    
-                    # Calcular taxa de quebra da unidade
-                    unit_total_furos = sum(unit_q1 + unit_q2 + unit_q3 + unit_q4)
-                    unit_total_fios = 0
-                    for s in unit_surgeries:
-                        for i in range(1, 5):
-                            fios_attr = f'q{i}_fios'
-                            if hasattr(s, fios_attr):
-                                unit_total_fios += getattr(s, fios_attr) or 0
-                    
-                    unit_breakage = 0
-                    if unit_total_furos > 0:
-                        unit_breakage = round(((unit_total_furos - unit_total_fios) / unit_total_furos) * 100, 2)
-                    
-                    units_data.append({
-                        'name': unit,
-                        'surgeries': len(unit_surgeries),
-                        'breakage_rate': max(0, unit_breakage),
-                        'max_q1': max(unit_q1) if unit_q1 else 0,
-                        'max_q2': max(unit_q2) if unit_q2 else 0,
-                        'max_q3': max(unit_q3) if unit_q3 else 0,
-                        'max_q4': max(unit_q4) if unit_q4 else 0
-                    })
+                    if unit_surgeries:
+                        # Calcular estatísticas para esta unidade
+                        unit_q1_furos = [getattr(s, 'q1_furos', 0) or 0 for s in unit_surgeries if getattr(s, 'q1_furos', None) is not None]
+                        unit_q2_furos = [getattr(s, 'q2_furos', 0) or 0 for s in unit_surgeries if getattr(s, 'q2_furos', None) is not None]
+                        unit_q3_furos = [getattr(s, 'q3_furos', 0) or 0 for s in unit_surgeries if getattr(s, 'q3_furos', None) is not None]
+                        unit_q4_furos = [getattr(s, 'q4_furos', 0) or 0 for s in unit_surgeries if getattr(s, 'q4_furos', None) is not None]
+                        
+                        # Calcular taxas de quebra médias por quadrante para esta unidade
+                        unit_q1_taxas = [getattr(s, 'q1_taxa_quebra', 0) or 0 for s in unit_surgeries if getattr(s, 'q1_taxa_quebra', None) is not None]
+                        unit_q2_taxas = [getattr(s, 'q2_taxa_quebra', 0) or 0 for s in unit_surgeries if getattr(s, 'q2_taxa_quebra', None) is not None]
+                        unit_q3_taxas = [getattr(s, 'q3_taxa_quebra', 0) or 0 for s in unit_surgeries if getattr(s, 'q3_taxa_quebra', None) is not None]
+                        unit_q4_taxas = [getattr(s, 'q4_taxa_quebra', 0) or 0 for s in unit_surgeries if getattr(s, 'q4_taxa_quebra', None) is not None]
+                        
+                        # Taxa média de quebra geral da unidade
+                        all_unit_taxas = unit_q1_taxas + unit_q2_taxas + unit_q3_taxas + unit_q4_taxas
+                        unit_avg_breakage = round(sum(all_unit_taxas) / len(all_unit_taxas), 2) if all_unit_taxas else 0
+                        
+                        units_data.append({
+                            'name': unit,
+                            'surgeries': len(unit_surgeries),
+                            'breakage_rate': unit_avg_breakage,
+                            'max_q1': max(unit_q1_furos) if unit_q1_furos else 0,
+                            'max_q2': max(unit_q2_furos) if unit_q2_furos else 0,
+                            'max_q3': max(unit_q3_furos) if unit_q3_furos else 0,
+                            'max_q4': max(unit_q4_furos) if unit_q4_furos else 0
+                        })
+                    else:
+                        units_data.append({
+                            'name': unit,
+                            'surgeries': 0,
+                            'breakage_rate': 0,
+                            'max_q1': 0,
+                            'max_q2': 0,
+                            'max_q3': 0,
+                            'max_q4': 0
+                        })
             
             response_data = {
                 'stats': {
