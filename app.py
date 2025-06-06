@@ -111,6 +111,7 @@ class Surgery(db.Model):
     q4_fios = db.Column(db.Integer)
     q4_densidade = db.Column(db.Float)
     q4_taxa_quebra = db.Column(db.Float)
+    densidade_extracao = db.Column(db.Float)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class UnitProgress(db.Model):
@@ -1658,6 +1659,14 @@ def get_medicos_dashboard_data():
             # Taxa média geral de quebra
             all_taxas = q1_taxas + q2_taxas + q3_taxas + q4_taxas
             avg_breakage_rate = round(sum(all_taxas) / len(all_taxas), 2) if all_taxas else 0
+            
+            # Coletar dados de densidade de extração
+            densidades_extracao = []
+            for surgery in surgeries:
+                if hasattr(surgery, 'densidade_extracao') and surgery.densidade_extracao is not None:
+                    densidades_extracao.append(surgery.densidade_extracao)
+            
+            avg_densidade_extracao = round(sum(densidades_extracao) / len(densidades_extracao), 2) if densidades_extracao else 0
             
             # Dados por unidade
             units_data = []
