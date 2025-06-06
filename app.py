@@ -1622,24 +1622,24 @@ def get_medicos_dashboard_data():
             q3_taxas = []
             q4_taxas = []
             
-            # Extrair dados reais dos quadrantes
+            # Extrair dados reais dos quadrantes (apenas valores > 0)
             for surgery in surgeries:
-                if hasattr(surgery, 'q1_furos') and surgery.q1_furos is not None:
+                if hasattr(surgery, 'q1_furos') and surgery.q1_furos is not None and surgery.q1_furos > 0:
                     q1_furos.append(surgery.q1_furos)
-                if hasattr(surgery, 'q2_furos') and surgery.q2_furos is not None:
+                if hasattr(surgery, 'q2_furos') and surgery.q2_furos is not None and surgery.q2_furos > 0:
                     q2_furos.append(surgery.q2_furos)
-                if hasattr(surgery, 'q3_furos') and surgery.q3_furos is not None:
+                if hasattr(surgery, 'q3_furos') and surgery.q3_furos is not None and surgery.q3_furos > 0:
                     q3_furos.append(surgery.q3_furos)
-                if hasattr(surgery, 'q4_furos') and surgery.q4_furos is not None:
+                if hasattr(surgery, 'q4_furos') and surgery.q4_furos is not None and surgery.q4_furos > 0:
                     q4_furos.append(surgery.q4_furos)
                     
-                if hasattr(surgery, 'q1_taxa_quebra') and surgery.q1_taxa_quebra is not None:
+                if hasattr(surgery, 'q1_taxa_quebra') and surgery.q1_taxa_quebra is not None and surgery.q1_taxa_quebra > 0:
                     q1_taxas.append(surgery.q1_taxa_quebra)
-                if hasattr(surgery, 'q2_taxa_quebra') and surgery.q2_taxa_quebra is not None:
+                if hasattr(surgery, 'q2_taxa_quebra') and surgery.q2_taxa_quebra is not None and surgery.q2_taxa_quebra > 0:
                     q2_taxas.append(surgery.q2_taxa_quebra)
-                if hasattr(surgery, 'q3_taxa_quebra') and surgery.q3_taxa_quebra is not None:
+                if hasattr(surgery, 'q3_taxa_quebra') and surgery.q3_taxa_quebra is not None and surgery.q3_taxa_quebra > 0:
                     q3_taxas.append(surgery.q3_taxa_quebra)
-                if hasattr(surgery, 'q4_taxa_quebra') and surgery.q4_taxa_quebra is not None:
+                if hasattr(surgery, 'q4_taxa_quebra') and surgery.q4_taxa_quebra is not None and surgery.q4_taxa_quebra > 0:
                     q4_taxas.append(surgery.q4_taxa_quebra)
             
             # Calcular máximos de furos por quadrante
@@ -1660,10 +1660,10 @@ def get_medicos_dashboard_data():
             all_taxas = q1_taxas + q2_taxas + q3_taxas + q4_taxas
             avg_breakage_rate = round(sum(all_taxas) / len(all_taxas), 2) if all_taxas else 0
             
-            # Coletar dados de densidade de extração
+            # Coletar dados de densidade de extração (apenas valores > 0)
             densidades_extracao = []
             for surgery in surgeries:
-                if hasattr(surgery, 'densidade_extracao') and surgery.densidade_extracao is not None:
+                if hasattr(surgery, 'densidade_extracao') and surgery.densidade_extracao is not None and surgery.densidade_extracao > 0:
                     densidades_extracao.append(surgery.densidade_extracao)
             
             avg_densidade_extracao = round(sum(densidades_extracao) / len(densidades_extracao), 2) if densidades_extracao else 0
