@@ -112,6 +112,18 @@ class Surgery(db.Model):
     q4_densidade = db.Column(db.Float)
     q4_taxa_quebra = db.Column(db.Float)
     densidade_extracao = db.Column(db.Float)
+    # Campos da segunda página do formulário
+    infiltracao = db.Column(db.String(255))
+    tadalafila = db.Column(db.String(255))
+    bloqueio_seringas = db.Column(db.String(255))
+    fonte_1 = db.Column(db.String(255))
+    fonte_2 = db.Column(db.String(255))
+    fonte_3 = db.Column(db.String(255))
+    fonte_4 = db.Column(db.String(255))
+    fonte_5 = db.Column(db.String(255))
+    pelos_corporais = db.Column(db.String(255))
+    tecnica = db.Column(db.String(255))
+    solucao_frente = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class UnitProgress(db.Model):
@@ -393,7 +405,41 @@ def save_to_excel(data):
                 coroa=int(data.get('Coroa', data.get('coroa', 0)) or 0),
                 scalpe=int(data.get('Scalpe', data.get('scalpe', 0)) or 0),
                 peninsula_direita=int(data.get('Península Direita', data.get('peninsula_direita', 0)) or 0),
-                peninsula_esquerda=int(data.get('Península Esquerda', data.get('peninsula_esquerda', 0)) or 0)
+                peninsula_esquerda=int(data.get('Península Esquerda', data.get('peninsula_esquerda', 0)) or 0),
+                # Campos da segunda página do formulário
+                infiltracao=str(data.get('Infiltração', data.get('infiltracao', '')) or ''),
+                tadalafila=str(data.get('Tadalafila', data.get('tadalafila', '')) or ''),
+                bloqueio_seringas=str(data.get('Bloqueio de Seringas', data.get('bloqueio_seringas', '')) or ''),
+                fonte_1=str(data.get('Fonte 1', data.get('fonte_1', '')) or ''),
+                fonte_2=str(data.get('Fonte 2', data.get('fonte_2', '')) or ''),
+                fonte_3=str(data.get('Fonte 3', data.get('fonte_3', '')) or ''),
+                fonte_4=str(data.get('Fonte 4', data.get('fonte_4', '')) or ''),
+                fonte_5=str(data.get('Fonte 5', data.get('fonte_5', '')) or ''),
+                pelos_corporais=str(data.get('Pelos Corporais', data.get('pelos_corporais', '')) or ''),
+                tecnica=str(data.get('Técnica', data.get('tecnica', '')) or ''),
+                solucao_frente=int(data.get('Solução Frente (ml)', data.get('solucao_frente', 0)) or 0),
+                # Dados dos quadrantes
+                q1_area=float(data.get('Q1 Área', data.get('q1_area', 0)) or 0),
+                q1_furos=int(data.get('Q1 Furos', data.get('q1_furos', 0)) or 0),
+                q1_fios=int(data.get('Q1 Fios', data.get('q1_fios', 0)) or 0),
+                q1_densidade=float(data.get('Q1 Densidade', data.get('q1_densidade', 0)) or 0),
+                q1_taxa_quebra=float(data.get('Q1 Taxa Quebra', data.get('q1_taxa_quebra', 0)) or 0),
+                q2_area=float(data.get('Q2 Área', data.get('q2_area', 0)) or 0),
+                q2_furos=int(data.get('Q2 Furos', data.get('q2_furos', 0)) or 0),
+                q2_fios=int(data.get('Q2 Fios', data.get('q2_fios', 0)) or 0),
+                q2_densidade=float(data.get('Q2 Densidade', data.get('q2_densidade', 0)) or 0),
+                q2_taxa_quebra=float(data.get('Q2 Taxa Quebra', data.get('q2_taxa_quebra', 0)) or 0),
+                q3_area=float(data.get('Q3 Área', data.get('q3_area', 0)) or 0),
+                q3_furos=int(data.get('Q3 Furos', data.get('q3_furos', 0)) or 0),
+                q3_fios=int(data.get('Q3 Fios', data.get('q3_fios', 0)) or 0),
+                q3_densidade=float(data.get('Q3 Densidade', data.get('q3_densidade', 0)) or 0),
+                q3_taxa_quebra=float(data.get('Q3 Taxa Quebra', data.get('q3_taxa_quebra', 0)) or 0),
+                q4_area=float(data.get('Q4 Área', data.get('q4_area', 0)) or 0),
+                q4_furos=int(data.get('Q4 Furos', data.get('q4_furos', 0)) or 0),
+                q4_fios=int(data.get('Q4 Fios', data.get('q4_fios', 0)) or 0),
+                q4_densidade=float(data.get('Q4 Densidade', data.get('q4_densidade', 0)) or 0),
+                q4_taxa_quebra=float(data.get('Q4 Taxa Quebra', data.get('q4_taxa_quebra', 0)) or 0),
+                densidade_extracao=float(data.get('Densidade Extração', data.get('densidade_extracao', 0)) or 0)
             )
 
             logger.info("Surgery object created, committing to database...")
