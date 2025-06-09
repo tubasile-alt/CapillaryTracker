@@ -1848,6 +1848,10 @@ def get_medicos_dashboard_data():
                             'densidade_extracao': unit_avg_densidade,
                             'max_q1': max(unit_q1_furos) if unit_q1_furos else 0,
                             'max_q2': max(unit_q2_furos) if unit_q2_furos else 0,
+                            'avg_q1_taxa': avg_q1_taxa_unit,
+                            'avg_q2_taxa': avg_q2_taxa_unit,
+                            'avg_q3_taxa': avg_q3_taxa_unit,
+                            'avg_q4_taxa': avg_q4_taxa_unit,
                             'max_q3': max(unit_q3_furos) if unit_q3_furos else 0,
                             'max_q4': max(unit_q4_furos) if unit_q4_furos else 0,
                             'avg_q1': avg_q1_furos,
@@ -1899,7 +1903,8 @@ def get_medicos_dashboard_data():
                     'avg_holes': [avg_q1_furos, avg_q2_furos, avg_q3_furos, avg_q4_furos],
                     'avg_breakage_by_quadrant': [avg_q1_taxa, avg_q2_taxa, avg_q3_taxa, avg_q4_taxa],
                     'unit_names': [unit['name'] for unit in units_data],
-                    'unit_breakage_rates': [unit['breakage_rate']/100 for unit in units_data]
+                    'unit_breakage_rates': [unit['breakage_rate']/100 for unit in units_data],
+                    'quadrant_breakage_rates': [avg_q1_taxa, avg_q2_taxa, avg_q3_taxa, avg_q4_taxa]
                 },
                 'units': units_data
             }

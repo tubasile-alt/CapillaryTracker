@@ -201,8 +201,8 @@
             </div>
             
             <div class="chart-container">
-                <h3>Taxa Média de Quebra por Unidade</h3>
-                <canvas id="unitBreakageChart" width="400" height="200"></canvas>
+                <h3>Taxa Média de Quebra por Quadrante</h3>
+                <canvas id="quadrantBreakageChart" width="400" height="200"></canvas>
             </div>
             
             <div class="chart-container">
@@ -233,7 +233,7 @@
     </div>
 
     <script>
-        let breakageChart, maxHolesChart, avgHolesChart, unitBreakageChart;
+        let breakageChart, maxHolesChart, avgHolesChart, quadrantBreakageChart;
         
         function updateDashboard() {
             const unit = document.getElementById('filterUnit').value;
@@ -388,18 +388,18 @@
                 }
             });
             
-            // Gráfico de Taxa de Quebra por Unidade
-            if (unitBreakageChart) unitBreakageChart.destroy();
+            // Gráfico de Taxa de Quebra por Quadrante
+            if (quadrantBreakageChart) quadrantBreakageChart.destroy();
             
-            const ctx4 = document.getElementById('unitBreakageChart').getContext('2d');
-            unitBreakageChart = new Chart(ctx4, {
+            const ctx4 = document.getElementById('quadrantBreakageChart').getContext('2d');
+            quadrantBreakageChart = new Chart(ctx4, {
                 type: 'bar',
                 data: {
-                    labels: chartData.unit_names || ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília'],
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
                     datasets: [{
                         label: 'Taxa Média de Quebra (%)',
-                        data: chartData.unit_breakage_rates || [0, 0, 0, 0, 0],
-                        backgroundColor: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'],
+                        data: chartData.quadrant_breakage_rates || [0, 0, 0, 0],
+                        backgroundColor: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'],
                         borderWidth: 1
                     }]
                 },
@@ -408,11 +408,10 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            max: 1,
                             ticks: {
                                 color: 'white',
                                 callback: function(value) {
-                                    return (value * 100).toFixed(2) + '%';
+                                    return value.toFixed(2) + '%';
                                 }
                             }
                         },
