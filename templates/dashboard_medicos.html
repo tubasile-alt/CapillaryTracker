@@ -254,16 +254,6 @@
             document.getElementById('totalSurgeries').textContent = stats.total_surgeries;
             document.getElementById('avgBreakageRate').textContent = stats.avg_breakage_rate + '%';
             document.getElementById('avgDensidadeExtracao').textContent = stats.avg_densidade_extracao;
-            document.getElementById('maxQ1').textContent = stats.max_q1;
-            document.getElementById('maxQ2').textContent = stats.max_q2;
-            document.getElementById('maxQ3').textContent = stats.max_q3;
-            document.getElementById('maxQ4').textContent = stats.max_q4;
-            
-            // Atualizar taxas de quebra por quadrante
-            document.getElementById('avgTaxaQ1').textContent = stats.avg_q1_taxa + '%';
-            document.getElementById('avgTaxaQ2').textContent = stats.avg_q2_taxa + '%';
-            document.getElementById('avgTaxaQ3').textContent = stats.avg_q3_taxa + '%';
-            document.getElementById('avgTaxaQ4').textContent = stats.avg_q4_taxa + '%';
         }
         
         function updateCharts(chartData) {
