@@ -1835,6 +1835,12 @@ def get_medicos_dashboard_data():
                         avg_q3_furos = round(sum(unit_q3_furos) / len(unit_q3_furos), 1) if unit_q3_furos else 0
                         avg_q4_furos = round(sum(unit_q4_furos) / len(unit_q4_furos), 1) if unit_q4_furos else 0
                         
+                        # Taxa média de quebra por quadrante da unidade
+                        avg_q1_taxa_unit = round(sum(unit_q1_taxas) / len(unit_q1_taxas), 2) if unit_q1_taxas else 0
+                        avg_q2_taxa_unit = round(sum(unit_q2_taxas) / len(unit_q2_taxas), 2) if unit_q2_taxas else 0
+                        avg_q3_taxa_unit = round(sum(unit_q3_taxas) / len(unit_q3_taxas), 2) if unit_q3_taxas else 0
+                        avg_q4_taxa_unit = round(sum(unit_q4_taxas) / len(unit_q4_taxas), 2) if unit_q4_taxas else 0
+                        
                         units_data.append({
                             'name': unit,
                             'surgeries': len(unit_surgeries),
@@ -1847,7 +1853,11 @@ def get_medicos_dashboard_data():
                             'avg_q1': avg_q1_furos,
                             'avg_q2': avg_q2_furos,
                             'avg_q3': avg_q3_furos,
-                            'avg_q4': avg_q4_furos
+                            'avg_q4': avg_q4_furos,
+                            'avg_q1_taxa': avg_q1_taxa_unit,
+                            'avg_q2_taxa': avg_q2_taxa_unit,
+                            'avg_q3_taxa': avg_q3_taxa_unit,
+                            'avg_q4_taxa': avg_q4_taxa_unit
                         })
                     else:
                         units_data.append({
@@ -1862,7 +1872,11 @@ def get_medicos_dashboard_data():
                             'avg_q1': 0,
                             'avg_q2': 0,
                             'avg_q3': 0,
-                            'avg_q4': 0
+                            'avg_q4': 0,
+                            'avg_q1_taxa': 0,
+                            'avg_q2_taxa': 0,
+                            'avg_q3_taxa': 0,
+                            'avg_q4_taxa': 0
                         })
             
             response_data = {
@@ -1873,12 +1887,17 @@ def get_medicos_dashboard_data():
                     'max_q1': max_q1,
                     'max_q2': max_q2,
                     'max_q3': max_q3,
-                    'max_q4': max_q4
+                    'max_q4': max_q4,
+                    'avg_q1_taxa': avg_q1_taxa,
+                    'avg_q2_taxa': avg_q2_taxa,
+                    'avg_q3_taxa': avg_q3_taxa,
+                    'avg_q4_taxa': avg_q4_taxa
                 },
                 'charts': {
                     'breakage_rates': breakage_rates,
                     'max_holes': [max_q1, max_q2, max_q3, max_q4],
-                    'avg_holes': [avg_q1_furos, avg_q2_furos, avg_q3_furos, avg_q4_furos]
+                    'avg_holes': [avg_q1_furos, avg_q2_furos, avg_q3_furos, avg_q4_furos],
+                    'avg_breakage_by_quadrant': [avg_q1_taxa, avg_q2_taxa, avg_q3_taxa, avg_q4_taxa]
                 },
                 'units': units_data
             }
