@@ -1760,13 +1760,13 @@ def get_medicos_dashboard_data():
                 if hasattr(surgery, 'q4_furos') and surgery.q4_furos is not None and surgery.q4_furos > 0:
                     q4_furos.append(surgery.q4_furos)
                     
-                if hasattr(surgery, 'q1_taxa_quebra') and surgery.q1_taxa_quebra is not None and surgery.q1_taxa_quebra > 0:
+                if hasattr(surgery, 'q1_taxa_quebra') and surgery.q1_taxa_quebra is not None and surgery.q1_taxa_quebra >= 0:
                     q1_taxas.append(surgery.q1_taxa_quebra)
-                if hasattr(surgery, 'q2_taxa_quebra') and surgery.q2_taxa_quebra is not None and surgery.q2_taxa_quebra > 0:
+                if hasattr(surgery, 'q2_taxa_quebra') and surgery.q2_taxa_quebra is not None and surgery.q2_taxa_quebra >= 0:
                     q2_taxas.append(surgery.q2_taxa_quebra)
-                if hasattr(surgery, 'q3_taxa_quebra') and surgery.q3_taxa_quebra is not None and surgery.q3_taxa_quebra > 0:
+                if hasattr(surgery, 'q3_taxa_quebra') and surgery.q3_taxa_quebra is not None and surgery.q3_taxa_quebra >= 0:
                     q3_taxas.append(surgery.q3_taxa_quebra)
-                if hasattr(surgery, 'q4_taxa_quebra') and surgery.q4_taxa_quebra is not None and surgery.q4_taxa_quebra > 0:
+                if hasattr(surgery, 'q4_taxa_quebra') and surgery.q4_taxa_quebra is not None and surgery.q4_taxa_quebra >= 0:
                     q4_taxas.append(surgery.q4_taxa_quebra)
             
             # Calcular máximos de furos por quadrante
@@ -1815,11 +1815,11 @@ def get_medicos_dashboard_data():
                         unit_q3_furos = [s.q3_furos for s in unit_surgeries if hasattr(s, 'q3_furos') and s.q3_furos is not None and s.q3_furos > 0]
                         unit_q4_furos = [s.q4_furos for s in unit_surgeries if hasattr(s, 'q4_furos') and s.q4_furos is not None and s.q4_furos > 0]
                         
-                        # Calcular taxas de quebra médias por quadrante para esta unidade (apenas dados > 0)
-                        unit_q1_taxas = [s.q1_taxa_quebra for s in unit_surgeries if hasattr(s, 'q1_taxa_quebra') and s.q1_taxa_quebra is not None and s.q1_taxa_quebra > 0]
-                        unit_q2_taxas = [s.q2_taxa_quebra for s in unit_surgeries if hasattr(s, 'q2_taxa_quebra') and s.q2_taxa_quebra is not None and s.q2_taxa_quebra > 0]
-                        unit_q3_taxas = [s.q3_taxa_quebra for s in unit_surgeries if hasattr(s, 'q3_taxa_quebra') and s.q3_taxa_quebra is not None and s.q3_taxa_quebra > 0]
-                        unit_q4_taxas = [s.q4_taxa_quebra for s in unit_surgeries if hasattr(s, 'q4_taxa_quebra') and s.q4_taxa_quebra is not None and s.q4_taxa_quebra > 0]
+                        # Calcular taxas de quebra médias por quadrante para esta unidade (dados >= 0)
+                        unit_q1_taxas = [s.q1_taxa_quebra for s in unit_surgeries if hasattr(s, 'q1_taxa_quebra') and s.q1_taxa_quebra is not None and s.q1_taxa_quebra >= 0]
+                        unit_q2_taxas = [s.q2_taxa_quebra for s in unit_surgeries if hasattr(s, 'q2_taxa_quebra') and s.q2_taxa_quebra is not None and s.q2_taxa_quebra >= 0]
+                        unit_q3_taxas = [s.q3_taxa_quebra for s in unit_surgeries if hasattr(s, 'q3_taxa_quebra') and s.q3_taxa_quebra is not None and s.q3_taxa_quebra >= 0]
+                        unit_q4_taxas = [s.q4_taxa_quebra for s in unit_surgeries if hasattr(s, 'q4_taxa_quebra') and s.q4_taxa_quebra is not None and s.q4_taxa_quebra >= 0]
                         
                         # Taxa média de quebra geral da unidade
                         all_unit_taxas = unit_q1_taxas + unit_q2_taxas + unit_q3_taxas + unit_q4_taxas
