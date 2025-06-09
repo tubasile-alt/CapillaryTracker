@@ -1775,17 +1775,17 @@ def get_medicos_dashboard_data():
             max_q3 = max(q3_furos) if q3_furos else 0
             max_q4 = max(q4_furos) if q4_furos else 0
             
-            # Calcular taxa média de quebra por quadrante
-            avg_q1_taxa = round(sum(q1_taxas) / len(q1_taxas), 2) if q1_taxas else 0
-            avg_q2_taxa = round(sum(q2_taxas) / len(q2_taxas), 2) if q2_taxas else 0
-            avg_q3_taxa = round(sum(q3_taxas) / len(q3_taxas), 2) if q3_taxas else 0
-            avg_q4_taxa = round(sum(q4_taxas) / len(q4_taxas), 2) if q4_taxas else 0
+            # Calcular taxa média de quebra por quadrante (converter decimal para porcentagem)
+            avg_q1_taxa = round((sum(q1_taxas) / len(q1_taxas)) * 100, 2) if q1_taxas else 0
+            avg_q2_taxa = round((sum(q2_taxas) / len(q2_taxas)) * 100, 2) if q2_taxas else 0
+            avg_q3_taxa = round((sum(q3_taxas) / len(q3_taxas)) * 100, 2) if q3_taxas else 0
+            avg_q4_taxa = round((sum(q4_taxas) / len(q4_taxas)) * 100, 2) if q4_taxas else 0
             
             breakage_rates = [avg_q1_taxa, avg_q2_taxa, avg_q3_taxa, avg_q4_taxa]
             
-            # Taxa média geral de quebra
+            # Taxa média geral de quebra (converter decimal para porcentagem)
             all_taxas = q1_taxas + q2_taxas + q3_taxas + q4_taxas
-            avg_breakage_rate = round(sum(all_taxas) / len(all_taxas), 2) if all_taxas else 0
+            avg_breakage_rate = round((sum(all_taxas) / len(all_taxas)) * 100, 2) if all_taxas else 0
             
             # Coletar dados de densidade de extração (apenas valores > 0)
             densidades_extracao = []
@@ -1821,9 +1821,9 @@ def get_medicos_dashboard_data():
                         unit_q3_taxas = [s.q3_taxa_quebra for s in unit_surgeries if hasattr(s, 'q3_taxa_quebra') and s.q3_taxa_quebra is not None and s.q3_taxa_quebra >= 0]
                         unit_q4_taxas = [s.q4_taxa_quebra for s in unit_surgeries if hasattr(s, 'q4_taxa_quebra') and s.q4_taxa_quebra is not None and s.q4_taxa_quebra >= 0]
                         
-                        # Taxa média de quebra geral da unidade
+                        # Taxa média de quebra geral da unidade (converter decimal para porcentagem)
                         all_unit_taxas = unit_q1_taxas + unit_q2_taxas + unit_q3_taxas + unit_q4_taxas
-                        unit_avg_breakage = round(sum(all_unit_taxas) / len(all_unit_taxas), 2) if all_unit_taxas else 0
+                        unit_avg_breakage = round((sum(all_unit_taxas) / len(all_unit_taxas)) * 100, 2) if all_unit_taxas else 0
                         
                         # Densidade de extração da unidade (apenas dados > 0)
                         unit_densidades = [s.densidade_extracao for s in unit_surgeries if hasattr(s, 'densidade_extracao') and s.densidade_extracao is not None and s.densidade_extracao > 0]
@@ -1835,11 +1835,11 @@ def get_medicos_dashboard_data():
                         avg_q3_furos = round(sum(unit_q3_furos) / len(unit_q3_furos), 1) if unit_q3_furos else 0
                         avg_q4_furos = round(sum(unit_q4_furos) / len(unit_q4_furos), 1) if unit_q4_furos else 0
                         
-                        # Taxa média de quebra por quadrante da unidade
-                        avg_q1_taxa_unit = round(sum(unit_q1_taxas) / len(unit_q1_taxas), 2) if unit_q1_taxas else 0
-                        avg_q2_taxa_unit = round(sum(unit_q2_taxas) / len(unit_q2_taxas), 2) if unit_q2_taxas else 0
-                        avg_q3_taxa_unit = round(sum(unit_q3_taxas) / len(unit_q3_taxas), 2) if unit_q3_taxas else 0
-                        avg_q4_taxa_unit = round(sum(unit_q4_taxas) / len(unit_q4_taxas), 2) if unit_q4_taxas else 0
+                        # Taxa média de quebra por quadrante da unidade (converter decimal para porcentagem)
+                        avg_q1_taxa_unit = round((sum(unit_q1_taxas) / len(unit_q1_taxas)) * 100, 2) if unit_q1_taxas else 0
+                        avg_q2_taxa_unit = round((sum(unit_q2_taxas) / len(unit_q2_taxas)) * 100, 2) if unit_q2_taxas else 0
+                        avg_q3_taxa_unit = round((sum(unit_q3_taxas) / len(unit_q3_taxas)) * 100, 2) if unit_q3_taxas else 0
+                        avg_q4_taxa_unit = round((sum(unit_q4_taxas) / len(unit_q4_taxas)) * 100, 2) if unit_q4_taxas else 0
                         
                         units_data.append({
                             'name': unit,
