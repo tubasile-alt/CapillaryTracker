@@ -816,14 +816,34 @@ def novo_cadastro():
 @app.route('/get_medicos/<unidade>')
 def get_medicos(unidade):
     logger.info(f"Retrieving doctors for unit: {unidade}")
-    # Médicos por unidade conforme especificação
-    medicos_por_unidade = {
-        'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
-        'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
-        'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
-        'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
-        'Brasília': ['Dra. Leticia', 'Dra. Natalia'],
-    }
+    
+    # Tentar carregar configuração dinâmica
+    try:
+        import json
+        if os.path.exists('admin_config.json'):
+            with open('admin_config.json', 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                medicos_por_unidade = config.get('medicos_por_unidade', {})
+        else:
+            # Fallback para configuração padrão
+            medicos_por_unidade = {
+                'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
+                'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
+                'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
+                'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
+                'Brasília': ['Dra. Leticia', 'Dra. Natalia'],
+            }
+    except Exception as e:
+        logger.error(f"Erro ao carregar configuração de médicos: {e}")
+        # Fallback para configuração padrão
+        medicos_por_unidade = {
+            'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
+            'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
+            'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
+            'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
+            'Brasília': ['Dra. Leticia', 'Dra. Natalia'],
+        }
+    
     return {'medicos': medicos_por_unidade.get(unidade, [])}
 
 
@@ -935,20 +955,46 @@ def verify_data():
 @app.route('/get_equipe/<unidade>')
 def get_equipe(unidade):
     logger.info(f"Retrieving team for unit: {unidade}")
-    # Equipe por unidade conforme especificação
-    equipe_por_unidade = {
-        'Ribeirão Preto': ['Aline', 'Ana', 'Natália'],
-        'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 
-                  'Isabelle de Campos', 'Juliana Nunes', 'Kesley Sabrina', 
-                  'Larissa Hellen', 'Thalita Corrêa', 'Vitória Delino'],
-        'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
-        'São Paulo': ['Adriana Almeida', 'Ana Paula dos Santos', 'Dani Curti', 
-                  'Eliene Rodrigues', 'Gabriela Cruz', 'Greice Barbosa', 
-                  'Jaiza Valentim', 'Josefa Wilma Vieira', 'Joyce Eugênia Da Silva', 
-                  'Merielen Venâncio Oliveira', 'Rosana Pereira', 'Sabrina Crott', 
-                  'Thamiris Santos', 'Thaís Paiva'],
-        'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel'],
-    }
+    
+    # Tentar carregar configuração dinâmica
+    try:
+        import json
+        if os.path.exists('admin_config.json'):
+            with open('admin_config.json', 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                equipe_por_unidade = config.get('equipe_por_unidade', {})
+        else:
+            # Fallback para configuração padrão
+            equipe_por_unidade = {
+                'Ribeirão Preto': ['Aline', 'Ana', 'Natália'],
+                'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 
+                          'Isabelle de Campos', 'Juliana Nunes', 'Kesley Sabrina', 
+                          'Larissa Hellen', 'Thalita Corrêa', 'Vitória Delino'],
+                'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
+                'São Paulo': ['Adriana Almeida', 'Ana Paula dos Santos', 'Dani Curti', 
+                          'Eliene Rodrigues', 'Gabriela Cruz', 'Greice Barbosa', 
+                          'Jaiza Valentim', 'Josefa Wilma Vieira', 'Joyce Eugênia Da Silva', 
+                          'Merielen Venâncio Oliveira', 'Rosana Pereira', 'Sabrina Crott', 
+                          'Thamiris Santos', 'Thaís Paiva'],
+                'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel'],
+            }
+    except Exception as e:
+        logger.error(f"Erro ao carregar configuração de equipe: {e}")
+        # Fallback para configuração padrão
+        equipe_por_unidade = {
+            'Ribeirão Preto': ['Aline', 'Ana', 'Natália'],
+            'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 
+                      'Isabelle de Campos', 'Juliana Nunes', 'Kesley Sabrina', 
+                      'Larissa Hellen', 'Thalita Corrêa', 'Vitória Delino'],
+            'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
+            'São Paulo': ['Adriana Almeida', 'Ana Paula dos Santos', 'Dani Curti', 
+                      'Eliene Rodrigues', 'Gabriela Cruz', 'Greice Barbosa', 
+                      'Jaiza Valentim', 'Josefa Wilma Vieira', 'Joyce Eugênia Da Silva', 
+                      'Merielen Venâncio Oliveira', 'Rosana Pereira', 'Sabrina Crott', 
+                      'Thamiris Santos', 'Thaís Paiva'],
+            'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel'],
+        }
+    
     return {'equipe': equipe_por_unidade.get(unidade, [])}
 
 def process_dashboard_data(df):
