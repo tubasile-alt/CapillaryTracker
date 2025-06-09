@@ -1897,7 +1897,9 @@ def get_medicos_dashboard_data():
                     'breakage_rates': breakage_rates,
                     'max_holes': [max_q1, max_q2, max_q3, max_q4],
                     'avg_holes': [avg_q1_furos, avg_q2_furos, avg_q3_furos, avg_q4_furos],
-                    'avg_breakage_by_quadrant': [avg_q1_taxa, avg_q2_taxa, avg_q3_taxa, avg_q4_taxa]
+                    'avg_breakage_by_quadrant': [avg_q1_taxa, avg_q2_taxa, avg_q3_taxa, avg_q4_taxa],
+                    'unit_names': [unit['name'] for unit in units_data],
+                    'unit_breakage_rates': [unit['breakage_rate']/100 for unit in units_data]
                 },
                 'units': units_data
             }

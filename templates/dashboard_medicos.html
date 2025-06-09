@@ -241,6 +241,11 @@
             </div>
             
             <div class="chart-container">
+                <h3>Taxa Média de Quebra por Unidade</h3>
+                <canvas id="unitBreakageChart" width="400" height="200"></canvas>
+            </div>
+            
+            <div class="chart-container">
                 <h3>Detalhes por Unidade</h3>
                 <div class="table-container">
                     <table class="data-table">
@@ -268,7 +273,7 @@
     </div>
 
     <script>
-        let breakageChart, maxHolesChart, avgHolesChart;
+        let breakageChart, maxHolesChart, avgHolesChart, unitBreakageChart;
         
         function updateDashboard() {
             const unit = document.getElementById('filterUnit').value;
@@ -405,6 +410,50 @@
                             beginAtZero: true,
                             ticks: {
                                 color: 'white'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'white'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de Taxa de Quebra por Unidade
+            if (unitBreakageChart) unitBreakageChart.destroy();
+            
+            const ctx4 = document.getElementById('unitBreakageChart').getContext('2d');
+            unitBreakageChart = new Chart(ctx4, {
+                type: 'bar',
+                data: {
+                    labels: chartData.unit_names || ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília'],
+                    datasets: [{
+                        label: 'Taxa Média de Quebra (%)',
+                        data: chartData.unit_breakage_rates || [0, 0, 0, 0, 0],
+                        backgroundColor: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            ticks: {
+                                color: 'white',
+                                callback: function(value) {
+                                    return (value * 100).toFixed(2) + '%';
+                                }
                             }
                         },
                         x: {
