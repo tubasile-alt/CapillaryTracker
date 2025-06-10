@@ -114,6 +114,8 @@ class Surgery(db.Model):
     densidade_extracao = db.Column(db.Float)
     # Campos da segunda página do formulário
     infiltracao = db.Column(db.String(255))
+    sedacao = db.Column(db.String(255))
+    sangramento = db.Column(db.String(255))
     tadalafila = db.Column(db.String(255))
     bloqueio_seringas = db.Column(db.String(255))
     fonte_1 = db.Column(db.String(255))
@@ -408,6 +410,8 @@ def save_to_excel(data):
                 peninsula_esquerda=int(data.get('Península Esquerda', data.get('peninsula_esquerda', 0)) or 0),
                 # Campos da segunda página do formulário
                 infiltracao=str(data.get('Infiltração', data.get('infiltracao', '')) or ''),
+                sedacao=str(data.get('Sedação', data.get('sedacao', '')) or ''),
+                sangramento=str(data.get('Sangramento', data.get('sangramento', '')) or ''),
                 tadalafila=str(data.get('Tadalafila', data.get('tadalafila', '')) or ''),
                 bloqueio_seringas=str(data.get('Bloqueio de Seringas', data.get('bloqueio_seringas', '')) or ''),
                 fonte_1=str(data.get('Fonte 1', data.get('fonte_1', '')) or ''),
@@ -714,11 +718,30 @@ def novo_cadastro():
             # Log completo dos dados para auditoria
             logger.info(f"💾 Dados completos recebidos: {form_data}")
 
-            # Process multiple checkboxes
+            # Process multiple checkboxes for team members
+            team_members = []
+            
+            # Collect all team-related fields
+            for key, value in form_data.items():
+                if key.startswith('equipe_') and value:
+                    team_members.append(value)
+                elif key == 'extra_person_1' and value:
+                    team_members.append(f"Técnica Extra 1: {value}")
+                elif key == 'extra_person_2' and value:
+                    team_members.append(f"Técnica Extra 2: {value}")
+            
+            # Handle legacy equipe_values field
             if 'equipe_values' in form_data:
-                form_data['equipe'] = form_data['equipe_values']
+                if form_data['equipe_values']:
+                    team_members.append(form_data['equipe_values'])
                 del form_data['equipe_values']
-                logger.info(f"Processed equipe values: {form_data['equipe']}")
+            
+            # Combine all team members
+            if team_members:
+                form_data['equipe'] = ', '.join(team_members)
+            
+            logger.info(f"📋 Equipe processada: {form_data.get('equipe', 'Nenhuma')}")
+            logger.info(f"🔧 Membros coletados: {team_members}")
 
             # Save to Excel and database
             logger.info("Calling save_to_excel function")
@@ -1582,6 +1605,8 @@ def download_complete_data():
                     'Península Direita': surgery.peninsula_direita or 0,
                     'Península Esquerda': surgery.peninsula_esquerda or 0,
                     'Infiltração': surgery.infiltracao or '',
+                    'Sedação': getattr(surgery, 'sedacao', '') or '',
+                    'Sangramento': getattr(surgery, 'sangramento', '') or '',
                     'Tadalafila': surgery.tadalafila or '',
                     'Bloqueio de Seringas': surgery.bloqueio_seringas or '',
                     'Fonte 1': surgery.fonte_1 or '',
