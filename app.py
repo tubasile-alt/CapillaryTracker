@@ -418,7 +418,7 @@ def save_to_excel(data):
                 pelos_corporais=str(data.get('Pelos Corporais', data.get('pelos_corporais', '')) or ''),
                 tecnica=str(data.get('Técnica', data.get('tecnica', '')) or ''),
                 solucao_frente=int(data.get('Solução Frente (ml)', data.get('solucao_frente', 0)) or 0),
-                # Dados dos quadrantes
+                # Dados dos quadrantes - suporte a múltiplos formatos de nome
                 q1_area=float(data.get('Q1 Área', data.get('q1_area', 0)) or 0),
                 q1_furos=int(data.get('Q1 Furos', data.get('q1_furos', 0)) or 0),
                 q1_fios=int(data.get('Q1 Fios', data.get('q1_fios', 0)) or 0),
@@ -691,7 +691,7 @@ def novo_cadastro():
         try:
             # Process form data
             form_data = request.form.to_dict()
-            logger.info(f"Received form data: {form_data}")
+            logger.info(f"Received form data keys: {list(form_data.keys())}")
             logger.info(f"Request headers: {dict(request.headers)}")
             
             # Log de detalhes específicos importantes
@@ -701,6 +701,18 @@ def novo_cadastro():
                 logger.info(f"Data: {form_data['Data (DD/MM/AAAA)']}")
             if 'Unidade' in form_data:
                 logger.info(f"Unidade: {form_data['Unidade']}")
+            
+            # Log específico dos campos calculados para debugging
+            quadrant_fields = ['q1_densidade', 'q1_taxa_quebra', 'q2_densidade', 'q2_taxa_quebra', 
+                             'q3_densidade', 'q3_taxa_quebra', 'q4_densidade', 'q4_taxa_quebra']
+            for field in quadrant_fields:
+                if field in form_data:
+                    logger.info(f"📊 Campo calculado encontrado - {field}: {form_data[field]}")
+                else:
+                    logger.warning(f"⚠️ Campo calculado AUSENTE - {field}")
+            
+            # Log completo dos dados para auditoria
+            logger.info(f"💾 Dados completos recebidos: {form_data}")
 
             # Process multiple checkboxes
             if 'equipe_values' in form_data:
