@@ -834,9 +834,97 @@
         }
     }
 
+    // Form submission handler to collect calculated fields and team members
+    function handleFormSubmission(event) {
+        event.preventDefault();
+        console.log("Form submission intercepted");
+
+        // Collect calculated fields and add as hidden inputs
+        const quadrantes = ['q1', 'q2', 'q3', 'q4'];
+        quadrantes.forEach(q => {
+            // Get calculated density value
+            const densidadeResult = document.getElementById(`${q}_densidade_result`);
+            if (densidadeResult) {
+                const area = parseFloat(document.getElementById(`${q}_area`).value) || 0;
+                const furos = parseFloat(document.getElementById(`${q}_furos`).value) || 0;
+                const densidade = area > 0 ? furos / area : 0;
+                
+                let densidadeHidden = document.getElementById(`${q}_densidade_hidden`);
+                if (!densidadeHidden) {
+                    densidadeHidden = document.createElement('input');
+                    densidadeHidden.type = 'hidden';
+                    densidadeHidden.id = `${q}_densidade_hidden`;
+                    densidadeHidden.name = `${q}_densidade`;
+                    document.getElementById('cadastroForm').appendChild(densidadeHidden);
+                }
+                densidadeHidden.value = densidade;
+                console.log(`${q}_densidade saved:`, densidade);
+            }
+
+            // Get calculated breakage rate value
+            const taxaQuebraResult = document.getElementById(`${q}_taxa_quebra_result`);
+            if (taxaQuebraResult) {
+                const furos = parseFloat(document.getElementById(`${q}_furos`).value) || 0;
+                const fios = parseFloat(document.getElementById(`${q}_fios`).value) || 0;
+                const taxaQuebra = furos > 0 ? ((furos - fios) / furos) : 0;
+                
+                let taxaQuebraHidden = document.getElementById(`${q}_taxa_quebra_hidden`);
+                if (!taxaQuebraHidden) {
+                    taxaQuebraHidden = document.createElement('input');
+                    taxaQuebraHidden.type = 'hidden';
+                    taxaQuebraHidden.id = `${q}_taxa_quebra_hidden`;
+                    taxaQuebraHidden.name = `${q}_taxa_quebra`;
+                    document.getElementById('cadastroForm').appendChild(taxaQuebraHidden);
+                }
+                taxaQuebraHidden.value = taxaQuebra;
+                console.log(`${q}_taxa_quebra saved:`, taxaQuebra);
+            }
+        });
+
+        // Collect selected team members
+        const checkboxes = document.querySelectorAll('input[name="equipe"]:checked');
+        const selectedEquipe = Array.from(checkboxes).map(checkbox => checkbox.value);
+        
+        // Add extra team members
+        const extraPerson1 = document.getElementById('extra_person_1').value;
+        const extraPerson2 = document.getElementById('extra_person_2').value;
+        
+        if (extraPerson1) {
+            selectedEquipe.push(`Técnica Extra 1: ${extraPerson1}`);
+        }
+        if (extraPerson2) {
+            selectedEquipe.push(`Técnica Extra 2: ${extraPerson2}`);
+        }
+        
+        if (selectedEquipe.length > 0) {
+            let equipeHidden = document.getElementById('equipe_values_hidden');
+            if (!equipeHidden) {
+                equipeHidden = document.createElement('input');
+                equipeHidden.type = 'hidden';
+                equipeHidden.id = 'equipe_values_hidden';
+                equipeHidden.name = 'equipe_values';
+                document.getElementById('cadastroForm').appendChild(equipeHidden);
+            }
+            equipeHidden.value = selectedEquipe.join(', ');
+            console.log('Team members saved:', selectedEquipe.join(', '));
+        }
+
+        // Submit the form
+        console.log('Submitting form with all data...');
+        document.getElementById('cadastroForm').submit();
+    }
+
     // Inicializar quando a página carregar
     document.addEventListener('DOMContentLoaded', function() {
         console.log("DOMContentLoaded disparado");
+        
+        // Add form submission handler
+        const form = document.getElementById('cadastroForm');
+        if (form) {
+            form.addEventListener('submit', handleFormSubmission);
+            console.log("Form submission handler added");
+        }
+        
         const unidadeSelect = document.getElementById('unidade');
         if (unidadeSelect) {
             console.log("Select de unidade encontrado:", unidadeSelect);
