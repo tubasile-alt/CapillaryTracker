@@ -130,11 +130,35 @@
 
                     // Calcular densidade (furos/área) e arredondar para baixo
                     const densidade = area > 0 ? furos / area : 0;
-                    document.getElementById(`${q}_densidade_result`).textContent = Math.floor(densidade);
+                    const densidadeFloor = Math.floor(densidade);
+                    document.getElementById(`${q}_densidade_result`).textContent = densidadeFloor;
+                    
+                    // Salvar valor calculado em campo hidden para envio ao servidor
+                    let densidadeHidden = document.getElementById(`${q}_densidade_hidden`);
+                    if (!densidadeHidden) {
+                        densidadeHidden = document.createElement('input');
+                        densidadeHidden.type = 'hidden';
+                        densidadeHidden.id = `${q}_densidade_hidden`;
+                        densidadeHidden.name = `${q}_densidade`;
+                        document.getElementById('cadastroForm').appendChild(densidadeHidden);
+                    }
+                    densidadeHidden.value = densidade; // Valor preciso para o banco
 
                     // Calcular taxa de quebra ((furos-fios)/furos * 100) e arredondar para baixo
                     const taxaQuebra = furos > 0 ? ((furos - fios) / furos) * 100 : 0;
-                    document.getElementById(`${q}_taxa_quebra_result`).textContent = Math.floor(taxaQuebra);
+                    const taxaQuebraFloor = Math.floor(taxaQuebra);
+                    document.getElementById(`${q}_taxa_quebra_result`).textContent = taxaQuebraFloor;
+                    
+                    // Salvar valor calculado em campo hidden para envio ao servidor
+                    let taxaQuebraHidden = document.getElementById(`${q}_taxa_quebra_hidden`);
+                    if (!taxaQuebraHidden) {
+                        taxaQuebraHidden = document.createElement('input');
+                        taxaQuebraHidden.type = 'hidden';
+                        taxaQuebraHidden.id = `${q}_taxa_quebra_hidden`;
+                        taxaQuebraHidden.name = `${q}_taxa_quebra`;
+                        document.getElementById('cadastroForm').appendChild(taxaQuebraHidden);
+                    }
+                    taxaQuebraHidden.value = taxaQuebra / 100; // Valor como decimal para o banco (0.23 em vez de 23%)
                 };
 
                 areaInput.addEventListener('input', updateCalculations);

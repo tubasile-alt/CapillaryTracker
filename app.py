@@ -1526,11 +1526,116 @@ def download_excel():
             )
 
             # Delete temp file after sending
-            os.remove(temp_file)
+            try:
+                os.remove(temp_file)
+            except:
+                pass
             return return_data
     except Exception as e:
         logger.error(f"Error downloading Excel file: {str(e)}\n{traceback.format_exc()}")
         flash(f"Erro ao baixar arquivo: {str(e)}", "error")
+        return redirect(url_for('dashboard'))
+
+@app.route('/download_complete_data')
+def download_complete_data():
+    """Endpoint para baixar dados completos do banco com todos os campos"""
+    logger.info("Gerando exportação completa do banco de dados...")
+    try:
+        with app.app_context():
+            # Buscar todas as cirurgias
+            surgeries = Surgery.query.order_by(Surgery.data.desc()).all()
+            logger.info(f"Encontrados {len(surgeries)} registros no banco")
+            
+            if not surgeries:
+                flash("Nenhum dado encontrado no banco de dados", "error")
+                return redirect(url_for('dashboard'))
+            
+            # Converter para lista de dicionários com TODOS os campos
+            data_list = []
+            for surgery in surgeries:
+                surgery_dict = {
+                    'ID': surgery.id,
+                    'Data': surgery.data.strftime('%d/%m/%Y') if surgery.data else '',
+                    'Paciente': surgery.nome or '',
+                    'Unidade': surgery.unidade or '',
+                    'Médico': surgery.medico or '',
+                    'Equipe': surgery.equipe or '',
+                    'Hora da Cirurgia': surgery.hora_cirurgia or '',
+                    'Tempo de Cirurgia (horas)': surgery.tempo_cirurgia or 0,
+                    'Total de Folículos': surgery.total_foliculos or 0,
+                    'Frente': surgery.frente or 0,
+                    'Densidade Scketh': surgery.densidade_scketh or 0,
+                    'Coroa': surgery.coroa or 0,
+                    'Scalpe': surgery.scalpe or 0,
+                    'Península Direita': surgery.peninsula_direita or 0,
+                    'Península Esquerda': surgery.peninsula_esquerda or 0,
+                    'Infiltração': surgery.infiltracao or '',
+                    'Tadalafila': surgery.tadalafila or '',
+                    'Bloqueio de Seringas': surgery.bloqueio_seringas or '',
+                    'Fonte 1': surgery.fonte_1 or '',
+                    'Fonte 2': surgery.fonte_2 or '',
+                    'Fonte 3': surgery.fonte_3 or '',
+                    'Fonte 4': surgery.fonte_4 or '',
+                    'Fonte 5': surgery.fonte_5 or '',
+                    'Pelos Corporais': surgery.pelos_corporais or '',
+                    'Técnica': surgery.tecnica or '',
+                    'Solução Frente (ml)': surgery.solucao_frente or 0,
+                    'Q1 Área': surgery.q1_area or 0,
+                    'Q1 Furos': surgery.q1_furos or 0,
+                    'Q1 Fios': surgery.q1_fios or 0,
+                    'Q1 Densidade': surgery.q1_densidade or 0,
+                    'Q1 Taxa Quebra': surgery.q1_taxa_quebra or 0,
+                    'Q2 Área': surgery.q2_area or 0,
+                    'Q2 Furos': surgery.q2_furos or 0,
+                    'Q2 Fios': surgery.q2_fios or 0,
+                    'Q2 Densidade': surgery.q2_densidade or 0,
+                    'Q2 Taxa Quebra': surgery.q2_taxa_quebra or 0,
+                    'Q3 Área': surgery.q3_area or 0,
+                    'Q3 Furos': surgery.q3_furos or 0,
+                    'Q3 Fios': surgery.q3_fios or 0,
+                    'Q3 Densidade': surgery.q3_densidade or 0,
+                    'Q3 Taxa Quebra': surgery.q3_taxa_quebra or 0,
+                    'Q4 Área': surgery.q4_area or 0,
+                    'Q4 Furos': surgery.q4_furos or 0,
+                    'Q4 Fios': surgery.q4_fios or 0,
+                    'Q4 Densidade': surgery.q4_densidade or 0,
+                    'Q4 Taxa Quebra': surgery.q4_taxa_quebra or 0,
+                    'Densidade Extração': surgery.densidade_extracao or 0,
+                    'Data de Criação': surgery.created_at.strftime('%d/%m/%Y %H:%M:%S') if surgery.created_at else ''
+                }
+                data_list.append(surgery_dict)
+            
+            # Criar DataFrame e salvar em Excel
+            df = pd.DataFrame(data_list)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"dados_completos_banco_{timestamp}.xlsx"
+            temp_file = f"temp_{filename}"
+            
+            # Salvar no arquivo temporário
+            df.to_excel(temp_file, index=False, engine='openpyxl')
+            
+            logger.info(f"Exportação criada com {len(data_list)} registros: {filename}")
+            
+            # Enviar arquivo e depois deletar
+            return_data = send_file(
+                temp_file,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name=filename
+            )
+            
+            # Limpar arquivo temporário
+            try:
+                os.remove(temp_file)
+            except:
+                pass
+                
+            return return_data
+            
+    except Exception as e:
+        logger.error(f"Erro ao exportar dados completos: {str(e)}")
+        logger.error(traceback.format_exc())
+        flash(f"Erro ao exportar dados: {str(e)}", "error")
         return redirect(url_for('dashboard'))
 
 @app.route('/necrose')
