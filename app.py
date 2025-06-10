@@ -124,6 +124,19 @@ class Surgery(db.Model):
     fonte_4 = db.Column(db.String(255))
     fonte_5 = db.Column(db.String(255))
     pelos_corporais = db.Column(db.String(255))
+    # Body hair detailed fields
+    barba_furos = db.Column(db.Integer, default=0)
+    barba_fios = db.Column(db.Integer, default=0)
+    barba_comentarios = db.Column(db.Text, default='')
+    peitoral_furos = db.Column(db.Integer, default=0)
+    peitoral_fios = db.Column(db.Integer, default=0)
+    peitoral_comentarios = db.Column(db.Text, default='')
+    abdome_furos = db.Column(db.Integer, default=0)
+    abdome_fios = db.Column(db.Integer, default=0)
+    abdome_comentarios = db.Column(db.Text, default='')
+    pernas_furos = db.Column(db.Integer, default=0)
+    pernas_fios = db.Column(db.Integer, default=0)
+    pernas_comentarios = db.Column(db.Text, default='')
     tecnica = db.Column(db.String(255))
     solucao_frente = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -420,6 +433,19 @@ def save_to_excel(data):
                 fonte_4=str(data.get('Fonte 4', data.get('fonte_4', '')) or ''),
                 fonte_5=str(data.get('Fonte 5', data.get('fonte_5', '')) or ''),
                 pelos_corporais=str(data.get('Pelos Corporais', data.get('pelos_corporais', '')) or ''),
+                # Body hair detailed fields
+                barba_furos=int(data.get('barba_furos', 0) or 0),
+                barba_fios=int(data.get('barba_fios', 0) or 0),
+                barba_comentarios=str(data.get('barba_comentarios', '') or ''),
+                peitoral_furos=int(data.get('peitoral_furos', 0) or 0),
+                peitoral_fios=int(data.get('peitoral_fios', 0) or 0),
+                peitoral_comentarios=str(data.get('peitoral_comentarios', '') or ''),
+                abdome_furos=int(data.get('abdome_furos', 0) or 0),
+                abdome_fios=int(data.get('abdome_fios', 0) or 0),
+                abdome_comentarios=str(data.get('abdome_comentarios', '') or ''),
+                pernas_furos=int(data.get('pernas_furos', 0) or 0),
+                pernas_fios=int(data.get('pernas_fios', 0) or 0),
+                pernas_comentarios=str(data.get('pernas_comentarios', '') or ''),
                 tecnica=str(data.get('Técnica', data.get('tecnica', '')) or ''),
                 solucao_frente=int(data.get('Solução Frente (ml)', data.get('solucao_frente', 0)) or 0),
                 # Dados dos quadrantes - suporte a múltiplos formatos de nome
@@ -742,6 +768,36 @@ def novo_cadastro():
             
             logger.info(f"📋 Equipe processada: {form_data.get('equipe', 'Nenhuma')}")
             logger.info(f"🔧 Membros coletados: {team_members}")
+
+            # Process body hair checkbox and data
+            body_hair_checked = form_data.get('body_hair_check') == 'on'
+            form_data['pelos_corporais'] = 'Sim' if body_hair_checked else 'Não'
+            
+            logger.info(f"🧔 Body hair checkbox: {body_hair_checked} -> {form_data['pelos_corporais']}")
+            
+            # Process individual body hair parts
+            body_hair_parts = ['barba', 'peitoral', 'abdome', 'pernas']
+            for part in body_hair_parts:
+                # Handle checkbox for each part
+                part_checked = form_data.get(f'{part}_check') == 'on'
+                
+                # Set furos, fios, comentários based on checkbox state
+                if part_checked:
+                    form_data[f'{part}_furos'] = int(form_data.get(f'{part}_furos', 0) or 0)
+                    form_data[f'{part}_fios'] = int(form_data.get(f'{part}_fios', 0) or 0)
+                    form_data[f'{part}_comentarios'] = str(form_data.get(f'{part}_comentarios', '') or '')
+                else:
+                    # If not checked, set to default values
+                    form_data[f'{part}_furos'] = 0
+                    form_data[f'{part}_fios'] = 0
+                    form_data[f'{part}_comentarios'] = ''
+                
+                logger.info(f"🎯 {part.title()}: checked={part_checked}, furos={form_data[f'{part}_furos']}, fios={form_data[f'{part}_fios']}")
+            
+            # Clean up checkbox fields that don't need to be saved
+            for key in list(form_data.keys()):
+                if key.endswith('_check'):
+                    del form_data[key]
 
             # Save to Excel and database
             logger.info("Calling save_to_excel function")
@@ -1615,6 +1671,19 @@ def download_complete_data():
                     'Fonte 4': surgery.fonte_4 or '',
                     'Fonte 5': surgery.fonte_5 or '',
                     'Pelos Corporais': surgery.pelos_corporais or '',
+                    # Body hair detailed fields
+                    'Barba Furos': getattr(surgery, 'barba_furos', 0) or 0,
+                    'Barba Fios': getattr(surgery, 'barba_fios', 0) or 0,
+                    'Barba Comentários': getattr(surgery, 'barba_comentarios', '') or '',
+                    'Peitoral Furos': getattr(surgery, 'peitoral_furos', 0) or 0,
+                    'Peitoral Fios': getattr(surgery, 'peitoral_fios', 0) or 0,
+                    'Peitoral Comentários': getattr(surgery, 'peitoral_comentarios', '') or '',
+                    'Abdome Furos': getattr(surgery, 'abdome_furos', 0) or 0,
+                    'Abdome Fios': getattr(surgery, 'abdome_fios', 0) or 0,
+                    'Abdome Comentários': getattr(surgery, 'abdome_comentarios', '') or '',
+                    'Pernas Furos': getattr(surgery, 'pernas_furos', 0) or 0,
+                    'Pernas Fios': getattr(surgery, 'pernas_fios', 0) or 0,
+                    'Pernas Comentários': getattr(surgery, 'pernas_comentarios', '') or '',
                     'Técnica': surgery.tecnica or '',
                     'Solução Frente (ml)': surgery.solucao_frente or 0,
                     'Q1 Área': surgery.q1_area or 0,
