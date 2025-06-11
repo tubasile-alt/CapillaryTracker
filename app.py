@@ -176,6 +176,16 @@ def export_and_backup(df=None):
             logger.warning("DROPBOX_ACCESS_TOKEN não configurado - backup desabilitado")
             return False, "Token do Dropbox não configurado"
         
+        # Limpar e validar o token
+        dropbox_token = dropbox_token.strip().replace('\\t', '').replace('\t', '').replace('\n', '').replace('\r', '').replace(' ', '')
+        
+        # Validação básica do formato do token
+        if len(dropbox_token) < 10 or not dropbox_token.replace('_', '').replace('-', '').isalnum():
+            logger.error(f"Token do Dropbox inválido - comprimento: {len(dropbox_token)}, primeiros 10 chars: {dropbox_token[:10]}...")
+            return False, "Token do Dropbox tem formato inválido"
+        
+        logger.info(f"Token validado - comprimento: {len(dropbox_token)}, inicia com: {dropbox_token[:4]}...")
+        
         # Se não foi fornecido DataFrame, buscar todos os dados do banco
         if df is None:
             logger.info("Buscando dados do banco para backup...")
