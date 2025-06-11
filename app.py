@@ -254,13 +254,20 @@ def export_and_backup(df=None):
             
             df = pd.DataFrame(data_list)
         
-        # Criar o arquivo Excel em memória
-        logger.info("Criando arquivo Excel para backup...")
-        excel_buffer = io.BytesIO()
+        # Criar arquivo temporário no disco para gerar o Excel
+        import tempfile
+        logger.info("Criando arquivo Excel temporário para backup...")
         
-        # Usar openpyxl para criar o Excel
-        df.to_excel(excel_buffer, sheet_name='Cirurgias', index=False, engine='openpyxl')
-        excel_buffer.seek(0)
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            temp_filename = temp_file.name
+            df.to_excel(temp_filename, sheet_name='Cirurgias', index=False, engine='openpyxl')
+        
+        # Ler o arquivo Excel como bytes
+        with open(temp_filename, 'rb') as f:
+            excel_content = f.read()
+        
+        # Remover arquivo temporário
+        os.unlink(temp_filename)
         
         # Conectar ao Dropbox
         logger.info("Conectando ao Dropbox...")
@@ -269,21 +276,21 @@ def export_and_backup(df=None):
         # Nome do arquivo com timestamp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f"relatorio_cirurgias_backup_{timestamp}.xlsx"
-        dropbox_path = f"/Apps/replit-relatorio cirurgia/{filename}"
+        dropbox_path = f"/relatorio_cirurgias_backup_{timestamp}.xlsx"
         
         # Upload para o Dropbox (sobrescrever se existir)
         logger.info(f"Fazendo upload para Dropbox: {dropbox_path}")
         dbx.files_upload(
-            excel_buffer.getvalue(),
+            excel_content,
             dropbox_path,
             mode=dropbox.files.WriteMode.overwrite,
             autorename=False
         )
         
         # Também manter uma versão "latest" que sempre é sobrescrita
-        latest_path = "/Apps/replit-relatorio cirurgia/relatorio_cirurgias_latest.xlsx"
+        latest_path = "/relatorio_cirurgias_latest.xlsx"
         dbx.files_upload(
-            excel_buffer.getvalue(),
+            excel_content,
             latest_path,
             mode=dropbox.files.WriteMode.overwrite,
             autorename=False
@@ -2291,6 +2298,33 @@ def get_medicos_dashboard_data():
     except Exception as e:
         logger.error(f"Error saving necrose data: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/test_backup')
+def test_backup():
+    """Rota para testar o backup manual para Dropbox"""
+    try:
+        logger.info("Iniciando teste de backup manual...")
+        success, message = export_and_backup()
+        
+        if success:
+            logger.info(f"✅ Teste de backup bem-sucedido: {message}")
+            return jsonify({
+                'success': True, 
+                'message': f'Backup realizado com sucesso: {message}'
+            })
+        else:
+            logger.warning(f"⚠️ Falha no teste de backup: {message}")
+            return jsonify({
+                'success': False, 
+                'message': f'Falha no backup: {message}'
+            })
+            
+    except Exception as e:
+        logger.error(f"Erro no teste de backup: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': f'Erro no teste de backup: {str(e)}'
+        })
 
 # Configure Flask app
 app.config['ENV'] = 'production'
