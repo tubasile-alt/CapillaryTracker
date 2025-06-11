@@ -179,10 +179,10 @@ def export_and_backup(df=None):
         # Limpar e validar o token
         dropbox_token = dropbox_token.strip().replace('\\t', '').replace('\t', '').replace('\n', '').replace('\r', '').replace(' ', '')
         
-        # Validação básica do formato do token
-        if len(dropbox_token) < 10 or not dropbox_token.replace('_', '').replace('-', '').isalnum():
-            logger.error(f"Token do Dropbox inválido - comprimento: {len(dropbox_token)}, primeiros 10 chars: {dropbox_token[:10]}...")
-            return False, "Token do Dropbox tem formato inválido"
+        # Validação básica do comprimento do token
+        if len(dropbox_token) < 10:
+            logger.error(f"Token do Dropbox muito curto - comprimento: {len(dropbox_token)}")
+            return False, "Token do Dropbox muito curto"
         
         logger.info(f"Token validado - comprimento: {len(dropbox_token)}, inicia com: {dropbox_token[:4]}...")
         
@@ -309,6 +309,13 @@ def export_and_backup(df=None):
         logger.info(f"✅ Backup realizado com sucesso no Dropbox: {filename}")
         return True, f"Backup realizado com sucesso: {filename}"
         
+    except dropbox.exceptions.AuthError as e:
+        if 'expired_access_token' in str(e):
+            logger.error("Token do Dropbox expirado")
+            return False, "Token do Dropbox expirado. Gere um novo token no console do Dropbox."
+        else:
+            logger.error(f"Erro de autenticação Dropbox: {e}")
+            return False, f"Erro de autenticação: {e}"
     except Exception as e:
         logger.error(f"Erro no backup para Dropbox: {str(e)}")
         logger.error(traceback.format_exc())
