@@ -12,6 +12,8 @@ import json
 from flask_sqlalchemy import SQLAlchemy
 import shutil
 from sqlalchemy import text, extract
+import dropbox
+import io
 
 # Configure logging
 logging.basicConfig(
@@ -152,6 +154,148 @@ from flask_migrate import Migrate
 # Initialize Flask-Migrate with app and db
 migrate = Migrate(app, db)
 logger.info("✅ Flask-Migrate initialized")
+
+# ===============================
+# DROPBOX BACKUP FUNCTIONALITY
+# ===============================
+
+def export_and_backup(df=None):
+    """
+    Exporta DataFrame para Excel e faz backup automático no Dropbox.
+    
+    Args:
+        df: DataFrame para backup. Se None, busca todos os dados do banco.
+    
+    Returns:
+        tuple: (success: bool, message: str)
+    """
+    try:
+        # Verificar se o token do Dropbox está configurado
+        dropbox_token = os.environ.get('DROPBOX_ACCESS_TOKEN')
+        if not dropbox_token:
+            logger.warning("DROPBOX_ACCESS_TOKEN não configurado - backup desabilitado")
+            return False, "Token do Dropbox não configurado"
+        
+        # Se não foi fornecido DataFrame, buscar todos os dados do banco
+        if df is None:
+            logger.info("Buscando dados do banco para backup...")
+            surgeries = Surgery.query.all()
+            
+            if not surgeries:
+                logger.info("Nenhum dado encontrado no banco para backup")
+                return False, "Nenhum dado encontrado para backup"
+            
+            # Converter dados do banco para DataFrame
+            data_list = []
+            for surgery in surgeries:
+                data_list.append({
+                    'data': surgery.data.strftime('%d/%m/%Y') if surgery.data else '',
+                    'nome': surgery.nome or '',
+                    'unidade': surgery.unidade or '',
+                    'medico': surgery.medico or '',
+                    'equipe': surgery.equipe or '',
+                    'hora_cirurgia': surgery.hora_cirurgia or '',
+                    'tempo_cirurgia': surgery.tempo_cirurgia or 0,
+                    'total_foliculos': surgery.total_foliculos or 0,
+                    'frente': surgery.frente or 0,
+                    'densidade_scketh': surgery.densidade_scketh or 0,
+                    'coroa': surgery.coroa or 0,
+                    'scalpe': surgery.scalpe or 0,
+                    'peninsula_direita': surgery.peninsula_direita or 0,
+                    'peninsula_esquerda': surgery.peninsula_esquerda or 0,
+                    'q1_area': surgery.q1_area or 0,
+                    'q1_furos': surgery.q1_furos or 0,
+                    'q1_fios': surgery.q1_fios or 0,
+                    'q1_densidade': surgery.q1_densidade or 0,
+                    'q1_taxa_quebra': surgery.q1_taxa_quebra or 0,
+                    'q2_area': surgery.q2_area or 0,
+                    'q2_furos': surgery.q2_furos or 0,
+                    'q2_fios': surgery.q2_fios or 0,
+                    'q2_densidade': surgery.q2_densidade or 0,
+                    'q2_taxa_quebra': surgery.q2_taxa_quebra or 0,
+                    'q3_area': surgery.q3_area or 0,
+                    'q3_furos': surgery.q3_furos or 0,
+                    'q3_fios': surgery.q3_fios or 0,
+                    'q3_densidade': surgery.q3_densidade or 0,
+                    'q3_taxa_quebra': surgery.q3_taxa_quebra or 0,
+                    'q4_area': surgery.q4_area or 0,
+                    'q4_furos': surgery.q4_furos or 0,
+                    'q4_fios': surgery.q4_fios or 0,
+                    'q4_densidade': surgery.q4_densidade or 0,
+                    'q4_taxa_quebra': surgery.q4_taxa_quebra or 0,
+                    'densidade_extracao': surgery.densidade_extracao or 0,
+                    'infiltracao': surgery.infiltracao or '',
+                    'sedacao': surgery.sedacao or '',
+                    'sangramento': surgery.sangramento or '',
+                    'tadalafila': surgery.tadalafila or '',
+                    'bloqueio_seringas': surgery.bloqueio_seringas or '',
+                    'fonte_1': surgery.fonte_1 or '',
+                    'fonte_2': surgery.fonte_2 or '',
+                    'fonte_3': surgery.fonte_3 or '',
+                    'fonte_4': surgery.fonte_4 or '',
+                    'fonte_5': surgery.fonte_5 or '',
+                    'pelos_corporais': surgery.pelos_corporais or '',
+                    'barba_furos': surgery.barba_furos or 0,
+                    'barba_fios': surgery.barba_fios or 0,
+                    'barba_comentarios': surgery.barba_comentarios or '',
+                    'peitoral_furos': surgery.peitoral_furos or 0,
+                    'peitoral_fios': surgery.peitoral_fios or 0,
+                    'peitoral_comentarios': surgery.peitoral_comentarios or '',
+                    'abdome_furos': surgery.abdome_furos or 0,
+                    'abdome_fios': surgery.abdome_fios or 0,
+                    'abdome_comentarios': surgery.abdome_comentarios or '',
+                    'pernas_furos': surgery.pernas_furos or 0,
+                    'pernas_fios': surgery.pernas_fios or 0,
+                    'pernas_comentarios': surgery.pernas_comentarios or '',
+                    'tecnica': surgery.tecnica or '',
+                    'solucao_frente': surgery.solucao_frente or 0,
+                    'created_at': surgery.created_at.strftime('%d/%m/%Y %H:%M:%S') if surgery.created_at else ''
+                })
+            
+            df = pd.DataFrame(data_list)
+        
+        # Criar o arquivo Excel em memória
+        logger.info("Criando arquivo Excel para backup...")
+        excel_buffer = io.BytesIO()
+        
+        # Usar openpyxl para criar o Excel
+        df.to_excel(excel_buffer, sheet_name='Cirurgias', index=False, engine='openpyxl')
+        excel_buffer.seek(0)
+        
+        # Conectar ao Dropbox
+        logger.info("Conectando ao Dropbox...")
+        dbx = dropbox.Dropbox(dropbox_token)
+        
+        # Nome do arquivo com timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"relatorio_cirurgias_backup_{timestamp}.xlsx"
+        dropbox_path = f"/Apps/replit-relatorio cirurgia/{filename}"
+        
+        # Upload para o Dropbox (sobrescrever se existir)
+        logger.info(f"Fazendo upload para Dropbox: {dropbox_path}")
+        dbx.files_upload(
+            excel_buffer.getvalue(),
+            dropbox_path,
+            mode=dropbox.files.WriteMode.overwrite,
+            autorename=False
+        )
+        
+        # Também manter uma versão "latest" que sempre é sobrescrita
+        latest_path = "/Apps/replit-relatorio cirurgia/relatorio_cirurgias_latest.xlsx"
+        dbx.files_upload(
+            excel_buffer.getvalue(),
+            latest_path,
+            mode=dropbox.files.WriteMode.overwrite,
+            autorename=False
+        )
+        
+        logger.info(f"✅ Backup realizado com sucesso no Dropbox: {filename}")
+        return True, f"Backup realizado com sucesso: {filename}"
+        
+    except Exception as e:
+        logger.error(f"Erro no backup para Dropbox: {str(e)}")
+        logger.error(traceback.format_exc())
+        return False, f"Erro no backup: {str(e)}"
 
 # Load models and set up tables only once
 with app.app_context():
@@ -511,6 +655,19 @@ def save_to_excel(data):
             os.rename(temp_file, filename)
 
         logger.info("✅ Data saved to Excel successfully!")
+        
+        # Executar backup automático para Dropbox após salvar os dados
+        try:
+            logger.info("Iniciando backup automático para Dropbox...")
+            backup_success, backup_message = export_and_backup()
+            if backup_success:
+                logger.info(f"✅ Backup automático realizado: {backup_message}")
+            else:
+                logger.warning(f"⚠️ Backup automático falhou: {backup_message}")
+        except Exception as backup_e:
+            logger.error(f"Erro no backup automático: {str(backup_e)}")
+            # Não falhar o salvamento por causa de erro no backup
+        
         return True, "Dados salvos com sucesso!"
     except Exception as e:
         logging.error(f"Error saving data: {str(e)}")
