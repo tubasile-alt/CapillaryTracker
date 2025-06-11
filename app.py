@@ -286,10 +286,9 @@ def export_and_backup(df=None):
         logger.info("Conectando ao Dropbox...")
         dbx = dropbox.Dropbox(dropbox_token)
         
-        # Nome do arquivo com timestamp
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"relatorio_cirurgias_backup_{timestamp}.xlsx"
-        dropbox_path = f"/relatorio_cirurgias_backup_{timestamp}.xlsx"
+        # Nome fixo do arquivo (sempre o mesmo)
+        filename = "relatorio_cirurgias_backup.xlsx"
+        dropbox_path = f"/{filename}"
         
         # Upload para o Dropbox (sobrescrever se existir)
         logger.info(f"Fazendo upload para Dropbox: {dropbox_path}")
@@ -300,17 +299,8 @@ def export_and_backup(df=None):
             autorename=False
         )
         
-        # Também manter uma versão "latest" que sempre é sobrescrita
-        latest_path = "/relatorio_cirurgias_latest.xlsx"
-        dbx.files_upload(
-            excel_content,
-            latest_path,
-            mode=dropbox.files.WriteMode.overwrite,
-            autorename=False
-        )
-        
         logger.info(f"✅ Backup realizado com sucesso no Dropbox: {filename}")
-        return True, f"Backup realizado com sucesso: {filename}"
+        return True, f"Arquivo '{filename}' atualizado com sucesso no Dropbox"
         
     except dropbox.exceptions.AuthError as e:
         if 'expired_access_token' in str(e):
@@ -2330,7 +2320,7 @@ def test_backup():
             logger.info(f"✅ Teste de backup bem-sucedido: {message}")
             return jsonify({
                 'success': True, 
-                'message': f'Backup realizado com sucesso: {message}'
+                'message': message
             })
         else:
             logger.warning(f"⚠️ Falha no teste de backup: {message}")
