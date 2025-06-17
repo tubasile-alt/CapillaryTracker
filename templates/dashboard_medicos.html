@@ -6,6 +6,7 @@
     <title>Dashboard Médicos - ICB</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
         .medical-dashboard {
             padding: 20px;
@@ -182,6 +183,21 @@
                 <h3>Densidade de Extração</h3>
                 <div class="stat-value" id="avgDensidadeExtracao">-</div>
             </div>
+            
+            <div class="stat-card">
+                <h3>Tempo Médio de Cirurgia</h3>
+                <div class="stat-value" id="avgTempoCirurgia">-</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Média Solução Frente</h3>
+                <div class="stat-value" id="avgSolucaoFrente">-</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Média de Sangramento</h3>
+                <div class="stat-value" id="avgSangramento">-</div>
+            </div>
         </div>
         
         <div class="charts-section">
@@ -254,6 +270,9 @@
             document.getElementById('totalSurgeries').textContent = stats.total_surgeries;
             document.getElementById('avgBreakageRate').textContent = stats.avg_breakage_rate + '%';
             document.getElementById('avgDensidadeExtracao').textContent = stats.avg_densidade_extracao;
+            document.getElementById('avgTempoCirurgia').textContent = stats.avg_tempo_cirurgia ? stats.avg_tempo_cirurgia + 'h' : '-';
+            document.getElementById('avgSolucaoFrente').textContent = stats.avg_solucao_frente ? stats.avg_solucao_frente + 'ml' : '-';
+            document.getElementById('avgSangramento').textContent = stats.avg_sangramento || '-';
         }
         
         function updateCharts(chartData) {
@@ -378,7 +397,7 @@
                 }
             });
             
-            // Gráfico de Taxa de Quebra por Quadrante
+            // Gráfico de Taxa de Quebra por Quadrante com números visíveis
             if (quadrantBreakageChart) quadrantBreakageChart.destroy();
             
             const ctx4 = document.getElementById('quadrantBreakageChart').getContext('2d');
@@ -415,6 +434,17 @@
                         legend: {
                             labels: {
                                 color: 'white'
+                            }
+                        },
+                        datalabels: {
+                            display: true,
+                            color: 'white',
+                            font: {
+                                weight: 'bold',
+                                size: 14
+                            },
+                            formatter: function(value) {
+                                return value.toFixed(2) + '%';
                             }
                         }
                     }

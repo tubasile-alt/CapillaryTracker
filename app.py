@@ -2180,6 +2180,36 @@ def get_medicos_dashboard_data():
             
             avg_densidade_extracao = round(sum(densidades_extracao) / len(densidades_extracao), 2) if densidades_extracao else 0
             
+            # Coletar dados de tempo de cirurgia (apenas valores > 0)
+            tempos_cirurgia = []
+            for surgery in surgeries:
+                if hasattr(surgery, 'tempo_cirurgia') and surgery.tempo_cirurgia is not None and surgery.tempo_cirurgia > 0:
+                    tempos_cirurgia.append(surgery.tempo_cirurgia)
+            
+            avg_tempo_cirurgia = round(sum(tempos_cirurgia) / len(tempos_cirurgia), 2) if tempos_cirurgia else 0
+            
+            # Coletar dados de solução frente (apenas valores > 0)
+            solucoes_frente = []
+            for surgery in surgeries:
+                if hasattr(surgery, 'solucao_frente') and surgery.solucao_frente is not None and surgery.solucao_frente > 0:
+                    solucoes_frente.append(surgery.solucao_frente)
+            
+            avg_solucao_frente = round(sum(solucoes_frente) / len(solucoes_frente), 2) if solucoes_frente else 0
+            
+            # Coletar dados de sangramento (apenas valores não nulos)
+            sangramentos = []
+            for surgery in surgeries:
+                if hasattr(surgery, 'sangramento') and surgery.sangramento is not None and surgery.sangramento.strip():
+                    sangramentos.append(surgery.sangramento.strip())
+            
+            # Calcular a média de sangramento (exemplo: porcentagem de casos com sangramento mínimo/moderado/intenso)
+            sangramento_counts = {}
+            for sang in sangramentos:
+                sangramento_counts[sang] = sangramento_counts.get(sang, 0) + 1
+            
+            # Retornar o tipo de sangramento mais comum
+            avg_sangramento = max(sangramento_counts, key=sangramento_counts.get) if sangramento_counts else "N/A"
+            
             # Calcular média de furos por quadrante global
             avg_q1_furos = round(sum(q1_furos) / len(q1_furos), 1) if q1_furos else 0
             avg_q2_furos = round(sum(q2_furos) / len(q2_furos), 1) if q2_furos else 0
