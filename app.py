@@ -2210,6 +2210,29 @@ def get_medicos_dashboard_data():
             # Retornar o tipo de sangramento mais comum
             avg_sangramento = max(sangramento_counts, key=sangramento_counts.get) if sangramento_counts else "N/A"
             
+            # Calcular métricas gerais para comparação (quando filtro específico está aplicado)
+            general_avg_tempo_cirurgia = None
+            general_avg_solucao_frente = None
+            general_avg_sangramento = None
+            
+            if unit_filter != 'all':
+                # Buscar dados de todas as unidades para comparação
+                all_surgeries = Surgery.query.all()
+                
+                # Calcular métricas gerais
+                all_tempos_cirurgia = [s.tempo_cirurgia for s in all_surgeries if hasattr(s, 'tempo_cirurgia') and s.tempo_cirurgia is not None and s.tempo_cirurgia > 0]
+                general_avg_tempo_cirurgia = round(sum(all_tempos_cirurgia) / len(all_tempos_cirurgia), 2) if all_tempos_cirurgia else 0
+                
+                all_solucoes_frente = [s.solucao_frente for s in all_surgeries if hasattr(s, 'solucao_frente') and s.solucao_frente is not None and s.solucao_frente > 0]
+                general_avg_solucao_frente = round(sum(all_solucoes_frente) / len(all_solucoes_frente), 2) if all_solucoes_frente else 0
+                
+                all_sangramentos = [s.sangramento.strip() for s in all_surgeries if hasattr(s, 'sangramento') and s.sangramento is not None and s.sangramento.strip()]
+                if all_sangramentos:
+                    all_sangramento_counts = {}
+                    for sang in all_sangramentos:
+                        all_sangramento_counts[sang] = all_sangramento_counts.get(sang, 0) + 1
+                    general_avg_sangramento = max(all_sangramento_counts, key=all_sangramento_counts.get)
+            
             # Calcular média de furos por quadrante global
             avg_q1_furos = round(sum(q1_furos) / len(q1_furos), 1) if q1_furos else 0
             avg_q2_furos = round(sum(q2_furos) / len(q2_furos), 1) if q2_furos else 0
@@ -2306,6 +2329,9 @@ def get_medicos_dashboard_data():
                     'avg_tempo_cirurgia': avg_tempo_cirurgia,
                     'avg_solucao_frente': avg_solucao_frente,
                     'avg_sangramento': avg_sangramento,
+                    'general_avg_tempo_cirurgia': general_avg_tempo_cirurgia,
+                    'general_avg_solucao_frente': general_avg_solucao_frente,
+                    'general_avg_sangramento': general_avg_sangramento,
                     'max_q1': max_q1,
                     'max_q2': max_q2,
                     'max_q3': max_q3,

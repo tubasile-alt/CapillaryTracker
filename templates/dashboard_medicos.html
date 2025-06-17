@@ -81,6 +81,13 @@
             margin-bottom: 10px;
         }
         
+        .stat-comparison {
+            font-size: 12px;
+            color: #ccc;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
         .charts-section {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -187,16 +194,19 @@
             <div class="stat-card">
                 <h3>Tempo Médio de Cirurgia</h3>
                 <div class="stat-value" id="avgTempoCirurgia">-</div>
+                <div class="stat-comparison" id="tempoCirurgiaComparison"></div>
             </div>
             
             <div class="stat-card">
                 <h3>Média Solução Frente</h3>
                 <div class="stat-value" id="avgSolucaoFrente">-</div>
+                <div class="stat-comparison" id="solucaoFrenteComparison"></div>
             </div>
             
             <div class="stat-card">
                 <h3>Média de Sangramento</h3>
                 <div class="stat-value" id="avgSangramento">-</div>
+                <div class="stat-comparison" id="sangramentoComparison"></div>
             </div>
         </div>
         
@@ -271,8 +281,30 @@
             document.getElementById('avgBreakageRate').textContent = stats.avg_breakage_rate + '%';
             document.getElementById('avgDensidadeExtracao').textContent = stats.avg_densidade_extracao;
             document.getElementById('avgTempoCirurgia').textContent = stats.avg_tempo_cirurgia ? stats.avg_tempo_cirurgia + 'h' : '-';
-            document.getElementById('avgSolucaoFrente').textContent = stats.avg_solucao_frente ? stats.avg_solucao_frente + 'ml' : '-';
+            document.getElementById('avgSolucaoFrente').textContent = stats.avg_solucao_frente ? stats.avg_solucao_frente + ' seringas' : '-';
             document.getElementById('avgSangramento').textContent = stats.avg_sangramento || '-';
+            
+            // Adicionar comparações se disponíveis
+            if (stats.general_avg_tempo_cirurgia !== undefined) {
+                document.getElementById('tempoCirurgiaComparison').textContent = 
+                    `Geral: ${stats.general_avg_tempo_cirurgia}h`;
+            } else {
+                document.getElementById('tempoCirurgiaComparison').textContent = '';
+            }
+            
+            if (stats.general_avg_solucao_frente !== undefined) {
+                document.getElementById('solucaoFrenteComparison').textContent = 
+                    `Geral: ${stats.general_avg_solucao_frente} seringas`;
+            } else {
+                document.getElementById('solucaoFrenteComparison').textContent = '';
+            }
+            
+            if (stats.general_avg_sangramento !== undefined) {
+                document.getElementById('sangramentoComparison').textContent = 
+                    `Geral: ${stats.general_avg_sangramento}`;
+            } else {
+                document.getElementById('sangramentoComparison').textContent = '';
+            }
         }
         
         function updateCharts(chartData) {
