@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script>
+        Chart.register(ChartDataLabels);
+    </script>
     <style>
         .medical-dashboard {
             padding: 20px;
@@ -163,9 +166,20 @@
         
         <div class="filter-section">
             <div class="filter-group">
-                <label for="filterUnit">Unidade:</label>
+                <label for="filterUnit">Unidade Principal:</label>
                 <select id="filterUnit" onchange="updateDashboard()">
                     <option value="all">Todas as Unidades</option>
+                    <option value="Ribeirão Preto">Ribeirão Preto</option>
+                    <option value="Campinas">Campinas</option>
+                    <option value="Rio de Janeiro">Rio de Janeiro</option>
+                    <option value="São Paulo">São Paulo</option>
+                    <option value="Brasília">Brasília</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="compareUnit">Comparar com:</label>
+                <select id="compareUnit" onchange="updateDashboard()">
+                    <option value="">Nenhuma</option>
                     <option value="Ribeirão Preto">Ribeirão Preto</option>
                     <option value="Campinas">Campinas</option>
                     <option value="Rio de Janeiro">Rio de Janeiro</option>
@@ -263,17 +277,36 @@
         
         function updateDashboard() {
             const unit = document.getElementById('filterUnit').value;
+            const compareUnit = document.getElementById('compareUnit').value;
             
-            fetch(`/medicos/dashboard_data?unit=${unit}`)
-                .then(response => response.json())
-                .then(data => {
-                    updateStats(data.stats);
-                    updateCharts(data.charts);
-                    updateTable(data.units);
+            // Se modo de comparação estiver ativo, buscar dados de ambas as unidades
+            if (compareUnit && compareUnit !== unit) {
+                Promise.all([
+                    fetch(`/medicos/dashboard_data?unit=${encodeURIComponent(unit)}`),
+                    fetch(`/medicos/dashboard_data?unit=${encodeURIComponent(compareUnit)}`)
+                ])
+                .then(responses => Promise.all(responses.map(r => r.json())))
+                .then(([primaryData, compareData]) => {
+                    updateStatsComparison(primaryData.stats, compareData.stats, unit, compareUnit);
+                    updateCharts(primaryData.charts); // Gráficos mostram apenas a unidade principal
+                    updateTable(primaryData.units);
                 })
                 .catch(error => {
-                    console.error('Erro ao carregar dados:', error);
+                    console.error('Erro ao carregar dados de comparação:', error);
                 });
+            } else {
+                // Modo normal
+                fetch(`/medicos/dashboard_data?unit=${encodeURIComponent(unit)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        updateStats(data.stats);
+                        updateCharts(data.charts);
+                        updateTable(data.units);
+                    })
+                    .catch(error => {
+                        console.error('Erro ao carregar dados:', error);
+                    });
+            }
         }
         
         function updateStats(stats) {
@@ -305,6 +338,24 @@
             } else {
                 document.getElementById('sangramentoComparison').textContent = '';
             }
+        }
+        
+        function updateStatsComparison(primaryStats, compareStats, primaryUnit, compareUnit) {
+            // Atualizar valores principais
+            document.getElementById('totalSurgeries').textContent = primaryStats.total_surgeries;
+            document.getElementById('avgBreakageRate').textContent = primaryStats.avg_breakage_rate + '%';
+            document.getElementById('avgDensidadeExtracao').textContent = primaryStats.avg_densidade_extracao;
+            document.getElementById('avgTempoCirurgia').textContent = primaryStats.avg_tempo_cirurgia ? primaryStats.avg_tempo_cirurgia + 'h' : '-';
+            document.getElementById('avgSolucaoFrente').textContent = primaryStats.avg_solucao_frente ? primaryStats.avg_solucao_frente + ' seringas' : '-';
+            document.getElementById('avgSangramento').textContent = primaryStats.avg_sangramento || '-';
+            
+            // Atualizar comparações com a segunda unidade
+            document.getElementById('tempoCirurgiaComparison').textContent = 
+                `${compareUnit}: ${compareStats.avg_tempo_cirurgia ? compareStats.avg_tempo_cirurgia + 'h' : '-'}`;
+            document.getElementById('solucaoFrenteComparison').textContent = 
+                `${compareUnit}: ${compareStats.avg_solucao_frente ? compareStats.avg_solucao_frente + ' seringas' : '-'}`;
+            document.getElementById('sangramentoComparison').textContent = 
+                `${compareUnit}: ${compareStats.avg_sangramento || '-'}`;
         }
         
         function updateCharts(chartData) {
@@ -449,10 +500,11 @@
                     scales: {
                         y: {
                             beginAtZero: true,
+                            max: 25,
                             ticks: {
                                 color: 'white',
                                 callback: function(value) {
-                                    return value.toFixed(2) + '%';
+                                    return value.toFixed(0) + '%';
                                 }
                             }
                         },
@@ -476,11 +528,12 @@
                                 size: 14
                             },
                             formatter: function(value) {
-                                return value.toFixed(2) + '%';
+                                return value.toFixed(1) + '%';
                             }
                         }
                     }
-                }
+                },
+                plugins: [ChartDataLabels]
             });
         }
         
