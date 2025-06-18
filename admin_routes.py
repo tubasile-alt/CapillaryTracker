@@ -35,7 +35,7 @@ def load_config():
             'Brasília': ['Dra. Leticia', 'Dra. Natalia']
         },
         'equipe_por_unidade': {
-            'Ribeirão Preto': ['Aline', 'Ana', 'Natália'],
+            'Ribeirão Preto': ['Aline', 'Ana', 'Lavinia', 'Natália'],
             'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 'Isabelle de Campos', 
                          'Juliana Nunes', 'Kesley Sabrina', 'Larissa Hellen', 'Thalita Corrêa', 'Vitória Delino'],
             'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],

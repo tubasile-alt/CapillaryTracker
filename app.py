@@ -1247,7 +1247,7 @@ def get_equipe(unidade):
         logger.error(f"Erro ao carregar configuração de equipe: {e}")
         # Fallback para configuração padrão
         equipe_por_unidade = {
-            'Ribeirão Preto': ['Aline', 'Ana', 'Natália'],
+            'Ribeirão Preto': ['Aline', 'Ana', 'Lavinia', 'Natália'],
             'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 
                       'Isabelle de Campos', 'Juliana Nunes', 'Kesley Sabrina', 
                       'Larissa Hellen', 'Thalita Corrêa', 'Vitória Delino'],
