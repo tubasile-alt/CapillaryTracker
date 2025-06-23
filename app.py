@@ -1964,39 +1964,41 @@ def search_patients():
         if not term or len(term) < 2:
             return jsonify([])
 
-        # Carregar dados dos pacientes
+        # Buscar dados dos pacientes diretamente do banco
         with app.app_context():
-            df = pd.read_sql(Surgery.query.statement, db.session.get_bind())
+            # Construir query base
+            query = Surgery.query
+            
+            # Filtrar por unidade se especificado
+            if unit and unit.strip():
+                query = query.filter(Surgery.unidade == unit)
+            
+            # Buscar pacientes que contenham o termo no nome
+            query = query.filter(Surgery.nome.ilike(f'%{term}%'))
+            
+            # Executar query e ordenar por data mais recente
+            surgeries = query.order_by(Surgery.data.desc()).limit(15).all()
 
-        # Filtrar por unidade se especificado
-        if unit:
-            df = df[df['unidade'] == unit]
-
-        # Filtrar e ordenar pacientes
+        # Processar resultados
         patients = []
-        for _, row in df.iterrows():
-            name = str(row['nome']).lower()
-            # Usar fuzzy matching para melhorar a busca
-            ratio = fuzz.partial_ratio(term, name)
-            if ratio > 75:  # Threshold de similaridade
-                patient_data = {
-                    'id': len(patients),  # Usar índice como ID temporário
-                    'nome': row['nome'],
-                    'unidade': row['unidade'],
-                    'data': row['data'],
-                    'total_foliculos': row['total_foliculos'],
-                    'densidade_scketh': row['densidade_scketh'],
-                    'infiltracao': row['infiltracao'],
-                    'tadalafila': row['tadalafila'] if 'tadalafila' in row else 'Não',
-                    'medico': row['medico'],
-                    'equipe': row['equipe']
-                }
-                patients.append(patient_data)
+        for surgery in surgeries:
+            patient_data = {
+                'id': surgery.id,
+                'nome': surgery.nome or '',
+                'unidade': surgery.unidade or '',
+                'data': surgery.data.strftime('%d/%m/%Y') if surgery.data else '',
+                'total_foliculos': surgery.total_foliculos or 0,
+                'densidade_scketh': surgery.densidade_scketh or 0,
+                'infiltracao': surgery.infiltracao or '',
+                'tadalafila': surgery.tadalafila or 'Não informado',
+                'medico': surgery.medico or '',
+                'equipe': surgery.equipe or ''
+            }
+            patients.append(patient_data)
 
-        # Ordenar por nome
-        patients.sort(key=lambda x: x['nome'])
-
-        return jsonify(patients[:10])  # Limitar a 10 sugestões
+        logger.info(f"Found {len(patients)} patients for term '{term}' in unit '{unit}'")
+        return jsonify(patients)
+        
     except Exception as e:
         logger.error(f"Error searching patients: {str(e)}\n{traceback.format_exc()}")
         return jsonify([])
