@@ -2235,6 +2235,129 @@ def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@app.route('/download_combined_data')
+def download_combined_data():
+    """Endpoint para baixar dados combinados de cirurgia e necrose em Excel"""
+    logger.info("Gerando exportação combinada de cirurgia e necrose...")
+    try:
+        with app.app_context():
+            # Buscar todas as cirurgias com LEFT JOIN para incluir dados de necrose
+            query = db.session.query(Surgery, Necrose).outerjoin(
+                Necrose, Surgery.id == Necrose.surgery_id
+            ).order_by(Surgery.data.desc())
+            
+            results = query.all()
+            logger.info(f"Encontrados {len(results)} registros para exportação")
+            
+            if not results:
+                flash("Nenhum dado encontrado no banco de dados", "error")
+                return redirect(url_for('necrose'))
+            
+            # Converter para lista de dicionários combinando dados de cirurgia e necrose
+            data_list = []
+            for surgery, necrose in results:
+                combined_dict = {
+                    # Dados da Cirurgia
+                    'ID Cirurgia': surgery.id,
+                    'Data da Cirurgia': surgery.data.strftime('%d/%m/%Y') if surgery.data else '',
+                    'Paciente': surgery.nome or '',
+                    'Unidade': surgery.unidade or '',
+                    'Médico': surgery.medico or '',
+                    'Equipe': surgery.equipe or '',
+                    'Hora da Cirurgia': surgery.hora_cirurgia or '',
+                    'Tempo de Cirurgia (horas)': surgery.tempo_cirurgia or 0,
+                    'Total de Folículos': surgery.total_foliculos or 0,
+                    'Frente': surgery.frente or 0,
+                    'Densidade Scketh': surgery.densidade_scketh or 0,
+                    'Coroa': surgery.coroa or 0,
+                    'Scalpe': surgery.scalpe or 0,
+                    'Península Direita': surgery.peninsula_direita or 0,
+                    'Península Esquerda': surgery.peninsula_esquerda or 0,
+                    'Infiltração': surgery.infiltracao or '',
+                    'Sedação': getattr(surgery, 'sedacao', '') or '',
+                    'Sangramento': getattr(surgery, 'sangramento', '') or '',
+                    'Tadalafila': surgery.tadalafila or '',
+                    'Bloqueio de Seringas': surgery.bloqueio_seringas or '',
+                    'Técnica': surgery.tecnica or '',
+                    'Solução Frente (ml)': surgery.solucao_frente or 0,
+                    'Q1 Área': surgery.q1_area or 0,
+                    'Q1 Furos': surgery.q1_furos or 0,
+                    'Q1 Fios': surgery.q1_fios or 0,
+                    'Q1 Densidade': surgery.q1_densidade or 0,
+                    'Q1 Taxa Quebra': surgery.q1_taxa_quebra or 0,
+                    'Q2 Área': surgery.q2_area or 0,
+                    'Q2 Furos': surgery.q2_furos or 0,
+                    'Q2 Fios': surgery.q2_fios or 0,
+                    'Q2 Densidade': surgery.q2_densidade or 0,
+                    'Q2 Taxa Quebra': surgery.q2_taxa_quebra or 0,
+                    'Q3 Área': surgery.q3_area or 0,
+                    'Q3 Furos': surgery.q3_furos or 0,
+                    'Q3 Fios': surgery.q3_fios or 0,
+                    'Q3 Densidade': surgery.q3_densidade or 0,
+                    'Q3 Taxa Quebra': surgery.q3_taxa_quebra or 0,
+                    'Q4 Área': surgery.q4_area or 0,
+                    'Q4 Furos': surgery.q4_furos or 0,
+                    'Q4 Fios': surgery.q4_fios or 0,
+                    'Q4 Densidade': surgery.q4_densidade or 0,
+                    'Q4 Taxa Quebra': surgery.q4_taxa_quebra or 0,
+                    'Densidade Extração': surgery.densidade_extracao or 0,
+                    'Data de Criação': surgery.created_at.strftime('%d/%m/%Y %H:%M:%S') if surgery.created_at else '',
+                    
+                    # Dados da Necrose
+                    'Tem Necrose': 'Sim' if necrose and necrose.tem_necrose else 'Não',
+                    'Data Avaliação Necrose': necrose.data_avaliacao.strftime('%d/%m/%Y') if necrose and necrose.data_avaliacao else '',
+                    'Médico Responsável Necrose': necrose.medico_responsavel if necrose else '',
+                    'Grau da Necrose': necrose.grau_necrose if necrose else '',
+                    'Localização da Necrose': necrose.localizacao if necrose else '',
+                    'Tamanho da Lesão (mm)': necrose.tamanho_mm if necrose else '',
+                    'Descrição da Necrose': necrose.descricao if necrose else '',
+                    'Tratamento Aplicado': necrose.tratamento_aplicado if necrose else '',
+                    'Observações Necrose': necrose.observacoes if necrose else '',
+                    'Status da Necrose': necrose.status if necrose else '',
+                    'Data Resolução': necrose.data_resolucao.strftime('%d/%m/%Y') if necrose and necrose.data_resolucao else '',
+                    'Necrose Criada em': necrose.created_at.strftime('%d/%m/%Y %H:%M:%S') if necrose and necrose.created_at else '',
+                    'Necrose Atualizada em': necrose.updated_at.strftime('%d/%m/%Y %H:%M:%S') if necrose and necrose.updated_at else ''
+                }
+                data_list.append(combined_dict)
+            
+            # Criar DataFrame e salvar em Excel
+            df = pd.DataFrame(data_list)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"dados_cirurgia_necrose_{timestamp}.xlsx"
+            temp_file = f"temp_{filename}"
+            
+            # Salvar no arquivo temporário
+            df.to_excel(temp_file, index=False, engine='openpyxl')
+            
+            logger.info(f"Exportação combinada criada com {len(data_list)} registros: {filename}")
+            
+            # Enviar arquivo e depois deletar
+            return_data = send_file(
+                temp_file,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name=filename
+            )
+            
+            # Agendar remoção do arquivo temporário
+            import threading
+            def remove_temp_file():
+                try:
+                    import time
+                    time.sleep(2)  # Aguardar download
+                    os.remove(temp_file)
+                except:
+                    pass
+            
+            threading.Thread(target=remove_temp_file).start()
+            
+            return return_data
+            
+    except Exception as e:
+        logger.error(f"Erro ao gerar exportação combinada: {str(e)}\n{traceback.format_exc()}")
+        flash(f"Erro ao gerar arquivo: {str(e)}", "error")
+        return redirect(url_for('necrose'))
+
 # Rotas do Dashboard Médicos
 @app.route('/medicos/login', methods=['GET', 'POST'])
 def login_medicos():
