@@ -1,0 +1,107 @@
+# Replit.md - Hair Surgery Management System
+
+## Overview
+
+This is a comprehensive hair surgery management system for Instituto Capilar do Brasil (ICB). The system tracks surgical procedures, patient data, medical teams, and generates detailed reports and dashboards. It's built with Flask and PostgreSQL, featuring both a web interface and a Tkinter desktop application for data entry.
+
+## System Architecture
+
+### Backend Architecture
+- **Framework**: Flask with SQLAlchemy ORM
+- **Database**: PostgreSQL hosted on Neon (cloud database)
+- **Migration System**: Flask-Migrate with Alembic
+- **Monitoring**: Flask-MonitoringDashboard for system metrics
+- **Authentication**: Simple password-based admin authentication
+
+### Frontend Architecture
+- **Web Interface**: Flask templates with Jinja2
+- **Desktop Application**: Tkinter-based form application (main.py)
+- **Styling**: Custom CSS with responsive design
+- **JavaScript**: Dynamic form interactions and chart visualizations
+
+### Data Storage
+- **Primary Database**: PostgreSQL with two main tables:
+  - `surgery`: Patient surgery records
+  - `unit_progress`: Goal tracking per medical unit
+- **File Storage**: Excel files for data backup and import/export
+- **Cloud Backup**: Automated Dropbox integration for data backup
+
+## Key Components
+
+### 1. Database Models
+- **Surgery Model**: Comprehensive patient surgery data including demographics, procedure details, follicle counts, and medical team information
+- **UnitProgress Model**: Tracks performance goals for each medical unit
+
+### 2. Web Application Routes
+- **Main Routes** (app.py): Patient registration, dashboard, data visualization
+- **Admin Routes** (admin_routes.py): Medical staff and team management
+- **Authentication**: Separate login systems for general users and medical staff
+
+### 3. Desktop Application
+- **Tkinter Interface** (main.py): Offline data entry form with validation
+- **Multi-page Form**: Paginated interface for comprehensive data collection
+- **Data Sync**: Integrates with web application database
+
+### 4. Data Management
+- **Import/Export**: Excel file handling for data migration
+- **Backup System**: Automated Dropbox backup with versioning
+- **Migration Scripts**: Database schema management and data restoration
+
+## Data Flow
+
+1. **Data Entry**: Users can input data via web form or desktop application
+2. **Validation**: Form validation ensures data integrity before database storage
+3. **Storage**: Data is stored in PostgreSQL with automatic backup triggers
+4. **Visualization**: Dashboard provides real-time analytics and reporting
+5. **Backup**: Automated backup to Dropbox maintains data safety
+6. **Export**: Excel export functionality for reporting and data sharing
+
+## External Dependencies
+
+### Core Dependencies
+- **Flask**: Web framework and routing
+- **SQLAlchemy**: Database ORM and connection management
+- **Pandas**: Data manipulation and Excel file handling
+- **Psycopg2**: PostgreSQL database adapter
+- **Tkinter**: Desktop GUI framework (built-in Python)
+
+### Additional Services
+- **Dropbox API**: Cloud backup integration
+- **Neon PostgreSQL**: Cloud database hosting
+- **Chart.js**: Web-based data visualization
+- **FuzzyWuzzy**: Name matching for duplicate detection
+
+### Development Tools
+- **Flask-Migrate**: Database migration management
+- **Flask-MonitoringDashboard**: Application performance monitoring
+- **Openpyxl**: Excel file processing
+
+## Deployment Strategy
+
+### Environment Configuration
+- **Database**: Cloud-hosted PostgreSQL on Neon platform
+- **Secrets Management**: Environment variables for sensitive data (tokens, passwords)
+- **Static Assets**: Served directly by Flask in development
+
+### Migration Strategy
+- **Database Migrations**: Managed through Flask-Migrate with custom scripts
+- **Data Restoration**: Automated deployment data restoration from Excel backups
+- **Version Control**: Git-based deployment with automated setup scripts
+
+### Backup Strategy
+- **Local Backups**: Excel file exports stored in data_backup directory
+- **Cloud Backups**: Automated Dropbox sync with timestamped versions
+- **Database Dumps**: Migration scripts for complete database restoration
+
+## Changelog
+
+```
+Changelog:
+- June 24, 2025. Initial setup
+```
+
+## User Preferences
+
+```
+Preferred communication style: Simple, everyday language.
+```

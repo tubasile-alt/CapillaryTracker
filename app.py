@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 import functools
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, date
 from fuzzywuzzy import fuzz
 import json
 from flask_sqlalchemy import SQLAlchemy
@@ -14,6 +14,9 @@ import shutil
 from sqlalchemy import text, extract
 import dropbox
 import io
+from werkzeug.utils import secure_filename
+import uuid
+import mimetypes
 
 # Configure logging
 logging.basicConfig(
@@ -27,6 +30,8 @@ logger.info("Starting Flask application...")
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 app.config['ADMIN_PASSWORD'] = '12345'
+app.config['UPLOAD_FOLDER'] = 'static/uploads/necrose_photos'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Importar e registrar blueprints após as configurações da app
 from admin_routes import admin_bp
@@ -147,6 +152,49 @@ class UnitProgress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     unidade = db.Column(db.String(100), unique=True)
     meta = db.Column(db.Integer)
+
+class Necrose(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    surgery_id = db.Column(db.Integer, db.ForeignKey('surgery.id'), nullable=False)
+    unidade = db.Column(db.String(100), nullable=False)
+    paciente_nome = db.Column(db.String(255), nullable=False)
+    data_cirurgia = db.Column(db.Date, nullable=False)
+    data_avaliacao = db.Column(db.Date, nullable=False)
+    medico_responsavel = db.Column(db.String(100))
+    
+    # Dados de necrose
+    tem_necrose = db.Column(db.Boolean, default=False)
+    grau_necrose = db.Column(db.String(50))  # Leve, Moderada, Severa
+    localizacao = db.Column(db.Text)  # Área afetada
+    tamanho_mm = db.Column(db.Float)  # Tamanho em mm
+    descricao = db.Column(db.Text)
+    tratamento_aplicado = db.Column(db.Text)
+    observacoes = db.Column(db.Text)
+    
+    # Campos de acompanhamento
+    status = db.Column(db.String(50), default='Em acompanhamento')  # Em acompanhamento, Resolvida, etc.
+    data_resolucao = db.Column(db.Date)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relacionamento
+    surgery = db.relationship('Surgery', backref='necroses')
+
+class NecrosePhoto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    necrose_id = db.Column(db.Integer, db.ForeignKey('necrose.id'), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255))
+    file_path = db.Column(db.String(500))
+    file_size = db.Column(db.Integer)
+    mime_type = db.Column(db.String(100))
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relacionamento
+    necrose = db.relationship('Necrose', backref='photos')
 
 # Configure Flask-Migrate
 from flask_migrate import Migrate
