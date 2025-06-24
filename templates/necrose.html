@@ -97,47 +97,75 @@
         <h3>Registro de Necrose</h3>
         <form id="form-necrose" method="POST" enctype="multipart/form-data">
             <input type="hidden" id="patient-id" name="patient_id">
-            <input type="hidden" id="patient-unit" name="patient_unit">
             
             <div class="form-group">
-                <label for="lesion-count">Número de Lesões</label>
-                <input type="number" id="lesion-count" name="lesion_count" class="form-control" required min="0">
+                <label for="data-avaliacao">Data da Avaliação</label>
+                <input type="date" id="data-avaliacao" name="data_avaliacao" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="medico-responsavel">Médico Responsável</label>
+                <input type="text" id="medico-responsavel" name="medico_responsavel" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="tem-necrose" name="tem_necrose" value="true"> 
+                    Apresenta necrose
+                </label>
             </div>
 
-            <div class="form-group">
-                <label for="largest-lesion">Área da Maior Lesão (cm²)</label>
-                <input type="number" id="largest-lesion" name="largest_lesion" class="form-control" required min="0" step="0.1">
-            </div>
+            <div id="necrose-details" style="display: none;">
+                <div class="form-group">
+                    <label for="grau">Grau da Necrose</label>
+                    <select id="grau" name="grau" class="form-control">
+                        <option value="">Selecione...</option>
+                        <option value="Leve">Leve</option>
+                        <option value="Moderada">Moderada</option>
+                        <option value="Severa">Severa</option>
+                    </select>
+                </div>
 
+                <div class="form-group">
+                    <label for="localizacao">Localização da Necrose</label>
+                    <textarea id="localizacao" name="localizacao" class="form-control" rows="2" placeholder="Descreva a área afetada"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="tamanho">Tamanho da Maior Lesão (mm)</label>
+                    <input type="number" id="tamanho" name="tamanho" class="form-control" min="0" step="0.1">
+                </div>
+            </div>
+            
             <div class="form-group">
-                <label for="affected-band">Faixa Acometida</label>
-                <select id="affected-band" name="affected_band" class="form-control" required>
-                    <option value="">Selecione...</option>
-                    <option value="1">Faixa 1</option>
-                    <option value="2">Faixa 2</option>
-                    <option value="1,2">Faixas 1 e 2</option>
-                    <option value="3">Faixa 3</option>
+                <label for="descricao">Descrição Detalhada</label>
+                <textarea id="descricao" name="descricao" class="form-control" rows="3" placeholder="Descrição detalhada dos achados"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="tratamento">Tratamento Aplicado</label>
+                <textarea id="tratamento" name="tratamento" class="form-control" rows="2" placeholder="Tratamento aplicado ou recomendado"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="observacoes">Observações</label>
+                <textarea id="observacoes" name="observacoes" class="form-control" rows="2" placeholder="Observações adicionais"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status" class="form-control">
+                    <option value="Em acompanhamento">Em acompanhamento</option>
+                    <option value="Resolvida">Resolvida</option>
+                    <option value="Em tratamento">Em tratamento</option>
                 </select>
             </div>
             
             <div class="form-group">
-                <label>Fotos da Lesão (máximo 3)</label>
+                <label>Fotos (máximo 5)</label>
                 <div class="photo-upload-container">
-                    <div class="photo-upload">
-                        <label for="photo1" class="photo-label">Foto 1</label>
-                        <input type="file" id="photo1" name="photo1" class="form-control" accept="image/*">
-                        <div class="preview" id="preview1"></div>
-                    </div>
-                    <div class="photo-upload">
-                        <label for="photo2" class="photo-label">Foto 2</label>
-                        <input type="file" id="photo2" name="photo2" class="form-control" accept="image/*">
-                        <div class="preview" id="preview2"></div>
-                    </div>
-                    <div class="photo-upload">
-                        <label for="photo3" class="photo-label">Foto 3</label>
-                        <input type="file" id="photo3" name="photo3" class="form-control" accept="image/*">
-                        <div class="preview" id="preview3"></div>
-                    </div>
+                    <input type="file" name="photos" class="form-control" accept="image/*" multiple>
+                    <small class="form-text text-muted">Selecione até 5 fotos (PNG, JPG, JPEG)</small>
                 </div>
             </div>
 
@@ -428,29 +456,46 @@ setupImagePreview('photo1', 'preview1');
 setupImagePreview('photo2', 'preview2');
 setupImagePreview('photo3', 'preview3');
 
-document.getElementById('form-necrose').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    // Criar FormData para enviar arquivos
-    const formData = new FormData(this);
-    
-    fetch('/save_necrose', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Registro de necrose salvo com sucesso!');
-            // Limpar formulário
-            document.getElementById('form-necrose').reset();
-            // Limpar previews
-            document.getElementById('preview1').innerHTML = '';
-            document.getElementById('preview2').innerHTML = '';
-            document.getElementById('preview3').innerHTML = '';
-        } else {
-            alert('Erro ao salvar registro: ' + data.error);
-        }
+// Formulário de necrose - movido para dentro do DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('form-necrose').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        // Mostrar indicador de carregamento
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Salvando...';
+        submitBtn.disabled = true;
+        
+        fetch('/save_necrose', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'Dados salvos com sucesso!');
+                clearPatientSelection();
+                loadNecroseSummary(); // Atualizar resumo automaticamente
+                // Limpar formulário
+                this.reset();
+                document.getElementById('data-avaliacao').value = new Date().toISOString().split('T')[0];
+                document.getElementById('necrose-details').style.display = 'none';
+            } else {
+                alert('Erro ao salvar: ' + (data.error || data.message));
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao salvar dados');
+        })
+        .finally(() => {
+            // Restaurar botão
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        });
     });
 });
 

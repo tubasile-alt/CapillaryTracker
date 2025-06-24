@@ -2053,21 +2053,46 @@ def search_patients():
 
 @app.route('/necrose_summary')
 def necrose_summary():
-    """Endpoint para retornar o resumo de necroses"""
-    logger.info("Getting necrose summary")
+    """Endpoint para retornar o resumo de necroses do banco de dados"""
+    logger.info("Getting necrose summary from database")
     try:
         with app.app_context():
             total_surgeries = Surgery.query.count()
-            total_necroses = 0 #Necroses model needs to be defined and populated
+            total_necroses = Necrose.query.filter_by(tem_necrose=True).count()
+            
             necrose_rate = "0%"
             if total_surgeries > 0:
                 taxa = (total_necroses / total_surgeries) * 100
                 necrose_rate = f"{taxa:.1f}%"
 
+            # Dados por unidade
+            unit_data = {}
+            units = db.session.query(Surgery.unidade.distinct()).all()
+            
+            for unit_tuple in units:
+                unit = unit_tuple[0]
+                if unit:
+                    unit_surgeries = Surgery.query.filter_by(unidade=unit).count()
+                    unit_necroses = Necrose.query.join(Surgery).filter(
+                        Surgery.unidade == unit,
+                        Necrose.tem_necrose == True
+                    ).count()
+                    
+                    unit_rate = (unit_necroses / unit_surgeries * 100) if unit_surgeries > 0 else 0
+                    
+                    unit_data[unit] = {
+                        'surgeries': unit_surgeries,
+                        'necroses': unit_necroses,
+                        'rate': f"{unit_rate:.1f}%"
+                    }
+
+            logger.info(f"Necrose summary: {total_surgeries} surgeries, {total_necroses} necroses, rate: {necrose_rate}")
+            
             return jsonify({
                 'total_surgeries': total_surgeries,
                 'total_necroses': total_necroses,
-                'necrose_rate': necrose_rate
+                'necrose_rate': necrose_rate,
+                'by_unit': unit_data
             })
     except Exception as e:
         logger.error(f"Error getting necrose summary: {str(e)}\n{traceback.format_exc()}")
@@ -2075,54 +2100,140 @@ def necrose_summary():
             'total_surgeries': 0,
             'total_necroses': 0,
             'necrose_rate': '0%',
+            'by_unit': {},
             'error': str(e)
         })
 
 @app.route('/save_necrose', methods=['POST'])
 def save_necrose():
-    """Endpoint para salvar dados de necrose"""
-    logger.info("Saving necrose data")
+    """Endpoint para salvar dados de necrose com upload de fotos"""
+    logger.info("Saving necrose data to database")
     try:
-        # Verificar se existem dados do formulário
-        if not request.form:
-            return jsonify({'success': False, 'error': 'Dados do formulário não encontrados'})
-
         # Obter dados do formulário
         patient_id = request.form.get('patient_id')
-        patient_unit = request.form.get('patient_unit')
-        lesion_count = request.form.get('lesion_count')
-        largest_lesion = request.form.get('largest_lesion')
-        affected_band = request.form.get('affected_band')
-
-        # Validar dados recebidos
-        required_fields = ['patient_id', 'lesion_count', 'largest_lesion', 'affected_band']
-        if not all(request.form.get(field) for field in required_fields):
-            return jsonify({'success': False, 'error': 'Dados incompletos'})
-
-        # Processar arquivos de foto
-        photo_paths = []
-        photo_dir = os.path.join('static', 'uploads', 'necrose_photos')
-
-        # Criar diretório se não existir
-        os.makedirs(photo_dir, exist_ok=True)
-
-        for i in range(1, 4):  # Para cada uma das 3 fotos possíveis
-            photo_key = f'photo{i}'
-            if photo_key in request.files and request.files[photo_key].filename != '':
-                file = request.files[photo_key]
-                filename = f"necrose_{patient_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{i}.jpg"
-                file_path = os.path.join(photo_dir, filename)
-                file.save(file_path)
-                photo_paths.append(file_path)
-
-        # Carregar arquivo de necroses existente ou criar novo
-        #Necroses model needs to be defined and populated
+        if not patient_id:
+            return jsonify({
+                'success': False,
+                'message': 'ID do paciente é obrigatório'
+            }), 400
         
-        return jsonify({'success': True, 'message': 'Dados de necrose salvos com sucesso'})
+        # Buscar dados da cirurgia
+        surgery = Surgery.query.get(patient_id)
+        if not surgery:
+            return jsonify({
+                'success': False,
+                'message': 'Paciente não encontrado'
+            }), 404
+        
+        # Verificar se já existe registro de necrose para este paciente
+        existing_necrose = Necrose.query.filter_by(surgery_id=patient_id).first()
+        
+        # Dados do formulário
+        tem_necrose = request.form.get('tem_necrose') == 'true'
+        grau_necrose = request.form.get('grau') if tem_necrose else None
+        localizacao = request.form.get('localizacao') if tem_necrose else None
+        tamanho_mm = float(request.form.get('tamanho')) if request.form.get('tamanho') and tem_necrose else None
+        descricao = request.form.get('descricao') or ''
+        tratamento_aplicado = request.form.get('tratamento') or ''
+        observacoes = request.form.get('observacoes') or ''
+        data_avaliacao = datetime.strptime(request.form.get('data_avaliacao', datetime.now().strftime('%Y-%m-%d')), '%Y-%m-%d').date()
+        medico_responsavel = request.form.get('medico_responsavel', '')
+        status = request.form.get('status', 'Em acompanhamento')
+        
+        if existing_necrose:
+            # Atualizar registro existente
+            existing_necrose.tem_necrose = tem_necrose
+            existing_necrose.grau_necrose = grau_necrose
+            existing_necrose.localizacao = localizacao
+            existing_necrose.tamanho_mm = tamanho_mm
+            existing_necrose.descricao = descricao
+            existing_necrose.tratamento_aplicado = tratamento_aplicado
+            existing_necrose.observacoes = observacoes
+            existing_necrose.data_avaliacao = data_avaliacao
+            existing_necrose.medico_responsavel = medico_responsavel
+            existing_necrose.status = status
+            existing_necrose.updated_at = datetime.utcnow()
+            necrose_record = existing_necrose
+        else:
+            # Criar novo registro
+            necrose_record = Necrose(
+                surgery_id=patient_id,
+                unidade=surgery.unidade,
+                paciente_nome=surgery.nome,
+                data_cirurgia=surgery.data,
+                data_avaliacao=data_avaliacao,
+                medico_responsavel=medico_responsavel,
+                tem_necrose=tem_necrose,
+                grau_necrose=grau_necrose,
+                localizacao=localizacao,
+                tamanho_mm=tamanho_mm,
+                descricao=descricao,
+                tratamento_aplicado=tratamento_aplicado,
+                observacoes=observacoes,
+                status=status
+            )
+            db.session.add(necrose_record)
+        
+        # Salvar no banco antes de processar fotos
+        db.session.commit()
+        
+        # Processar upload de fotos
+        uploaded_files = []
+        photos = request.files.getlist('photos')
+        
+        for photo in photos:
+            if photo and photo.filename:
+                if allowed_file(photo.filename):
+                    # Gerar nome único para o arquivo
+                    filename = secure_filename(photo.filename)
+                    unique_filename = f"{uuid.uuid4().hex}_{filename}"
+                    
+                    # Criar diretório se não existir
+                    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                    
+                    # Salvar arquivo
+                    file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                    photo.save(file_path)
+                    
+                    # Salvar informações da foto no banco
+                    photo_record = NecrosePhoto(
+                        necrose_id=necrose_record.id,
+                        filename=unique_filename,
+                        original_filename=filename,
+                        file_path=file_path,
+                        file_size=os.path.getsize(file_path),
+                        mime_type=mimetypes.guess_type(filename)[0] or 'image/jpeg',
+                        description=request.form.get(f'photo_description_{photos.index(photo)}', '')
+                    )
+                    db.session.add(photo_record)
+                    uploaded_files.append(unique_filename)
+        
+        # Commit final
+        db.session.commit()
+        
+        logger.info(f"Dados de necrose salvos para paciente: {surgery.nome} (ID: {patient_id})")
+        if uploaded_files:
+            logger.info(f"Fotos carregadas: {uploaded_files}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Dados de necrose salvos com sucesso. {len(uploaded_files)} foto(s) carregada(s).',
+            'necrose_id': necrose_record.id,
+            'photos_uploaded': len(uploaded_files)
+        })
         
     except Exception as e:
+        db.session.rollback()
         logger.error(f"Erro ao salvar dados de necrose: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)})
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao salvar dados: {str(e)}'
+        }), 500
+
+def allowed_file(filename):
+    """Verificar se o arquivo é uma imagem permitida"""
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Rotas do Dashboard Médicos
 @app.route('/medicos/login', methods=['GET', 'POST'])
