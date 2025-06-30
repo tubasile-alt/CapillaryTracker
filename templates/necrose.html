@@ -443,92 +443,78 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedUnit = e.target.value;
             const patientSearchField = document.getElementById('patient-search');
             
-            if (selectedUnit) {
+            if (selectedUnit && patientSearchField) {
                 patientSearchField.disabled = false;
-                patientSearchField.placeholder = `Digite o nome do paciente na unidade ${selectedUnit}...`;
-                console.log('Campo de busca habilitado para:', selectedUnit);
-            } else {
+                patientSearchField.placeholder = `Digite o nome do paciente...`;
+                console.log('Campo habilitado para unidade:', selectedUnit);
+            } else if (patientSearchField) {
                 patientSearchField.disabled = true;
                 patientSearchField.placeholder = "Selecione uma unidade primeiro";
                 patientSearchField.value = "";
-                const suggestions = document.getElementById('search-suggestions');
-                if (suggestions) suggestions.style.display = 'none';
             }
-    
-            // Limpar qualquer busca anterior
-            const patientReport = document.getElementById('patient-report');
-            const necroseForm = document.getElementById('necrose-form');
-            if (patientReport) patientReport.style.display = 'none';
-            if (necroseForm) necroseForm.style.display = 'none';
+            
+            // Limpar busca anterior
+            clearPatientSelection();
         });
     }
 
     const patientSearch = document.getElementById('patient-search');
     if (patientSearch) {
         patientSearch.addEventListener('input', function(e) {
-    const searchTerm = e.target.value;
-    if (searchTerm.length < 2) {
-        document.getElementById('search-suggestions').style.display = 'none';
-        return;
-    }
-
-    fetch(`/search_patients?term=${encodeURIComponent(searchTerm)}&unit=${encodeURIComponent(selectedUnit)}`)
-        .then(response => response.json())
-        .then(data => {
-            const suggestionsDiv = document.getElementById('search-suggestions');
-            suggestionsDiv.innerHTML = '';
-            
-            if (data.length > 0) {
-                data.forEach(patient => {
-                    const div = document.createElement('div');
-                    div.className = 'suggestion-item';
-                    div.innerHTML = `
-                        <strong>${patient.nome}</strong><br>
-                        <small>Unidade: ${patient.unidade} | Data: ${patient.data}</small>
-                    `;
-                    div.addEventListener('click', () => selectPatient(patient));
-                    suggestionsDiv.appendChild(div);
-                });
-                suggestionsDiv.style.display = 'block';
-            } else {
-                // Mostrar mensagem quando não encontrar pacientes
-                const div = document.createElement('div');
-                div.className = 'suggestion-item';
-                div.innerHTML = '<em>Nenhum paciente encontrado</em>';
-                div.style.color = '#666';
-                suggestionsDiv.appendChild(div);
-                suggestionsDiv.style.display = 'block';
-            }
-        })
-        .catch(error => {
-            console.error('Erro na busca de pacientes:', error);
-            const suggestionsDiv = document.getElementById('search-suggestions');
-            suggestionsDiv.innerHTML = '<div class="suggestion-item" style="color: red;"><em>Erro na busca</em></div>';
-            suggestionsDiv.style.display = 'block';
+            searchPatients(e.target.value);
         });
-});
 
 function selectPatient(patient) {
     patientData = patient;
-    document.getElementById('search-suggestions').style.display = 'none';
-    document.getElementById('patient-search').value = patient.nome;
+    console.log('Paciente selecionado:', patient);
     
-    // Preencher relatório
-    document.getElementById('patient-name').textContent = patient.nome;
-    document.getElementById('patient-unit').textContent = patient.unidade;
-    document.getElementById('surgery-date').textContent = patient.data;
-    document.getElementById('follicles-count').textContent = patient.total_foliculos;
-    document.getElementById('density-first').textContent = patient.densidade_scketh;
-    document.getElementById('front-infiltration').textContent = patient.infiltracao;
-    document.getElementById('tadalafila-status').textContent = patient.tadalafila || 'Não informado';
-    document.getElementById('doctor-name').textContent = patient.medico;
-    document.getElementById('team-members').textContent = patient.equipe;
+    const patientSearch = document.getElementById('patient-search');
+    const suggestions = document.getElementById('search-suggestions');
     
-    // Mostrar relatório e formulário
-    document.getElementById('patient-report').style.display = 'block';
-    document.getElementById('necrose-form').style.display = 'block';
-    document.getElementById('patient-id').value = patient.id;
-    document.getElementById('patient-unit').value = patient.unidade;
+    if (patientSearch) patientSearch.value = patient.nome;
+    if (suggestions) suggestions.style.display = 'none';
+    
+    // Preencher relatório com verificação de elementos
+    const elements = [
+        { id: 'patient-name', value: patient.nome },
+        { id: 'patient-unit', value: patient.unidade },
+        { id: 'surgery-date', value: patient.data },
+        { id: 'follicles-count', value: patient.total_foliculos || 'N/A' },
+        { id: 'density-first', value: patient.densidade_scketh || 'N/A' },
+        { id: 'front-infiltration', value: patient.infiltracao || 'N/A' },
+        { id: 'tadalafila-status', value: patient.tadalafila || 'Não informado' },
+        { id: 'doctor-name', value: patient.medico || 'N/A' },
+        { id: 'team-members', value: patient.equipe || 'N/A' }
+    ];
+    
+    elements.forEach(elem => {
+        const element = document.getElementById(elem.id);
+        if (element) element.textContent = elem.value;
+    });
+    
+    // Mostrar seções
+    const patientReport = document.getElementById('patient-report');
+    const necroseForm = document.getElementById('necrose-form');
+    const patientIdField = document.getElementById('patient-id');
+    
+    if (patientReport) patientReport.style.display = 'block';
+    if (necroseForm) necroseForm.style.display = 'block';
+    if (patientIdField) patientIdField.value = patient.id;
+}
+
+// Função para limpar seleção
+function clearPatientSelection() {
+    const patientSearch = document.getElementById('patient-search');
+    const patientReport = document.getElementById('patient-report');
+    const necroseForm = document.getElementById('necrose-form');
+    const searchSuggestions = document.getElementById('search-suggestions');
+    
+    if (patientSearch) patientSearch.value = '';
+    if (patientReport) patientReport.style.display = 'none';
+    if (necroseForm) necroseForm.style.display = 'none';
+    if (searchSuggestions) searchSuggestions.style.display = 'none';
+    
+    patientData = null;
 }
 
 // Preview de imagens
