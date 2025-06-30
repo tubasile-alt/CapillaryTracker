@@ -44,7 +44,7 @@
     <div class="search-section">
         <div class="form-group">
             <label for="patient-search">Buscar Paciente</label>
-            <input type="text" id="patient-search" class="form-control" placeholder="Digite o nome do paciente..." disabled>
+            <input type="text" id="patient-search" class="form-control" placeholder="Selecione uma unidade primeiro..." disabled>
             <div id="search-suggestions" class="search-suggestions"></div>
         </div>
     </div>
@@ -440,18 +440,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const unitSelect = document.getElementById('unit-select');
     if (unitSelect) {
         unitSelect.addEventListener('change', function(e) {
-    selectedUnit = e.target.value;
-    const patientSearchField = document.getElementById('patient-search');
-    
-    if (selectedUnit) {
-        patientSearchField.disabled = false;
-        patientSearchField.placeholder = `Digite o nome do paciente na unidade ${selectedUnit}...`;
-    } else {
-        patientSearchField.disabled = true;
-        patientSearchField.placeholder = "Selecione uma unidade primeiro";
-        patientSearchField.value = "";
-        document.getElementById('search-suggestions').style.display = 'none';
-    }
+            selectedUnit = e.target.value;
+            const patientSearchField = document.getElementById('patient-search');
+            
+            if (selectedUnit) {
+                patientSearchField.disabled = false;
+                patientSearchField.placeholder = `Digite o nome do paciente na unidade ${selectedUnit}...`;
+                console.log('Campo de busca habilitado para:', selectedUnit);
+            } else {
+                patientSearchField.disabled = true;
+                patientSearchField.placeholder = "Selecione uma unidade primeiro";
+                patientSearchField.value = "";
+                const suggestions = document.getElementById('search-suggestions');
+                if (suggestions) suggestions.style.display = 'none';
+            }
     
             // Limpar qualquer busca anterior
             const patientReport = document.getElementById('patient-report');
@@ -624,21 +626,21 @@ function validateRegions() {
     return regions.some(region => document.querySelector(`input[name="${region}"]`).checked);
 }
 
-// Validação do formulário antes do envio
-document.getElementById('necrose-form').addEventListener('submit', function(e) {
-    if (!validateRegions()) {
-        e.preventDefault();
-        alert('Por favor, selecione pelo menos uma região acometida.');
-        return false;
-    }
-    
-    const fileCount = document.getElementById('fotos_necrose').files.length;
-    if (fileCount !== 3) {
-        e.preventDefault();
-        alert('Por favor, anexe exatamente 3 fotos para avaliação futura.');
-        return false;
-    }
-});
+// Validação do formulário antes do envio - remover para evitar conflito
+// document.getElementById('necrose-form').addEventListener('submit', function(e) {
+//     if (!validateRegions()) {
+//         e.preventDefault();
+//         alert('Por favor, selecione pelo menos uma região acometida.');
+//         return false;
+//     }
+//     
+//     const fileCount = document.getElementById('fotos_necrose').files.length;
+//     if (fileCount !== 3) {
+//         e.preventDefault();
+//         alert('Por favor, anexe exatamente 3 fotos para avaliação futura.');
+//         return false;
+//     }
+// });
 
 // Função para download do Excel combinado
 function downloadNecroseExcel() {
@@ -708,5 +710,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadNecroseSummary();
     loadAvailableUnits();
 });
+
 </script>
 {% endblock %}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Necrose</title>
+</head>
+<body>
+    <select id="unit-select">
+        <option value="">Selecione</option>
+        <option value="Rio de Janeiro">Rio de Janeiro</option>
+    </select>
+    
+    <input type="text" id="patient-search" placeholder="Digite aqui..." disabled>
+    
+    <script>
+    document.getElementById('unit-select').addEventListener('change', function(e) {
+        const patientSearch = document.getElementById('patient-search');
+        if (e.target.value) {
+            patientSearch.disabled = false;
+            patientSearch.placeholder = "Digite o nome do paciente...";
+        } else {
+            patientSearch.disabled = true;
+            patientSearch.placeholder = "Selecione uma unidade primeiro...";
+        }
+    });
+    </script>
+</body>
+</html>
