@@ -2154,6 +2154,26 @@ def save_necrose():
         medico_responsavel = request.form.get('medico_responsavel', '')
         status = request.form.get('status', 'Em acompanhamento')
         
+        # Validar se pelo menos uma região foi selecionada
+        if tem_necrose and not any([primeira_faixa, segunda_faixa, terceira_faixa, coroa_acometida]):
+            return jsonify({'success': False, 'message': 'É obrigatório selecionar pelo menos uma região acometida'}), 400
+        
+        # Validar campos obrigatórios quando há necrose
+        if tem_necrose:
+            if not tamanho_mm or tamanho_mm <= 0:
+                return jsonify({'success': False, 'message': 'Tamanho da necrose é obrigatório e deve ser maior que 0'}), 400
+            
+            if not numero_necroses or numero_necroses <= 0:
+                return jsonify({'success': False, 'message': 'Número de necrose é obrigatório e deve ser maior que 0'}), 400
+        
+        # Validação de fotos - exatamente 3 fotos obrigatórias quando há necrose
+        if tem_necrose and 'fotos_necrose' in request.files:
+            files = request.files.getlist('fotos_necrose')
+            if len(files) != 3:
+                return jsonify({'success': False, 'message': f'É necessário anexar exatamente 3 fotos para avaliação futura'}), 400
+        elif tem_necrose:
+            return jsonify({'success': False, 'message': 'É obrigatório anexar 3 fotos para avaliação futura'}), 400
+        
         if existing_necrose:
             # Atualizar registro existente
             existing_necrose.tem_necrose = tem_necrose
@@ -2200,26 +2220,6 @@ def save_necrose():
         
         # Salvar no banco antes de processar fotos
         db.session.commit()
-        
-        # Validar se pelo menos uma região foi selecionada
-        if tem_necrose and not any([primeira_faixa, segunda_faixa, terceira_faixa, coroa_acometida]):
-            return jsonify({'success': False, 'message': 'É obrigatório selecionar pelo menos uma região acometida'}), 400
-        
-        # Validar campos obrigatórios quando há necrose
-        if tem_necrose:
-            if not tamanho_mm or tamanho_mm <= 0:
-                return jsonify({'success': False, 'message': 'Tamanho da necrose é obrigatório e deve ser maior que 0'}), 400
-            
-            if not numero_necroses or numero_necroses <= 0:
-                return jsonify({'success': False, 'message': 'Número de necrose é obrigatório e deve ser maior que 0'}), 400
-        
-        # Validação de fotos - exatamente 3 fotos obrigatórias quando há necrose
-        if tem_necrose and 'fotos_necrose' in request.files:
-            files = request.files.getlist('fotos_necrose')
-            if len(files) != 3:
-                return jsonify({'success': False, 'message': f'É necessário anexar exatamente 3 fotos para avaliação futura'}), 400
-        elif tem_necrose:
-            return jsonify({'success': False, 'message': 'É obrigatório anexar 3 fotos para avaliação futura'}), 400
         
         # Processar upload de fotos
         uploaded_files = []
