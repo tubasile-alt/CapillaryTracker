@@ -97,6 +97,13 @@ This is a comprehensive hair surgery management system for Instituto Capilar do 
 
 ```
 Changelog:
+- June 30, 2025. Implemented real-time search suggestion filtering with:
+  - Intelligent local caching for fast filtering
+  - Keyboard navigation (arrow keys, enter, escape)
+  - Visual highlighting of search terms
+  - Enhanced UI with patient details and icons
+  - Debounced server requests for performance
+  - Smart search across name, doctor, and date fields
 - June 24, 2025. Initial setup
 ```
 
