@@ -2140,7 +2140,7 @@ def save_necrose():
         numero_necroses = int(request.form.get('numero_necroses', 1)) if tem_necrose else 0
         grau_necrose = request.form.get('grau') if tem_necrose else None
         localizacao = request.form.get('localizacao') if tem_necrose else None
-        tamanho_mm = float(request.form.get('tamanho')) if request.form.get('tamanho') and tem_necrose else None
+        tamanho_mm = float(request.form.get('tamanho_mm')) if request.form.get('tamanho_mm') and tem_necrose else None
         
         # Regiões acometidas
         primeira_faixa = request.form.get('primeira_faixa') == 'true' if tem_necrose else False
@@ -2201,9 +2201,29 @@ def save_necrose():
         # Salvar no banco antes de processar fotos
         db.session.commit()
         
+        # Validar se pelo menos uma região foi selecionada
+        if tem_necrose and not any([primeira_faixa, segunda_faixa, terceira_faixa, coroa_acometida]):
+            return jsonify({'success': False, 'message': 'É obrigatório selecionar pelo menos uma região acometida'}), 400
+        
+        # Validar campos obrigatórios quando há necrose
+        if tem_necrose:
+            if not tamanho_mm or tamanho_mm <= 0:
+                return jsonify({'success': False, 'message': 'Tamanho da necrose é obrigatório e deve ser maior que 0'}), 400
+            
+            if not numero_necroses or numero_necroses <= 0:
+                return jsonify({'success': False, 'message': 'Número de necrose é obrigatório e deve ser maior que 0'}), 400
+        
+        # Validação de fotos - exatamente 3 fotos obrigatórias quando há necrose
+        if tem_necrose and 'fotos_necrose' in request.files:
+            files = request.files.getlist('fotos_necrose')
+            if len(files) != 3:
+                return jsonify({'success': False, 'message': f'É necessário anexar exatamente 3 fotos para avaliação futura'}), 400
+        elif tem_necrose:
+            return jsonify({'success': False, 'message': 'É obrigatório anexar 3 fotos para avaliação futura'}), 400
+        
         # Processar upload de fotos
         uploaded_files = []
-        photos = request.files.getlist('photos')
+        photos = request.files.getlist('fotos_necrose') if tem_necrose else []
         
         for photo in photos:
             if photo and photo.filename:
