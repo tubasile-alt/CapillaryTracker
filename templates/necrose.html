@@ -432,8 +432,14 @@ function loadNecroseSummary() {
         });
 }
 
-// Habilitar campo de busca apenas quando a unidade for selecionada
-document.getElementById('unit-select').addEventListener('change', function(e) {
+// Aguardar o DOM carregar completamente
+document.addEventListener('DOMContentLoaded', function() {
+    loadNecroseSummary();
+    
+    // Habilitar campo de busca apenas quando a unidade for selecionada
+    const unitSelect = document.getElementById('unit-select');
+    if (unitSelect) {
+        unitSelect.addEventListener('change', function(e) {
     selectedUnit = e.target.value;
     const patientSearchField = document.getElementById('patient-search');
     
@@ -447,12 +453,17 @@ document.getElementById('unit-select').addEventListener('change', function(e) {
         document.getElementById('search-suggestions').style.display = 'none';
     }
     
-    // Limpar qualquer busca anterior
-    document.getElementById('patient-report').style.display = 'none';
-    document.getElementById('necrose-form').style.display = 'none';
-});
+            // Limpar qualquer busca anterior
+            const patientReport = document.getElementById('patient-report');
+            const necroseForm = document.getElementById('necrose-form');
+            if (patientReport) patientReport.style.display = 'none';
+            if (necroseForm) necroseForm.style.display = 'none';
+        });
+    }
 
-document.getElementById('patient-search').addEventListener('input', function(e) {
+    const patientSearch = document.getElementById('patient-search');
+    if (patientSearch) {
+        patientSearch.addEventListener('input', function(e) {
     const searchTerm = e.target.value;
     if (searchTerm.length < 2) {
         document.getElementById('search-suggestions').style.display = 'none';
