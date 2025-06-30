@@ -2183,21 +2183,22 @@ def save_necrose():
         
         if existing_necrose:
             # Atualizar registro existente
-            existing_necrose.tem_necrose = tem_necrose
-            existing_necrose.numero_necroses = numero_necroses
-            existing_necrose.grau_necrose = grau_necrose
-            existing_necrose.localizacao = localizacao
-            existing_necrose.tamanho_mm = tamanho_mm
+            existing_necrose.tem_necrose = True
+            existing_necrose.numero_necroses = numero_necroses_int
             existing_necrose.primeira_faixa = primeira_faixa
             existing_necrose.segunda_faixa = segunda_faixa
             existing_necrose.terceira_faixa = terceira_faixa
             existing_necrose.coroa = coroa_acometida
-            existing_necrose.descricao = descricao
-            existing_necrose.tratamento_aplicado = tratamento_aplicado
-            existing_necrose.observacoes = observacoes
-            existing_necrose.data_avaliacao = data_avaliacao
+            existing_necrose.data_avaliacao = data_avaliacao_date
             existing_necrose.medico_responsavel = medico_responsavel
-            existing_necrose.status = status
+            existing_necrose.status = 'Em acompanhamento'
+            
+            # Atualizar tamanhos
+            existing_necrose.tamanho_1_cm = tamanhos[0] if len(tamanhos) > 0 else None
+            existing_necrose.tamanho_2_cm = tamanhos[1] if len(tamanhos) > 1 else None
+            existing_necrose.tamanho_3_cm = tamanhos[2] if len(tamanhos) > 2 else None
+            existing_necrose.tamanho_4_cm = tamanhos[3] if len(tamanhos) > 3 else None
+            
             existing_necrose.updated_at = datetime.utcnow()
             necrose_record = existing_necrose
         else:
@@ -2207,21 +2208,19 @@ def save_necrose():
                 unidade=surgery.unidade,
                 paciente_nome=surgery.nome,
                 data_cirurgia=surgery.data,
-                data_avaliacao=data_avaliacao,
+                data_avaliacao=data_avaliacao_date,
                 medico_responsavel=medico_responsavel,
-                tem_necrose=tem_necrose,
-                numero_necroses=numero_necroses,
-                grau_necrose=grau_necrose,
-                localizacao=localizacao,
-                tamanho_mm=tamanho_mm,
+                tem_necrose=True,
+                numero_necroses=numero_necroses_int,
                 primeira_faixa=primeira_faixa,
                 segunda_faixa=segunda_faixa,
                 terceira_faixa=terceira_faixa,
                 coroa=coroa_acometida,
-                descricao=descricao,
-                tratamento_aplicado=tratamento_aplicado,
-                observacoes=observacoes,
-                status=status
+                status='Em acompanhamento',
+                tamanho_1_cm=tamanhos[0] if len(tamanhos) > 0 else None,
+                tamanho_2_cm=tamanhos[1] if len(tamanhos) > 1 else None,
+                tamanho_3_cm=tamanhos[2] if len(tamanhos) > 2 else None,
+                tamanho_4_cm=tamanhos[3] if len(tamanhos) > 3 else None
             )
             db.session.add(necrose_record)
         
@@ -2230,7 +2229,7 @@ def save_necrose():
         
         # Processar upload de fotos
         uploaded_files = []
-        photos = request.files.getlist('fotos_necrose') if tem_necrose else []
+        photos = request.files.getlist('fotos_necrose')
         
         for photo in photos:
             if photo and photo.filename:
