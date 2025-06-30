@@ -104,19 +104,46 @@
             </div>
             
             <div class="form-group">
-                <label for="medico-responsavel">Médico Responsável</label>
-                <input type="text" id="medico-responsavel" name="medico_responsavel" class="form-control">
-            </div>
-            
-            <div class="form-group">
                 <label for="data_avaliacao">Data da Avaliação <span class="text-danger">*</span></label>
                 <input type="date" id="data_avaliacao" name="data_avaliacao" class="form-control" required>
             </div>
 
             <div class="form-group">
-                <label for="tamanho_mm">Tamanho da Necrose (mm) <span class="text-danger">*</span></label>
-                <input type="number" id="tamanho_mm" name="tamanho_mm" class="form-control" min="0" step="0.1" required placeholder="Ex: 5.5">
-                <small class="form-text text-muted">Digite o tamanho em milímetros</small>
+                <label for="numero_necroses">Quantas necroses? <span class="text-danger">*</span></label>
+                <select id="numero_necroses" name="numero_necroses" class="form-control" required onchange="showTamanhoFields()">
+                    <option value="">Selecione</option>
+                    <option value="1">1 necrose</option>
+                    <option value="2">2 necroses</option>
+                    <option value="3">3 necroses</option>
+                    <option value="4">4 necroses</option>
+                </select>
+            </div>
+
+            <div id="tamanho-fields" style="display: none;">
+                <div class="form-group">
+                    <label><strong>Tamanho das Necroses (cm - maior diâmetro)</strong></label>
+                    <small class="form-text text-muted">Digite o maior diâmetro de cada necrose em centímetros</small>
+                </div>
+                
+                <div class="form-group" id="tamanho-1-group">
+                    <label for="tamanho_1_cm">1ª Necrose (cm) <span class="text-danger">*</span></label>
+                    <input type="number" id="tamanho_1_cm" name="tamanho_1_cm" class="form-control" min="0" step="0.1" placeholder="Ex: 2.5">
+                </div>
+                
+                <div class="form-group" id="tamanho-2-group" style="display: none;">
+                    <label for="tamanho_2_cm">2ª Necrose (cm) <span class="text-danger">*</span></label>
+                    <input type="number" id="tamanho_2_cm" name="tamanho_2_cm" class="form-control" min="0" step="0.1" placeholder="Ex: 1.8">
+                </div>
+                
+                <div class="form-group" id="tamanho-3-group" style="display: none;">
+                    <label for="tamanho_3_cm">3ª Necrose (cm) <span class="text-danger">*</span></label>
+                    <input type="number" id="tamanho_3_cm" name="tamanho_3_cm" class="form-control" min="0" step="0.1" placeholder="Ex: 1.2">
+                </div>
+                
+                <div class="form-group" id="tamanho-4-group" style="display: none;">
+                    <label for="tamanho_4_cm">4ª Necrose (cm) <span class="text-danger">*</span></label>
+                    <input type="number" id="tamanho_4_cm" name="tamanho_4_cm" class="form-control" min="0" step="0.1" placeholder="Ex: 0.9">
+                </div>
             </div>
 
             <div class="form-group">
@@ -503,6 +530,10 @@ function selectPatient(patient) {
     if (patientReport) patientReport.style.display = 'block';
     if (necroseForm) necroseForm.style.display = 'block';
     if (patientIdField) patientIdField.value = patient.id;
+    
+    // Preencher médico responsável automaticamente
+    const medicoField = document.getElementById('medico-responsavel');
+    if (medicoField) medicoField.value = patient.medico || '';
 }
 
 // Função para limpar seleção
@@ -660,6 +691,33 @@ document.addEventListener('click', function(e) {
         if (suggestions) suggestions.style.display = 'none';
     }
 });
+
+// Função para mostrar campos de tamanho baseado no número de necroses
+function showTamanhoFields() {
+    const numeroNecroses = document.getElementById('numero_necroses').value;
+    const tamanhoFields = document.getElementById('tamanho-fields');
+    
+    if (numeroNecroses) {
+        tamanhoFields.style.display = 'block';
+        
+        // Mostrar/esconder campos conforme número selecionado
+        for (let i = 1; i <= 4; i++) {
+            const group = document.getElementById(`tamanho-${i}-group`);
+            const input = document.getElementById(`tamanho_${i}_cm`);
+            
+            if (i <= parseInt(numeroNecroses)) {
+                group.style.display = 'block';
+                input.required = true;
+            } else {
+                group.style.display = 'none';
+                input.required = false;
+                input.value = ''; // Limpar valor
+            }
+        }
+    } else {
+        tamanhoFields.style.display = 'none';
+    }
+}
 
 </script>
 {% endblock %}

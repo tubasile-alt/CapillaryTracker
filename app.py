@@ -166,8 +166,11 @@ class Necrose(db.Model):
     tem_necrose = db.Column(db.Boolean, default=False)
     grau_necrose = db.Column(db.String(50))  # Leve, Moderada, Severa
     localizacao = db.Column(db.Text)  # Área afetada
-    tamanho_mm = db.Column(db.Float)  # Tamanho em mm
     numero_necroses = db.Column(db.Integer, default=1)  # Número de necroses
+    tamanho_1_cm = db.Column(db.Float)  # Tamanho da 1ª necrose em cm
+    tamanho_2_cm = db.Column(db.Float)  # Tamanho da 2ª necrose em cm (se houver)
+    tamanho_3_cm = db.Column(db.Float)  # Tamanho da 3ª necrose em cm (se houver)
+    tamanho_4_cm = db.Column(db.Float)  # Tamanho da 4ª necrose em cm (se houver)
     
     # Regiões acometidas (múltiplas possíveis)
     primeira_faixa = db.Column(db.Boolean, default=False)
