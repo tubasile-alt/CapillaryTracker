@@ -109,86 +109,40 @@
             </div>
             
             <div class="form-group">
-                <label>
-                    <input type="checkbox" id="tem-necrose" name="tem_necrose" value="true"> 
-                    Apresenta necrose
-                </label>
+                <label for="data_avaliacao">Data da Avaliação <span class="text-danger">*</span></label>
+                <input type="date" id="data_avaliacao" name="data_avaliacao" class="form-control" required>
             </div>
 
-            <div id="necrose-details" style="display: none;">
-                <div class="form-group">
-                    <label for="numero-necroses">Número de Necroses</label>
-                    <input type="number" id="numero-necroses" name="numero_necroses" class="form-control" min="1" value="1">
-                </div>
+            <div class="form-group">
+                <label for="tamanho_mm">Tamanho da Necrose (mm) <span class="text-danger">*</span></label>
+                <input type="number" id="tamanho_mm" name="tamanho_mm" class="form-control" min="0" step="0.1" required placeholder="Ex: 5.5">
+                <small class="form-text text-muted">Digite o tamanho em milímetros</small>
+            </div>
 
-                <div class="form-group">
-                    <label for="grau">Grau da Necrose</label>
-                    <select id="grau" name="grau" class="form-control">
-                        <option value="">Selecione...</option>
-                        <option value="Leve">Leve</option>
-                        <option value="Moderada">Moderada</option>
-                        <option value="Severa">Severa</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Regiões Acometidas <span class="text-danger">*</span></label>
-                    <p class="text-muted small">Pode marcar múltiplas regiões acometidas simultaneamente</p>
-                    <div class="checkbox-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="primeira_faixa" value="true"> Primeira Faixa
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="segunda_faixa" value="true"> Segunda Faixa
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="terceira_faixa" value="true"> Terceira Faixa
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="coroa" value="true"> Coroa
-                        </label>
+            <div class="form-group">
+                <label><strong>Faixas Acometidas <span class="text-danger">*</span></strong></label>
+                <p class="text-muted small">Selecione todas as faixas que apresentam necrose (pode ser múltiplas)</p>
+                <div class="checkbox-group mt-2">
+                    <div class="form-check mb-2">
+                        <input type="checkbox" id="primeira_faixa" name="primeira_faixa" class="form-check-input" value="true">
+                        <label for="primeira_faixa" class="form-check-label"><strong>1ª Faixa</strong></label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input type="checkbox" id="segunda_faixa" name="segunda_faixa" class="form-check-input" value="true">
+                        <label for="segunda_faixa" class="form-check-label"><strong>2ª Faixa</strong></label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input type="checkbox" id="terceira_faixa" name="terceira_faixa" class="form-check-input" value="true">
+                        <label for="terceira_faixa" class="form-check-label"><strong>3ª Faixa</strong></label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input type="checkbox" id="coroa" name="coroa" class="form-check-input" value="true">
+                        <label for="coroa" class="form-check-label"><strong>Coroa</strong></label>
                     </div>
                 </div>
+            </div>
+            
 
-                <div class="form-group">
-                    <label for="localizacao">Localização Detalhada da Necrose</label>
-                    <textarea id="localizacao" name="localizacao" class="form-control" rows="2" placeholder="Descreva a área afetada em detalhes"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="tamanho_mm">Tamanho da Necrose (mm) <span class="text-danger">*</span></label>
-                    <input type="number" id="tamanho_mm" name="tamanho_mm" class="form-control" min="0" step="0.1" required placeholder="Ex: 5.5">
-                </div>
-                
-                <div class="form-group">
-                    <label for="numero_necroses">Número de Necrose <span class="text-danger">*</span></label>
-                    <input type="number" id="numero_necroses" name="numero_necroses" class="form-control" min="1" value="1" required placeholder="Quantidade de necroses">
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="descricao">Descrição Detalhada</label>
-                <textarea id="descricao" name="descricao" class="form-control" rows="3" placeholder="Descrição detalhada dos achados"></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="tratamento">Tratamento Aplicado</label>
-                <textarea id="tratamento" name="tratamento" class="form-control" rows="2" placeholder="Tratamento aplicado ou recomendado"></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="observacoes">Observações</label>
-                <textarea id="observacoes" name="observacoes" class="form-control" rows="2" placeholder="Observações adicionais"></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="status">Status</label>
-                <select id="status" name="status" class="form-control">
-                    <option value="Em acompanhamento">Em acompanhamento</option>
-                    <option value="Resolvida">Resolvida</option>
-                    <option value="Em tratamento">Em tratamento</option>
-                </select>
-            </div>
             
             <div class="form-group">
                 <label for="fotos_necrose">Anexar 3 Fotos da Necrose <span class="text-danger">*</span></label>
@@ -198,10 +152,8 @@
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Salvar Registro</button>
-                <button type="button" id="download-excel" class="btn btn-secondary" onclick="downloadNecroseExcel()">
-                    📊 Download Excel Exclusivo (Cirurgia + Necrose)
-                </button>
+                <button type="submit" class="btn btn-primary btn-lg">Registrar Necrose</button>
+                <button type="button" class="btn btn-secondary" onclick="clearPatientSelection()">Limpar</button>
             </div>
         </form>
     </div>
