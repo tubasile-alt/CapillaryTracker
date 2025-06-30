@@ -167,6 +167,13 @@ class Necrose(db.Model):
     grau_necrose = db.Column(db.String(50))  # Leve, Moderada, Severa
     localizacao = db.Column(db.Text)  # Área afetada
     tamanho_mm = db.Column(db.Float)  # Tamanho em mm
+    numero_necroses = db.Column(db.Integer, default=1)  # Número de necroses
+    
+    # Regiões acometidas (múltiplas possíveis)
+    primeira_faixa = db.Column(db.Boolean, default=False)
+    segunda_faixa = db.Column(db.Boolean, default=False)
+    terceira_faixa = db.Column(db.Boolean, default=False)
+    coroa = db.Column(db.Boolean, default=False)
     descricao = db.Column(db.Text)
     tratamento_aplicado = db.Column(db.Text)
     observacoes = db.Column(db.Text)
@@ -2130,9 +2137,16 @@ def save_necrose():
         
         # Dados do formulário
         tem_necrose = request.form.get('tem_necrose') == 'true'
+        numero_necroses = int(request.form.get('numero_necroses', 1)) if tem_necrose else 0
         grau_necrose = request.form.get('grau') if tem_necrose else None
         localizacao = request.form.get('localizacao') if tem_necrose else None
         tamanho_mm = float(request.form.get('tamanho')) if request.form.get('tamanho') and tem_necrose else None
+        
+        # Regiões acometidas
+        primeira_faixa = request.form.get('primeira_faixa') == 'true' if tem_necrose else False
+        segunda_faixa = request.form.get('segunda_faixa') == 'true' if tem_necrose else False
+        terceira_faixa = request.form.get('terceira_faixa') == 'true' if tem_necrose else False
+        coroa_acometida = request.form.get('coroa') == 'true' if tem_necrose else False
         descricao = request.form.get('descricao') or ''
         tratamento_aplicado = request.form.get('tratamento') or ''
         observacoes = request.form.get('observacoes') or ''
@@ -2143,9 +2157,14 @@ def save_necrose():
         if existing_necrose:
             # Atualizar registro existente
             existing_necrose.tem_necrose = tem_necrose
+            existing_necrose.numero_necroses = numero_necroses
             existing_necrose.grau_necrose = grau_necrose
             existing_necrose.localizacao = localizacao
             existing_necrose.tamanho_mm = tamanho_mm
+            existing_necrose.primeira_faixa = primeira_faixa
+            existing_necrose.segunda_faixa = segunda_faixa
+            existing_necrose.terceira_faixa = terceira_faixa
+            existing_necrose.coroa = coroa_acometida
             existing_necrose.descricao = descricao
             existing_necrose.tratamento_aplicado = tratamento_aplicado
             existing_necrose.observacoes = observacoes
@@ -2164,9 +2183,14 @@ def save_necrose():
                 data_avaliacao=data_avaliacao,
                 medico_responsavel=medico_responsavel,
                 tem_necrose=tem_necrose,
+                numero_necroses=numero_necroses,
                 grau_necrose=grau_necrose,
                 localizacao=localizacao,
                 tamanho_mm=tamanho_mm,
+                primeira_faixa=primeira_faixa,
+                segunda_faixa=segunda_faixa,
+                terceira_faixa=terceira_faixa,
+                coroa=coroa_acometida,
                 descricao=descricao,
                 tratamento_aplicado=tratamento_aplicado,
                 observacoes=observacoes,
@@ -2305,10 +2329,18 @@ def download_combined_data():
                     
                     # Dados da Necrose
                     'Tem Necrose': 'Sim' if necrose and necrose.tem_necrose else 'Não',
+                    'Número de Necroses': necrose.numero_necroses if necrose else '',
                     'Data Avaliação Necrose': necrose.data_avaliacao.strftime('%d/%m/%Y') if necrose and necrose.data_avaliacao else '',
                     'Médico Responsável Necrose': necrose.medico_responsavel if necrose else '',
                     'Grau da Necrose': necrose.grau_necrose if necrose else '',
-                    'Localização da Necrose': necrose.localizacao if necrose else '',
+                    
+                    # Regiões Acometidas
+                    'Primeira Faixa Acometida': 'Sim' if necrose and necrose.primeira_faixa else 'Não',
+                    'Segunda Faixa Acometida': 'Sim' if necrose and necrose.segunda_faixa else 'Não',
+                    'Terceira Faixa Acometida': 'Sim' if necrose and necrose.terceira_faixa else 'Não',
+                    'Coroa Acometida': 'Sim' if necrose and necrose.coroa else 'Não',
+                    
+                    'Localização Detalhada': necrose.localizacao if necrose else '',
                     'Tamanho da Lesão (mm)': necrose.tamanho_mm if necrose else '',
                     'Descrição da Necrose': necrose.descricao if necrose else '',
                     'Tratamento Aplicado': necrose.tratamento_aplicado if necrose else '',
@@ -2316,7 +2348,11 @@ def download_combined_data():
                     'Status da Necrose': necrose.status if necrose else '',
                     'Data Resolução': necrose.data_resolucao.strftime('%d/%m/%Y') if necrose and necrose.data_resolucao else '',
                     'Necrose Criada em': necrose.created_at.strftime('%d/%m/%Y %H:%M:%S') if necrose and necrose.created_at else '',
-                    'Necrose Atualizada em': necrose.updated_at.strftime('%d/%m/%Y %H:%M:%S') if necrose and necrose.updated_at else ''
+                    'Necrose Atualizada em': necrose.updated_at.strftime('%d/%m/%Y %H:%M:%S') if necrose and necrose.updated_at else '',
+                    
+                    # Informações sobre fotos anexadas
+                    'Fotos Anexadas': len(necrose.photos) if necrose and hasattr(necrose, 'photos') else 0,
+                    'Lista de Arquivos de Fotos': ', '.join([photo.filename for photo in necrose.photos]) if necrose and hasattr(necrose, 'photos') else ''
                 }
                 data_list.append(combined_dict)
             
