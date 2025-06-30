@@ -580,6 +580,50 @@ document.getElementById('form-necrose').addEventListener('submit', function(e) {
     });
 });
 
+// Contador de fotos
+const fotosInput = document.getElementById('fotos_necrose');
+if (fotosInput) {
+    fotosInput.addEventListener('change', function() {
+        const fileCount = this.files.length;
+        const photoCountDiv = document.getElementById('photo-count');
+        
+        if (fileCount === 3) {
+            photoCountDiv.textContent = `✓ ${fileCount} fotos selecionadas (correto)`;
+            photoCountDiv.className = 'small text-success mt-1';
+        } else if (fileCount > 3) {
+            photoCountDiv.textContent = `⚠ ${fileCount} fotos selecionadas (máximo 3)`;
+            photoCountDiv.className = 'small text-warning mt-1';
+        } else if (fileCount > 0) {
+            photoCountDiv.textContent = `${fileCount} foto(s) selecionada(s) (necessário 3)`;
+            photoCountDiv.className = 'small text-info mt-1';
+        } else {
+            photoCountDiv.textContent = '';
+        }
+    });
+}
+
+// Validação das regiões acometidas
+function validateRegions() {
+    const regions = ['primeira_faixa', 'segunda_faixa', 'terceira_faixa', 'coroa'];
+    return regions.some(region => document.querySelector(`input[name="${region}"]`).checked);
+}
+
+// Validação do formulário antes do envio
+document.getElementById('necrose-form').addEventListener('submit', function(e) {
+    if (!validateRegions()) {
+        e.preventDefault();
+        alert('Por favor, selecione pelo menos uma região acometida.');
+        return false;
+    }
+    
+    const fileCount = document.getElementById('fotos_necrose').files.length;
+    if (fileCount !== 3) {
+        e.preventDefault();
+        alert('Por favor, anexe exatamente 3 fotos para avaliação futura.');
+        return false;
+    }
+});
+
 // Função para download do Excel combinado
 function downloadNecroseExcel() {
     const btn = document.getElementById('download-excel');

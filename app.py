@@ -2329,7 +2329,7 @@ def download_combined_data():
                     
                     # Dados da Necrose
                     'Tem Necrose': 'Sim' if necrose and necrose.tem_necrose else 'Não',
-                    'Número de Necroses': necrose.numero_necroses if necrose else '',
+                    'Número de Necrose': necrose.numero_necroses if necrose else '',
                     'Data Avaliação Necrose': necrose.data_avaliacao.strftime('%d/%m/%Y') if necrose and necrose.data_avaliacao else '',
                     'Médico Responsável Necrose': necrose.medico_responsavel if necrose else '',
                     'Grau da Necrose': necrose.grau_necrose if necrose else '',
@@ -2341,7 +2341,7 @@ def download_combined_data():
                     'Coroa Acometida': 'Sim' if necrose and necrose.coroa else 'Não',
                     
                     'Localização Detalhada': necrose.localizacao if necrose else '',
-                    'Tamanho da Lesão (mm)': necrose.tamanho_mm if necrose else '',
+                    'Tamanho da Necrose (mm)': necrose.tamanho_mm if necrose else '',
                     'Descrição da Necrose': necrose.descricao if necrose else '',
                     'Tratamento Aplicado': necrose.tratamento_aplicado if necrose else '',
                     'Observações Necrose': necrose.observacoes if necrose else '',
@@ -2350,9 +2350,9 @@ def download_combined_data():
                     'Necrose Criada em': necrose.created_at.strftime('%d/%m/%Y %H:%M:%S') if necrose and necrose.created_at else '',
                     'Necrose Atualizada em': necrose.updated_at.strftime('%d/%m/%Y %H:%M:%S') if necrose and necrose.updated_at else '',
                     
-                    # Informações sobre fotos anexadas
-                    'Fotos Anexadas': len(necrose.photos) if necrose and hasattr(necrose, 'photos') else 0,
-                    'Lista de Arquivos de Fotos': ', '.join([photo.filename for photo in necrose.photos]) if necrose and hasattr(necrose, 'photos') else ''
+                    # Informações sobre as 3 fotos obrigatórias para avaliação futura
+                    'Fotos para Avaliação Futura': len(necrose.photos) if necrose and hasattr(necrose, 'photos') else 0,
+                    'Arquivos das 3 Fotos': ', '.join([photo.filename for photo in necrose.photos]) if necrose and hasattr(necrose, 'photos') else ''
                 }
                 data_list.append(combined_dict)
             
