@@ -591,13 +591,11 @@ document.getElementById('form-necrose').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(data.message || 'Dados salvos com sucesso!');
-            clearPatientSelection();
-            loadNecroseSummary(); // Atualizar resumo automaticamente
-            // Limpar formulário
-            this.reset();
-            document.getElementById('data-avaliacao').value = new Date().toISOString().split('T')[0];
-            document.getElementById('necrose-details').style.display = 'none';
+            // Mostrar mensagem de sucesso
+            alert('✓ Necrose registrada com sucesso!');
+            
+            // Redirecionar para a página de necrose (dashboard)
+            window.location.href = '/necrose';
         } else {
             alert('Erro ao salvar: ' + (data.error || data.message));
         }
@@ -620,17 +618,19 @@ if (fotosInput) {
         const fileCount = this.files.length;
         const photoCountDiv = document.getElementById('photo-count');
         
-        if (fileCount === 3) {
-            photoCountDiv.textContent = `✓ ${fileCount} fotos selecionadas (correto)`;
-            photoCountDiv.className = 'small text-success mt-1';
-        } else if (fileCount > 3) {
-            photoCountDiv.textContent = `⚠ ${fileCount} fotos selecionadas (máximo 3)`;
-            photoCountDiv.className = 'small text-warning mt-1';
-        } else if (fileCount > 0) {
-            photoCountDiv.textContent = `${fileCount} foto(s) selecionada(s) (necessário 3)`;
-            photoCountDiv.className = 'small text-info mt-1';
-        } else {
-            photoCountDiv.textContent = '';
+        if (photoCountDiv) {
+            if (fileCount === 3) {
+                photoCountDiv.textContent = `✓ ${fileCount} fotos selecionadas (correto)`;
+                photoCountDiv.className = 'small text-success mt-1';
+            } else if (fileCount > 3) {
+                photoCountDiv.textContent = `⚠ ${fileCount} fotos selecionadas (máximo 3)`;
+                photoCountDiv.className = 'small text-warning mt-1';
+            } else if (fileCount > 0) {
+                photoCountDiv.textContent = `${fileCount} foto(s) selecionada(s) (recomendado 3)`;
+                photoCountDiv.className = 'small text-info mt-1';
+            } else {
+                photoCountDiv.textContent = '';
+            }
         }
     });
 }
