@@ -33,6 +33,29 @@ app.config['ADMIN_PASSWORD'] = '12345'
 app.config['UPLOAD_FOLDER'] = 'static/uploads/necrose_photos'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
+# Configurações de Unidades, Médicos e Equipe (atualizadas dinamicamente pelo admin)
+UNIDADES = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília']
+
+MEDICOS_POR_UNIDADE = {
+    'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
+    'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
+    'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
+    'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
+    'Brasília': ['Dra. Leticia', 'Dra. Natalia']
+}
+
+EQUIPE_POR_UNIDADE = {
+    'Ribeirão Preto': ['Aline', 'Ana', 'Lavinia', 'Natália'],
+    'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 'Isabelle de Campos', 
+                 'Juliana Nunes', 'Kesley Sabrina', 'Larissa Hellen', 'Thalita Corrêa', 'Vitória Delino'],
+    'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
+    'São Paulo': ['Adriana Almeida', 'Ana Paula dos Santos', 'Dani Curti', 'Eliene Rodrigues', 
+                  'Gabriela Cruz', 'Greice Barbosa', 'Jaiza Valentim', 'Joyce Eugênia Da Silva', 
+                  'Josefa Wilma Vieira', 'Merielen Venâncio Oliveira', 'Rosana Pereira', 
+                  'Sabrina Crott', 'Thaís Paiva', 'Thamiris Santos'],
+    'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel']
+}
+
 # Importar e registrar blueprints após as configurações da app
 from admin_routes import admin_bp
 app.register_blueprint(admin_bp, url_prefix='/admin')
@@ -1068,7 +1091,7 @@ def novo_cadastro():
             {'name': 'data', 'label': 'Data da Cirurgia', 'type': 'date', 'required': True},
             {'name': 'nome', 'label': 'Nome do Paciente', 'type': 'text', 'required': True},
             {'name': 'unidade', 'label': 'Unidade', 'type': 'select', 'required': True, 
-             'options': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília']},
+             'options': UNIDADES},
             {'name': 'medico', 'label': 'Médico Responsável', 'type': 'select_dynamic', 'required': True},
             {'name': 'equipe', 'label': 'Equipe', 'type': 'select_dynamic', 'required': True},
             {'name': 'hora_cirurgia', 'label': 'Hora da Cirurgia (HH:MM)', 'type': 'time', 'required': True, 'default': '08:00'},
@@ -1149,13 +1172,7 @@ def get_medicos(unidade):
                 medicos_por_unidade = config.get('medicos_por_unidade', {})
         else:
             # Fallback para configuração padrão
-            medicos_por_unidade = {
-                'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
-                'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
-                'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
-                'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
-                'Brasília': ['Dra. Leticia', 'Dra. Natalia'],
-            }
+            medicos_por_unidade = MEDICOS_POR_UNIDADE
     except Exception as e:
         logger.error(f"Erro ao carregar configuração de médicos: {e}")
         # Fallback para configuração padrão
@@ -1288,19 +1305,7 @@ def get_equipe(unidade):
                 equipe_por_unidade = config.get('equipe_por_unidade', {})
         else:
             # Fallback para configuração padrão
-            equipe_por_unidade = {
-                'Ribeirão Preto': ['Aline', 'Ana', 'Natália'],
-                'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 
-                          'Isabelle de Campos', 'Juliana Nunes', 'Kesley Sabrina', 
-                          'Larissa Hellen', 'Thalita Corrêa', 'Vitória Delino'],
-                'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
-                'São Paulo': ['Adriana Almeida', 'Ana Paula dos Santos', 'Dani Curti', 
-                          'Eliene Rodrigues', 'Gabriela Cruz', 'Greice Barbosa', 
-                          'Jaiza Valentim', 'Josefa Wilma Vieira', 'Joyce Eugênia Da Silva', 
-                          'Merielen Venâncio Oliveira', 'Rosana Pereira', 'Sabrina Crott', 
-                          'Thamiris Santos', 'Thaís Paiva'],
-                'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel'],
-            }
+            equipe_por_unidade = EQUIPE_POR_UNIDADE
     except Exception as e:
         logger.error(f"Erro ao carregar configuração de equipe: {e}")
         # Fallback para configuração padrão

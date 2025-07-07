@@ -27,6 +27,7 @@ def load_config():
 
     # Configuração padrão
     return {
+        'unidades': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília'],
         'medicos_por_unidade': {
             'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
             'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
@@ -138,13 +139,15 @@ def logout():
 @admin_required
 def dashboard():
     """Dashboard administrativo"""
-    unidades = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília']
-
     # Carregar configuração atual
     config = load_config()
+    
+    # Usar unidades da configuração ou lista padrão
+    unidades = config.get('unidades', ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília'])
 
     return render_template(
         'admin.html', 
+        config=config,
         unidades=unidades, 
         medicos_por_unidade=config['medicos_por_unidade'], 
         equipe_por_unidade=config['equipe_por_unidade']
@@ -288,4 +291,87 @@ def delete_equipe():
     else:
         flash(f'Membro removido, mas houve erro ao atualizar o sistema. Reinicie a aplicação.', 'warning')
 
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/add_unidade', methods=['POST'])
+@admin_required
+def add_unidade():
+    """Adiciona uma nova unidade"""
+    nome = request.form.get('nome')
+    
+    if not nome:
+        flash('Nome da unidade é obrigatório!', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    
+    # Carregar configuração atual
+    config = load_config()
+    
+    # Verificar se a unidade já existe
+    if 'unidades' not in config:
+        config['unidades'] = []
+    
+    if nome in config['unidades']:
+        flash(f'A unidade {nome} já existe!', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    
+    # Adicionar nova unidade
+    config['unidades'].append(nome)
+    config['unidades'].sort()  # Ordenar em ordem alfabética
+    
+    # Inicializar listas vazias para médicos e equipe
+    if 'medicos_por_unidade' not in config:
+        config['medicos_por_unidade'] = {}
+    if 'equipe_por_unidade' not in config:
+        config['equipe_por_unidade'] = {}
+        
+    config['medicos_por_unidade'][nome] = []
+    config['equipe_por_unidade'][nome] = []
+    
+    # Salvar configuração
+    save_config(config)
+    
+    # Atualizar app.py
+    if update_app_py(config):
+        flash(f'Unidade {nome} adicionada com sucesso!', 'success')
+    else:
+        flash(f'Unidade adicionada, mas houve erro ao atualizar o sistema. Reinicie a aplicação.', 'warning')
+    
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/delete_unidade', methods=['POST'])
+@admin_required
+def delete_unidade():
+    """Remove uma unidade"""
+    nome = request.form.get('nome')
+    
+    if not nome:
+        flash('Nome da unidade é obrigatório!', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    
+    # Carregar configuração atual
+    config = load_config()
+    
+    # Verificar se a unidade existe
+    if 'unidades' not in config or nome not in config['unidades']:
+        flash(f'A unidade {nome} não existe!', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    
+    # Remover unidade
+    config['unidades'].remove(nome)
+    
+    # Remover médicos e equipe da unidade
+    if nome in config.get('medicos_por_unidade', {}):
+        del config['medicos_por_unidade'][nome]
+    if nome in config.get('equipe_por_unidade', {}):
+        del config['equipe_por_unidade'][nome]
+    
+    # Salvar configuração
+    save_config(config)
+    
+    # Atualizar app.py
+    if update_app_py(config):
+        flash(f'Unidade {nome} removida com sucesso!', 'success')
+    else:
+        flash(f'Unidade removida, mas houve erro ao atualizar o sistema. Reinicie a aplicação.', 'warning')
+    
     return redirect(url_for('admin.dashboard'))

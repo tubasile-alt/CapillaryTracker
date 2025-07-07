@@ -170,11 +170,51 @@
             {% endwith %}
             
             <div class="admin-tabs">
-                <button class="admin-tab active" onclick="showTab('medicos')">Médicos</button>
+                <button class="admin-tab active" onclick="showTab('unidades')">Unidades</button>
+                <button class="admin-tab" onclick="showTab('medicos')">Médicos</button>
                 <button class="admin-tab" onclick="showTab('equipe')">Equipe</button>
             </div>
             
-            <div id="medicos" class="tab-content active">
+            <div id="unidades" class="tab-content active">
+                <div class="admin-section">
+                    <h2>Adicionar Unidade</h2>
+                    <form action="{{ url_for('admin.add_unidade') }}" method="post" class="admin-form">
+                        <div class="form-group">
+                            <label for="nome_unidade">Nome da Unidade:</label>
+                            <input type="text" id="nome_unidade" name="nome" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Adicionar Unidade</button>
+                    </form>
+                </div>
+                
+                <div class="admin-section">
+                    <h2>Unidades Cadastradas</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome da Unidade</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for unidade in config.get('unidades', []) %}
+                            <tr>
+                                <td>{{ unidade }}</td>
+                                <td class="action-buttons">
+                                    <form action="{{ url_for('admin.delete_unidade') }}" method="post" 
+                                          onsubmit="return confirm('Tem certeza que deseja remover a unidade {{ unidade }}? Todos os médicos e equipes desta unidade também serão removidos.');">
+                                        <input type="hidden" name="nome" value="{{ unidade }}">
+                                        <button type="submit" class="btn-delete">Remover</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="medicos" class="tab-content">
                 <div class="admin-section">
                     <h2>Adicionar Médico</h2>
                     <form action="{{ url_for('admin.add_medico') }}" method="post" class="admin-form">
