@@ -1177,12 +1177,13 @@ def get_medicos(unidade):
         logger.error(f"Erro ao carregar configuração de médicos: {e}")
         # Fallback para configuração padrão
         medicos_por_unidade = {
-            'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
-            'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
-            'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
-            'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
-            'Brasília': ['Dra. Leticia', 'Dra. Natalia'],
-        }
+        'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
+        'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
+        'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
+        'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
+        'Brasília': ['Dra. Leticia', 'Dra. Natalia'],
+        'Goiania': [],
+    }
     
     return {'medicos': medicos_por_unidade.get(unidade, [])}
 
@@ -1310,18 +1311,23 @@ def get_equipe(unidade):
         logger.error(f"Erro ao carregar configuração de equipe: {e}")
         # Fallback para configuração padrão
         equipe_por_unidade = {
-            'Ribeirão Preto': ['Aline', 'Ana', 'Lavinia', 'Natália'],
-            'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 
-                      'Isabelle de Campos', 'Juliana Nunes', 'Kesley Sabrina', 
-                      'Larissa Hellen', 'Thalita Corrêa', 'Vitória Delino'],
-            'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
-            'São Paulo': ['Adriana Almeida', 'Ana Paula dos Santos', 'Dani Curti', 
-                      'Eliene Rodrigues', 'Gabriela Cruz', 'Greice Barbosa', 
-                      'Jaiza Valentim', 'Josefa Wilma Vieira', 'Joyce Eugênia Da Silva', 
-                      'Merielen Venâncio Oliveira', 'Rosana Pereira', 'Sabrina Crott', 
-                      'Thamiris Santos', 'Thaís Paiva'],
-            'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel'],
-        }
+        'Ribeirão Preto': ['Aline', 'Ana', 'Lavinia', 'Natália'],
+        'Campinas': [
+                  'Bruna Galhardo',                   'Dayane Andrade',                   'Eduarda de Sousa', 
+                  'Isabelle de Campos',                   'Juliana Nunes',                   'Kesley Sabrina', 
+                  'Larissa Hellen',                   'Thalita Corrêa',                   'Vitória Delino'
+                 ],
+        'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
+        'São Paulo': [
+                  'Adriana Almeida',                   'Ana Paula dos Santos',                   'Dani Curti', 
+                  'Eliene Rodrigues',                   'Gabriela Cruz',                   'Greice Barbosa', 
+                  'Jaiza Valentim',                   'Joyce Eugênia Da Silva',                   'Josefa Wilma Vieira', 
+                  'Merielen Venâncio Oliveira',                   'Rosana Pereira',                   'Sabrina Crott', 
+                  'Thaís Paiva',                   'Thamiris Santos'
+                 ],
+        'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel'],
+        'Goiania': [],
+    }
     
     return {'equipe': equipe_por_unidade.get(unidade, [])}
 
@@ -1675,21 +1681,27 @@ def filter_dashboard():
         'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
         'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
         'Brasília': ['Dra. Leticia', 'Dra. Natalia'],
+        'Goiania': [],
     }
 
         # Equipe por unidade para filtros
         equipe_por_unidade = {
-        'Ribeirão Preto': ['Aline', 'Ana', 'Natália'],
-        'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 
-                  'Isabelle de Campos', 'Juliana Nunes', 'Kesley Sabrina', 
-                  'Larissa Hellen', 'Thalita Corrêa', 'Vitória Delino'],
+        'Ribeirão Preto': ['Aline', 'Ana', 'Lavinia', 'Natália'],
+        'Campinas': [
+                  'Bruna Galhardo',                   'Dayane Andrade',                   'Eduarda de Sousa', 
+                  'Isabelle de Campos',                   'Juliana Nunes',                   'Kesley Sabrina', 
+                  'Larissa Hellen',                   'Thalita Corrêa',                   'Vitória Delino'
+                 ],
         'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
-        'São Paulo': ['Adriana Almeida', 'Ana Paula dos Santos', 'Dani Curti', 
-                  'Eliene Rodrigues', 'Gabriela Cruz', 'Greice Barbosa', 
-                  'Jaiza Valentim', 'Josefa Wilma Vieira', 'Joyce Eugênia Da Silva', 
-                  'Merielen Venâncio Oliveira', 'Rosana Pereira', 'Sabrina Crott', 
-                  'Thamiris Santos', 'Thaís Paiva'],
+        'São Paulo': [
+                  'Adriana Almeida',                   'Ana Paula dos Santos',                   'Dani Curti', 
+                  'Eliene Rodrigues',                   'Gabriela Cruz',                   'Greice Barbosa', 
+                  'Jaiza Valentim',                   'Joyce Eugênia Da Silva',                   'Josefa Wilma Vieira', 
+                  'Merielen Venâncio Oliveira',                   'Rosana Pereira',                   'Sabrina Crott', 
+                  'Thaís Paiva',                   'Thamiris Santos'
+                 ],
         'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel'],
+        'Goiania': [],
     }
 
         # Load data

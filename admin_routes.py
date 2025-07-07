@@ -59,36 +59,26 @@ def update_app_py(config):
         with open('app.py', 'r', encoding='utf-8') as f:
             content = f.read()
 
-        # Atualizar médicos por unidade
-        medicos_str = "medicos_por_unidade = {\n"
-        for unidade, medicos in config['medicos_por_unidade'].items():
-            medicos_str += f"        '{unidade}': {medicos},\n"
-        medicos_str += "    }"
+        # Atualizar UNIDADES
+        unidades_list = config.get('unidades', ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília'])
+        unidades_str = f"UNIDADES = {unidades_list}"
+        
+        # Encontrar e substituir a definição de UNIDADES
+        unidades_pattern = r"UNIDADES\s*=\s*\[[\s\S]*?\]"
+        if re.search(unidades_pattern, content):
+            content = re.sub(unidades_pattern, unidades_str, content, flags=re.DOTALL)
+        else:
+            # Adicionar UNIDADES se não existir
+            content = content.replace('MEDICOS_POR_UNIDADE', f'{unidades_str}\n\nMEDICOS_POR_UNIDADE')
 
-        # Encontrar e substituir a definição de médicos
-        medicos_pattern = r"medicos_por_unidade\s*=\s*\{[^}]*\}"
+        # Atualizar MEDICOS_POR_UNIDADE
+        medicos_str = f"MEDICOS_POR_UNIDADE = {config.get('medicos_por_unidade', {})}"
+        medicos_pattern = r"MEDICOS_POR_UNIDADE\s*=\s*\{[\s\S]*?\n\}"
         content = re.sub(medicos_pattern, medicos_str, content, flags=re.DOTALL)
 
-        # Atualizar equipe por unidade
-        equipe_str = "equipe_por_unidade = {\n"
-        for unidade, equipe in config['equipe_por_unidade'].items():
-            if len(equipe) > 5:
-                # Formatação com quebra de linhas para listas longas
-                equipe_lines = "[\n"
-                for i, member in enumerate(equipe):
-                    if i % 3 == 0 and i > 0:
-                        equipe_lines += "\n"
-                    equipe_lines += f"                  '{member}'"
-                    if i < len(equipe) - 1:
-                        equipe_lines += ", "
-                equipe_lines += "\n                 ]"
-            else:
-                equipe_lines = str(equipe)
-            equipe_str += f"        '{unidade}': {equipe_lines},\n"
-        equipe_str += "    }"
-
-        # Encontrar e substituir a definição de equipe
-        equipe_pattern = r"equipe_por_unidade\s*=\s*\{[^}]*\}"
+        # Atualizar EQUIPE_POR_UNIDADE
+        equipe_str = f"EQUIPE_POR_UNIDADE = {config.get('equipe_por_unidade', {})}"
+        equipe_pattern = r"EQUIPE_POR_UNIDADE\s*=\s*\{[\s\S]*?\n\}"
         content = re.sub(equipe_pattern, equipe_str, content, flags=re.DOTALL)
 
         with open('app.py', 'w', encoding='utf-8') as f:
