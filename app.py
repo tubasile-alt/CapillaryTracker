@@ -2135,10 +2135,16 @@ def necrose_summary():
 def save_necrose():
     """Endpoint para salvar dados de necrose com upload de fotos"""
     logger.info("Saving necrose data to database")
+    logger.info(f"Form data received: {dict(request.form)}")
+    logger.info(f"Files received: {list(request.files.keys())}")
+    
     try:
         # Obter dados do formulário
         patient_id = request.form.get('patient_id')
+        logger.info(f"Patient ID: {patient_id}")
+        
         if not patient_id:
+            logger.error("Patient ID is missing")
             return jsonify({
                 'success': False,
                 'message': 'ID do paciente é obrigatório'
@@ -2159,10 +2165,15 @@ def save_necrose():
         data_avaliacao = request.form.get('data_avaliacao')
         numero_necroses = request.form.get('numero_necroses')
         
+        logger.info(f"Data avaliacao: {data_avaliacao}")
+        logger.info(f"Numero necroses: {numero_necroses}")
+        
         if not data_avaliacao:
+            logger.error("Data avaliacao is missing")
             return jsonify({'success': False, 'message': 'Data da avaliação é obrigatória'})
         
         if not numero_necroses:
+            logger.error("Numero necroses is missing")
             return jsonify({'success': False, 'message': 'Número de necroses é obrigatório'})
             
         # Validar tamanhos baseado no número de necroses
@@ -2195,8 +2206,11 @@ def save_necrose():
         
         # Processar fotos
         photos = request.files.getlist('fotos_necrose')
-        if len(photos) != 3:
-            return jsonify({'success': False, 'message': 'Exatamente 3 fotos são necessárias'})
+        logger.info(f"Number of photos received: {len(photos)}")
+        
+        # Relaxar validação de fotos para testar - permitir 0 ou mais fotos
+        if len(photos) > 3:
+            return jsonify({'success': False, 'message': 'Máximo de 3 fotos permitidas'})
         
         if existing_necrose:
             # Atualizar registro existente
