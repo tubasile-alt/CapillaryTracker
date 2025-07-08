@@ -20,9 +20,52 @@
         </div>
     </div>
     
+    <!-- Filtros -->
+    <div class="filters-section">
+        <div class="filter-row">
+            <div class="filter-item">
+                <label for="filter-unit">Unidade:</label>
+                <select id="filter-unit" class="form-control">
+                    <option value="">Todas as Unidades</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label for="filter-month">Mês:</label>
+                <select id="filter-month" class="form-control">
+                    <option value="">Todos os Meses</option>
+                    <option value="01">Janeiro</option>
+                    <option value="02">Fevereiro</option>
+                    <option value="03">Março</option>
+                    <option value="04">Abril</option>
+                    <option value="05">Maio</option>
+                    <option value="06">Junho</option>
+                    <option value="07">Julho</option>
+                    <option value="08">Agosto</option>
+                    <option value="09">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label for="filter-year">Ano:</label>
+                <select id="filter-year" class="form-control">
+                    <option value="">Todos os Anos</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <button type="button" class="btn btn-primary" onclick="applyFilters()">Aplicar Filtros</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Botões de ação -->
     <div class="action-buttons" style="margin: 20px 0; text-align: center;">
         <button type="button" class="btn btn-primary" onclick="loadAnalysisData()">🔄 Atualizar Dados</button>
+        <button type="button" class="btn btn-success" onclick="exportData()">📁 Exportar Dados</button>
         <a href="/necrose" class="btn btn-secondary">← Voltar para Registro</a>
     </div>
     
@@ -211,28 +254,53 @@
     margin: 20px 0;
     text-align: center;
 }
+
+.filters-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 15px;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 150px;
+}
+
+.filter-item label {
+    font-weight: bold;
+    font-size: 14px;
+    color: #495057;
+}
+
+.form-control {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.patient-photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+    border: 2px solid #dee2e6;
+}
 </style>
 
 <script>
-function loadAnalysisData() {
-    const cardsContainer = document.getElementById('analysis-cards');
-    cardsContainer.innerHTML = '<div class="loading-message">Carregando dados...</div>';
-    
-    fetch('/api/necrose_analise_data')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                displayAnalysisCards(data.data);
-                updateStats(data.data);
-            } else {
-                cardsContainer.innerHTML = '<div class="loading-message">Erro ao carregar dados: ' + data.error + '</div>';
-            }
-        })
-        .catch(error => {
-            console.error('Erro ao carregar dados:', error);
-            cardsContainer.innerHTML = '<div class="loading-message">Erro ao conectar com o servidor</div>';
-        });
-}
+
 
 function displayAnalysisCards(necroses) {
     const cardsContainer = document.getElementById('analysis-cards');
@@ -245,7 +313,10 @@ function displayAnalysisCards(necroses) {
     const cardsHTML = necroses.map(necrose => `
         <div class="necrose-card">
             <div class="card-header">
-                <div class="patient-name">${necrose.paciente_nome}</div>
+                <div style="display: flex; align-items: center;">
+                    <img src="/static/img/user-icon.svg" alt="Paciente" class="patient-photo">
+                    <div class="patient-name">${necrose.paciente_nome}</div>
+                </div>
                 <div class="necrose-grade grade-${necrose.grau_necrose?.toLowerCase() || 'leve'}">
                     ${necrose.grau_necrose || 'Não informado'}
                 </div>
@@ -294,7 +365,7 @@ function displayAnalysisCards(necroses) {
                         <div class="metric-value">${necrose.sangramento || 'N/A'}</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-label">Tempo (min)</div>
+                        <div class="metric-label">Tempo (horas)</div>
                         <div class="metric-value">${necrose.tempo_cirurgia || 'N/A'}</div>
                     </div>
                     <div class="metric-item">
@@ -302,8 +373,8 @@ function displayAnalysisCards(necroses) {
                         <div class="metric-value">${necrose.tadalafila || 'N/A'}</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-label">Bloqueio</div>
-                        <div class="metric-value">${necrose.bloqueio_seringas || 'N/A'}</div>
+                        <div class="metric-label">Solução Frente</div>
+                        <div class="metric-value">${necrose.solucao_frente || 'N/A'}</div>
                     </div>
                     <div class="metric-item">
                         <div class="metric-label">Técnica</div>
@@ -345,6 +416,94 @@ function updateStats(necroses) {
     
     document.getElementById('mais-comum').textContent = 
         topGrau ? `${topGrau[0]}` : 'N/A';
+}
+
+let allNecroses = []; // Armazenar todos os dados para filtrar
+
+function loadAnalysisData() {
+    const cardsContainer = document.getElementById('analysis-cards');
+    cardsContainer.innerHTML = '<div class="loading-message">Carregando dados...</div>';
+    
+    fetch('/api/necrose_analise_data')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                allNecroses = data.data;
+                populateFilterOptions(allNecroses);
+                displayAnalysisCards(allNecroses);
+                updateStats(allNecroses);
+            } else {
+                cardsContainer.innerHTML = '<div class="loading-message">Erro ao carregar dados: ' + data.error + '</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar dados:', error);
+            cardsContainer.innerHTML = '<div class="loading-message">Erro ao conectar com o servidor</div>';
+        });
+}
+
+function populateFilterOptions(necroses) {
+    const unitFilter = document.getElementById('filter-unit');
+    const units = [...new Set(necroses.map(n => n.unidade))];
+    
+    // Limpar opções anteriores (exceto "Todas as Unidades")
+    unitFilter.innerHTML = '<option value="">Todas as Unidades</option>';
+    
+    units.forEach(unit => {
+        const option = document.createElement('option');
+        option.value = unit;
+        option.textContent = unit;
+        unitFilter.appendChild(option);
+    });
+}
+
+function applyFilters() {
+    const unitFilter = document.getElementById('filter-unit').value;
+    const monthFilter = document.getElementById('filter-month').value;
+    const yearFilter = document.getElementById('filter-year').value;
+    
+    let filteredNecroses = allNecroses;
+    
+    // Filtrar por unidade
+    if (unitFilter) {
+        filteredNecroses = filteredNecroses.filter(n => n.unidade === unitFilter);
+    }
+    
+    // Filtrar por mês
+    if (monthFilter) {
+        filteredNecroses = filteredNecroses.filter(n => {
+            const date = new Date(n.data_cirurgia.split('/').reverse().join('-'));
+            return String(date.getMonth() + 1).padStart(2, '0') === monthFilter;
+        });
+    }
+    
+    // Filtrar por ano
+    if (yearFilter) {
+        filteredNecroses = filteredNecroses.filter(n => {
+            const date = new Date(n.data_cirurgia.split('/').reverse().join('-'));
+            return String(date.getFullYear()) === yearFilter;
+        });
+    }
+    
+    displayAnalysisCards(filteredNecroses);
+    updateStats(filteredNecroses);
+}
+
+function exportData() {
+    const unitFilter = document.getElementById('filter-unit').value;
+    const monthFilter = document.getElementById('filter-month').value;
+    const yearFilter = document.getElementById('filter-year').value;
+    
+    let url = '/download_combined_data?';
+    const params = new URLSearchParams();
+    
+    if (unitFilter) params.append('unit', unitFilter);
+    if (monthFilter) params.append('month', monthFilter);
+    if (yearFilter) params.append('year', yearFilter);
+    
+    url += params.toString();
+    
+    window.location.href = url;
 }
 
 // Carregar dados ao carregar a página

@@ -2348,7 +2348,7 @@ def api_necrose_analise_data():
             Surgery.sangramento,
             Surgery.tempo_cirurgia,
             Surgery.tadalafila,
-            Surgery.bloqueio_seringas,
+            Surgery.solucao_frente,
             Surgery.tecnica
         ).join(Surgery, Necrose.surgery_id == Surgery.id).all()
         
@@ -2385,7 +2385,7 @@ def api_necrose_analise_data():
                 'sangramento': necrose.sangramento,
                 'tempo_cirurgia': necrose.tempo_cirurgia,
                 'tadalafila': necrose.tadalafila,
-                'bloqueio_seringas': necrose.bloqueio_seringas,
+                'solucao_frente': necrose.solucao_frente,
                 'tecnica': necrose.tecnica
             }
             analysis_cards.append(card_data)
@@ -2407,6 +2407,11 @@ def api_necrose_analise_data():
 def download_combined_data():
     """Endpoint para baixar dados combinados de cirurgia e necrose em Excel"""
     logger.info("Gerando exportação combinada de cirurgia e necrose...")
+    
+    # Obter filtros da query string
+    unit_filter = request.args.get('unit')
+    month_filter = request.args.get('month')
+    year_filter = request.args.get('year')
     try:
         with app.app_context():
             # Buscar todas as cirurgias com LEFT JOIN para incluir dados de necrose
