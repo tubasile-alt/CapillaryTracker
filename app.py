@@ -2298,7 +2298,7 @@ def save_necrose():
         
         return jsonify({
             'success': True,
-            'message': f'Dados de necrose salvos com sucesso. {len(uploaded_files)} foto(s) carregada(s).',
+            'message': f'Necrose registrada com sucesso! {len(uploaded_files)} foto(s) carregada(s).',
             'necrose_id': necrose_record.id,
             'photos_uploaded': len(uploaded_files)
         })
@@ -2315,6 +2315,93 @@ def allowed_file(filename):
     """Verificar se o arquivo é uma imagem permitida"""
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/necrose_analise')
+def necrose_analise():
+    """Página de análise de dados de necrose"""
+    return render_template('necrose_analise.html')
+
+@app.route('/api/necrose_analise_data')
+def api_necrose_analise_data():
+    """API para dados de análise de necrose"""
+    try:
+        # Buscar dados de necroses com dados das cirurgias
+        necroses_data = db.session.query(
+            Necrose.id,
+            Necrose.unidade,
+            Necrose.paciente_nome,
+            Necrose.data_cirurgia,
+            Necrose.data_avaliacao,
+            Necrose.medico_responsavel,
+            Necrose.tem_necrose,
+            Necrose.grau_necrose,
+            Necrose.numero_necroses,
+            Necrose.tamanho_1_cm,
+            Necrose.tamanho_2_cm,
+            Necrose.tamanho_3_cm,
+            Necrose.tamanho_4_cm,
+            Necrose.primeira_faixa,
+            Necrose.segunda_faixa,
+            Necrose.terceira_faixa,
+            Necrose.coroa,
+            Surgery.infiltracao,
+            Surgery.sangramento,
+            Surgery.tempo_cirurgia,
+            Surgery.tadalafila,
+            Surgery.bloqueio_seringas,
+            Surgery.tecnica
+        ).join(Surgery, Necrose.surgery_id == Surgery.id).all()
+        
+        # Organizar dados para cards
+        analysis_cards = []
+        for necrose in necroses_data:
+            # Calcular tamanho total das necroses
+            tamanhos = [necrose.tamanho_1_cm, necrose.tamanho_2_cm, necrose.tamanho_3_cm, necrose.tamanho_4_cm]
+            tamanho_total = sum(t for t in tamanhos if t is not None)
+            
+            # Identificar faixas acometidas
+            faixas_acometidas = []
+            if necrose.primeira_faixa:
+                faixas_acometidas.append("1ª Faixa")
+            if necrose.segunda_faixa:
+                faixas_acometidas.append("2ª Faixa")
+            if necrose.terceira_faixa:
+                faixas_acometidas.append("3ª Faixa")
+            if necrose.coroa:
+                faixas_acometidas.append("Coroa")
+            
+            card_data = {
+                'id': necrose.id,
+                'paciente_nome': necrose.paciente_nome,
+                'unidade': necrose.unidade,
+                'data_cirurgia': necrose.data_cirurgia.strftime('%d/%m/%Y') if necrose.data_cirurgia else '',
+                'data_avaliacao': necrose.data_avaliacao.strftime('%d/%m/%Y') if necrose.data_avaliacao else '',
+                'medico_responsavel': necrose.medico_responsavel,
+                'grau_necrose': necrose.grau_necrose,
+                'numero_necroses': necrose.numero_necroses,
+                'tamanho_total': round(tamanho_total, 2),
+                'faixas_acometidas': ', '.join(faixas_acometidas),
+                'infiltracao': necrose.infiltracao,
+                'sangramento': necrose.sangramento,
+                'tempo_cirurgia': necrose.tempo_cirurgia,
+                'tadalafila': necrose.tadalafila,
+                'bloqueio_seringas': necrose.bloqueio_seringas,
+                'tecnica': necrose.tecnica
+            }
+            analysis_cards.append(card_data)
+        
+        return jsonify({
+            'success': True,
+            'data': analysis_cards,
+            'total_casos': len(analysis_cards)
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao buscar dados de análise de necrose: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/download_combined_data')
 def download_combined_data():
