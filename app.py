@@ -33,28 +33,55 @@ app.config['ADMIN_PASSWORD'] = '12345'
 app.config['UPLOAD_FOLDER'] = 'static/uploads/necrose_photos'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-# Configurações de Unidades, Médicos e Equipe (atualizadas dinamicamente pelo admin)
-UNIDADES = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília']
+# Função para carregar configurações do arquivo JSON
+def load_admin_config():
+    """Carrega configurações de unidades, médicos e equipe do arquivo admin_config.json"""
+    config_file = 'admin_config.json'
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                return config
+        except Exception as e:
+            logger.error(f"Erro ao carregar admin_config.json: {e}")
+    
+    # Configuração padrão se o arquivo não existir
+    return {
+        'unidades': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília', 'Goiania'],
+        'medicos_por_unidade': {
+            'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
+            'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
+            'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
+            'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
+            'Brasília': ['Dra. Leticia', 'Dra. Natalia'],
+            'Goiania': []
+        },
+        'equipe_por_unidade': {
+            'Ribeirão Preto': ['Aline', 'Ana', 'Lavinia', 'Natália'],
+            'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 'Isabelle de Campos', 
+                         'Juliana Nunes', 'Kesley Sabrina', 'Larissa Hellen', 'Thalita Corrêa', 'Vitória Delino'],
+            'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
+            'São Paulo': ['Adriana Almeida', 'Ana Paula dos Santos', 'Dani Curti', 'Eliene Rodrigues', 
+                          'Gabriela Cruz', 'Greice Barbosa', 'Jaiza Valentim', 'Joyce Eugênia Da Silva', 
+                          'Josefa Wilma Vieira', 'Merielen Venâncio Oliveira', 'Rosana Pereira', 
+                          'Sabrina Crott', 'Thaís Paiva', 'Thamiris Santos'],
+            'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel'],
+            'Goiania': []
+        }
+    }
 
-MEDICOS_POR_UNIDADE = {
-    'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
-    'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
-    'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
-    'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
-    'Brasília': ['Dra. Leticia', 'Dra. Natalia']
-}
+# Carregar configurações dinamicamente
+def reload_admin_config():
+    """Recarrega as configurações administrativas"""
+    global UNIDADES, MEDICOS_POR_UNIDADE, EQUIPE_POR_UNIDADE
+    admin_config = load_admin_config()
+    UNIDADES = admin_config.get('unidades', ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília'])
+    MEDICOS_POR_UNIDADE = admin_config.get('medicos_por_unidade', {})
+    EQUIPE_POR_UNIDADE = admin_config.get('equipe_por_unidade', {})
+    logger.info(f"Configurações recarregadas: {len(UNIDADES)} unidades, {len(MEDICOS_POR_UNIDADE)} grupos de médicos")
 
-EQUIPE_POR_UNIDADE = {
-    'Ribeirão Preto': ['Aline', 'Ana', 'Lavinia', 'Natália'],
-    'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 'Isabelle de Campos', 
-                 'Juliana Nunes', 'Kesley Sabrina', 'Larissa Hellen', 'Thalita Corrêa', 'Vitória Delino'],
-    'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
-    'São Paulo': ['Adriana Almeida', 'Ana Paula dos Santos', 'Dani Curti', 'Eliene Rodrigues', 
-                  'Gabriela Cruz', 'Greice Barbosa', 'Jaiza Valentim', 'Joyce Eugênia Da Silva', 
-                  'Josefa Wilma Vieira', 'Merielen Venâncio Oliveira', 'Rosana Pereira', 
-                  'Sabrina Crott', 'Thaís Paiva', 'Thamiris Santos'],
-    'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel']
-}
+# Inicializar configurações
+reload_admin_config()
 
 # Importar e registrar blueprints após as configurações da app
 from admin_routes import admin_bp
@@ -1083,6 +1110,9 @@ def novo_cadastro():
                 logger.info("API call detected, returning JSON error response")
                 return jsonify({"status": "error", "message": error_msg}), 500
 
+    # Recarregar configurações para garantir que estão atualizadas
+    reload_admin_config()
+    
     # Complete form structure
     form_data = {
         'title': 'Cadastro de Cirurgia Capilar',
@@ -1162,30 +1192,9 @@ def novo_cadastro():
 @app.route('/get_medicos/<unidade>')
 def get_medicos(unidade):
     logger.info(f"Retrieving doctors for unit: {unidade}")
-    
-    # Tentar carregar configuração dinâmica
-    try:
-        import json
-        if os.path.exists('admin_config.json'):
-            with open('admin_config.json', 'r', encoding='utf-8') as f:
-                config = json.load(f)
-                medicos_por_unidade = config.get('medicos_por_unidade', {})
-        else:
-            # Fallback para configuração padrão
-            medicos_por_unidade = MEDICOS_POR_UNIDADE
-    except Exception as e:
-        logger.error(f"Erro ao carregar configuração de médicos: {e}")
-        # Fallback para configuração padrão
-        medicos_por_unidade = {
-        'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
-        'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
-        'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
-        'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
-        'Brasília': ['Dra. Leticia', 'Dra. Natalia'],
-        'Goiania': [],
-    }
-    
-    return {'medicos': medicos_por_unidade.get(unidade, [])}
+    # Recarregar configurações para garantir que estão atualizadas
+    reload_admin_config()
+    return {'medicos': MEDICOS_POR_UNIDADE.get(unidade, [])}
 
 
 @app.route('/import_data', methods=['GET', 'POST'])
@@ -1296,40 +1305,9 @@ def verify_data():
 @app.route('/get_equipe/<unidade>')
 def get_equipe(unidade):
     logger.info(f"Retrieving team for unit: {unidade}")
-    
-    # Tentar carregar configuração dinâmica
-    try:
-        import json
-        if os.path.exists('admin_config.json'):
-            with open('admin_config.json', 'r', encoding='utf-8') as f:
-                config = json.load(f)
-                equipe_por_unidade = config.get('equipe_por_unidade', {})
-        else:
-            # Fallback para configuração padrão
-            equipe_por_unidade = EQUIPE_POR_UNIDADE
-    except Exception as e:
-        logger.error(f"Erro ao carregar configuração de equipe: {e}")
-        # Fallback para configuração padrão
-        equipe_por_unidade = {
-        'Ribeirão Preto': ['Aline', 'Ana', 'Lavinia', 'Natália'],
-        'Campinas': [
-                  'Bruna Galhardo',                   'Dayane Andrade',                   'Eduarda de Sousa', 
-                  'Isabelle de Campos',                   'Juliana Nunes',                   'Kesley Sabrina', 
-                  'Larissa Hellen',                   'Thalita Corrêa',                   'Vitória Delino'
-                 ],
-        'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
-        'São Paulo': [
-                  'Adriana Almeida',                   'Ana Paula dos Santos',                   'Dani Curti', 
-                  'Eliene Rodrigues',                   'Gabriela Cruz',                   'Greice Barbosa', 
-                  'Jaiza Valentim',                   'Joyce Eugênia Da Silva',                   'Josefa Wilma Vieira', 
-                  'Merielen Venâncio Oliveira',                   'Rosana Pereira',                   'Sabrina Crott', 
-                  'Thaís Paiva',                   'Thamiris Santos'
-                 ],
-        'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel'],
-        'Goiania': [],
-    }
-    
-    return {'equipe': equipe_por_unidade.get(unidade, [])}
+    # Recarregar configurações para garantir que estão atualizadas
+    reload_admin_config()
+    return {'equipe': EQUIPE_POR_UNIDADE.get(unidade, [])}
 
 def process_dashboard_data(df):
     """Process dataframe into dashboard-ready data"""
@@ -1992,6 +1970,25 @@ def download_complete_data():
         logger.error(traceback.format_exc())
         flash(f"Erro ao exportar dados: {str(e)}", "error")
         return redirect(url_for('dashboard'))
+
+@app.route('/reload_config')
+def reload_config():
+    """Endpoint para recarregar as configurações administrativas"""
+    try:
+        reload_admin_config()
+        return jsonify({
+            'success': True,
+            'message': 'Configurações recarregadas com sucesso',
+            'unidades': UNIDADES,
+            'total_medicos': sum(len(m) for m in MEDICOS_POR_UNIDADE.values()),
+            'total_equipe': sum(len(e) for e in EQUIPE_POR_UNIDADE.values())
+        })
+    except Exception as e:
+        logger.error(f"Erro ao recarregar configurações: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/necrose')
 def necrose():

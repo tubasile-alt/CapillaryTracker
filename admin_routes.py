@@ -55,40 +55,10 @@ def save_config(config):
 
 def update_app_py(config):
     """Atualiza o arquivo app.py com as novas configurações"""
-    try:
-        with open('app.py', 'r', encoding='utf-8') as f:
-            content = f.read()
-
-        # Atualizar UNIDADES
-        unidades_list = config.get('unidades', ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília'])
-        unidades_str = f"UNIDADES = {unidades_list}"
-        
-        # Encontrar e substituir a definição de UNIDADES
-        unidades_pattern = r"UNIDADES\s*=\s*\[[\s\S]*?\]"
-        if re.search(unidades_pattern, content):
-            content = re.sub(unidades_pattern, unidades_str, content, flags=re.DOTALL)
-        else:
-            # Adicionar UNIDADES se não existir
-            content = content.replace('MEDICOS_POR_UNIDADE', f'{unidades_str}\n\nMEDICOS_POR_UNIDADE')
-
-        # Atualizar MEDICOS_POR_UNIDADE
-        medicos_str = f"MEDICOS_POR_UNIDADE = {config.get('medicos_por_unidade', {})}"
-        medicos_pattern = r"MEDICOS_POR_UNIDADE\s*=\s*\{[\s\S]*?\n\}"
-        content = re.sub(medicos_pattern, medicos_str, content, flags=re.DOTALL)
-
-        # Atualizar EQUIPE_POR_UNIDADE
-        equipe_str = f"EQUIPE_POR_UNIDADE = {config.get('equipe_por_unidade', {})}"
-        equipe_pattern = r"EQUIPE_POR_UNIDADE\s*=\s*\{[\s\S]*?\n\}"
-        content = re.sub(equipe_pattern, equipe_str, content, flags=re.DOTALL)
-
-        with open('app.py', 'w', encoding='utf-8') as f:
-            f.write(content)
-
-        logger.info("Arquivo app.py atualizado com sucesso")
-        return True
-    except Exception as e:
-        logger.error(f"Erro ao atualizar app.py: {str(e)}")
-        return False
+    # Não precisamos mais atualizar o app.py diretamente
+    # As configurações são carregadas dinamicamente do arquivo JSON
+    logger.info("Configurações salvas no arquivo JSON. App.py carregará automaticamente.")
+    return True
 
 # Decorator para verificar se o usuário está autenticado como administrador
 def admin_required(func):

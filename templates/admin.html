@@ -340,6 +340,43 @@
             // Adicionar classe ativa ao botão clicado
             event.target.classList.add('active');
         }
+
+        // Função para recarregar configurações do servidor
+        function reloadServerConfigurations() {
+            fetch('/reload_config')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Configurações recarregadas:', data);
+                        // Mostrar notificação de sucesso
+                        if (data.unidades) {
+                            console.log('Unidades atualizadas:', data.unidades);
+                        }
+                    } else {
+                        console.error('Erro ao recarregar configurações:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao conectar com o servidor:', error);
+                });
+        }
+
+        // Recarregar configurações após cada alteração
+        document.addEventListener('DOMContentLoaded', function() {
+            // Interceptar todos os formulários de administração
+            const forms = document.querySelectorAll('form[action*="/admin/"]');
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    // Aguardar o envio do formulário e depois recarregar as configurações
+                    setTimeout(() => {
+                        reloadServerConfigurations();
+                    }, 1000); // Esperar 1 segundo para garantir que o servidor processou
+                });
+            });
+
+            // Recarregar configurações ao carregar a página
+            reloadServerConfigurations();
+        });
     </script>
 </body>
 </html>
