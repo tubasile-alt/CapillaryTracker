@@ -97,6 +97,13 @@ This is a comprehensive hair surgery management system for Instituto Capilar do 
 
 ```
 Changelog:
+- July 16, 2025. Fixed administration system persistence issues:
+  - Replaced hardcoded constants with dynamic JSON configuration loading
+  - Implemented reload_admin_config() function for real-time updates
+  - Added automatic configuration reloading after admin changes
+  - Enhanced admin interface with automatic refresh after modifications
+  - Created test script (test_admin.py) for troubleshooting admin functionality
+  - Units, doctors, and teams now properly persist across page refreshes
 - June 30, 2025. Implemented real-time search suggestion filtering with:
   - Intelligent local caching for fast filtering
   - Keyboard navigation (arrow keys, enter, escape)

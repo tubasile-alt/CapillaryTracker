@@ -367,10 +367,11 @@
             const forms = document.querySelectorAll('form[action*="/admin/"]');
             forms.forEach(form => {
                 form.addEventListener('submit', function(e) {
-                    // Aguardar o envio do formulário e depois recarregar as configurações
+                    // Aguardar o envio do formulário e depois recarregar a página
                     setTimeout(() => {
                         reloadServerConfigurations();
-                    }, 1000); // Esperar 1 segundo para garantir que o servidor processou
+                        window.location.reload();
+                    }, 1500); // Esperar 1.5 segundos para garantir que o servidor processou
                 });
             });
 

@@ -99,8 +99,11 @@ def logout():
 @admin_required
 def dashboard():
     """Dashboard administrativo"""
-    # Carregar configuração atual
+    # Forçar recarregamento das configurações
     config = load_config()
+    
+    # Log para debug
+    logger.info(f"Dashboard carregado com {len(config.get('unidades', []))} unidades")
     
     # Usar unidades da configuração ou lista padrão
     unidades = config.get('unidades', ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília'])
