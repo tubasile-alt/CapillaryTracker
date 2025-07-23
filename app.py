@@ -2322,36 +2322,14 @@ def necrose_analise():
 def api_necrose_analise_data():
     """API para dados de análise de necrose"""
     try:
-        # Buscar dados de necroses com dados das cirurgias
-        necroses_data = db.session.query(
-            Necrose.id,
-            Necrose.unidade,
-            Necrose.paciente_nome,
-            Necrose.data_cirurgia,
-            Necrose.data_avaliacao,
-            Necrose.medico_responsavel,
-            Necrose.tem_necrose,
-            Necrose.grau_necrose,
-            Necrose.numero_necroses,
-            Necrose.tamanho_1_cm,
-            Necrose.tamanho_2_cm,
-            Necrose.tamanho_3_cm,
-            Necrose.tamanho_4_cm,
-            Necrose.primeira_faixa,
-            Necrose.segunda_faixa,
-            Necrose.terceira_faixa,
-            Necrose.coroa,
-            Surgery.infiltracao,
-            Surgery.sangramento,
-            Surgery.tempo_cirurgia,
-            Surgery.tadalafila,
-            Surgery.solucao_frente,
-            Surgery.tecnica
-        ).join(Surgery, Necrose.surgery_id == Surgery.id).all()
+        # Buscar dados de necroses com dados das cirurgias e fotos
+        necroses_data = db.session.query(Necrose, Surgery).join(
+            Surgery, Necrose.surgery_id == Surgery.id
+        ).all()
         
         # Organizar dados para cards
         analysis_cards = []
-        for necrose in necroses_data:
+        for necrose, surgery in necroses_data:
             # Calcular tamanho total das necroses
             tamanhos = [necrose.tamanho_1_cm, necrose.tamanho_2_cm, necrose.tamanho_3_cm, necrose.tamanho_4_cm]
             tamanho_total = sum(t for t in tamanhos if t is not None)
@@ -2367,6 +2345,17 @@ def api_necrose_analise_data():
             if necrose.coroa:
                 faixas_acometidas.append("Coroa")
             
+            # Buscar fotos associadas a esta necrose
+            photos = NecrosePhoto.query.filter_by(necrose_id=necrose.id).all()
+            photo_thumbnails = []
+            for photo in photos:
+                photo_thumbnails.append({
+                    'id': photo.id,
+                    'filename': photo.filename,
+                    'path': photo.file_path or f'/static/uploads/necrose_photos/{photo.filename}',
+                    'description': photo.description or 'Foto da necrose'
+                })
+            
             card_data = {
                 'id': necrose.id,
                 'paciente_nome': necrose.paciente_nome,
@@ -2378,19 +2367,69 @@ def api_necrose_analise_data():
                 'numero_necroses': necrose.numero_necroses,
                 'tamanho_total': round(tamanho_total, 2),
                 'faixas_acometidas': ', '.join(faixas_acometidas),
-                'infiltracao': necrose.infiltracao,
-                'sangramento': necrose.sangramento,
-                'tempo_cirurgia': necrose.tempo_cirurgia,
-                'tadalafila': necrose.tadalafila,
-                'solucao_frente': necrose.solucao_frente,
-                'tecnica': necrose.tecnica
+                'infiltracao': surgery.infiltracao,
+                'sangramento': surgery.sangramento,
+                'tempo_cirurgia': surgery.tempo_cirurgia,
+                'tadalafila': surgery.tadalafila,
+                'solucao_frente': surgery.solucao_frente,
+                'tecnica': surgery.tecnica,
+                'photos': photo_thumbnails
             }
             analysis_cards.append(card_data)
         
+        # Calcular estatísticas por unidade
+        stats_by_unit = {}
+        all_units = set()
+        
+        for necrose, surgery in necroses_data:
+            unit = necrose.unidade
+            all_units.add(unit)
+            
+            if unit not in stats_by_unit:
+                stats_by_unit[unit] = {
+                    'total_casos': 0,
+                    'casos_leves': 0,
+                    'casos_moderados': 0,
+                    'casos_severos': 0,
+                    'tamanho_medio': 0.0,
+                    'total_tamanhos': []
+                }
+            
+            stats_by_unit[unit]['total_casos'] += 1
+            
+            # Contar por grau
+            grau = necrose.grau_necrose.lower() if necrose.grau_necrose else ''
+            if 'leve' in grau:
+                stats_by_unit[unit]['casos_leves'] += 1
+            elif 'moderada' in grau or 'moderado' in grau:
+                stats_by_unit[unit]['casos_moderados'] += 1
+            elif 'severa' in grau or 'severo' in grau:
+                stats_by_unit[unit]['casos_severos'] += 1
+            
+            # Calcular tamanho total da necrose
+            tamanhos = [necrose.tamanho_1_cm, necrose.tamanho_2_cm, necrose.tamanho_3_cm, necrose.tamanho_4_cm]
+            tamanho_total = sum(t for t in tamanhos if t is not None)
+            if tamanho_total > 0:
+                stats_by_unit[unit]['total_tamanhos'].append(tamanho_total)
+        
+        # Calcular tamanho médio para cada unidade
+        for unit_stats in stats_by_unit.values():
+            if unit_stats['total_tamanhos']:
+                unit_stats['tamanho_medio'] = round(
+                    sum(unit_stats['total_tamanhos']) / len(unit_stats['total_tamanhos']), 2
+                )
+            del unit_stats['total_tamanhos']  # Remover array temporário
+        
+        # Carregar todas as unidades disponíveis da configuração
+        reload_admin_config()
+        all_configured_units = UNIDADES
+
         return jsonify({
             'success': True,
             'data': analysis_cards,
-            'total_casos': len(analysis_cards)
+            'total_casos': len(analysis_cards),
+            'stats_by_unit': stats_by_unit,
+            'all_units': list(all_configured_units)
         })
         
     except Exception as e:
