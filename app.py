@@ -2520,6 +2520,94 @@ def api_registered_necrose_patients():
             'error': str(e)
         }), 500
 
+@app.route('/api/upload_necrose_photos', methods=['POST'])
+def api_upload_necrose_photos():
+    """API para fazer upload de fotos adicionais para necrose"""
+    try:
+        necrose_id = request.form.get('necrose_id')
+        description = request.form.get('description', '')
+        
+        if not necrose_id:
+            return jsonify({
+                'success': False,
+                'error': 'ID da necrose é obrigatório'
+            }), 400
+            
+        # Verificar se a necrose existe
+        necrose = Necrose.query.get(necrose_id)
+        if not necrose:
+            return jsonify({
+                'success': False,
+                'error': 'Registro de necrose não encontrado'
+            }), 404
+            
+        # Verificar se há fotos para upload
+        if 'photos' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'Nenhuma foto foi enviada'
+            }), 400
+            
+        photos = request.files.getlist('photos')
+        if not photos or len(photos) == 0:
+            return jsonify({
+                'success': False,
+                'error': 'Nenhuma foto foi selecionada'
+            }), 400
+            
+        if len(photos) > 3:
+            return jsonify({
+                'success': False,
+                'error': 'Máximo de 3 fotos por vez'
+            }), 400
+            
+        # Criar diretório se não existir
+        upload_dir = 'static/uploads/necrose_photos'
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        uploaded_photos = []
+        
+        for photo in photos:
+            if photo and photo.filename:
+                # Gerar nome único para o arquivo
+                file_extension = photo.filename.rsplit('.', 1)[1].lower() if '.' in photo.filename else 'jpg'
+                unique_filename = f"{uuid.uuid4().hex}_{secure_filename(photo.filename)}"
+                file_path = os.path.join(upload_dir, unique_filename)
+                
+                # Salvar arquivo
+                photo.save(file_path)
+                
+                # Salvar no banco de dados
+                new_photo = NecrosePhoto(
+                    necrose_id=necrose_id,
+                    filename=unique_filename,
+                    file_path=f"/{file_path}",
+                    description=description
+                )
+                db.session.add(new_photo)
+                
+                uploaded_photos.append({
+                    'filename': unique_filename,
+                    'path': f"/{file_path}"
+                })
+                
+        db.session.commit()
+        logger.info(f"Uploaded {len(uploaded_photos)} photos for necrose ID {necrose_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'{len(uploaded_photos)} fotos anexadas com sucesso',
+            'photos': uploaded_photos
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error uploading photos for necrose: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/delete_necrose/<int:necrose_id>', methods=['DELETE'])
 def api_delete_necrose(necrose_id):
     """API para excluir registro de necrose"""
