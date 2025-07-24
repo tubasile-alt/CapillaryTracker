@@ -2468,19 +2468,29 @@ def api_registered_necrose_patients():
             # Buscar fotos associadas a esta necrose
             photos = NecrosePhoto.query.filter_by(necrose_id=necrose.id).all()
             photo_data = []
+            logger.info(f"Buscando fotos para necrose ID {necrose.id}: {len(photos)} fotos encontradas")
+            
             for photo in photos:
-                # Verificar se o arquivo existe fisicamente
-                file_path = photo.file_path or f'static/uploads/necrose_photos/{photo.filename}'
-                web_path = f'/{file_path}' if not file_path.startswith('/') else file_path
+                # Construir caminho da foto
+                if photo.file_path:
+                    # Usar caminho do banco se existir
+                    web_path = photo.file_path if photo.file_path.startswith('/') else f'/{photo.file_path}'
+                    file_path = photo.file_path.lstrip('/')
+                else:
+                    # Fallback para caminho padrão
+                    file_path = f'static/uploads/necrose_photos/{photo.filename}'
+                    web_path = f'/{file_path}'
                 
-                # Só adicionar se o arquivo existir
-                if os.path.exists(file_path):
-                    photo_data.append({
-                        'id': photo.id,
-                        'filename': photo.filename,
-                        'path': web_path,
-                        'description': photo.description or f'Foto {photo.id} da necrose'
-                    })
+                logger.info(f"Verificando foto: {file_path} -> {web_path}")
+                
+                # Adicionar foto (mesmo se arquivo não existir fisicamente)
+                photo_data.append({
+                    'id': photo.id,
+                    'filename': photo.filename,
+                    'path': web_path,
+                    'description': photo.description or f'Foto {photo.id} da necrose',
+                    'exists': os.path.exists(file_path)
+                })
             
             patient_info = {
                 'id': necrose.id,

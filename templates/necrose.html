@@ -27,18 +27,9 @@
     
     <!-- Botões de Ação -->
     <div class="action-buttons" style="margin: 20px 0; text-align: center;">
-        <button type="button" class="btn btn-primary" onclick="toggleForm()">Registrar Necrose</button>
         <button type="button" class="btn btn-success" onclick="window.location.href='/necrose_analise'">📊 Análise de Dados</button>
-        <button type="button" class="btn btn-info" onclick="loadRegisteredPatients()">🔄 Atualizar Lista</button>
+        <button type="button" class="btn btn-info" onclick="togglePatientsList()">📋 Ver Lista de Pacientes</button>
         <a href="/" class="btn btn-secondary">← Voltar ao Dashboard</a>
-    </div>
-    
-    <!-- Lista de Pacientes Cadastrados -->
-    <div id="registered-patients-section" class="registered-patients">
-        <h3>Pacientes com Necrose Cadastrada</h3>
-        <div id="registered-patients-list" class="patients-list">
-            <div class="loading-message">Carregando pacientes cadastrados...</div>
-        </div>
     </div>
     
     <!-- Seleção de unidade -->
@@ -195,6 +186,17 @@
             </div>
         </form>
     </div>
+    
+    <!-- Lista de Pacientes Cadastrados (inicialmente oculta) -->
+    <div id="registered-patients-section" class="registered-patients" style="display: none;">
+        <div class="section-header">
+            <h3>Pacientes com Necrose Cadastrada</h3>
+            <button type="button" class="btn btn-info btn-sm" onclick="loadRegisteredPatients()">🔄 Atualizar Lista</button>
+        </div>
+        <div id="registered-patients-list" class="patients-list">
+            <div class="loading-message">Carregando pacientes cadastrados...</div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -339,6 +341,18 @@
     background: #f8f9fa;
     border-radius: 8px;
     border: 1px solid #dee2e6;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 12px;
 }
 
 .patients-list {
@@ -590,8 +604,7 @@ function loadNecroseSummary() {
 // Aguardar o DOM carregar completamente
 document.addEventListener('DOMContentLoaded', function() {
     loadNecroseSummary();
-    // Carregar lista de pacientes cadastrados
-    loadRegisteredPatients();
+    // NÃO carregar lista automaticamente - usuário deve clicar no botão
     
     // Habilitar campo de busca apenas quando a unidade for selecionada
     const unitSelect = document.getElementById('unit-select');
@@ -1084,14 +1097,15 @@ function deleteNecroseRecord(necroseId, patientName) {
     }
 }
 
-// Função para mostrar/esconder formulário de registro
-function toggleForm() {
-    const necroseForm = document.getElementById('necrose-form');
-    if (necroseForm) {
-        if (necroseForm.style.display === 'none' || necroseForm.style.display === '') {
-            necroseForm.style.display = 'block';
+// Função para mostrar/esconder lista de pacientes
+function togglePatientsList() {
+    const patientsSection = document.getElementById('registered-patients-section');
+    if (patientsSection) {
+        if (patientsSection.style.display === 'none' || patientsSection.style.display === '') {
+            patientsSection.style.display = 'block';
+            loadRegisteredPatients(); // Carregar dados quando mostrar
         } else {
-            necroseForm.style.display = 'none';
+            patientsSection.style.display = 'none';
         }
     }
 }
