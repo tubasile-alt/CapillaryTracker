@@ -29,7 +29,16 @@
     <div class="action-buttons" style="margin: 20px 0; text-align: center;">
         <button type="button" class="btn btn-primary" onclick="toggleForm()">Registrar Necrose</button>
         <button type="button" class="btn btn-success" onclick="window.location.href='/necrose_analise'">📊 Análise de Dados</button>
+        <button type="button" class="btn btn-info" onclick="loadRegisteredPatients()">🔄 Atualizar Lista</button>
         <a href="/" class="btn btn-secondary">← Voltar ao Dashboard</a>
+    </div>
+    
+    <!-- Lista de Pacientes Cadastrados -->
+    <div id="registered-patients-section" class="registered-patients">
+        <h3>Pacientes com Necrose Cadastrada</h3>
+        <div id="registered-patients-list" class="patients-list">
+            <div class="loading-message">Carregando pacientes cadastrados...</div>
+        </div>
     </div>
     
     <!-- Seleção de unidade -->
@@ -323,6 +332,171 @@
     margin-top: 20px;
 }
 
+/* Estilos para pacientes cadastrados */
+.registered-patients {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.patients-list {
+    margin-top: 15px;
+}
+
+.patient-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.patient-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.patient-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.patient-name {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+}
+
+.patient-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+}
+
+.patient-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.info-item {
+    padding: 8px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.info-label {
+    font-weight: bold;
+    color: #666;
+}
+
+.info-value {
+    color: #333;
+    margin-left: 5px;
+}
+
+/* Thumbnails de fotos nos cards */
+.patient-photos {
+    margin-top: 10px;
+}
+
+.photos-thumbnails {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.photo-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 2px solid #ddd;
+    transition: all 0.3s ease;
+}
+
+.photo-thumbnail:hover {
+    border-color: #007bff;
+    transform: scale(1.05);
+}
+
+.no-photos {
+    color: #666;
+    font-style: italic;
+    font-size: 12px;
+}
+
+/* Modal para visualização das fotos */
+.photo-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+}
+
+.photo-modal-content {
+    position: relative;
+    margin: 5% auto;
+    max-width: 80%;
+    max-height: 80%;
+}
+
+.modal-image {
+    width: 100%;
+    height: auto;
+    max-height: 80vh;
+    object-fit: contain;
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    opacity: 0.7;
+}
+
+.loading-message {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+}
+
 .btn {
     padding: 10px 20px;
     border: none;
@@ -416,6 +590,8 @@ function loadNecroseSummary() {
 // Aguardar o DOM carregar completamente
 document.addEventListener('DOMContentLoaded', function() {
     loadNecroseSummary();
+    // Carregar lista de pacientes cadastrados
+    loadRegisteredPatients();
     
     // Habilitar campo de busca apenas quando a unidade for selecionada
     const unitSelect = document.getElementById('unit-select');
@@ -718,6 +894,180 @@ function showTamanhoFields() {
         }
     } else {
         tamanhoFields.style.display = 'none';
+    }
+}
+
+// Função para carregar lista de pacientes cadastrados
+function loadRegisteredPatients() {
+    const patientsList = document.getElementById('registered-patients-list');
+    patientsList.innerHTML = '<div class="loading-message">Carregando pacientes cadastrados...</div>';
+    
+    fetch('/api/registered_necrose_patients')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayRegisteredPatients(data.patients);
+            } else {
+                patientsList.innerHTML = '<div class="loading-message">Erro ao carregar pacientes: ' + data.error + '</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar pacientes:', error);
+            patientsList.innerHTML = '<div class="loading-message">Erro de conexão</div>';
+        });
+}
+
+// Função para exibir pacientes cadastrados
+function displayRegisteredPatients(patients) {
+    const patientsList = document.getElementById('registered-patients-list');
+    
+    if (patients.length === 0) {
+        patientsList.innerHTML = '<div class="loading-message">Nenhum paciente com necrose cadastrado</div>';
+        return;
+    }
+    
+    const patientsHTML = patients.map(patient => {
+        // Criar thumbnails das fotos
+        let photosHTML = '';
+        if (patient.photos && patient.photos.length > 0) {
+            photosHTML = `
+                <div class="patient-photos">
+                    <div class="photos-thumbnails">
+                        ${patient.photos.map(photo => `
+                            <img src="${photo.path}" 
+                                 alt="${photo.description}" 
+                                 class="photo-thumbnail"
+                                 onclick="openPhotoModal('${photo.path}', '${photo.description}')"
+                                 title="${photo.description}">
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            photosHTML = '<div class="no-photos">Nenhuma foto anexada</div>';
+        }
+        
+        return `
+            <div class="patient-card">
+                <div class="patient-header">
+                    <div class="patient-name">${patient.paciente_nome}</div>
+                    <div class="patient-actions">
+                        <button class="btn-delete" onclick="deleteNecroseRecord(${patient.id}, '${patient.paciente_nome}')" 
+                                title="Excluir registro de necrose">
+                            🗑️ Excluir
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="patient-info">
+                    <div class="info-item">
+                        <span class="info-label">🏥 Unidade:</span>
+                        <span class="info-value">${patient.unidade}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">👨‍⚕️ Médico:</span>
+                        <span class="info-value">${patient.medico_responsavel || 'Não informado'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">📅 Data Cirurgia:</span>
+                        <span class="info-value">${patient.data_cirurgia}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">📅 Data Avaliação:</span>
+                        <span class="info-value">${patient.data_avaliacao}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">🔢 Necroses:</span>
+                        <span class="info-value">${patient.numero_necroses}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">📏 Tamanho Total:</span>
+                        <span class="info-value">${patient.tamanho_total} cm</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">⚠️ Grau:</span>
+                        <span class="info-value">${patient.grau_necrose || 'Não informado'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">📋 Faixas:</span>
+                        <span class="info-value">${patient.faixas_acometidas || 'Não informado'}</span>
+                    </div>
+                </div>
+                
+                ${photosHTML}
+            </div>
+        `;
+    }).join('');
+    
+    patientsList.innerHTML = patientsHTML;
+}
+
+// Função para abrir modal de foto
+function openPhotoModal(imagePath, description) {
+    // Criar modal se não existir
+    let modal = document.getElementById('photo-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'photo-modal';
+        modal.className = 'photo-modal';
+        modal.innerHTML = `
+            <div class="photo-modal-content">
+                <span class="close-modal" onclick="closePhotoModal()">&times;</span>
+                <img id="modal-image" class="modal-image" src="" alt="">
+                <div id="modal-description" style="color: white; text-align: center; margin-top: 10px; font-size: 16px;"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Fechar modal ao clicar fora da imagem
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closePhotoModal();
+            }
+        });
+    }
+    
+    // Atualizar imagem e descrição
+    document.getElementById('modal-image').src = imagePath;
+    document.getElementById('modal-description').textContent = description;
+    modal.style.display = 'block';
+    
+    // Fechar com tecla ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closePhotoModal();
+        }
+    });
+}
+
+// Função para fechar modal de foto
+function closePhotoModal() {
+    const modal = document.getElementById('photo-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Função para excluir registro de necrose
+function deleteNecroseRecord(necroseId, patientName) {
+    if (confirm(`Tem certeza que deseja excluir o registro de necrose de ${patientName}?\n\nEsta ação não pode ser desfeita.`)) {
+        fetch(`/api/delete_necrose/${necroseId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Registro de necrose excluído com sucesso!');
+                loadRegisteredPatients(); // Recarregar lista
+                loadNecroseSummary(); // Atualizar resumo
+            } else {
+                alert('Erro ao excluir registro: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao excluir registro:', error);
+            alert('Erro de conexão ao excluir registro');
+        });
     }
 }
 

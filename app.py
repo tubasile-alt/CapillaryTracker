@@ -2439,6 +2439,121 @@ def api_necrose_analise_data():
             'error': str(e)
         }), 500
 
+@app.route('/api/registered_necrose_patients')
+def api_registered_necrose_patients():
+    """API para listar pacientes com necrose cadastrada"""
+    try:
+        # Buscar todos os registros de necrose com dados das cirurgias e fotos
+        necroses_data = db.session.query(Necrose, Surgery).join(
+            Surgery, Necrose.surgery_id == Surgery.id
+        ).order_by(Necrose.created_at.desc()).all()
+        
+        patients_data = []
+        for necrose, surgery in necroses_data:
+            # Calcular tamanho total das necroses
+            tamanhos = [necrose.tamanho_1_cm, necrose.tamanho_2_cm, necrose.tamanho_3_cm, necrose.tamanho_4_cm]
+            tamanho_total = sum(t for t in tamanhos if t is not None)
+            
+            # Identificar faixas acometidas
+            faixas_acometidas = []
+            if necrose.primeira_faixa:
+                faixas_acometidas.append("1ª Faixa")
+            if necrose.segunda_faixa:
+                faixas_acometidas.append("2ª Faixa")
+            if necrose.terceira_faixa:
+                faixas_acometidas.append("3ª Faixa")
+            if necrose.coroa:
+                faixas_acometidas.append("Coroa")
+            
+            # Buscar fotos associadas a esta necrose
+            photos = NecrosePhoto.query.filter_by(necrose_id=necrose.id).all()
+            photo_data = []
+            for photo in photos:
+                photo_data.append({
+                    'id': photo.id,
+                    'filename': photo.filename,
+                    'path': photo.file_path or f'/static/uploads/necrose_photos/{photo.filename}',
+                    'description': photo.description or f'Foto {photo.id} da necrose'
+                })
+            
+            patient_info = {
+                'id': necrose.id,
+                'paciente_nome': necrose.paciente_nome,
+                'unidade': necrose.unidade,
+                'data_cirurgia': necrose.data_cirurgia.strftime('%d/%m/%Y') if necrose.data_cirurgia else '',
+                'data_avaliacao': necrose.data_avaliacao.strftime('%d/%m/%Y') if necrose.data_avaliacao else '',
+                'medico_responsavel': necrose.medico_responsavel,
+                'numero_necroses': necrose.numero_necroses,
+                'tamanho_total': f"{tamanho_total:.1f}" if tamanho_total > 0 else "0.0",
+                'grau_necrose': necrose.grau_necrose or 'Não informado',
+                'faixas_acometidas': ', '.join(faixas_acometidas) if faixas_acometidas else 'Nenhuma',
+                'status': necrose.status or 'Em acompanhamento',
+                'photos': photo_data
+            }
+            patients_data.append(patient_info)
+        
+        return jsonify({
+            'success': True,
+            'patients': patients_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting registered necrose patients: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/delete_necrose/<int:necrose_id>', methods=['DELETE'])
+def api_delete_necrose(necrose_id):
+    """API para excluir registro de necrose"""
+    try:
+        # Buscar o registro de necrose
+        necrose = Necrose.query.get(necrose_id)
+        if not necrose:
+            return jsonify({
+                'success': False,
+                'error': 'Registro de necrose não encontrado'
+            }), 404
+        
+        # Buscar e excluir fotos associadas
+        photos = NecrosePhoto.query.filter_by(necrose_id=necrose_id).all()
+        
+        for photo in photos:
+            # Excluir arquivo físico se existir
+            if photo.file_path and os.path.exists(photo.file_path):
+                try:
+                    os.remove(photo.file_path)
+                    logger.info(f"Arquivo de foto excluído: {photo.file_path}")
+                except Exception as e:
+                    logger.warning(f"Erro ao excluir arquivo de foto {photo.file_path}: {str(e)}")
+            
+            # Excluir registro da foto do banco
+            db.session.delete(photo)
+        
+        # Armazenar informações para log
+        patient_name = necrose.paciente_nome
+        patient_unit = necrose.unidade
+        
+        # Excluir registro de necrose
+        db.session.delete(necrose)
+        db.session.commit()
+        
+        logger.info(f"Registro de necrose excluído: Paciente {patient_name} da unidade {patient_unit}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Registro de necrose de {patient_name} excluído com sucesso'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting necrose record {necrose_id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao excluir registro: {str(e)}'
+        }), 500
+
 @app.route('/download_combined_data')
 def download_combined_data():
     """Endpoint para baixar dados combinados de cirurgia e necrose em Excel"""
