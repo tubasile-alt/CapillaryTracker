@@ -953,7 +953,8 @@ function displayRegisteredPatients(patients) {
                                  class="photo-thumbnail"
                                  onclick="openPhotoModal('${photo.path}', '${photo.description || 'Foto ' + (index + 1) + ' da necrose'}')"
                                  title="Clique para ampliar - ${photo.description || 'Foto ' + (index + 1)}"
-                                 onerror="this.style.display='none'">
+                                 onerror="console.error('Erro ao carregar:', this.src); this.style.display='none';"
+                                 onload="console.log('Foto carregada:', this.src)">
                         `).join('')}
                     </div>
                 </div>
