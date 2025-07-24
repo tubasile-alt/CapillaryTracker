@@ -492,6 +492,11 @@
     flex-wrap: wrap;
 }
 
+.photo-container {
+    position: relative;
+    display: inline-block;
+}
+
 .photo-thumbnail {
     width: 60px;
     height: 60px;
@@ -505,6 +510,21 @@
 .photo-thumbnail:hover {
     border-color: #007bff;
     transform: scale(1.05);
+}
+
+.storage-indicator {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    border: 1px solid #ddd;
 }
 
 .no-photos {
@@ -992,19 +1012,37 @@ function displayRegisteredPatients(patients) {
         // Criar thumbnails das fotos
         let photosHTML = '';
         if (patient.photos && patient.photos.length > 0) {
+            const dropboxPhotos = patient.photos.filter(p => p.storage === 'dropbox').length;
+            const localPhotos = patient.photos.filter(p => p.storage === 'local').length;
+            
+            let storageInfo = '';
+            if (dropboxPhotos > 0 && localPhotos > 0) {
+                storageInfo = ` (${dropboxPhotos} no Dropbox, ${localPhotos} local)`;
+            } else if (dropboxPhotos > 0) {
+                storageInfo = ` (armazenadas no Dropbox)`;
+            } else if (localPhotos > 0) {
+                storageInfo = ` (armazenadas localmente)`;
+            }
+            
             photosHTML = `
                 <div class="patient-photos">
-                    <strong>📷 Fotos anexadas (${patient.photos.length}):</strong>
+                    <strong>📷 Fotos anexadas (${patient.photos.length})${storageInfo}:</strong>
                     <div class="photos-thumbnails">
-                        ${patient.photos.map((photo, index) => `
-                            <img src="${photo.path}" 
-                                 alt="Foto ${index + 1} da necrose" 
-                                 class="photo-thumbnail"
-                                 onclick="openPhotoModal('${photo.path}', '${photo.description || 'Foto ' + (index + 1) + ' da necrose'}')"
-                                 title="Clique para ampliar - ${photo.description || 'Foto ' + (index + 1)}"
-                                 onerror="console.error('Erro ao carregar:', this.src); this.style.display='none';"
-                                 onload="console.log('Foto carregada:', this.src)">
-                        `).join('')}
+                        ${patient.photos.map((photo, index) => {
+                            const storageIcon = photo.storage === 'dropbox' ? '☁️' : '💾';
+                            return `
+                                <div class="photo-container">
+                                    <img src="${photo.path}" 
+                                         alt="Foto ${index + 1} da necrose" 
+                                         class="photo-thumbnail"
+                                         onclick="openPhotoModal('${photo.path}', '${photo.description || 'Foto ' + (index + 1) + ' da necrose'}')"
+                                         title="Clique para ampliar - ${photo.description || 'Foto ' + (index + 1)} ${storageIcon}"
+                                         onerror="console.error('Erro ao carregar:', this.src); this.parentElement.style.display='none';"
+                                         onload="console.log('Foto carregada:', this.src)">
+                                    <span class="storage-indicator" title="${photo.storage === 'dropbox' ? 'Armazenada no Dropbox' : 'Armazenada localmente'}">${storageIcon}</span>
+                                </div>
+                            `;
+                        }).join('')}
                     </div>
                 </div>
             `;
@@ -1158,7 +1196,8 @@ function uploadPhotos() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Fotos anexadas com sucesso!');
+            const storageMsg = data.storage_type === 'dropbox' ? 'no Dropbox' : 'localmente';
+            alert(`Fotos anexadas com sucesso ${storageMsg}!`);
             closeAddPhotosModal();
             loadRegisteredPatients(); // Recarregar lista
         } else {

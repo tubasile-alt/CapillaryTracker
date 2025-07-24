@@ -2473,23 +2473,39 @@ def api_registered_necrose_patients():
             for photo in photos:
                 # Construir caminho da foto
                 if photo.file_path:
-                    # Usar caminho do banco se existir
-                    web_path = photo.file_path if photo.file_path.startswith('/') else f'/{photo.file_path}'
-                    file_path = photo.file_path.lstrip('/')
+                    if photo.file_path.startswith('http'):
+                        # Link direto do Dropbox
+                        web_path = photo.file_path
+                        storage_type = 'dropbox'
+                        exists = True  # Assumir que existe no Dropbox
+                    elif photo.file_path.startswith('dropbox:'):
+                        # Path do Dropbox sem link direto
+                        web_path = photo.file_path
+                        storage_type = 'dropbox'
+                        exists = True
+                    else:
+                        # Arquivo local
+                        web_path = photo.file_path if photo.file_path.startswith('/') else f'/{photo.file_path}'
+                        file_path = photo.file_path.lstrip('/')
+                        storage_type = 'local'
+                        exists = os.path.exists(file_path)
                 else:
                     # Fallback para caminho padrão
                     file_path = f'static/uploads/necrose_photos/{photo.filename}'
                     web_path = f'/{file_path}'
+                    storage_type = 'local'
+                    exists = os.path.exists(file_path)
                 
-                logger.info(f"Verificando foto: {file_path} -> {web_path}")
+                logger.info(f"Verificando foto: {photo.filename} -> {web_path} ({storage_type})")
                 
-                # Adicionar foto (mesmo se arquivo não existir fisicamente)
+                # Adicionar foto
                 photo_data.append({
                     'id': photo.id,
                     'filename': photo.filename,
                     'path': web_path,
                     'description': photo.description or f'Foto {photo.id} da necrose',
-                    'exists': os.path.exists(file_path)
+                    'storage': storage_type,
+                    'exists': exists
                 })
             
             patient_info = {
@@ -2561,43 +2577,96 @@ def api_upload_necrose_photos():
                 'error': 'Máximo de 3 fotos por vez'
             }), 400
             
-        # Criar diretório se não existir
-        upload_dir = 'static/uploads/necrose_photos'
-        os.makedirs(upload_dir, exist_ok=True)
+        # Criar diretório local temporário
+        temp_dir = 'static/uploads/necrose_photos'
+        os.makedirs(temp_dir, exist_ok=True)
         
         uploaded_photos = []
+        
+        # Configurar Dropbox
+        try:
+            import dropbox
+            dropbox_token = os.environ.get('DROPBOX_ACCESS_TOKEN')
+            if dropbox_token:
+                dbx = dropbox.Dropbox(dropbox_token)
+                use_dropbox = True
+                logger.info("Dropbox configurado para upload de fotos de necrose")
+            else:
+                use_dropbox = False
+                logger.warning("DROPBOX_ACCESS_TOKEN não encontrado, usando armazenamento local")
+        except ImportError:
+            use_dropbox = False
+            logger.warning("Módulo dropbox não disponível, usando armazenamento local")
         
         for photo in photos:
             if photo and photo.filename:
                 # Gerar nome único para o arquivo
                 file_extension = photo.filename.rsplit('.', 1)[1].lower() if '.' in photo.filename else 'jpg'
-                unique_filename = f"{uuid.uuid4().hex}_{secure_filename(photo.filename)}"
-                file_path = os.path.join(upload_dir, unique_filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                unique_filename = f"necrose_{necrose_id}_{timestamp}_{uuid.uuid4().hex[:8]}.{file_extension}"
                 
-                # Salvar arquivo
-                photo.save(file_path)
+                # Salvar temporariamente no local
+                temp_file_path = os.path.join(temp_dir, unique_filename)
+                photo.save(temp_file_path)
+                
+                if use_dropbox:
+                    try:
+                        # Upload para Dropbox na pasta específica de necrose
+                        dropbox_path = f"/fotos_necrose/{unique_filename}"
+                        
+                        with open(temp_file_path, 'rb') as f:
+                            dbx.files_upload(
+                                f.read(),
+                                dropbox_path,
+                                mode=dropbox.files.WriteMode.overwrite
+                            )
+                        
+                        # Obter link compartilhável
+                        try:
+                            shared_link = dbx.sharing_create_shared_link(dropbox_path)
+                            # Converter para link direto
+                            direct_link = shared_link.url.replace('dl=0', 'dl=1')
+                            file_path = direct_link
+                            logger.info(f"Foto uploaded para Dropbox: {dropbox_path}")
+                        except:
+                            # Fallback para path do Dropbox
+                            file_path = f"dropbox:{dropbox_path}"
+                        
+                        # Remover arquivo temporário
+                        os.remove(temp_file_path)
+                        
+                    except Exception as e:
+                        logger.error(f"Erro ao fazer upload para Dropbox: {e}")
+                        # Manter arquivo local como fallback
+                        file_path = f"/{temp_file_path}"
+                else:
+                    # Usar armazenamento local
+                    file_path = f"/{temp_file_path}"
                 
                 # Salvar no banco de dados
                 new_photo = NecrosePhoto(
                     necrose_id=necrose_id,
                     filename=unique_filename,
-                    file_path=f"/{file_path}",
+                    file_path=file_path,
                     description=description
                 )
                 db.session.add(new_photo)
                 
                 uploaded_photos.append({
                     'filename': unique_filename,
-                    'path': f"/{file_path}"
+                    'path': file_path,
+                    'storage': 'dropbox' if use_dropbox and file_path.startswith('http') else 'local'
                 })
                 
         db.session.commit()
         logger.info(f"Uploaded {len(uploaded_photos)} photos for necrose ID {necrose_id}")
         
+        storage_info = "no Dropbox" if use_dropbox else "localmente"
         return jsonify({
             'success': True,
-            'message': f'{len(uploaded_photos)} fotos anexadas com sucesso',
-            'photos': uploaded_photos
+            'message': f'{len(uploaded_photos)} fotos anexadas com sucesso {storage_info}',
+            'photos': uploaded_photos,
+            'storage_type': 'dropbox' if use_dropbox else 'local'
         })
         
     except Exception as e:
