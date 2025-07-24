@@ -2469,12 +2469,18 @@ def api_registered_necrose_patients():
             photos = NecrosePhoto.query.filter_by(necrose_id=necrose.id).all()
             photo_data = []
             for photo in photos:
-                photo_data.append({
-                    'id': photo.id,
-                    'filename': photo.filename,
-                    'path': photo.file_path or f'/static/uploads/necrose_photos/{photo.filename}',
-                    'description': photo.description or f'Foto {photo.id} da necrose'
-                })
+                # Verificar se o arquivo existe fisicamente
+                file_path = photo.file_path or f'static/uploads/necrose_photos/{photo.filename}'
+                web_path = f'/{file_path}' if not file_path.startswith('/') else file_path
+                
+                # Só adicionar se o arquivo existir
+                if os.path.exists(file_path):
+                    photo_data.append({
+                        'id': photo.id,
+                        'filename': photo.filename,
+                        'path': web_path,
+                        'description': photo.description or f'Foto {photo.id} da necrose'
+                    })
             
             patient_info = {
                 'id': necrose.id,

@@ -932,19 +932,21 @@ function displayRegisteredPatients(patients) {
         if (patient.photos && patient.photos.length > 0) {
             photosHTML = `
                 <div class="patient-photos">
+                    <strong>📷 Fotos anexadas (${patient.photos.length}):</strong>
                     <div class="photos-thumbnails">
-                        ${patient.photos.map(photo => `
+                        ${patient.photos.map((photo, index) => `
                             <img src="${photo.path}" 
-                                 alt="${photo.description}" 
+                                 alt="Foto ${index + 1} da necrose" 
                                  class="photo-thumbnail"
-                                 onclick="openPhotoModal('${photo.path}', '${photo.description}')"
-                                 title="${photo.description}">
+                                 onclick="openPhotoModal('${photo.path}', '${photo.description || 'Foto ' + (index + 1) + ' da necrose'}')"
+                                 title="Clique para ampliar - ${photo.description || 'Foto ' + (index + 1)}"
+                                 onerror="this.style.display='none'">
                         `).join('')}
                     </div>
                 </div>
             `;
         } else {
-            photosHTML = '<div class="no-photos">Nenhuma foto anexada</div>';
+            photosHTML = '<div class="no-photos">📷 Nenhuma foto anexada</div>';
         }
         
         return `
@@ -1004,6 +1006,8 @@ function displayRegisteredPatients(patients) {
 
 // Função para abrir modal de foto
 function openPhotoModal(imagePath, description) {
+    console.log('Abrindo modal para:', imagePath);
+    
     // Criar modal se não existir
     let modal = document.getElementById('photo-modal');
     if (!modal) {
@@ -1025,19 +1029,28 @@ function openPhotoModal(imagePath, description) {
                 closePhotoModal();
             }
         });
+        
+        // Fechar com tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePhotoModal();
+            }
+        });
     }
     
     // Atualizar imagem e descrição
-    document.getElementById('modal-image').src = imagePath;
-    document.getElementById('modal-description').textContent = description;
-    modal.style.display = 'block';
+    const modalImage = document.getElementById('modal-image');
+    const modalDescription = document.getElementById('modal-description');
     
-    // Fechar com tecla ESC
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closePhotoModal();
-        }
-    });
+    if (modalImage && modalDescription) {
+        modalImage.src = imagePath;
+        modalImage.onerror = function() {
+            this.src = '/static/img/no-image.png'; // Fallback se imagem não carregar
+            console.error('Erro ao carregar imagem:', imagePath);
+        };
+        modalDescription.textContent = description || 'Foto da necrose';
+        modal.style.display = 'block';
+    }
 }
 
 // Função para fechar modal de foto
@@ -1068,6 +1081,18 @@ function deleteNecroseRecord(necroseId, patientName) {
             console.error('Erro ao excluir registro:', error);
             alert('Erro de conexão ao excluir registro');
         });
+    }
+}
+
+// Função para mostrar/esconder formulário de registro
+function toggleForm() {
+    const necroseForm = document.getElementById('necrose-form');
+    if (necroseForm) {
+        if (necroseForm.style.display === 'none' || necroseForm.style.display === '') {
+            necroseForm.style.display = 'block';
+        } else {
+            necroseForm.style.display = 'none';
+        }
     }
 }
 
