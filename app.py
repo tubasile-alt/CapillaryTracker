@@ -2203,9 +2203,11 @@ def save_necrose():
         
         # Processar fotos
         photos = request.files.getlist('fotos_necrose')
-        logger.info(f"Number of photos received: {len(photos)}")
+        # Filtrar fotos vazias (quando nenhum arquivo é selecionado, Flask pode retornar um arquivo vazio)
+        photos = [photo for photo in photos if photo and photo.filename and photo.filename.strip()]
+        logger.info(f"Number of valid photos received: {len(photos)}")
         
-        # Relaxar validação de fotos para testar - permitir 0 ou mais fotos
+        # Validar número de fotos - permitir 0 ou mais fotos (até 3)
         if len(photos) > 3:
             return jsonify({'success': False, 'message': 'Máximo de 3 fotos permitidas'})
         
@@ -2257,7 +2259,7 @@ def save_necrose():
         
         # Processar upload de fotos
         uploaded_files = []
-        photos = request.files.getlist('fotos_necrose')
+        # Usar as fotos já filtradas anteriormente
         
         for photo in photos:
             if photo and photo.filename:
