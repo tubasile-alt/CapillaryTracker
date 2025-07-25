@@ -5,6 +5,7 @@ import re
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_file
 import functools
 import pandas as pd
+from openpyxl.utils.dataframe import dataframe_to_rows
 import numpy as np
 from datetime import datetime, date
 from fuzzywuzzy import fuzz
@@ -266,6 +267,205 @@ logger.info("✅ Flask-Migrate initialized")
 # ===============================
 # DROPBOX BACKUP FUNCTIONALITY
 # ===============================
+
+def trigger_automatic_backup():
+    """
+    Dispara backup automático com múltiplas estratégias (Dropbox + local)
+    
+    Returns:
+        tuple: (success: bool, message: str)
+    """
+    try:
+        logger.info("🔄 Iniciando backup automático multicanal...")
+        
+        # Buscar todos os dados para backup
+        surgeries = Surgery.query.order_by(Surgery.data.desc()).all()
+        necroses = Necrose.query.order_by(Necrose.data_avaliacao.desc()).all()
+        
+        if not surgeries:
+            return False, "Nenhum dado de cirurgia encontrado para backup"
+        
+        # Criar DataFrame com dados de cirurgias
+        surgery_data = []
+        for surgery in surgeries:
+            surgery_dict = {
+                'ID': surgery.id,
+                'Data': surgery.data.strftime('%d/%m/%Y') if surgery.data else '',
+                'Nome': surgery.nome,
+                'Unidade': surgery.unidade,
+                'Médico': surgery.medico,
+                'Equipe': surgery.equipe,
+                'Total_Folículos': surgery.total_foliculos,
+                'Densidade': surgery.densidade,
+                'Sangramento': surgery.sangramento,
+                'Infiltração': surgery.infiltracao,
+                'Técnica': surgery.tecnica,
+                'Tempo_Cirurgia': surgery.tempo_cirurgia,
+                'Quadrante_1': surgery.quadrante_1,
+                'Quadrante_2': surgery.quadrante_2,
+                'Quadrante_3': surgery.quadrante_3,
+                'Quadrante_4': surgery.quadrante_4,
+                'Tadalafila': surgery.tadalafila,
+                'Solução_Frente': surgery.solucao_frente,
+                'Created_At': surgery.created_at.strftime('%d/%m/%Y %H:%M') if surgery.created_at else ''
+            }
+            surgery_data.append(surgery_dict)
+        
+        # Criar DataFrame com dados de necroses
+        necrose_data = []
+        for necrose in necroses:
+            necrose_dict = {
+                'ID': necrose.id,
+                'Surgery_ID': necrose.surgery_id,
+                'Paciente': necrose.paciente_nome,
+                'Unidade': necrose.unidade,
+                'Data_Cirurgia': necrose.data_cirurgia.strftime('%d/%m/%Y') if necrose.data_cirurgia else '',
+                'Data_Avaliação': necrose.data_avaliacao.strftime('%d/%m/%Y') if necrose.data_avaliacao else '',
+                'Médico_Responsável': necrose.medico_responsavel,
+                'Tem_Necrose': necrose.tem_necrose,
+                'Número_Necroses': necrose.numero_necroses,
+                'Grau_Necrose': necrose.grau_necrose,
+                'Primeira_Faixa': necrose.primeira_faixa,
+                'Segunda_Faixa': necrose.segunda_faixa,
+                'Terceira_Faixa': necrose.terceira_faixa,
+                'Coroa': necrose.coroa,
+                'Tamanho_1_cm': necrose.tamanho_1_cm,
+                'Tamanho_2_cm': necrose.tamanho_2_cm,
+                'Tamanho_3_cm': necrose.tamanho_3_cm,
+                'Tamanho_4_cm': necrose.tamanho_4_cm,
+                'Status': necrose.status,
+                'Created_At': necrose.created_at.strftime('%d/%m/%Y %H:%M') if necrose.created_at else '',
+                'Updated_At': necrose.updated_at.strftime('%d/%m/%Y %H:%M') if necrose.updated_at else ''
+            }
+            necrose_data.append(necrose_dict)
+        
+        # Criar timestamp para backup
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # ESTRATÉGIA 1: Backup Local (sempre funciona)
+        local_backup_success = create_local_backup(surgery_data, necrose_data, timestamp)
+        
+        # ESTRATÉGIA 2: Backup Dropbox (se token válido)
+        dropbox_backup_success = create_dropbox_backup(surgery_data, necrose_data, timestamp)
+        
+        # Resultado final
+        if local_backup_success and dropbox_backup_success:
+            return True, f"Backup completo (Local + Dropbox) - {timestamp}"
+        elif local_backup_success:
+            return True, f"Backup local realizado - {timestamp} (Dropbox indisponível)"
+        elif dropbox_backup_success:
+            return True, f"Backup Dropbox realizado - {timestamp} (Local falhou)"
+        else:
+            return False, "Falha em todos os backups"
+            
+    except Exception as e:
+        logger.error(f"Erro no backup automático: {e}")
+        return False, f"Erro: {str(e)}"
+
+def create_local_backup(surgery_data, necrose_data, timestamp):
+    """Criar backup local em Excel"""
+    try:
+        # Garantir que diretório existe
+        backup_dir = 'data_backup'
+        os.makedirs(backup_dir, exist_ok=True)
+        
+        # Nome do arquivo local
+        local_filename = f"{backup_dir}/backup_automatico_{timestamp}.xlsx"
+        
+        # Criar arquivo Excel com múltiplas planilhas
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            temp_filename = temp_file.name
+        
+        # Usar openpyxl para criar múltiplas planilhas
+        from openpyxl import Workbook
+        wb = Workbook()
+        
+        # Planilha de cirurgias
+        ws_cirurgias = wb.active
+        ws_cirurgias.title = "Cirurgias"
+        if surgery_data:
+            surgery_df = pd.DataFrame(surgery_data)
+            for row in dataframe_to_rows(surgery_df, index=False, header=True):
+                ws_cirurgias.append(row)
+        
+        # Planilha de necroses
+        if necrose_data:
+            ws_necroses = wb.create_sheet(title="Necroses")
+            necrose_df = pd.DataFrame(necrose_data)
+            for row in dataframe_to_rows(necrose_df, index=False, header=True):
+                ws_necroses.append(row)
+        
+        # Salvar arquivo
+        wb.save(local_filename)
+        
+        logger.info(f"💾 Backup local criado: {local_filename}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Erro no backup local: {e}")
+        return False
+
+def create_dropbox_backup(surgery_data, necrose_data, timestamp):
+    """Criar backup no Dropbox"""
+    try:
+        # Verificar token
+        dropbox_token = os.environ.get('DROPBOX_ACCESS_TOKEN')
+        if not dropbox_token:
+            logger.warning("Token Dropbox não configurado")
+            return False
+        
+        # Criar arquivo Excel temporário
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            temp_filename = temp_file.name
+        
+        # Criar workbook
+        from openpyxl import Workbook
+        wb = Workbook()
+        
+        # Planilha de cirurgias
+        ws_cirurgias = wb.active
+        ws_cirurgias.title = "Cirurgias"
+        if surgery_data:
+            surgery_df = pd.DataFrame(surgery_data)
+            for row in dataframe_to_rows(surgery_df, index=False, header=True):
+                ws_cirurgias.append(row)
+        
+        # Planilha de necroses
+        if necrose_data:
+            ws_necroses = wb.create_sheet(title="Necroses")
+            necrose_df = pd.DataFrame(necrose_data)
+            for row in dataframe_to_rows(necrose_df, index=False, header=True):
+                ws_necroses.append(row)
+        
+        # Salvar arquivo temporário
+        wb.save(temp_filename)
+        
+        # Upload para Dropbox
+        dbx = dropbox.Dropbox(dropbox_token)
+        
+        with open(temp_filename, 'rb') as f:
+            excel_content = f.read()
+        
+        # Nome do arquivo no Dropbox
+        dropbox_path = f"/backup_automatico_{timestamp}.xlsx"
+        
+        dbx.files_upload(
+            excel_content,
+            dropbox_path,
+            mode=dropbox.files.WriteMode.overwrite
+        )
+        
+        # Limpar arquivo temporário
+        os.unlink(temp_filename)
+        
+        logger.info(f"☁️ Backup Dropbox criado: {dropbox_path}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Erro no backup Dropbox: {e}")
+        return False
 
 def export_and_backup(df=None):
     """
@@ -2294,6 +2494,17 @@ def save_necrose():
         logger.info(f"Dados de necrose salvos para paciente: {surgery.nome} (ID: {patient_id})")
         if uploaded_files:
             logger.info(f"Fotos carregadas: {uploaded_files}")
+        
+        # Disparar backup automático após salvar necrose
+        try:
+            logger.info("Iniciando backup automático após registro de necrose...")
+            backup_success, backup_message = trigger_automatic_backup()
+            if backup_success:
+                logger.info(f"✅ Backup automático realizado: {backup_message}")
+            else:
+                logger.warning(f"⚠️ Backup automático falhou: {backup_message}")
+        except Exception as backup_error:
+            logger.error(f"Erro no backup automático: {backup_error}")
         
         return jsonify({
             'success': True,
