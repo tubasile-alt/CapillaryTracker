@@ -11,16 +11,28 @@
             <div class="stat-value" id="total-casos">--</div>
         </div>
         <div class="stat-card">
-            <div class="stat-title">Unidade Selecionada</div>
-            <div class="stat-value" id="unidade-selecionada">Todas</div>
+            <div class="stat-title">Média Densidade 1ª Faixa</div>
+            <div class="stat-value" id="media-densidade">--</div>
         </div>
         <div class="stat-card">
-            <div class="stat-title">Casos Severos</div>
-            <div class="stat-value" id="casos-severos">--</div>
+            <div class="stat-title">Média Solução Frente</div>
+            <div class="stat-value" id="media-solucao-frente">--</div>
         </div>
         <div class="stat-card">
-            <div class="stat-title">Tamanho Médio</div>
-            <div class="stat-value" id="tamanho-medio">--</div>
+            <div class="stat-title">Média Infiltração</div>
+            <div class="stat-value" id="media-infiltracao">--</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Média Sangramento</div>
+            <div class="stat-value" id="media-sangramento">--</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Casos com Transamin</div>
+            <div class="stat-value" id="casos-transamin">--</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Casos com Tadalafil</div>
+            <div class="stat-value" id="casos-tadalafil">--</div>
         </div>
     </div>
     
@@ -86,19 +98,21 @@
 
 <style>
 .stats-summary {
-    display: flex;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 15px;
     margin-bottom: 30px;
-    justify-content: center;
+    max-width: 1200px;
+    margin: 0 auto 30px auto;
 }
 
 .stat-card {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 20px;
+    padding: 15px;
     border-radius: 10px;
     text-align: center;
-    min-width: 150px;
+    min-width: 140px;
 }
 
 .stat-title {
@@ -734,34 +748,55 @@ function loadAnalysisData() {
     cardsContainer.innerHTML = '<div class="loading-message">Carregando dados...</div>';
     summaryContainer.innerHTML = '<div class="loading-message">Carregando resumo...</div>';
     
-    fetch('/api/necrose_analise_data')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                allNecroses = data.data;
-                allStatsByUnit = data.stats_by_unit;
-                allUnits = data.all_units;
-                
-                // Atualizar filtro de unidades
-                updateUnitFilter();
-                
-                // Exibir cards de resumo por unidade
-                displayUnitSummaryCards(allStatsByUnit, allUnits);
-                
-                // Exibir cards de análise
-                displayAnalysisCards(allNecroses);
-                updateStats(allNecroses);
-            } else {
-                cardsContainer.innerHTML = '<div class="loading-message">Erro ao carregar dados</div>';
-                summaryContainer.innerHTML = '';
-                console.error('Erro na API:', data.error);
-            }
-        })
-        .catch(error => {
-            cardsContainer.innerHTML = '<div class="loading-message">Erro de conexão</div>';
+    // Carregar dados de análise e estatísticas em paralelo
+    Promise.all([
+        fetch('/api/necrose_analise_data').then(response => response.json()),
+        fetch('/api/necrose_statistics').then(response => response.json())
+    ])
+    .then(([analysisData, statisticsData]) => {
+        if (analysisData.success) {
+            allNecroses = analysisData.data;
+            allStatsByUnit = analysisData.stats_by_unit;
+            allUnits = analysisData.all_units;
+            
+            // Atualizar filtro de unidades
+            updateUnitFilter();
+            
+            // Exibir cards de resumo por unidade
+            displayUnitSummaryCards(allStatsByUnit, allUnits);
+            
+            // Exibir cards de análise
+            displayAnalysisCards(allNecroses);
+            updateStats(allNecroses);
+        } else {
+            cardsContainer.innerHTML = '<div class="loading-message">Erro ao carregar dados</div>';
             summaryContainer.innerHTML = '';
-            console.error('Erro:', error);
-        });
+            console.error('Erro na API de análise:', analysisData.error);
+        }
+        
+        // Atualizar cartões de estatísticas específicas
+        if (statisticsData.success) {
+            updateStatisticsCards(statisticsData.statistics);
+        } else {
+            console.error('Erro na API de estatísticas:', statisticsData.error);
+        }
+    })
+    .catch(error => {
+        cardsContainer.innerHTML = '<div class="loading-message">Erro de conexão</div>';
+        summaryContainer.innerHTML = '';
+        console.error('Erro:', error);
+    });
+}
+
+function updateStatisticsCards(stats) {
+    // Atualizar os cartões com os dados específicos solicitados
+    document.getElementById('total-casos').textContent = stats.total_casos || '--';
+    document.getElementById('media-densidade').textContent = stats.media_densidade_primeira_faixa || '--';
+    document.getElementById('media-solucao-frente').textContent = stats.media_solucao_frente || '--';
+    document.getElementById('media-infiltracao').textContent = stats.media_infiltracao || '--';
+    document.getElementById('media-sangramento').textContent = stats.media_sangramento || '--';
+    document.getElementById('casos-transamin').textContent = stats.casos_com_transamin || '--';
+    document.getElementById('casos-tadalafil').textContent = stats.casos_com_tadalafil || '--';
 }
 
 function updateUnitFilter() {

@@ -2658,6 +2658,98 @@ def api_necrose_analise_data():
             'error': str(e)
         }), 500
 
+@app.route('/api/necrose_statistics')
+def api_necrose_statistics():
+    """API para estatísticas específicas de necrose"""
+    try:
+        # Buscar todos os dados de cirurgias e necroses
+        surgeries = Surgery.query.all()
+        necroses = Necrose.query.all()
+        necroses_with_surgery = db.session.query(Necrose, Surgery).join(
+            Surgery, Necrose.surgery_id == Surgery.id
+        ).all()
+        
+        # Inicializar contadores
+        total_casos = len(necroses)
+        densidade_primeira_faixa = []
+        solucao_frente_values = []
+        infiltracao_values = []
+        sangramento_values = []
+        transamin_count = 0
+        tadalafil_count = 0
+        
+        # Processar dados das cirurgias associadas a necroses
+        for necrose, surgery in necroses_with_surgery:
+            # Densidade da primeira faixa (q1_densidade ou densidade_scketh)
+            if hasattr(surgery, 'q1_densidade') and surgery.q1_densidade:
+                try:
+                    densidade_primeira_faixa.append(float(surgery.q1_densidade))
+                except (ValueError, TypeError):
+                    pass
+            elif hasattr(surgery, 'densidade_scketh') and surgery.densidade_scketh:
+                try:
+                    densidade_primeira_faixa.append(float(surgery.densidade_scketh))
+                except (ValueError, TypeError):
+                    pass
+            
+            # Solução frente
+            if surgery.solucao_frente:
+                try:
+                    solucao_frente_values.append(float(surgery.solucao_frente))
+                except (ValueError, TypeError):
+                    pass
+            
+            # Infiltração
+            if surgery.infiltracao:
+                try:
+                    infiltracao_values.append(float(surgery.infiltracao))
+                except (ValueError, TypeError):
+                    pass
+            
+            # Sangramento
+            if surgery.sangramento:
+                try:
+                    sangramento_values.append(float(surgery.sangramento))
+                except (ValueError, TypeError):
+                    pass
+            
+            # Transamin (buscar nos campos da cirurgia)
+            surgery_dict = surgery.__dict__
+            for key, value in surgery_dict.items():
+                if 'transamin' in str(key).lower() and value and str(value).lower() in ['sim', 'yes', 'true', '1']:
+                    transamin_count += 1
+                    break
+            
+            # Tadalafil
+            if surgery.tadalafila and str(surgery.tadalafila).lower() in ['sim', 'yes', 'true', '1']:
+                tadalafil_count += 1
+        
+        # Calcular médias
+        media_densidade = round(sum(densidade_primeira_faixa) / len(densidade_primeira_faixa), 2) if densidade_primeira_faixa else 0
+        media_solucao_frente = round(sum(solucao_frente_values) / len(solucao_frente_values), 2) if solucao_frente_values else 0
+        media_infiltracao = round(sum(infiltracao_values) / len(infiltracao_values), 2) if infiltracao_values else 0
+        media_sangramento = round(sum(sangramento_values) / len(sangramento_values), 2) if sangramento_values else 0
+        
+        return jsonify({
+            'success': True,
+            'statistics': {
+                'total_casos': total_casos,
+                'media_densidade_primeira_faixa': media_densidade,
+                'media_solucao_frente': media_solucao_frente,
+                'media_infiltracao': media_infiltracao,
+                'media_sangramento': media_sangramento,
+                'casos_com_transamin': transamin_count,
+                'casos_com_tadalafil': tadalafil_count
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao calcular estatísticas de necrose: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/registered_necrose_patients')
 def api_registered_necrose_patients():
     """API para listar pacientes com necrose cadastrada"""
