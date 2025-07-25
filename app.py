@@ -296,17 +296,23 @@ def trigger_automatic_backup():
                 'Médico': surgery.medico,
                 'Equipe': surgery.equipe,
                 'Total_Folículos': surgery.total_foliculos,
-                'Densidade': surgery.densidade,
+                'Densidade_Extração': getattr(surgery, 'densidade_extracao', ''),
+                'Densidade_Sketch': getattr(surgery, 'densidade_scketh', ''),
                 'Sangramento': surgery.sangramento,
                 'Infiltração': surgery.infiltracao,
                 'Técnica': surgery.tecnica,
                 'Tempo_Cirurgia': surgery.tempo_cirurgia,
-                'Quadrante_1': surgery.quadrante_1,
-                'Quadrante_2': surgery.quadrante_2,
-                'Quadrante_3': surgery.quadrante_3,
-                'Quadrante_4': surgery.quadrante_4,
+                'Q1_Fios': getattr(surgery, 'q1_fios', ''),
+                'Q1_Furos': getattr(surgery, 'q1_furos', ''),
+                'Q2_Fios': getattr(surgery, 'q2_fios', ''),
+                'Q2_Furos': getattr(surgery, 'q2_furos', ''),
+                'Q3_Fios': getattr(surgery, 'q3_fios', ''),
+                'Q3_Furos': getattr(surgery, 'q3_furos', ''),
+                'Q4_Fios': getattr(surgery, 'q4_fios', ''),
+                'Q4_Furos': getattr(surgery, 'q4_furos', ''),
                 'Tadalafila': surgery.tadalafila,
                 'Solução_Frente': surgery.solucao_frente,
+                'Pelos_Corporais': getattr(surgery, 'pelos_corporais', ''),
                 'Created_At': surgery.created_at.strftime('%d/%m/%Y %H:%M') if surgery.created_at else ''
             }
             surgery_data.append(surgery_dict)
@@ -381,13 +387,13 @@ def create_local_backup(surgery_data, necrose_data, timestamp):
         from openpyxl import Workbook
         wb = Workbook()
         
-        # Planilha de cirurgias
-        ws_cirurgias = wb.active
-        ws_cirurgias.title = "Cirurgias"
+        # Planilha de pacientes (dados de cirurgia)
+        ws_pacientes = wb.active
+        ws_pacientes.title = "Pacientes"
         if surgery_data:
             surgery_df = pd.DataFrame(surgery_data)
             for row in dataframe_to_rows(surgery_df, index=False, header=True):
-                ws_cirurgias.append(row)
+                ws_pacientes.append(row)
         
         # Planilha de necroses
         if necrose_data:
@@ -424,13 +430,13 @@ def create_dropbox_backup(surgery_data, necrose_data, timestamp):
         from openpyxl import Workbook
         wb = Workbook()
         
-        # Planilha de cirurgias
-        ws_cirurgias = wb.active
-        ws_cirurgias.title = "Cirurgias"
+        # Planilha de pacientes (dados de cirurgia)
+        ws_pacientes = wb.active
+        ws_pacientes.title = "Pacientes"
         if surgery_data:
             surgery_df = pd.DataFrame(surgery_data)
             for row in dataframe_to_rows(surgery_df, index=False, header=True):
-                ws_cirurgias.append(row)
+                ws_pacientes.append(row)
         
         # Planilha de necroses
         if necrose_data:
