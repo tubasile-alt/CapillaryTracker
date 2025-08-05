@@ -3314,10 +3314,19 @@ def get_medicos_dashboard_data():
             # Retornar o tipo de sangramento mais comum
             avg_sangramento = max(sangramento_counts, key=sangramento_counts.get) if sangramento_counts else "N/A"
             
+            # Contar cirurgias com body hair (pelos corporais)
+            body_hair_count = 0
+            for surgery in surgeries:
+                if hasattr(surgery, 'pelos_corporais') and surgery.pelos_corporais:
+                    # Verifica se pelos_corporais é True ou string não vazia
+                    if surgery.pelos_corporais is True or (isinstance(surgery.pelos_corporais, str) and surgery.pelos_corporais.strip().lower() in ['sim', 'yes', 'true', '1']):
+                        body_hair_count += 1
+            
             # Calcular métricas gerais para comparação (quando filtro específico está aplicado)
             general_avg_tempo_cirurgia = None
             general_avg_solucao_frente = None
             general_avg_sangramento = None
+            general_body_hair_count = None
             
             if unit_filter != 'all':
                 # Buscar dados de todas as unidades para comparação
@@ -3336,6 +3345,13 @@ def get_medicos_dashboard_data():
                     for sang in all_sangramentos:
                         all_sangramento_counts[sang] = all_sangramento_counts.get(sang, 0) + 1
                     general_avg_sangramento = max(all_sangramento_counts, key=all_sangramento_counts.get)
+                    
+                # Contar body hair de todas as unidades para comparação
+                general_body_hair_count = 0
+                for surgery in all_surgeries:
+                    if hasattr(surgery, 'pelos_corporais') and surgery.pelos_corporais:
+                        if surgery.pelos_corporais is True or (isinstance(surgery.pelos_corporais, str) and surgery.pelos_corporais.strip().lower() in ['sim', 'yes', 'true', '1']):
+                            general_body_hair_count += 1
             
             # Calcular média de furos por quadrante global
             avg_q1_furos = round(sum(q1_furos) / len(q1_furos), 1) if q1_furos else 0
@@ -3433,9 +3449,11 @@ def get_medicos_dashboard_data():
                     'avg_tempo_cirurgia': avg_tempo_cirurgia,
                     'avg_solucao_frente': avg_solucao_frente,
                     'avg_sangramento': avg_sangramento,
+                    'body_hair_count': body_hair_count,
                     'general_avg_tempo_cirurgia': general_avg_tempo_cirurgia,
                     'general_avg_solucao_frente': general_avg_solucao_frente,
                     'general_avg_sangramento': general_avg_sangramento,
+                    'general_body_hair_count': general_body_hair_count,
                     'max_q1': max_q1,
                     'max_q2': max_q2,
                     'max_q3': max_q3,

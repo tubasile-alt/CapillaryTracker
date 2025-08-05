@@ -222,6 +222,12 @@
                 <div class="stat-value" id="avgSangramento">-</div>
                 <div class="stat-comparison" id="sangramentoComparison"></div>
             </div>
+            
+            <div class="stat-card">
+                <h3>Cirurgias com Body Hair</h3>
+                <div class="stat-value" id="bodyHairCount">-</div>
+                <div class="stat-comparison" id="bodyHairComparison"></div>
+            </div>
         </div>
         
         <div class="charts-section">
@@ -316,6 +322,7 @@
             document.getElementById('avgTempoCirurgia').textContent = stats.avg_tempo_cirurgia ? stats.avg_tempo_cirurgia + 'h' : '-';
             document.getElementById('avgSolucaoFrente').textContent = stats.avg_solucao_frente ? stats.avg_solucao_frente + ' seringas' : '-';
             document.getElementById('avgSangramento').textContent = stats.avg_sangramento || '-';
+            document.getElementById('bodyHairCount').textContent = stats.body_hair_count || '0';
             
             // Adicionar comparações se disponíveis
             if (stats.general_avg_tempo_cirurgia !== undefined) {
@@ -338,6 +345,13 @@
             } else {
                 document.getElementById('sangramentoComparison').textContent = '';
             }
+            
+            if (stats.general_body_hair_count !== undefined) {
+                document.getElementById('bodyHairComparison').textContent = 
+                    `Geral: ${stats.general_body_hair_count}`;
+            } else {
+                document.getElementById('bodyHairComparison').textContent = '';
+            }
         }
         
         function updateStatsComparison(primaryStats, compareStats, primaryUnit, compareUnit) {
@@ -348,6 +362,7 @@
             document.getElementById('avgTempoCirurgia').textContent = primaryStats.avg_tempo_cirurgia ? primaryStats.avg_tempo_cirurgia + 'h' : '-';
             document.getElementById('avgSolucaoFrente').textContent = primaryStats.avg_solucao_frente ? primaryStats.avg_solucao_frente + ' seringas' : '-';
             document.getElementById('avgSangramento').textContent = primaryStats.avg_sangramento || '-';
+            document.getElementById('bodyHairCount').textContent = primaryStats.body_hair_count || '0';
             
             // Atualizar comparações com a segunda unidade
             document.getElementById('tempoCirurgiaComparison').textContent = 
@@ -356,6 +371,8 @@
                 `${compareUnit}: ${compareStats.avg_solucao_frente ? compareStats.avg_solucao_frente + ' seringas' : '-'}`;
             document.getElementById('sangramentoComparison').textContent = 
                 `${compareUnit}: ${compareStats.avg_sangramento || '-'}`;
+            document.getElementById('bodyHairComparison').textContent = 
+                `${compareUnit}: ${compareStats.body_hair_count || '0'}`;
         }
         
         function updateCharts(chartData) {
