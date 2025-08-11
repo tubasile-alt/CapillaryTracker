@@ -8,62 +8,95 @@
         
         {% if saved_data %}
         <div class="surgery-summary" style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left; border: 1px solid #dee2e6;">
-            <h3 style="color: #495057; margin-bottom: 15px; text-align: center;">📋 Resumo da Cirurgia</h3>
-            <div class="summary-content" style="font-family: 'Courier New', monospace; line-height: 1.6; white-space: pre-wrap; background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ced4da;">Data: {{ saved_data.get('Data (DD/MM/AAAA)', 'N/A') }}
-Paciente: {{ saved_data.get('Paciente', 'N/A') }}
-Médico: {{ saved_data.get('Médico', 'N/A') }}
-Equipe: {{ saved_data.get('equipe', 'N/A') }}
-Hora da cirurgia: {{ saved_data.get('Hora da cirurgia', 'N/A') }}
-Tempo de cirurgia: {{ saved_data.get('Tempo de cirurgia (horas)', 'N/A') }}h
-N Total de Folículo: {{ saved_data.get('Total de folículos', 'N/A') }}
-Frente: {{ saved_data.get('Frente', 'N/A') }}
-Densidade scketh primeira faixa: D:{{ saved_data.get('Densidade Scketh', 'N/A') }} UF {{ saved_data.get('densidade_primeira_faixa', 'N/A') }}
-Coroa: {{ saved_data.get('Coroa', 'N/A') }}
-Scalpe: {{ saved_data.get('Scalpe', 'N/A') }}
-Península direita: {{ saved_data.get('Península direita', 'N/A') }}
-Península esquerda: {{ saved_data.get('Península esquerda', 'N/A') }}
-Safira: {{ saved_data.get('Safira', 'N/A') }}
-Punch: {{ saved_data.get('Punch', 'N/A') }}
-Quantidade de solução frente: {{ saved_data.get('Solução frente', 'N/A') }} seringas de 3ml
-Solução de xilo Frente: {{ saved_data.get('Solução xilo frente', 'N/A') }} seringas de 3ml
+            <h3 style="color: #495057; margin-bottom: 15px; text-align: center;">📋 Resumo Completo dos Dados Cadastrados</h3>
+            <div class="summary-content" style="font-family: 'Courier New', monospace; line-height: 1.6; white-space: pre-wrap; background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ced4da; max-height: 400px; overflow-y: auto;">==========================================
+           RESUMO COMPLETO DA CIRURGIA
+==========================================
 
-Implante secundário: {{ saved_data.get('Implante secundario', 'Não') }}
+DADOS GERAIS:
+• Data: {{ saved_data.get('Data (DD/MM/AAAA)', 'N/A') }}
+• Paciente: {{ saved_data.get('Paciente', 'N/A') }}
+• Unidade: {{ saved_data.get('Unidade', 'N/A') }}
+• Médico: {{ saved_data.get('Médico', 'N/A') }}
+• Equipe: {{ saved_data.get('equipe', 'N/A') }}
+• Hora da cirurgia: {{ saved_data.get('Hora da cirurgia', 'N/A') }}
+• Tempo de cirurgia: {{ saved_data.get('Tempo de cirurgia (horas)', 'N/A') }}h
+• Idade: {{ saved_data.get('Idade', 'N/A') }}
+• Sexo: {{ saved_data.get('Sexo', 'N/A') }}
 
-LE: {{ saved_data.get('LE - Densidade (UF/cm²)', 'N/A') }} ({{ saved_data.get('LE - Furos', 'N/A') }}) {{ saved_data.get('LE - Fios totais', 'N/A') }}, {{ saved_data.get('LE - Fios implantados', 'N/A') }}
-ME: {{ saved_data.get('ME - Densidade (UF/cm²)', 'N/A') }} ({{ saved_data.get('ME - Furos', 'N/A') }}) {{ saved_data.get('ME - Fios totais', 'N/A') }}, {{ saved_data.get('ME - Fios implantados', 'N/A') }}
-MD: {{ saved_data.get('MD - Densidade (UF/cm²)', 'N/A') }} ({{ saved_data.get('MD - Furos', 'N/A') }}) {{ saved_data.get('MD - Fios totais', 'N/A') }}, {{ saved_data.get('MD - Fios implantados', 'N/A') }}
-LD: {{ saved_data.get('LD - Densidade (UF/cm²)', 'N/A') }} ({{ saved_data.get('LD - Furos', 'N/A') }}) {{ saved_data.get('LD - Fios totais', 'N/A') }}, {{ saved_data.get('LD - Fios implantados', 'N/A') }}
+DADOS DA CIRURGIA:
+• Total de folículos: {{ saved_data.get('Total de folículos', 'N/A') }}
+• Técnica: {{ saved_data.get('Técnica', 'N/A') }}
+• Tipo de cirurgia: {{ saved_data.get('Tipo de cirurgia', 'N/A') }}
 
-Qualidade
-Infiltração (1-3): {{ saved_data.get('Infiltração', 'N/A') }}
-Sedação (1-3): {{ saved_data.get('Sedação', 'N/A') }}
-Sangramento (1-3): {{ saved_data.get('Sangramento', 'N/A') }}
-Opções
-* 1 normal
-* 2 moderado
-* 3 intenso
+ÁREAS TRATADAS:
+• Frente: {{ saved_data.get('Frente', 'N/A') }}
+• Coroa: {{ saved_data.get('Coroa', 'N/A') }}
+• Scalpe: {{ saved_data.get('Scalpe', 'N/A') }}
+• Península direita: {{ saved_data.get('Península direita', 'N/A') }}
+• Península esquerda: {{ saved_data.get('Península esquerda', 'N/A') }}
 
-Solução feita com:
-250ml SF
-10ml de bupi
-20ml de xilo
-1ml adrenalina
+DENSIDADE E MEDIDAS:
+• Densidade Scketh: {{ saved_data.get('Densidade Scketh', 'N/A') }}
+• Densidade primeira faixa: {{ saved_data.get('densidade_primeira_faixa', 'N/A') }}
 
-Comentários: {{ saved_data.get('Comentários', 'N/A') }}
+INSTRUMENTOS:
+• Safira: {{ saved_data.get('Safira', 'N/A') }}
+• Punch: {{ saved_data.get('Punch', 'N/A') }}
 
-Medicações feitas na cirurgia:
-Transamin: {{ saved_data.get('Transamin', 'N/A') }}
-Tadalafila: {{ saved_data.get('Tadalafila', 'N/A') }}
-Diprospam ou beta 30: {{ saved_data.get('Diprospam', 'N/A') }}
-Fumante: {{ saved_data.get('Fumante', 'N/A') }}
-Antecedente pessoal: {{ saved_data.get('Antecedente pessoal', 'N/A') }}
+SOLUÇÕES:
+• Solução frente: {{ saved_data.get('Solução frente', 'N/A') }} seringas de 3ml
+• Solução xilo frente: {{ saved_data.get('Solução xilo frente', 'N/A') }} seringas de 3ml
 
-Outros: {{ saved_data.get('Outros medicamentos', 'N/A') }}</div>
+IMPLANTE SECUNDÁRIO: {{ saved_data.get('Implante secundario', 'Não') }}
+
+QUADRANTES (Densidade/Furos/Fios Totais/Fios Implantados):
+• LE: {{ saved_data.get('LE - Densidade (UF/cm²)', 'N/A') }} / {{ saved_data.get('LE - Furos', 'N/A') }} / {{ saved_data.get('LE - Fios totais', 'N/A') }} / {{ saved_data.get('LE - Fios implantados', 'N/A') }}
+• ME: {{ saved_data.get('ME - Densidade (UF/cm²)', 'N/A') }} / {{ saved_data.get('ME - Furos', 'N/A') }} / {{ saved_data.get('ME - Fios totais', 'N/A') }} / {{ saved_data.get('ME - Fios implantados', 'N/A') }}
+• MD: {{ saved_data.get('MD - Densidade (UF/cm²)', 'N/A') }} / {{ saved_data.get('MD - Furos', 'N/A') }} / {{ saved_data.get('MD - Fios totais', 'N/A') }} / {{ saved_data.get('MD - Fios implantados', 'N/A') }}
+• LD: {{ saved_data.get('LD - Densidade (UF/cm²)', 'N/A') }} / {{ saved_data.get('LD - Furos', 'N/A') }} / {{ saved_data.get('LD - Fios totais', 'N/A') }} / {{ saved_data.get('LD - Fios implantados', 'N/A') }}
+
+AVALIAÇÃO DA QUALIDADE (1=normal, 2=moderado, 3=intenso):
+• Infiltração: {{ saved_data.get('Infiltração', 'N/A') }}
+• Sedação: {{ saved_data.get('Sedação', 'N/A') }}
+• Sangramento: {{ saved_data.get('Sangramento', 'N/A') }}
+
+MEDICAÇÕES UTILIZADAS:
+• Transamin: {{ saved_data.get('Transamin', 'N/A') }}
+• Tadalafila: {{ saved_data.get('Tadalafila', 'N/A') }}
+• Diprospam/Beta 30: {{ saved_data.get('Diprospam', 'N/A') }}
+• Outros medicamentos: {{ saved_data.get('Outros medicamentos', 'N/A') }}
+
+HISTÓRICO MÉDICO:
+• Fumante: {{ saved_data.get('Fumante', 'N/A') }}
+• Antecedente pessoal: {{ saved_data.get('Antecedente pessoal', 'N/A') }}
+
+PELOS CORPORAIS:
+• Pelos corporais: {{ saved_data.get('pelos_corporais', 'N/A') }}
+{% if saved_data.get('pelos_corporais') == 'Sim' %}
+• Barba - Furos: {{ saved_data.get('barba_furos', '0') }} | Fios: {{ saved_data.get('barba_fios', '0') }} | Comentários: {{ saved_data.get('barba_comentarios', '') }}
+• Peitoral - Furos: {{ saved_data.get('peitoral_furos', '0') }} | Fios: {{ saved_data.get('peitoral_fios', '0') }} | Comentários: {{ saved_data.get('peitoral_comentarios', '') }}
+• Abdome - Furos: {{ saved_data.get('abdome_furos', '0') }} | Fios: {{ saved_data.get('abdome_fios', '0') }} | Comentários: {{ saved_data.get('abdome_comentarios', '') }}
+• Pernas - Furos: {{ saved_data.get('pernas_furos', '0') }} | Fios: {{ saved_data.get('pernas_fios', '0') }} | Comentários: {{ saved_data.get('pernas_comentarios', '') }}
+{% endif %}
+
+COMENTÁRIOS GERAIS:
+{{ saved_data.get('Comentários', 'Nenhum comentário adicional') }}
+
+DADOS ADICIONAIS COLETADOS:
+{% for key, value in saved_data.items() %}{% if key not in ['Data (DD/MM/AAAA)', 'Paciente', 'Unidade', 'Médico', 'equipe', 'Hora da cirurgia', 'Tempo de cirurgia (horas)', 'Idade', 'Sexo', 'Total de folículos', 'Técnica', 'Tipo de cirurgia', 'Frente', 'Coroa', 'Scalpe', 'Península direita', 'Península esquerda', 'Densidade Scketh', 'densidade_primeira_faixa', 'Safira', 'Punch', 'Solução frente', 'Solução xilo frente', 'Implante secundario', 'LE - Densidade (UF/cm²)', 'LE - Furos', 'LE - Fios totais', 'LE - Fios implantados', 'ME - Densidade (UF/cm²)', 'ME - Furos', 'ME - Fios totais', 'ME - Fios implantados', 'MD - Densidade (UF/cm²)', 'MD - Furos', 'MD - Fios totais', 'MD - Fios implantados', 'LD - Densidade (UF/cm²)', 'LD - Furos', 'LD - Fios totais', 'LD - Fios implantados', 'Infiltração', 'Sedação', 'Sangramento', 'Transamin', 'Tadalafila', 'Diprospam', 'Outros medicamentos', 'Fumante', 'Antecedente pessoal', 'pelos_corporais', 'barba_furos', 'barba_fios', 'barba_comentarios', 'peitoral_furos', 'peitoral_fios', 'peitoral_comentarios', 'abdome_furos', 'abdome_fios', 'abdome_comentarios', 'pernas_furos', 'pernas_fios', 'pernas_comentarios', 'Comentários'] %}• {{ key }}: {{ value }}
+{% endif %}{% endfor %}
+==========================================
+Relatório gerado automaticamente pelo sistema
+==========================================</div>
             
             <div style="text-align: center; margin-top: 15px;">
-                <button onclick="copySummary()" class="btn btn-success" style="background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
-                    📋 Copiar Resumo
+                <button id="copyButton" onclick="copySummary()" class="btn btn-success" style="background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold;">
+                    📋 Copiar Resumo Completo
                 </button>
+                <p style="font-size: 12px; color: #6c757d; margin-top: 10px;">
+                    Clique para copiar todas as informações cadastradas
+                </p>
             </div>
         </div>
         {% endif %}
@@ -82,25 +115,71 @@ Outros: {{ saved_data.get('Outros medicamentos', 'N/A') }}</div>
 <script>
 function copySummary() {
     const summaryText = document.querySelector('.summary-content').textContent;
-    
-    // Criar elemento temporário para copiar
-    const textarea = document.createElement('textarea');
-    textarea.value = summaryText;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
-    
-    // Feedback visual
-    const button = event.target;
+    const button = document.getElementById('copyButton');
     const originalText = button.innerHTML;
-    button.innerHTML = '✅ Copiado!';
-    button.style.backgroundColor = '#28a745';
+    
+    try {
+        // Tentar usar a API moderna do clipboard
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(summaryText).then(() => {
+                showCopySuccess(button, originalText);
+            }).catch(() => {
+                fallbackCopyMethod(summaryText, button, originalText);
+            });
+        } else {
+            fallbackCopyMethod(summaryText, button, originalText);
+        }
+    } catch (error) {
+        fallbackCopyMethod(summaryText, button, originalText);
+    }
+}
+
+function fallbackCopyMethod(text, button, originalText) {
+    // Método alternativo para navegadores mais antigos
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showCopySuccess(button, originalText);
+        } else {
+            showCopyError(button, originalText);
+        }
+    } catch (err) {
+        showCopyError(button, originalText);
+    } finally {
+        document.body.removeChild(textarea);
+    }
+}
+
+function showCopySuccess(button, originalText) {
+    button.innerHTML = '✅ Copiado com Sucesso!';
+    button.style.backgroundColor = '#20c997';
+    button.style.transform = 'scale(1.05)';
     
     setTimeout(() => {
         button.innerHTML = originalText;
         button.style.backgroundColor = '#28a745';
-    }, 2000);
+        button.style.transform = 'scale(1)';
+    }, 3000);
+}
+
+function showCopyError(button, originalText) {
+    button.innerHTML = '⚠️ Erro ao Copiar';
+    button.style.backgroundColor = '#dc3545';
+    
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.style.backgroundColor = '#28a745';
+    }, 3000);
+    
+    alert('Não foi possível copiar automaticamente. Por favor, selecione o texto manualmente e pressione Ctrl+C (ou Cmd+C no Mac)');
 }
 </script>
 {% endblock %}
