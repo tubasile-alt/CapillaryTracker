@@ -1042,7 +1042,8 @@ def ping():
 @app.route('/success')
 def success():
     logger.info("Accessing success page")
-    return render_template('success.html')
+    saved_data = session.get('last_saved_data', {})
+    return render_template('success.html', saved_data=saved_data)
 
 @app.route('/clear_data', methods=['POST'])
 def clear_data():
@@ -1295,6 +1296,10 @@ def novo_cadastro():
             if success:
                 flash("✅ Dados salvos com sucesso! 🎉", "success")
                 logger.info("Flashed success message")
+                
+                # Salvar dados na sessão para mostrar na página de sucesso
+                session['last_saved_data'] = form_data
+                
             else:
                 flash(message, "error")
                 logger.error(f"Flashed error message: {message}")

@@ -6,6 +6,68 @@
         <h2 class="success-title">✅ Dados salvos com sucesso!</h2>
         <p class="success-message">Os dados do paciente foram registrados no sistema.</p>
         
+        {% if saved_data %}
+        <div class="surgery-summary" style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left; border: 1px solid #dee2e6;">
+            <h3 style="color: #495057; margin-bottom: 15px; text-align: center;">📋 Resumo da Cirurgia</h3>
+            <div class="summary-content" style="font-family: 'Courier New', monospace; line-height: 1.6; white-space: pre-wrap; background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ced4da;">Data: {{ saved_data.get('Data (DD/MM/AAAA)', 'N/A') }}
+Paciente: {{ saved_data.get('Paciente', 'N/A') }}
+Médico: {{ saved_data.get('Médico', 'N/A') }}
+Equipe: {{ saved_data.get('equipe', 'N/A') }}
+Hora da cirurgia: {{ saved_data.get('Hora da cirurgia', 'N/A') }}
+Tempo de cirurgia: {{ saved_data.get('Tempo de cirurgia (horas)', 'N/A') }}h
+N Total de Folículo: {{ saved_data.get('Total de folículos', 'N/A') }}
+Frente: {{ saved_data.get('Frente', 'N/A') }}
+Densidade scketh primeira faixa: D:{{ saved_data.get('Densidade Scketh', 'N/A') }} UF {{ saved_data.get('densidade_primeira_faixa', 'N/A') }}
+Coroa: {{ saved_data.get('Coroa', 'N/A') }}
+Scalpe: {{ saved_data.get('Scalpe', 'N/A') }}
+Península direita: {{ saved_data.get('Península direita', 'N/A') }}
+Península esquerda: {{ saved_data.get('Península esquerda', 'N/A') }}
+Safira: {{ saved_data.get('Safira', 'N/A') }}
+Punch: {{ saved_data.get('Punch', 'N/A') }}
+Quantidade de solução frente: {{ saved_data.get('Solução frente', 'N/A') }} seringas de 3ml
+Solução de xilo Frente: {{ saved_data.get('Solução xilo frente', 'N/A') }} seringas de 3ml
+
+Implante secundário: {{ saved_data.get('Implante secundario', 'Não') }}
+
+LE: {{ saved_data.get('LE - Densidade (UF/cm²)', 'N/A') }} ({{ saved_data.get('LE - Furos', 'N/A') }}) {{ saved_data.get('LE - Fios totais', 'N/A') }}, {{ saved_data.get('LE - Fios implantados', 'N/A') }}
+ME: {{ saved_data.get('ME - Densidade (UF/cm²)', 'N/A') }} ({{ saved_data.get('ME - Furos', 'N/A') }}) {{ saved_data.get('ME - Fios totais', 'N/A') }}, {{ saved_data.get('ME - Fios implantados', 'N/A') }}
+MD: {{ saved_data.get('MD - Densidade (UF/cm²)', 'N/A') }} ({{ saved_data.get('MD - Furos', 'N/A') }}) {{ saved_data.get('MD - Fios totais', 'N/A') }}, {{ saved_data.get('MD - Fios implantados', 'N/A') }}
+LD: {{ saved_data.get('LD - Densidade (UF/cm²)', 'N/A') }} ({{ saved_data.get('LD - Furos', 'N/A') }}) {{ saved_data.get('LD - Fios totais', 'N/A') }}, {{ saved_data.get('LD - Fios implantados', 'N/A') }}
+
+Qualidade
+Infiltração (1-3): {{ saved_data.get('Infiltração', 'N/A') }}
+Sedação (1-3): {{ saved_data.get('Sedação', 'N/A') }}
+Sangramento (1-3): {{ saved_data.get('Sangramento', 'N/A') }}
+Opções
+* 1 normal
+* 2 moderado
+* 3 intenso
+
+Solução feita com:
+250ml SF
+10ml de bupi
+20ml de xilo
+1ml adrenalina
+
+Comentários: {{ saved_data.get('Comentários', 'N/A') }}
+
+Medicações feitas na cirurgia:
+Transamin: {{ saved_data.get('Transamin', 'N/A') }}
+Tadalafila: {{ saved_data.get('Tadalafila', 'N/A') }}
+Diprospam ou beta 30: {{ saved_data.get('Diprospam', 'N/A') }}
+Fumante: {{ saved_data.get('Fumante', 'N/A') }}
+Antecedente pessoal: {{ saved_data.get('Antecedente pessoal', 'N/A') }}
+
+Outros: {{ saved_data.get('Outros medicamentos', 'N/A') }}</div>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <button onclick="copySummary()" class="btn btn-success" style="background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                    📋 Copiar Resumo
+                </button>
+            </div>
+        </div>
+        {% endif %}
+        
         <div class="success-actions">
             <a href="{{ url_for('novo_cadastro') }}" class="btn btn-primary" style="display: inline-block; background-color: #007bff; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; margin: 10px;">
                 <span style="margin-right: 8px;">➕</span> Cadastrar Novo Paciente
@@ -16,4 +78,29 @@
         </div>
     </div>
 </div>
+
+<script>
+function copySummary() {
+    const summaryText = document.querySelector('.summary-content').textContent;
+    
+    // Criar elemento temporário para copiar
+    const textarea = document.createElement('textarea');
+    textarea.value = summaryText;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    
+    // Feedback visual
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '✅ Copiado!';
+    button.style.backgroundColor = '#28a745';
+    
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.style.backgroundColor = '#28a745';
+    }, 2000);
+}
+</script>
 {% endblock %}
