@@ -14,20 +14,16 @@
 ==========================================
 
 DADOS GERAIS:
-• Data: {{ saved_data.get('data_formatted', saved_data.get('data', 'N/A')) }}
+• Data: {{ saved_data.get('data', 'N/A') }}
 • Paciente: {{ saved_data.get('nome', 'N/A') }}
 • Unidade: {{ saved_data.get('unidade', 'N/A') }}
 • Médico: {{ saved_data.get('medico', 'N/A') }}
 • Equipe: {{ saved_data.get('equipe', 'N/A') }}
 • Hora da cirurgia: {{ saved_data.get('hora_cirurgia', 'N/A') }}
 • Tempo de cirurgia: {{ saved_data.get('tempo_cirurgia', 'N/A') }}h
-• Idade: {{ saved_data.get('idade', 'N/A') }}
-• Sexo: {{ saved_data.get('sexo', 'N/A') }}
 
 DADOS DA CIRURGIA:
 • Total de folículos: {{ saved_data.get('total_foliculos', 'N/A') }}
-• Técnica: {{ saved_data.get('tecnica', 'N/A') }}
-• Tipo de cirurgia: {{ saved_data.get('tipo_cirurgia', 'N/A') }}
 
 ÁREAS TRATADAS:
 • Frente: {{ saved_data.get('frente', 'N/A') }}
