@@ -14,7 +14,7 @@
 ==========================================
 
 DADOS GERAIS:
-• Data: {{ saved_data.get('data', 'N/A') }}
+• Data: {% if saved_data.get('data') %}{{ saved_data.get('data').split('-')[2] }}/{{ saved_data.get('data').split('-')[1] }}/{{ saved_data.get('data').split('-')[0] }}{% else %}N/A{% endif %}
 • Paciente: {{ saved_data.get('nome', 'N/A') }}
 • Unidade: {{ saved_data.get('unidade', 'N/A') }}
 • Médico: {{ saved_data.get('medico', 'N/A') }}
