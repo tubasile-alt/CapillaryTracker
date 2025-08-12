@@ -14,62 +14,66 @@
 ==========================================
 
 DADOS GERAIS:
-• Data: {{ saved_data.get('Data (DD/MM/AAAA)', 'N/A') }}
-• Paciente: {{ saved_data.get('Paciente', 'N/A') }}
-• Unidade: {{ saved_data.get('Unidade', 'N/A') }}
-• Médico: {{ saved_data.get('Médico', 'N/A') }}
+• Data: {{ saved_data.get('data_formatted', saved_data.get('data', 'N/A')) }}
+• Paciente: {{ saved_data.get('nome', 'N/A') }}
+• Unidade: {{ saved_data.get('unidade', 'N/A') }}
+• Médico: {{ saved_data.get('medico', 'N/A') }}
 • Equipe: {{ saved_data.get('equipe', 'N/A') }}
-• Hora da cirurgia: {{ saved_data.get('Hora da cirurgia', 'N/A') }}
-• Tempo de cirurgia: {{ saved_data.get('Tempo de cirurgia (horas)', 'N/A') }}h
-• Idade: {{ saved_data.get('Idade', 'N/A') }}
-• Sexo: {{ saved_data.get('Sexo', 'N/A') }}
+• Hora da cirurgia: {{ saved_data.get('hora_cirurgia', 'N/A') }}
+• Tempo de cirurgia: {{ saved_data.get('tempo_cirurgia', 'N/A') }}h
+• Idade: {{ saved_data.get('idade', 'N/A') }}
+• Sexo: {{ saved_data.get('sexo', 'N/A') }}
 
 DADOS DA CIRURGIA:
-• Total de folículos: {{ saved_data.get('Total de folículos', 'N/A') }}
-• Técnica: {{ saved_data.get('Técnica', 'N/A') }}
-• Tipo de cirurgia: {{ saved_data.get('Tipo de cirurgia', 'N/A') }}
+• Total de folículos: {{ saved_data.get('total_foliculos', 'N/A') }}
+• Técnica: {{ saved_data.get('tecnica', 'N/A') }}
+• Tipo de cirurgia: {{ saved_data.get('tipo_cirurgia', 'N/A') }}
 
 ÁREAS TRATADAS:
-• Frente: {{ saved_data.get('Frente', 'N/A') }}
-• Coroa: {{ saved_data.get('Coroa', 'N/A') }}
-• Scalpe: {{ saved_data.get('Scalpe', 'N/A') }}
-• Península direita: {{ saved_data.get('Península direita', 'N/A') }}
-• Península esquerda: {{ saved_data.get('Península esquerda', 'N/A') }}
+• Frente: {{ saved_data.get('frente', 'N/A') }}
+• Coroa: {{ saved_data.get('coroa', 'N/A') }}
+• Scalpe: {{ saved_data.get('scalpe', 'N/A') }}
+• Península direita: {{ saved_data.get('peninsula_direita', 'N/A') }}
+• Península esquerda: {{ saved_data.get('peninsula_esquerda', 'N/A') }}
 
 DENSIDADE E MEDIDAS:
-• Densidade Scketh: {{ saved_data.get('Densidade Scketh', 'N/A') }}
-• Densidade primeira faixa: {{ saved_data.get('densidade_primeira_faixa', 'N/A') }}
+• Densidade Scketh: {{ saved_data.get('densidade_scketh', 'N/A') }}
 
 INSTRUMENTOS:
-• Safira: {{ saved_data.get('Safira', 'N/A') }}
-• Punch: {{ saved_data.get('Punch', 'N/A') }}
+• Safira: {{ saved_data.get('safira', 'N/A') }}
+• Punch: {{ saved_data.get('punch', 'N/A') }}
 
 SOLUÇÕES:
-• Solução frente: {{ saved_data.get('Solução frente', 'N/A') }} seringas de 3ml
-• Solução xilo frente: {{ saved_data.get('Solução xilo frente', 'N/A') }} seringas de 3ml
+• Solução frente: {{ saved_data.get('solucao_frente', 'N/A') }} seringas de 3ml
+• Solução coroa: {{ saved_data.get('solucao_coroa', 'N/A') }} seringas de 3ml
+• Solução xilo frente: {{ saved_data.get('solucao_xilo_frente', 'N/A') }} seringas de 3ml
 
-IMPLANTE SECUNDÁRIO: {{ saved_data.get('Implante secundario', 'Não') }}
+BLOQUEIO:
+• Bloqueio: {{ saved_data.get('bloqueio', 'N/A') }}
+• Seringas de bloqueio: {{ saved_data.get('bloqueio_seringas', 'N/A') }}
+• Comentários bloqueio: {{ saved_data.get('bloqueio_comentarios', 'N/A') }}
 
-QUADRANTES (Densidade/Furos/Fios Totais/Fios Implantados):
-• LE: {{ saved_data.get('LE - Densidade (UF/cm²)', 'N/A') }} / {{ saved_data.get('LE - Furos', 'N/A') }} / {{ saved_data.get('LE - Fios totais', 'N/A') }} / {{ saved_data.get('LE - Fios implantados', 'N/A') }}
-• ME: {{ saved_data.get('ME - Densidade (UF/cm²)', 'N/A') }} / {{ saved_data.get('ME - Furos', 'N/A') }} / {{ saved_data.get('ME - Fios totais', 'N/A') }} / {{ saved_data.get('ME - Fios implantados', 'N/A') }}
-• MD: {{ saved_data.get('MD - Densidade (UF/cm²)', 'N/A') }} / {{ saved_data.get('MD - Furos', 'N/A') }} / {{ saved_data.get('MD - Fios totais', 'N/A') }} / {{ saved_data.get('MD - Fios implantados', 'N/A') }}
-• LD: {{ saved_data.get('LD - Densidade (UF/cm²)', 'N/A') }} / {{ saved_data.get('LD - Furos', 'N/A') }} / {{ saved_data.get('LD - Fios totais', 'N/A') }} / {{ saved_data.get('LD - Fios implantados', 'N/A') }}
+IMPLANTE SECUNDÁRIO: {{ saved_data.get('implante_secundario', 'Não') }}
+
+QUADRANTES (Área/Densidade/Furos/Fios):
+• Q1 (LE): {{ saved_data.get('q1_area', 'N/A') }}cm² | {{ saved_data.get('q1_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q1_furos', 'N/A') }} furos | {{ saved_data.get('q1_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q1_taxa_quebra', 'N/A') }}
+• Q2 (ME): {{ saved_data.get('q2_area', 'N/A') }}cm² | {{ saved_data.get('q2_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q2_furos', 'N/A') }} furos | {{ saved_data.get('q2_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q2_taxa_quebra', 'N/A') }}
+• Q3 (MD): {{ saved_data.get('q3_area', 'N/A') }}cm² | {{ saved_data.get('q3_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q3_furos', 'N/A') }} furos | {{ saved_data.get('q3_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q3_taxa_quebra', 'N/A') }}
+• Q4 (LD): {{ saved_data.get('q4_area', 'N/A') }}cm² | {{ saved_data.get('q4_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q4_furos', 'N/A') }} furos | {{ saved_data.get('q4_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q4_taxa_quebra', 'N/A') }}
 
 AVALIAÇÃO DA QUALIDADE (1=normal, 2=moderado, 3=intenso):
-• Infiltração: {{ saved_data.get('Infiltração', 'N/A') }}
-• Sedação: {{ saved_data.get('Sedação', 'N/A') }}
-• Sangramento: {{ saved_data.get('Sangramento', 'N/A') }}
+• Infiltração: {{ saved_data.get('infiltracao', 'N/A') }}
+• Sedação: {{ saved_data.get('sedacao', 'N/A') }}
+• Sangramento: {{ saved_data.get('sangramento', 'N/A') }}
 
 MEDICAÇÕES UTILIZADAS:
-• Transamin: {{ saved_data.get('Transamin', 'N/A') }}
-• Tadalafila: {{ saved_data.get('Tadalafila', 'N/A') }}
-• Diprospam/Beta 30: {{ saved_data.get('Diprospam', 'N/A') }}
-• Outros medicamentos: {{ saved_data.get('Outros medicamentos', 'N/A') }}
+• Transamin: {{ saved_data.get('transamin', 'N/A') }}
+• Tadalafila: {{ saved_data.get('tadalafila', 'N/A') }}
+• Diprospam/Beta 30: {{ saved_data.get('diprospam', 'N/A') }}
 
 HISTÓRICO MÉDICO:
-• Fumante: {{ saved_data.get('Fumante', 'N/A') }}
-• Antecedente pessoal: {{ saved_data.get('Antecedente pessoal', 'N/A') }}
+• Fumante: {{ saved_data.get('fumante', 'N/A') }}
+• Antecedente pessoal: {{ saved_data.get('antecedentes', 'N/A') }}
 
 PELOS CORPORAIS:
 • Pelos corporais: {{ saved_data.get('pelos_corporais', 'N/A') }}
@@ -77,15 +81,12 @@ PELOS CORPORAIS:
 • Barba - Furos: {{ saved_data.get('barba_furos', '0') }} | Fios: {{ saved_data.get('barba_fios', '0') }} | Comentários: {{ saved_data.get('barba_comentarios', '') }}
 • Peitoral - Furos: {{ saved_data.get('peitoral_furos', '0') }} | Fios: {{ saved_data.get('peitoral_fios', '0') }} | Comentários: {{ saved_data.get('peitoral_comentarios', '') }}
 • Abdome - Furos: {{ saved_data.get('abdome_furos', '0') }} | Fios: {{ saved_data.get('abdome_fios', '0') }} | Comentários: {{ saved_data.get('abdome_comentarios', '') }}
+• Dorso - Furos: {{ saved_data.get('dorso_furos', '0') }} | Fios: {{ saved_data.get('dorso_fios', '0') }} | Comentários: {{ saved_data.get('dorso_comentarios', '') }}
 • Pernas - Furos: {{ saved_data.get('pernas_furos', '0') }} | Fios: {{ saved_data.get('pernas_fios', '0') }} | Comentários: {{ saved_data.get('pernas_comentarios', '') }}
 {% endif %}
 
 COMENTÁRIOS GERAIS:
-{{ saved_data.get('Comentários', 'Nenhum comentário adicional') }}
-
-DADOS ADICIONAIS COLETADOS:
-{% for key, value in saved_data.items() %}{% if key not in ['Data (DD/MM/AAAA)', 'Paciente', 'Unidade', 'Médico', 'equipe', 'Hora da cirurgia', 'Tempo de cirurgia (horas)', 'Idade', 'Sexo', 'Total de folículos', 'Técnica', 'Tipo de cirurgia', 'Frente', 'Coroa', 'Scalpe', 'Península direita', 'Península esquerda', 'Densidade Scketh', 'densidade_primeira_faixa', 'Safira', 'Punch', 'Solução frente', 'Solução xilo frente', 'Implante secundario', 'LE - Densidade (UF/cm²)', 'LE - Furos', 'LE - Fios totais', 'LE - Fios implantados', 'ME - Densidade (UF/cm²)', 'ME - Furos', 'ME - Fios totais', 'ME - Fios implantados', 'MD - Densidade (UF/cm²)', 'MD - Furos', 'MD - Fios totais', 'MD - Fios implantados', 'LD - Densidade (UF/cm²)', 'LD - Furos', 'LD - Fios totais', 'LD - Fios implantados', 'Infiltração', 'Sedação', 'Sangramento', 'Transamin', 'Tadalafila', 'Diprospam', 'Outros medicamentos', 'Fumante', 'Antecedente pessoal', 'pelos_corporais', 'barba_furos', 'barba_fios', 'barba_comentarios', 'peitoral_furos', 'peitoral_fios', 'peitoral_comentarios', 'abdome_furos', 'abdome_fios', 'abdome_comentarios', 'pernas_furos', 'pernas_fios', 'pernas_comentarios', 'Comentários'] %}• {{ key }}: {{ value }}
-{% endif %}{% endfor %}
+{{ saved_data.get('comentarios', 'Nenhum comentário adicional') }}
 ==========================================
 Relatório gerado automaticamente pelo sistema
 ==========================================</div>
