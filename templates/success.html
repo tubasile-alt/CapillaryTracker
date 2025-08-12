@@ -18,7 +18,7 @@ DADOS GERAIS:
 • Paciente: {{ saved_data.get('nome', 'N/A') }}
 • Unidade: {{ saved_data.get('unidade', 'N/A') }}
 • Médico: {{ saved_data.get('medico', 'N/A') }}
-• Equipe: {{ saved_data.get('equipe', 'N/A') }}
+• Equipe: {% set equipe_members = saved_data.get('equipe', 'N/A').split(', ') | unique | list %}{{ equipe_members | join(', ') }}
 • Hora da cirurgia: {{ saved_data.get('hora_cirurgia', 'N/A') }}
 • Tempo de cirurgia: {{ saved_data.get('tempo_cirurgia', 'N/A') }}h
 
@@ -51,11 +51,27 @@ BLOQUEIO:
 
 IMPLANTE SECUNDÁRIO: {{ saved_data.get('implante_secundario', 'Não') }}
 
+{% if saved_data.get('pelos_corporais') == 'Sim' %}
+PELOS CORPORAIS:
+• Pelos corporais: {{ saved_data.get('pelos_corporais', 'N/A') }}
+• Barba - Furos: {{ saved_data.get('barba_furos', '0') }} | Fios: {{ saved_data.get('barba_fios', '0') }} | Comentários: {{ saved_data.get('barba_comentarios', '') }}
+• Peitoral - Furos: {{ saved_data.get('peitoral_furos', '0') }} | Fios: {{ saved_data.get('peitoral_fios', '0') }} | Comentários: {{ saved_data.get('peitoral_comentarios', '') }}
+• Abdome - Furos: {{ saved_data.get('abdome_furos', '0') }} | Fios: {{ saved_data.get('abdome_fios', '0') }} | Comentários: {{ saved_data.get('abdome_comentarios', '') }}
+• Dorso - Furos: {{ saved_data.get('dorso_furos', '0') }} | Fios: {{ saved_data.get('dorso_fios', '0') }} | Comentários: {{ saved_data.get('dorso_comentarios', '') }}
+• Pernas - Furos: {{ saved_data.get('pernas_furos', '0') }} | Fios: {{ saved_data.get('pernas_fios', '0') }} | Comentários: {{ saved_data.get('pernas_comentarios', '') }}
+
 QUADRANTES (Área/Densidade/Furos/Fios):
 • Q1 (LE): {{ saved_data.get('q1_area', 'N/A') }}cm² | {{ saved_data.get('q1_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q1_furos', 'N/A') }} furos | {{ saved_data.get('q1_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q1_taxa_quebra', 'N/A') }}
 • Q2 (ME): {{ saved_data.get('q2_area', 'N/A') }}cm² | {{ saved_data.get('q2_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q2_furos', 'N/A') }} furos | {{ saved_data.get('q2_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q2_taxa_quebra', 'N/A') }}
 • Q3 (MD): {{ saved_data.get('q3_area', 'N/A') }}cm² | {{ saved_data.get('q3_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q3_furos', 'N/A') }} furos | {{ saved_data.get('q3_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q3_taxa_quebra', 'N/A') }}
 • Q4 (LD): {{ saved_data.get('q4_area', 'N/A') }}cm² | {{ saved_data.get('q4_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q4_furos', 'N/A') }} furos | {{ saved_data.get('q4_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q4_taxa_quebra', 'N/A') }}
+{% else %}
+QUADRANTES (Área/Densidade/Furos/Fios):
+• Q1 (LE): {{ saved_data.get('q1_area', 'N/A') }}cm² | {{ saved_data.get('q1_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q1_furos', 'N/A') }} furos | {{ saved_data.get('q1_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q1_taxa_quebra', 'N/A') }}
+• Q2 (ME): {{ saved_data.get('q2_area', 'N/A') }}cm² | {{ saved_data.get('q2_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q2_furos', 'N/A') }} furos | {{ saved_data.get('q2_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q2_taxa_quebra', 'N/A') }}
+• Q3 (MD): {{ saved_data.get('q3_area', 'N/A') }}cm² | {{ saved_data.get('q3_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q3_furos', 'N/A') }} furos | {{ saved_data.get('q3_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q3_taxa_quebra', 'N/A') }}
+• Q4 (LD): {{ saved_data.get('q4_area', 'N/A') }}cm² | {{ saved_data.get('q4_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q4_furos', 'N/A') }} furos | {{ saved_data.get('q4_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q4_taxa_quebra', 'N/A') }}
+{% endif %}
 
 AVALIAÇÃO DA QUALIDADE (1=normal, 2=moderado, 3=intenso):
 • Infiltração: {{ saved_data.get('infiltracao', 'N/A') }}
@@ -71,15 +87,7 @@ HISTÓRICO MÉDICO:
 • Fumante: {{ saved_data.get('fumante', 'N/A') }}
 • Antecedente pessoal: {{ saved_data.get('antecedentes', 'N/A') }}
 
-PELOS CORPORAIS:
-• Pelos corporais: {{ saved_data.get('pelos_corporais', 'N/A') }}
-{% if saved_data.get('pelos_corporais') == 'Sim' %}
-• Barba - Furos: {{ saved_data.get('barba_furos', '0') }} | Fios: {{ saved_data.get('barba_fios', '0') }} | Comentários: {{ saved_data.get('barba_comentarios', '') }}
-• Peitoral - Furos: {{ saved_data.get('peitoral_furos', '0') }} | Fios: {{ saved_data.get('peitoral_fios', '0') }} | Comentários: {{ saved_data.get('peitoral_comentarios', '') }}
-• Abdome - Furos: {{ saved_data.get('abdome_furos', '0') }} | Fios: {{ saved_data.get('abdome_fios', '0') }} | Comentários: {{ saved_data.get('abdome_comentarios', '') }}
-• Dorso - Furos: {{ saved_data.get('dorso_furos', '0') }} | Fios: {{ saved_data.get('dorso_fios', '0') }} | Comentários: {{ saved_data.get('dorso_comentarios', '') }}
-• Pernas - Furos: {{ saved_data.get('pernas_furos', '0') }} | Fios: {{ saved_data.get('pernas_fios', '0') }} | Comentários: {{ saved_data.get('pernas_comentarios', '') }}
-{% endif %}
+
 
 COMENTÁRIOS GERAIS:
 {{ saved_data.get('comentarios', 'Nenhum comentário adicional') }}
