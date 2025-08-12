@@ -1,0 +1,131 @@
+==========================================
+           RESUMO COMPLETO DA CIRURGIA
+==========================================
+
+DADOS GERAIS:
+• Data: N/A
+• Paciente: N/A
+• Unidade: N/A
+• Médico: N/A
+• Equipe: Aline, Ana, Lavinia, Natália, Aline, Ana, Lavinia, Natália
+• Hora da cirurgia: N/A
+• Tempo de cirurgia: N/Ah
+• Idade: N/A
+• Sexo: N/A
+
+DADOS DA CIRURGIA:
+• Total de folículos: N/A
+• Técnica: N/A
+• Tipo de cirurgia: N/A
+
+ÁREAS TRATADAS:
+• Frente: N/A
+• Coroa: N/A
+• Scalpe: N/A
+• Península direita: N/A
+• Península esquerda: N/A
+
+DENSIDADE E MEDIDAS:
+• Densidade Scketh: N/A
+• Densidade primeira faixa: N/A
+
+INSTRUMENTOS:
+• Safira: N/A
+• Punch: N/A
+
+SOLUÇÕES:
+• Solução frente: N/A seringas de 3ml
+• Solução xilo frente: N/A seringas de 3ml
+
+IMPLANTE SECUNDÁRIO: Não
+
+QUADRANTES (Densidade/Furos/Fios Totais/Fios Implantados):
+• LE: N/A / N/A / N/A / N/A
+• ME: N/A / N/A / N/A / N/A
+• MD: N/A / N/A / N/A / N/A
+• LD: N/A / N/A / N/A / N/A
+
+AVALIAÇÃO DA QUALIDADE (1=normal, 2=moderado, 3=intenso):
+• Infiltração: N/A
+• Sedação: N/A
+• Sangramento: N/A
+
+MEDICAÇÕES UTILIZADAS:
+• Transamin: N/A
+• Tadalafila: N/A
+• Diprospam/Beta 30: N/A
+• Outros medicamentos: N/A
+
+HISTÓRICO MÉDICO:
+• Fumante: N/A
+• Antecedente pessoal: N/A
+
+PELOS CORPORAIS:
+• Pelos corporais: Não
+
+
+COMENTÁRIOS GERAIS:
+Nenhum comentário adicional
+
+DADOS ADICIONAIS COLETADOS:
+• antecedentes: ndn
+• bloqueio: Não
+• bloqueio_comentarios: 
+• bloqueio_seringas: 
+• comentarios: fios finos
+• coroa: 20
+• data: 2025-08-20
+• data_formatted: 
+• densidade_scketh: 20
+• diprospam: Não
+• dorso_comentarios: 
+• dorso_fios: 
+• dorso_furos: 
+• extra_person_1: 
+• extra_person_2: 
+• frente: 20
+• fumante: Sim
+• hora_cirurgia: 08:00
+• implante_secundario: Sim
+• infiltracao: 1
+• medico: Dr. Arthur
+• nome: teste1
+• peninsula_direita: 24
+• peninsula_esquerda: 23
+• punch: 0,85x3,5mm
+• q1_area: 50
+• q1_densidade: 0.2
+• q1_fios: 8
+• q1_furos: 10
+• q1_taxa_quebra: 0.2
+• q2_area: 19
+• q2_densidade: 1
+• q2_fios: 19
+• q2_furos: 19
+• q2_taxa_quebra: 0
+• q3_area: 49
+• q3_densidade: 0.40816326530612246
+• q3_fios: 20
+• q3_furos: 20
+• q3_taxa_quebra: 0
+• q4_area: 50
+• q4_densidade: 0.8
+• q4_fios: 40
+• q4_furos: 40
+• q4_taxa_quebra: 0
+• safira: Sim
+• sangramento: 2
+• scalpe: 20
+• sedacao: 2
+• solucao_coroa: 23
+• solucao_frente: 23
+• solucao_xilo_frente: 54
+• tadalafila: Sim
+• tempo_cirurgia: 5
+• total_foliculos: 1
+• transamin: Não
+• unidade: Ribeirão Preto
+
+==========================================
+Relatório gerado automaticamente pelo sistema
+==========================================
