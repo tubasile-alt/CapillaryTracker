@@ -766,40 +766,55 @@ def dashboard():
             }
 
             if not df.empty:
-                # Processar dados por mês
-                df['mes_ano'] = pd.to_datetime(df['data']).dt.strftime('%m/%Y')
+                # Filtrar datas válidas (remover datas muito antigas que causam overflow)
+                try:
+                    # Converter data e filtrar apenas datas válidas (anos >= 1900)
+                    df['data_parsed'] = pd.to_datetime(df['data'], errors='coerce')
+                    df = df[df['data_parsed'].notna()]
+                    df = df[df['data_parsed'].dt.year >= 1900]
+                    
+                    if df.empty:
+                        logger.warning("Nenhuma data válida encontrada após filtro")
+                        dashboard_data['has_follicle_data'] = False
+                    else:
+                        # Processar dados por mês
+                        df['mes_ano'] = df['data_parsed'].dt.strftime('%m/%Y')
 
-                # Agrupar por mês
-                monthly_data = df.groupby('mes_ano').agg({
-                    'data': 'count',  # contagem de cirurgias
-                    'total_foliculos': 'mean',  # média de folículos
-                    'densidade_scketh': 'mean'   # média de densidade
-                }).round(2)
+                        # Agrupar por mês
+                        monthly_data = df.groupby('mes_ano').agg({
+                            'data': 'count',  # contagem de cirurgias
+                            'total_foliculos': 'mean',  # média de folículos
+                            'densidade_scketh': 'mean'   # média de densidade
+                        }).round(2)
 
-                # Dados gerais por mês
-                dashboard_data['labels'] = monthly_data.index.tolist()
-                dashboard_data['datasets'].append({
-                    'label': 'Total de Cirurgias',
-                    'data': monthly_data['data'].tolist()
-                })
+                        # Dados gerais por mês
+                        dashboard_data['labels'] = monthly_data.index.tolist()
+                        dashboard_data['datasets'].append({
+                            'label': 'Total de Cirurgias',
+                            'data': monthly_data['data'].tolist()
+                        })
 
-                # Dados por unidade
-                for unidade in df['unidade'].unique():
-                    df_unit = df[df['unidade'] == unidade]
-                    unit_data = df_unit.groupby('mes_ano')['data'].count()
+                        # Dados por unidade
+                        for unidade in df['unidade'].unique():
+                            df_unit = df[df['unidade'] == unidade]
+                            unit_data = df_unit.groupby('mes_ano')['data'].count()
 
-                    # Preencher meses faltantes com zero
-                    unit_data = unit_data.reindex(monthly_data.index, fill_value=0)
+                            # Preencher meses faltantes com zero
+                            unit_data = unit_data.reindex(monthly_data.index, fill_value=0)
 
-                    dashboard_data['datasets'].append({
-                        'label': f'Cirurgias - {unidade}',
-                        'data': unit_data.tolist()
-                    })
+                            dashboard_data['datasets'].append({
+                                'label': f'Cirurgias - {unidade}',
+                                'data': unit_data.tolist()
+                            })
 
-                # Dados de folículos e densidade por mês
-                dashboard_data['follicles_data']['labels'] = monthly_data.index.tolist()
-                dashboard_data['follicles_data']['averages'] = monthly_data['total_foliculos'].round().astype(int).tolist()
-                dashboard_data['follicles_data']['le_density'] = monthly_data['densidade_scketh'].round().astype(int).tolist()
+                        # Dados de folículos e densidade por mês
+                        dashboard_data['follicles_data']['labels'] = monthly_data.index.tolist()
+                        dashboard_data['follicles_data']['averages'] = monthly_data['total_foliculos'].round().astype(int).tolist()
+                        dashboard_data['follicles_data']['le_density'] = monthly_data['densidade_scketh'].round().astype(int).tolist()
+                        
+                except Exception as e:
+                    logger.error(f"Erro ao processar datas no dashboard: {str(e)}")
+                    dashboard_data['has_follicle_data'] = False
 
             logger.info(f"Processed dashboard data: {dashboard_data}")
             return render_template('dashboard.html', data=dashboard_data)
