@@ -9,11 +9,7 @@
         {% if saved_data %}
         <div class="surgery-summary" style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left; border: 1px solid #dee2e6;">
             <h3 style="color: #495057; margin-bottom: 15px; text-align: center;">📋 Resumo Completo dos Dados Cadastrados</h3>
-            <div class="summary-content" style="font-family: 'Courier New', monospace; line-height: 1.6; white-space: pre-wrap; background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ced4da; max-height: 400px; overflow-y: auto;">==========================================
-           RESUMO COMPLETO DA CIRURGIA
-==========================================
-
-DADOS GERAIS:
+            <div class="summary-content" style="font-family: 'Courier New', monospace; line-height: 1.6; white-space: pre-wrap; background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ced4da; max-height: 400px; overflow-y: auto;">DADOS GERAIS:
 • Data: {% if saved_data.get('data') %}{{ saved_data.get('data').split('-')[2] }}/{{ saved_data.get('data').split('-')[1] }}/{{ saved_data.get('data').split('-')[0] }}{% else %}N/A{% endif %}
 • Paciente: {{ saved_data.get('nome', 'N/A') }}
 • Unidade: {{ saved_data.get('unidade', 'N/A') }}
@@ -61,16 +57,16 @@ PELOS CORPORAIS:
 • Pernas - Furos: {{ saved_data.get('pernas_furos', '0') }} | Fios: {{ saved_data.get('pernas_fios', '0') }} | Comentários: {{ saved_data.get('pernas_comentarios', '') }}
 
 QUADRANTES (Área/Densidade/Furos/Fios):
-• Q1 (LE): {{ saved_data.get('q1_area', 'N/A') }}cm² | {{ saved_data.get('q1_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q1_furos', 'N/A') }} furos | {{ saved_data.get('q1_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q1_taxa_quebra', 'N/A') }}
-• Q2 (ME): {{ saved_data.get('q2_area', 'N/A') }}cm² | {{ saved_data.get('q2_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q2_furos', 'N/A') }} furos | {{ saved_data.get('q2_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q2_taxa_quebra', 'N/A') }}
-• Q3 (MD): {{ saved_data.get('q3_area', 'N/A') }}cm² | {{ saved_data.get('q3_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q3_furos', 'N/A') }} furos | {{ saved_data.get('q3_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q3_taxa_quebra', 'N/A') }}
-• Q4 (LD): {{ saved_data.get('q4_area', 'N/A') }}cm² | {{ saved_data.get('q4_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q4_furos', 'N/A') }} furos | {{ saved_data.get('q4_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q4_taxa_quebra', 'N/A') }}
+• Q1 (LE): {{ saved_data.get('q1_area', 'N/A') }}cm² | {{ saved_data.get('q1_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q1_furos', 'N/A') }} furos | {{ saved_data.get('q1_fios', 'N/A') }} fios | Taxa quebra: {% if saved_data.get('q1_taxa_quebra') != 'N/A' %}{{ (saved_data.get('q1_taxa_quebra') * 100) | round(1) }}%{% else %}N/A{% endif %}
+• Q2 (ME): {{ saved_data.get('q2_area', 'N/A') }}cm² | {{ saved_data.get('q2_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q2_furos', 'N/A') }} furos | {{ saved_data.get('q2_fios', 'N/A') }} fios | Taxa quebra: {% if saved_data.get('q2_taxa_quebra') != 'N/A' %}{{ (saved_data.get('q2_taxa_quebra') * 100) | round(1) }}%{% else %}N/A{% endif %}
+• Q3 (MD): {{ saved_data.get('q3_area', 'N/A') }}cm² | {{ saved_data.get('q3_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q3_furos', 'N/A') }} furos | {{ saved_data.get('q3_fios', 'N/A') }} fios | Taxa quebra: {% if saved_data.get('q3_taxa_quebra') != 'N/A' %}{{ (saved_data.get('q3_taxa_quebra') * 100) | round(1) }}%{% else %}N/A{% endif %}
+• Q4 (LD): {{ saved_data.get('q4_area', 'N/A') }}cm² | {{ saved_data.get('q4_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q4_furos', 'N/A') }} furos | {{ saved_data.get('q4_fios', 'N/A') }} fios | Taxa quebra: {% if saved_data.get('q4_taxa_quebra') != 'N/A' %}{{ (saved_data.get('q4_taxa_quebra') * 100) | round(1) }}%{% else %}N/A{% endif %}
 {% else %}
 QUADRANTES (Área/Densidade/Furos/Fios):
-• Q1 (LE): {{ saved_data.get('q1_area', 'N/A') }}cm² | {{ saved_data.get('q1_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q1_furos', 'N/A') }} furos | {{ saved_data.get('q1_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q1_taxa_quebra', 'N/A') }}
-• Q2 (ME): {{ saved_data.get('q2_area', 'N/A') }}cm² | {{ saved_data.get('q2_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q2_furos', 'N/A') }} furos | {{ saved_data.get('q2_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q2_taxa_quebra', 'N/A') }}
-• Q3 (MD): {{ saved_data.get('q3_area', 'N/A') }}cm² | {{ saved_data.get('q3_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q3_furos', 'N/A') }} furos | {{ saved_data.get('q3_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q3_taxa_quebra', 'N/A') }}
-• Q4 (LD): {{ saved_data.get('q4_area', 'N/A') }}cm² | {{ saved_data.get('q4_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q4_furos', 'N/A') }} furos | {{ saved_data.get('q4_fios', 'N/A') }} fios | Taxa quebra: {{ saved_data.get('q4_taxa_quebra', 'N/A') }}
+• Q1 (LE): {{ saved_data.get('q1_area', 'N/A') }}cm² | {{ saved_data.get('q1_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q1_furos', 'N/A') }} furos | {{ saved_data.get('q1_fios', 'N/A') }} fios | Taxa quebra: {% if saved_data.get('q1_taxa_quebra') != 'N/A' %}{{ (saved_data.get('q1_taxa_quebra') * 100) | round(1) }}%{% else %}N/A{% endif %}
+• Q2 (ME): {{ saved_data.get('q2_area', 'N/A') }}cm² | {{ saved_data.get('q2_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q2_furos', 'N/A') }} furos | {{ saved_data.get('q2_fios', 'N/A') }} fios | Taxa quebra: {% if saved_data.get('q2_taxa_quebra') != 'N/A' %}{{ (saved_data.get('q2_taxa_quebra') * 100) | round(1) }}%{% else %}N/A{% endif %}
+• Q3 (MD): {{ saved_data.get('q3_area', 'N/A') }}cm² | {{ saved_data.get('q3_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q3_furos', 'N/A') }} furos | {{ saved_data.get('q3_fios', 'N/A') }} fios | Taxa quebra: {% if saved_data.get('q3_taxa_quebra') != 'N/A' %}{{ (saved_data.get('q3_taxa_quebra') * 100) | round(1) }}%{% else %}N/A{% endif %}
+• Q4 (LD): {{ saved_data.get('q4_area', 'N/A') }}cm² | {{ saved_data.get('q4_densidade', 'N/A') }} UF/cm² | {{ saved_data.get('q4_furos', 'N/A') }} furos | {{ saved_data.get('q4_fios', 'N/A') }} fios | Taxa quebra: {% if saved_data.get('q4_taxa_quebra') != 'N/A' %}{{ (saved_data.get('q4_taxa_quebra') * 100) | round(1) }}%{% else %}N/A{% endif %}
 {% endif %}
 
 AVALIAÇÃO DA QUALIDADE (1=normal, 2=moderado, 3=intenso):
@@ -90,10 +86,7 @@ HISTÓRICO MÉDICO:
 
 
 COMENTÁRIOS GERAIS:
-{{ saved_data.get('comentarios', 'Nenhum comentário adicional') }}
-==========================================
-Relatório gerado automaticamente pelo sistema
-==========================================</div>
+{{ saved_data.get('comentarios', 'Nenhum comentário adicional') }}</div>
             
             <div style="text-align: center; margin-top: 15px;">
                 <button id="copyButton" onclick="copySummary()" class="btn btn-success" style="background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold;">
