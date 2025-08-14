@@ -261,26 +261,23 @@
                 {% endif %}
             </div>
             
-            <!-- Equipe Ribeirão Preto -->
+            <!-- Cirurgias por Unidade -->
             <div class="card">
-                <h2>👥 Equipe Ribeirão Preto - Performance Total</h2>
-                {% if equipe_ribeirao %}
+                <h2>🏥 Cirurgias por Unidade</h2>
+                {% if cirurgias_por_unidade %}
                     <div class="table-container">
-                        {% for item in equipe_ribeirao %}
-                            <div class="equipe-item">
-                                <div class="equipe-info">
-                                    <div class="equipe-nome">{{ item.membro }}</div>
-                                    <div class="equipe-unidade">Ribeirão Preto</div>
-                                </div>
-                                <div class="equipe-cirurgias">{{ item.total }}</div>
+                        {% for item in cirurgias_por_unidade %}
+                            <div class="stats-item {% if loop.first %}highlight{% endif %}">
+                                <span class="stats-label">{{ item.unidade }}</span>
+                                <span class="stats-value">{{ item.total }} cirurgias</span>
                             </div>
                         {% endfor %}
                     </div>
                     <div style="margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 5px; font-size: 0.9rem; color: #666;">
-                        📊 <strong>Dados atualizados:</strong> Mostra o total de cirurgias que cada membro da equipe participou (histórico completo após limpeza de duplicatas)
+                        📊 <strong>Filtros aplicados:</strong> {{ mes_nome }} {{ ano_atual }}{% if filter_name != 'all' %} - Membro: {{ filter_name }}{% endif %}
                     </div>
                 {% else %}
-                    <div class="no-data">Nenhum dado da equipe disponível</div>
+                    <div class="no-data">Nenhuma cirurgia registrada por unidade</div>
                 {% endif %}
             </div>
             

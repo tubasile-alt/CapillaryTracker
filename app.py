@@ -3710,50 +3710,19 @@ def controle_dashboard():
             result_membros_disp = db.session.execute(sql_membros_disponiveis)
             membros_disponiveis = [row.membro for row in result_membros_disp.fetchall()]
             
-            # Performance da equipe de Ribeirão Preto
-            sql_equipe_rp = text("""
-                WITH individual_counts AS (
-                  SELECT 
-                    'Ana' as membro,
-                    COUNT(*) as total_cirurgias
-                  FROM surgery 
-                  WHERE unidade = 'Ribeirão Preto' 
-                  AND equipe LIKE '%Ana%'
-                  
-                  UNION ALL
-                  
-                  SELECT 
-                    'Aline' as membro,
-                    COUNT(*) as total_cirurgias
-                  FROM surgery 
-                  WHERE unidade = 'Ribeirão Preto' 
-                  AND equipe LIKE '%Aline%'
-                  
-                  UNION ALL
-                  
-                  SELECT 
-                    'Natália' as membro,
-                    COUNT(*) as total_cirurgias
-                  FROM surgery 
-                  WHERE unidade = 'Ribeirão Preto' 
-                  AND equipe LIKE '%Natália%'
-                  
-                  UNION ALL
-                  
-                  SELECT 
-                    'Lavínia' as membro,
-                    COUNT(*) as total_cirurgias
-                  FROM surgery 
-                  WHERE unidade = 'Ribeirão Preto' 
-                  AND equipe LIKE '%Lavínia%'
-                )
-                SELECT membro, total_cirurgias 
-                FROM individual_counts 
+            # Cirurgias por unidade (sempre mostrar este card)
+            sql_por_unidade = text(f"""
+                SELECT unidade, COUNT(*) as total_cirurgias
+                FROM surgery
+                WHERE {where_clause.replace('equipe ILIKE :name_filter', '1=1')}
+                GROUP BY unidade
                 ORDER BY total_cirurgias DESC
             """)
             
-            result_equipe_rp = db.session.execute(sql_equipe_rp)
-            equipe_rp = result_equipe_rp.fetchall()
+            result_unidade = db.session.execute(sql_por_unidade, {k:v for k,v in sql_params.items() if k != 'name_filter'})
+            cirurgias_por_unidade_data = result_unidade.fetchall()
+            
+
             
             # Organizar dados para o template baseado no tipo de filtro
             if filter_name != 'all':
@@ -3775,17 +3744,17 @@ def controle_dashboard():
                     })
                 titulo_secao = "👥 Membros da Equipe - Total de Cirurgias"
             
-            # Dados da equipe de Ribeirão Preto (manter compatibilidade)
-            dados_equipe_rp = []
-            for row in equipe_rp:
-                dados_equipe_rp.append({
-                    'membro': row.membro,
+            # Dados das cirurgias por unidade
+            dados_por_unidade = []
+            for row in cirurgias_por_unidade_data:
+                dados_por_unidade.append({
+                    'unidade': row.unidade,
                     'total': row.total_cirurgias
                 })
 
             return render_template('controle_dashboard.html', 
                 dados_principais=dados_principais,
-                equipe_ribeirao=dados_equipe_rp,
+                cirurgias_por_unidade=dados_por_unidade,
                 membros_disponiveis=membros_disponiveis,
                 titulo_secao=titulo_secao,
                 filter_name=filter_name,
