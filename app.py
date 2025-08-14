@@ -3716,13 +3716,23 @@ def controle_dashboard():
             result_unidades_disp = db.session.execute(sql_unidades_disponiveis)
             unidades_disponiveis = [row.unidade for row in result_unidades_disp.fetchall()]
 
-            # Cirurgias por unidade (sempre mostra todas as unidades)
+            # Cirurgias por unidade (mostra todas as unidades, incluindo com zero cirurgias)
             sql_por_unidade = text(f"""
-                SELECT unidade, COUNT(*) as total_cirurgias
-                FROM surgery
-                WHERE EXTRACT(MONTH FROM data) = :month AND EXTRACT(YEAR FROM data) = :year
-                GROUP BY unidade
-                ORDER BY total_cirurgias DESC
+                WITH todas_unidades AS (
+                    SELECT DISTINCT unidade FROM surgery WHERE unidade IS NOT NULL
+                ),
+                cirurgias_periodo AS (
+                    SELECT unidade, COUNT(*) as total_cirurgias
+                    FROM surgery
+                    WHERE EXTRACT(MONTH FROM data) = :month AND EXTRACT(YEAR FROM data) = :year
+                    GROUP BY unidade
+                )
+                SELECT 
+                    tu.unidade,
+                    COALESCE(cp.total_cirurgias, 0) as total_cirurgias
+                FROM todas_unidades tu
+                LEFT JOIN cirurgias_periodo cp ON tu.unidade = cp.unidade
+                ORDER BY total_cirurgias DESC, tu.unidade
             """)
             
             result_unidade = db.session.execute(sql_por_unidade, {'month': current_month, 'year': current_year})
