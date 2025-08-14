@@ -214,6 +214,16 @@
                         {% endfor %}
                     </select>
                 </div>
+                
+                <div style="flex: 1; min-width: 200px;">
+                    <label for="unit" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Unidade:</label>
+                    <select name="unit" id="unit" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="all" {% if filter_unit == 'all' %}selected{% endif %}>Todas as Unidades</option>
+                        {% for unidade in unidades_disponiveis %}
+                            <option value="{{ unidade }}" {% if filter_unit == unidade %}selected{% endif %}>{{ unidade }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 <div style="flex: 1; min-width: 150px;">
                     <label for="month" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Mês:</label>
                     <select name="month" id="month" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
@@ -240,7 +250,7 @@
         
         <div class="month-info">
             <h3>📅 Relatório de {{ mes_nome or 'Mês Atual' }} {{ ano_atual or '2025' }}</h3>
-            <p>Dados filtrados{% if filter_name != 'all' %} - Membro: {{ filter_name }}{% endif %}</p>
+            <p>Dados filtrados{% if filter_name != 'all' %} - Membro: {{ filter_name }}{% endif %}{% if filter_unit != 'all' %} - Unidade: {{ filter_unit }}{% endif %}</p>
         </div>
         
         <div class="dashboard-grid">
@@ -263,7 +273,7 @@
             
             <!-- Cirurgias por Unidade -->
             <div class="card">
-                <h2>🏥 Cirurgias por Unidade</h2>
+                <h2>🏥 Cirurgias por Unidade - Todas as Unidades</h2>
                 {% if cirurgias_por_unidade %}
                     <div class="table-container">
                         {% for item in cirurgias_por_unidade %}
@@ -274,12 +284,37 @@
                         {% endfor %}
                     </div>
                     <div style="margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 5px; font-size: 0.9rem; color: #666;">
-                        📊 <strong>Filtros aplicados:</strong> {{ mes_nome }} {{ ano_atual }}{% if filter_name != 'all' %} - Membro: {{ filter_name }}{% endif %}
+                        📊 <strong>Período:</strong> {{ mes_nome }} {{ ano_atual }} - Mostra todas as unidades
                     </div>
                 {% else %}
                     <div class="no-data">Nenhuma cirurgia registrada por unidade</div>
                 {% endif %}
             </div>
+
+            <!-- Membros da Unidade Selecionada -->
+            {% if filter_unit != 'all' %}
+            <div class="card">
+                <h2>👥 Membros da Unidade: {{ filter_unit }}</h2>
+                {% if membros_unidade %}
+                    <div class="table-container">
+                        {% for item in membros_unidade %}
+                            <div class="equipe-item">
+                                <div class="equipe-info">
+                                    <div class="equipe-nome">{{ item.membro }}</div>
+                                    <div class="equipe-unidade">{{ filter_unit }}</div>
+                                </div>
+                                <div class="equipe-cirurgias">{{ item.total }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div style="margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 5px; font-size: 0.9rem; color: #666;">
+                        📊 <strong>Filtros:</strong> {{ mes_nome }} {{ ano_atual }} - Unidade: {{ filter_unit }}
+                    </div>
+                {% else %}
+                    <div class="no-data">Nenhum membro encontrado para esta unidade</div>
+                {% endif %}
+            </div>
+            {% endif %}
             
         </div>
         </div>

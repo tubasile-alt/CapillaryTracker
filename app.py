@@ -3634,8 +3634,9 @@ def controle_dashboard():
     if not session.get('controle_authenticated'):
         return redirect(url_for('controle_cirurgias'))
     
-    # Obter filtros da URL - mudança para filtro por nome
+    # Obter filtros da URL - filtros por nome e unidade
     filter_name = request.args.get('name', 'all')
+    filter_unit = request.args.get('unit', 'all')
     filter_month = request.args.get('month', str(datetime.now().month))
     filter_year = request.args.get('year', str(datetime.now().year))
     
@@ -3710,17 +3711,50 @@ def controle_dashboard():
             result_membros_disp = db.session.execute(sql_membros_disponiveis)
             membros_disponiveis = [row.membro for row in result_membros_disp.fetchall()]
             
-            # Cirurgias por unidade (sempre mostrar este card)
+            # Lista de unidades disponíveis para filtro
+            sql_unidades_disponiveis = text("SELECT DISTINCT unidade FROM surgery WHERE unidade IS NOT NULL ORDER BY unidade")
+            result_unidades_disp = db.session.execute(sql_unidades_disponiveis)
+            unidades_disponiveis = [row.unidade for row in result_unidades_disp.fetchall()]
+
+            # Cirurgias por unidade (sempre mostra todas as unidades)
             sql_por_unidade = text(f"""
                 SELECT unidade, COUNT(*) as total_cirurgias
                 FROM surgery
-                WHERE {where_clause.replace('equipe ILIKE :name_filter', '1=1')}
+                WHERE EXTRACT(MONTH FROM data) = :month AND EXTRACT(YEAR FROM data) = :year
                 GROUP BY unidade
                 ORDER BY total_cirurgias DESC
             """)
             
-            result_unidade = db.session.execute(sql_por_unidade, {k:v for k,v in sql_params.items() if k != 'name_filter'})
+            result_unidade = db.session.execute(sql_por_unidade, {'month': current_month, 'year': current_year})
             cirurgias_por_unidade_data = result_unidade.fetchall()
+            
+            # Membros da unidade selecionada (só quando unidade != 'all')
+            membros_unidade_data = []
+            if filter_unit != 'all':
+                sql_membros_unidade = text(f"""
+                    WITH membros_equipe AS (
+                        SELECT 
+                            unnest(string_to_array(equipe, ',')) AS membro,
+                            id
+                        FROM surgery
+                        WHERE EXTRACT(MONTH FROM data) = :month 
+                        AND EXTRACT(YEAR FROM data) = :year
+                        AND unidade = :unit
+                    )
+                    SELECT 
+                        TRIM(membro) as membro,
+                        COUNT(*) as total_cirurgias
+                    FROM membros_equipe
+                    WHERE TRIM(membro) != ''
+                    GROUP BY TRIM(membro)
+                    ORDER BY total_cirurgias DESC
+                """)
+                result_membros_unidade = db.session.execute(sql_membros_unidade, {
+                    'month': current_month, 
+                    'year': current_year,
+                    'unit': filter_unit
+                })
+                membros_unidade_data = result_membros_unidade.fetchall()
             
 
             
@@ -3751,13 +3785,24 @@ def controle_dashboard():
                     'unidade': row.unidade,
                     'total': row.total_cirurgias
                 })
+            
+            # Dados dos membros da unidade selecionada
+            dados_membros_unidade = []
+            for row in membros_unidade_data:
+                dados_membros_unidade.append({
+                    'membro': row.membro,
+                    'total': row.total_cirurgias
+                })
 
             return render_template('controle_dashboard.html', 
                 dados_principais=dados_principais,
                 cirurgias_por_unidade=dados_por_unidade,
+                membros_unidade=dados_membros_unidade,
                 membros_disponiveis=membros_disponiveis,
+                unidades_disponiveis=unidades_disponiveis,
                 titulo_secao=titulo_secao,
                 filter_name=filter_name,
+                filter_unit=filter_unit,
                 filter_month=filter_month,
                 filter_year=filter_year,
                 mes_atual=current_month,
