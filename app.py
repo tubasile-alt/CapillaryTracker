@@ -3539,7 +3539,7 @@ def test_backup():
 
 # Controle de Cirurgias - Rotas com autenticação
 @app.route('/controle_cirurgias')
-def controle_cirurgias_login():
+def controle_cirurgias():
     """Página de login para controle de cirurgias"""
     return render_template('controle_login.html')
 
@@ -3552,13 +3552,13 @@ def controle_cirurgias_auth():
         return redirect(url_for('controle_dashboard'))
     else:
         flash('Senha incorreta!', 'danger')
-        return redirect(url_for('controle_cirurgias_login'))
+        return redirect(url_for('controle_cirurgias'))
 
 @app.route('/controle_dashboard')
 def controle_dashboard():
     """Dashboard de controle de cirurgias"""
     if not session.get('controle_authenticated'):
-        return redirect(url_for('controle_cirurgias_login'))
+        return redirect(url_for('controle_cirurgias'))
     
     try:
         # Buscar dados de cirurgias por unidade
@@ -3670,7 +3670,7 @@ def controle_dashboard():
 def controle_logout():
     """Logout do controle de cirurgias"""
     session.pop('controle_authenticated', None)
-    return redirect(url_for('controle_cirurgias_login'))
+    return redirect(url_for('controle_cirurgias'))
 
 # Configure Flask app
 app.config['ENV'] = 'production'
