@@ -851,6 +851,17 @@ def save_to_excel(data):
         logger.info(f"Received data: {data}")
         filename = "cirurgias.xlsx"
 
+        # Check for duplicates first
+        is_duplicate, duplicate_message = check_duplicate_surgery(data)
+        if is_duplicate:
+            logger.warning(f"Duplicate surgery detected: {duplicate_message}")
+            return False, f"❌ Duplicata detectada: {duplicate_message}"
+
+        # Clean equipe field to prevent duplicates within the field
+        if 'equipe' in data and data['equipe']:
+            data['equipe'] = clean_equipe_string(data['equipe'])
+            logger.info(f"Equipe limpa: {data['equipe']}")
+
         # Create backup before modifying
         backup_excel_file(filename)
         logger.info(f"Backup created successfully")
@@ -1019,6 +1030,69 @@ def save_to_excel(data):
         logging.error(f"Error saving data: {str(e)}")
         logging.error(traceback.format_exc())
         return False, f"Erro ao salvar dados: {str(e)}"
+
+def check_duplicate_surgery(data):
+    """Check if a surgery record already exists to prevent duplicates"""
+    try:
+        # Extract key identifiers for duplicate checking
+        nome = data.get('Paciente', data.get('nome', '')).strip()
+        data_cirurgia = None
+        
+        # Parse date
+        if 'data' in data and data['data']:
+            try:
+                data_cirurgia = datetime.strptime(data['data'], '%Y-%m-%d').date()
+            except ValueError:
+                data_cirurgia = datetime.strptime(data['data'], '%d/%m/%Y').date()
+        elif 'Data (DD/MM/AAAA)' in data and data['Data (DD/MM/AAAA)']:
+            data_cirurgia = datetime.strptime(data['Data (DD/MM/AAAA)'], '%d/%m/%Y').date()
+        
+        if not nome or not data_cirurgia:
+            return False, "Dados insuficientes para verificação de duplicata"
+            
+        # Search for existing records with same name and date
+        existing = Surgery.query.filter(
+            Surgery.nome.ilike(f"%{nome}%"),
+            Surgery.data == data_cirurgia
+        ).first()
+        
+        if existing:
+            return True, f"Cirurgia já cadastrada para {nome} na data {data_cirurgia.strftime('%d/%m/%Y')}"
+            
+        return False, "Sem duplicatas encontradas"
+        
+    except Exception as e:
+        logger.error(f"Erro na verificação de duplicata: {str(e)}")
+        return False, f"Erro na verificação: {str(e)}"
+
+def clean_equipe_string(equipe_str):
+    """Clean and normalize team member strings to prevent duplicates"""
+    if not equipe_str:
+        return equipe_str
+    
+    # Split by comma and clean each name
+    nomes = [nome.strip() for nome in equipe_str.split(',')]
+    
+    # Remove duplicates while preserving order
+    nomes_unicos = []
+    for nome in nomes:
+        nome_clean = nome.strip()
+        
+        # Remove extra text like "(extra)", "Técnica Extra", etc
+        if '(' in nome_clean and 'extra' in nome_clean.lower():
+            continue
+        if 'Técnica Extra' in nome_clean:
+            continue
+        if ':' in nome_clean and any(x in nome_clean.lower() for x in ['técnica', 'extra']):
+            continue
+            
+        # Clean multiple spaces
+        nome_clean = re.sub(r'\s+', ' ', nome_clean)
+        
+        if nome_clean and nome_clean not in nomes_unicos:
+            nomes_unicos.append(nome_clean)
+    
+    return ', '.join(nomes_unicos)
 
 # Initialize empty Excel files if they don't exist
 def initialize_empty_files():
@@ -3556,12 +3630,12 @@ def controle_cirurgias_auth():
 
 @app.route('/controle_dashboard')
 def controle_dashboard():
-    """Dashboard de controle de cirurgias"""
+    """Dashboard de controle de cirurgias com filtro por nome"""
     if not session.get('controle_authenticated'):
         return redirect(url_for('controle_cirurgias'))
     
-    # Obter filtros da URL
-    filter_unit = request.args.get('unit', 'all')
+    # Obter filtros da URL - mudança para filtro por nome
+    filter_name = request.args.get('name', 'all')
     filter_month = request.args.get('month', str(datetime.now().month))
     filter_year = request.args.get('year', str(datetime.now().year))
     
@@ -3577,34 +3651,64 @@ def controle_dashboard():
             ]
             sql_params = {'month': current_month, 'year': current_year}
             
-            if filter_unit != 'all':
-                where_conditions.append("unidade = :unit")
-                sql_params['unit'] = filter_unit
+            # Filtro por nome ao invés de unidade
+            if filter_name != 'all':
+                where_conditions.append("equipe ILIKE :name_filter")
+                sql_params['name_filter'] = f'%{filter_name}%'
             
             where_clause = " AND ".join(where_conditions)
             
-            # Cirurgias por unidade
-            sql_unidade = text(f"""
-                SELECT unidade, COUNT(*) as total_cirurgias
-                FROM surgery
-                WHERE {where_clause}
-                GROUP BY unidade
-                ORDER BY total_cirurgias DESC
+            # Se filtro por nome específico, mostrar cirurgias por unidade para esse membro
+            if filter_name != 'all':
+                sql_membro_unidades = text(f"""
+                    SELECT unidade, COUNT(*) as total_cirurgias
+                    FROM surgery
+                    WHERE {where_clause}
+                    GROUP BY unidade
+                    ORDER BY total_cirurgias DESC
+                """)
+                result_membro = db.session.execute(sql_membro_unidades, sql_params)
+                cirurgias_unidade = result_membro.fetchall()
+            else:
+                # Mostrar todos os membros da equipe com total de cirurgias
+                sql_membros = text(f"""
+                    WITH membros_equipe AS (
+                        SELECT 
+                            unnest(string_to_array(equipe, ',')) AS membro,
+                            unidade,
+                            id
+                        FROM surgery
+                        WHERE {where_clause.replace('equipe ILIKE :name_filter', '1=1')}
+                    )
+                    SELECT 
+                        TRIM(membro) as membro,
+                        COUNT(*) as total_cirurgias
+                    FROM membros_equipe
+                    WHERE TRIM(membro) != ''
+                    GROUP BY TRIM(membro)
+                    ORDER BY total_cirurgias DESC
+                    LIMIT 20
+                """)
+                result_membros = db.session.execute(sql_membros, {k:v for k,v in sql_params.items() if k != 'name_filter'})
+                cirurgias_unidade = result_membros.fetchall()
+
+            # Lista de membros disponíveis para filtro
+            sql_membros_disponiveis = text("""
+                WITH membros_equipe AS (
+                    SELECT 
+                        unnest(string_to_array(equipe, ',')) AS membro
+                    FROM surgery
+                    WHERE equipe IS NOT NULL AND equipe != ''
+                )
+                SELECT DISTINCT TRIM(membro) as membro
+                FROM membros_equipe
+                WHERE TRIM(membro) != ''
+                ORDER BY membro
+                LIMIT 50
             """)
             
-            result_unidade = db.session.execute(sql_unidade, sql_params)
-            cirurgias_unidade = result_unidade.fetchall()
-            
-            # Lista de unidades disponíveis para filtro
-            sql_unidades_disponiveis = text("""
-                SELECT DISTINCT unidade
-                FROM surgery
-                WHERE unidade IS NOT NULL
-                ORDER BY unidade
-            """)
-            
-            result_unidades = db.session.execute(sql_unidades_disponiveis)
-            unidades_disponiveis = [row.unidade for row in result_unidades.fetchall()]
+            result_membros_disp = db.session.execute(sql_membros_disponiveis)
+            membros_disponiveis = [row.membro for row in result_membros_disp.fetchall()]
             
             # Performance da equipe de Ribeirão Preto
             sql_equipe_rp = text("""
@@ -3651,29 +3755,40 @@ def controle_dashboard():
             result_equipe_rp = db.session.execute(sql_equipe_rp)
             equipe_rp = result_equipe_rp.fetchall()
             
-            # Organizar dados para o template
-            dados_unidade = []
-            for row in cirurgias_unidade:
-                dados_unidade.append({
-                    'unidade': row.unidade,
-                    'total': row.total_cirurgias
-                })
+            # Organizar dados para o template baseado no tipo de filtro
+            if filter_name != 'all':
+                # Dados por unidade para membro específico
+                dados_principais = []
+                for row in cirurgias_unidade:
+                    dados_principais.append({
+                        'nome': row.unidade,
+                        'total': row.total_cirurgias
+                    })
+                titulo_secao = f"📊 Cirurgias de {filter_name} por Unidade"
+            else:
+                # Dados de todos os membros
+                dados_principais = []
+                for row in cirurgias_unidade:
+                    dados_principais.append({
+                        'nome': row.membro,
+                        'total': row.total_cirurgias
+                    })
+                titulo_secao = "👥 Membros da Equipe - Total de Cirurgias"
             
-            # Dados da equipe de Ribeirão Preto
+            # Dados da equipe de Ribeirão Preto (manter compatibilidade)
             dados_equipe_rp = []
             for row in equipe_rp:
                 dados_equipe_rp.append({
                     'membro': row.membro,
                     'total': row.total_cirurgias
                 })
-            
 
-            
             return render_template('controle_dashboard.html', 
-                cirurgias_unidade=dados_unidade,
+                dados_principais=dados_principais,
                 equipe_ribeirao=dados_equipe_rp,
-                unidades_disponiveis=unidades_disponiveis,
-                filter_unit=filter_unit,
+                membros_disponiveis=membros_disponiveis,
+                titulo_secao=titulo_secao,
+                filter_name=filter_name,
                 filter_month=filter_month,
                 filter_year=filter_year,
                 mes_atual=current_month,

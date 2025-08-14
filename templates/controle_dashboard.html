@@ -206,11 +206,11 @@
             <h2>🔍 Filtros</h2>
             <form method="GET" action="{{ url_for('controle_dashboard') }}" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: end;">
                 <div style="flex: 1; min-width: 200px;">
-                    <label for="unit" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Unidade:</label>
-                    <select name="unit" id="unit" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
-                        <option value="all" {% if filter_unit == 'all' %}selected{% endif %}>Todas as Unidades</option>
-                        {% for unidade in unidades_disponiveis %}
-                            <option value="{{ unidade }}" {% if filter_unit == unidade %}selected{% endif %}>{{ unidade }}</option>
+                    <label for="name" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Membro da Equipe:</label>
+                    <select name="name" id="name" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="all" {% if filter_name == 'all' %}selected{% endif %}>Todos os Membros</option>
+                        {% for membro in membros_disponiveis %}
+                            <option value="{{ membro }}" {% if filter_name == membro %}selected{% endif %}>{{ membro }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -240,24 +240,24 @@
         
         <div class="month-info">
             <h3>📅 Relatório de {{ mes_nome or 'Mês Atual' }} {{ ano_atual or '2025' }}</h3>
-            <p>Dados filtrados{% if filter_unit != 'all' %} - Unidade: {{ filter_unit }}{% endif %}</p>
+            <p>Dados filtrados{% if filter_name != 'all' %} - Membro: {{ filter_name }}{% endif %}</p>
         </div>
         
         <div class="dashboard-grid">
-            <!-- Cirurgias por Unidade -->
+            <!-- Seção Principal Dinâmica -->
             <div class="card">
-                <h2>🏥 Cirurgias por Unidade</h2>
-                {% if cirurgias_unidade %}
+                <h2>{{ titulo_secao or '📊 Dados de Cirurgias' }}</h2>
+                {% if dados_principais %}
                     <div class="table-container">
-                        {% for item in cirurgias_unidade %}
+                        {% for item in dados_principais %}
                             <div class="stats-item {% if loop.first %}highlight{% endif %}">
-                                <span class="stats-label">{{ item.unidade }}</span>
+                                <span class="stats-label">{{ item.nome }}</span>
                                 <span class="stats-value">{{ item.total }} cirurgias</span>
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="no-data">Nenhuma cirurgia registrada neste mês</div>
+                    <div class="no-data">Nenhuma cirurgia registrada para os filtros selecionados</div>
                 {% endif %}
             </div>
             
