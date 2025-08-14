@@ -3560,48 +3560,80 @@ def controle_dashboard():
     if not session.get('controle_authenticated'):
         return redirect(url_for('controle_cirurgias'))
     
+    # Obter filtros da URL
+    filter_unit = request.args.get('unit', 'all')
+    filter_month = request.args.get('month', str(datetime.now().month))
+    filter_year = request.args.get('year', str(datetime.now().year))
+    
     try:
-        # Buscar dados de cirurgias por unidade
         with app.app_context():
-            # Cirurgias por unidade (mês atual)
-            current_month = datetime.now().month
-            current_year = datetime.now().year
+            current_month = int(filter_month)
+            current_year = int(filter_year)
             
-            sql_unidade = text("""
-                SELECT unidade, COUNT(*) as total_cirurgias, 
-                       EXTRACT(MONTH FROM data) as mes,
-                       EXTRACT(YEAR FROM data) as ano
+            # Base SQL com filtros opcionais
+            where_conditions = [
+                "EXTRACT(MONTH FROM data) = :month",
+                "EXTRACT(YEAR FROM data) = :year"
+            ]
+            sql_params = {'month': current_month, 'year': current_year}
+            
+            if filter_unit != 'all':
+                where_conditions.append("unidade = :unit")
+                sql_params['unit'] = filter_unit
+            
+            where_clause = " AND ".join(where_conditions)
+            
+            # Cirurgias por unidade
+            sql_unidade = text(f"""
+                SELECT unidade, COUNT(*) as total_cirurgias
                 FROM surgery
-                WHERE EXTRACT(MONTH FROM data) = :month 
-                AND EXTRACT(YEAR FROM data) = :year
-                GROUP BY unidade, EXTRACT(MONTH FROM data), EXTRACT(YEAR FROM data)
+                WHERE {where_clause}
+                GROUP BY unidade
                 ORDER BY total_cirurgias DESC
             """)
             
-            result_unidade = db.session.execute(sql_unidade, {
-                'month': current_month, 
-                'year': current_year
-            })
+            result_unidade = db.session.execute(sql_unidade, sql_params)
             cirurgias_unidade = result_unidade.fetchall()
             
-            # Cirurgias por membro da equipe (mês atual)
-            sql_equipe = text("""
-                SELECT equipe, unidade, COUNT(*) as total_cirurgias,
-                       EXTRACT(MONTH FROM data) as mes,
-                       EXTRACT(YEAR FROM data) as ano
+            # Cirurgias por membro da equipe (agregado por nome, mostrando todas as unidades)
+            sql_equipe = text(f"""
+                SELECT equipe, 
+                       STRING_AGG(DISTINCT unidade, ', ') as unidades,
+                       COUNT(*) as total_cirurgias,
+                       COUNT(DISTINCT unidade) as num_unidades
                 FROM surgery
-                WHERE EXTRACT(MONTH FROM data) = :month 
-                AND EXTRACT(YEAR FROM data) = :year
+                WHERE {where_clause}
                 AND equipe IS NOT NULL AND equipe != ''
-                GROUP BY equipe, unidade, EXTRACT(MONTH FROM data), EXTRACT(YEAR FROM data)
-                ORDER BY total_cirurgias DESC
+                GROUP BY equipe
+                ORDER BY total_cirurgias DESC, equipe ASC
             """)
             
-            result_equipe = db.session.execute(sql_equipe, {
-                'month': current_month, 
-                'year': current_year
-            })
+            result_equipe = db.session.execute(sql_equipe, sql_params)
             cirurgias_equipe = result_equipe.fetchall()
+            
+            # Cirurgias por membro da equipe POR UNIDADE (detalhado)
+            sql_equipe_detalhado = text(f"""
+                SELECT equipe, unidade, COUNT(*) as total_cirurgias
+                FROM surgery
+                WHERE {where_clause}
+                AND equipe IS NOT NULL AND equipe != ''
+                GROUP BY equipe, unidade
+                ORDER BY equipe ASC, total_cirurgias DESC
+            """)
+            
+            result_equipe_detalhado = db.session.execute(sql_equipe_detalhado, sql_params)
+            cirurgias_equipe_detalhado = result_equipe_detalhado.fetchall()
+            
+            # Lista de unidades disponíveis para filtro
+            sql_unidades_disponiveis = text("""
+                SELECT DISTINCT unidade
+                FROM surgery
+                WHERE unidade IS NOT NULL
+                ORDER BY unidade
+            """)
+            
+            result_unidades = db.session.execute(sql_unidades_disponiveis)
+            unidades_disponiveis = [row.unidade for row in result_unidades.fetchall()]
             
             # Dados históricos (últimos 6 meses)
             sql_historico = text("""
@@ -3623,19 +3655,26 @@ def controle_dashboard():
             for row in cirurgias_unidade:
                 dados_unidade.append({
                     'unidade': row.unidade,
-                    'total': row.total_cirurgias,
-                    'mes': row.mes,
-                    'ano': row.ano
+                    'total': row.total_cirurgias
                 })
             
+            # Dados da equipe agregados (sem duplicação)
             dados_equipe = []
             for row in cirurgias_equipe:
                 dados_equipe.append({
                     'equipe': row.equipe,
-                    'unidade': row.unidade,
+                    'unidades': row.unidades,
                     'total': row.total_cirurgias,
-                    'mes': row.mes,
-                    'ano': row.ano
+                    'num_unidades': row.num_unidades
+                })
+            
+            # Dados da equipe detalhados por unidade
+            dados_equipe_detalhado = []
+            for row in cirurgias_equipe_detalhado:
+                dados_equipe_detalhado.append({
+                    'equipe': row.equipe,
+                    'unidade': row.unidade,
+                    'total': row.total_cirurgias
                 })
             
             dados_historico = []
@@ -3650,7 +3689,12 @@ def controle_dashboard():
             return render_template('controle_dashboard.html', 
                 cirurgias_unidade=dados_unidade,
                 cirurgias_equipe=dados_equipe,
+                cirurgias_equipe_detalhado=dados_equipe_detalhado,
                 historico=dados_historico,
+                unidades_disponiveis=unidades_disponiveis,
+                filter_unit=filter_unit,
+                filter_month=filter_month,
+                filter_year=filter_year,
                 mes_atual=current_month,
                 ano_atual=current_year,
                 mes_nome=['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -3662,7 +3706,12 @@ def controle_dashboard():
         return render_template('controle_dashboard.html', 
             cirurgias_unidade=[],
             cirurgias_equipe=[],
+            cirurgias_equipe_detalhado=[],
             historico=[],
+            unidades_disponiveis=[],
+            filter_unit='all',
+            filter_month=str(datetime.now().month),
+            filter_year=str(datetime.now().year),
             error=f'Erro ao carregar dados: {str(e)}'
         )
 
