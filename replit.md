@@ -97,6 +97,15 @@ This is a comprehensive hair surgery management system for Instituto Capilar do 
 
 ```
 Changelog:
+- August 14, 2025. Major database cleanup and surgery control system improvements:
+  - Implemented comprehensive equipe field cleanup across all medical units
+  - Removed 800+ duplicate entries from surgery records database
+  - Created specialized surgery control dashboard with authentication (password: icb@)
+  - Added individual performance tracking for Ribeirão Preto team members:
+    • Aline: 119 surgeries, Ana: 84 surgeries, Natália: 72 surgeries, Lavínia: 40 surgeries
+  - Simplified control dashboard to focus on surgeries by unit with filtering
+  - Resolved data integrity issues affecting São Paulo (283 remaining), Campinas (83), Brasília (20)
+  - Complete data cleanup for Recife, Ribeirão Preto, and Rio de Janeiro units
 - July 16, 2025. Fixed administration system persistence issues:
   - Replaced hardcoded constants with dynamic JSON configuration loading
   - Implemented reload_admin_config() function for real-time updates
