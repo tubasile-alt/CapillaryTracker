@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Cirurgias - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+        
+        .stats-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stats-item.highlight {
+            background: #e8f4f8;
+            border-left-color: #28a745;
+        }
+        
+        .stats-label {
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .stats-value {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        .equipe-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .equipe-info {
+            flex: 1;
+        }
+        
+        .equipe-nome {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .equipe-unidade {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .equipe-cirurgias {
+            font-weight: bold;
+            color: #667eea;
+            background: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 2rem;
+        }
+        
+        .month-info {
+            background: #667eea;
+            color: white;
+            padding: 1rem;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>📊 Controle de Cirurgias ICB</h1>
+            <a href="{{ url_for('controle_logout') }}" class="logout-btn">Sair</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        <div class="month-info">
+            <h3>📅 Relatório de {{ mes_nome or 'Mês Atual' }} {{ ano_atual or '2025' }}</h3>
+            <p>Dados atualizados em tempo real</p>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- Cirurgias por Unidade -->
+            <div class="card">
+                <h2>🏥 Cirurgias por Unidade</h2>
+                {% if cirurgias_unidade %}
+                    <div class="table-container">
+                        {% for item in cirurgias_unidade %}
+                            <div class="stats-item {% if loop.first %}highlight{% endif %}">
+                                <span class="stats-label">{{ item.unidade }}</span>
+                                <span class="stats-value">{{ item.total }} cirurgias</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-data">Nenhuma cirurgia registrada neste mês</div>
+                {% endif %}
+            </div>
+            
+            <!-- Cirurgias por Equipe -->
+            <div class="card">
+                <h2>👥 Performance da Equipe</h2>
+                {% if cirurgias_equipe %}
+                    <div class="table-container">
+                        {% for item in cirurgias_equipe %}
+                            <div class="equipe-item">
+                                <div class="equipe-info">
+                                    <div class="equipe-nome">{{ item.equipe }}</div>
+                                    <div class="equipe-unidade">{{ item.unidade }}</div>
+                                </div>
+                                <div class="equipe-cirurgias">{{ item.total }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-data">Nenhum membro da equipe com cirurgias registradas</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Histórico dos Últimos 6 Meses -->
+        {% if historico %}
+            <div class="card">
+                <h2>📈 Histórico - Últimos 6 Meses</h2>
+                <div class="table-container">
+                    {% set current_month = '' %}
+                    {% for item in historico %}
+                        {% if item.mes_ano != current_month %}
+                            {% set current_month = item.mes_ano %}
+                            <div style="background: #667eea; color: white; padding: 0.5rem; margin: 0.5rem 0; border-radius: 5px; font-weight: bold; text-align: center;">
+                                📅 {{ item.mes_ano }}
+                            </div>
+                        {% endif %}
+                        <div class="equipe-item">
+                            <div class="equipe-info">
+                                <div class="equipe-nome">{{ item.equipe or 'N/A' }}</div>
+                                <div class="equipe-unidade">{{ item.unidade }}</div>
+                            </div>
+                            <div class="equipe-cirurgias">{{ item.total }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Botões de Navegação -->
+        <div style="text-align: center; margin: 2rem 0;">
+            <a href="{{ url_for('dashboard') }}" 
+               style="display: inline-block; background: #667eea; color: white; padding: 0.75rem 1.5rem; border-radius: 5px; text-decoration: none; margin: 0 0.5rem;">
+                📊 Dashboard Principal
+            </a>
+            <a href="{{ url_for('novo_cadastro') }}" 
+               style="display: inline-block; background: #28a745; color: white; padding: 0.75rem 1.5rem; border-radius: 5px; text-decoration: none; margin: 0 0.5rem;">
+                ➕ Novo Cadastro
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        // Auto refresh a cada 5 minutos
+        setTimeout(function() {
+            location.reload();
+        }, 300000);
+        
+        // Mostrar horário de última atualização
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('pt-BR');
+            console.log(`Dashboard atualizado às ${timeString}`);
+        });
+    </script>
+</body>
+</html>

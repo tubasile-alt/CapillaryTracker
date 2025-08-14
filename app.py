@@ -3537,6 +3537,141 @@ def test_backup():
             'message': f'Erro no teste de backup: {str(e)}'
         })
 
+# Controle de Cirurgias - Rotas com autenticação
+@app.route('/controle_cirurgias')
+def controle_cirurgias_login():
+    """Página de login para controle de cirurgias"""
+    return render_template('controle_login.html')
+
+@app.route('/controle_cirurgias_auth', methods=['POST'])
+def controle_cirurgias_auth():
+    """Autenticação para controle de cirurgias"""
+    password = request.form.get('password')
+    if password == 'icb@':
+        session['controle_authenticated'] = True
+        return redirect(url_for('controle_dashboard'))
+    else:
+        flash('Senha incorreta!', 'danger')
+        return redirect(url_for('controle_cirurgias_login'))
+
+@app.route('/controle_dashboard')
+def controle_dashboard():
+    """Dashboard de controle de cirurgias"""
+    if not session.get('controle_authenticated'):
+        return redirect(url_for('controle_cirurgias_login'))
+    
+    try:
+        # Buscar dados de cirurgias por unidade
+        with app.app_context():
+            # Cirurgias por unidade (mês atual)
+            current_month = datetime.now().month
+            current_year = datetime.now().year
+            
+            sql_unidade = text("""
+                SELECT unidade, COUNT(*) as total_cirurgias, 
+                       EXTRACT(MONTH FROM data) as mes,
+                       EXTRACT(YEAR FROM data) as ano
+                FROM surgery
+                WHERE EXTRACT(MONTH FROM data) = :month 
+                AND EXTRACT(YEAR FROM data) = :year
+                GROUP BY unidade, EXTRACT(MONTH FROM data), EXTRACT(YEAR FROM data)
+                ORDER BY total_cirurgias DESC
+            """)
+            
+            result_unidade = db.session.execute(sql_unidade, {
+                'month': current_month, 
+                'year': current_year
+            })
+            cirurgias_unidade = result_unidade.fetchall()
+            
+            # Cirurgias por membro da equipe (mês atual)
+            sql_equipe = text("""
+                SELECT equipe, unidade, COUNT(*) as total_cirurgias,
+                       EXTRACT(MONTH FROM data) as mes,
+                       EXTRACT(YEAR FROM data) as ano
+                FROM surgery
+                WHERE EXTRACT(MONTH FROM data) = :month 
+                AND EXTRACT(YEAR FROM data) = :year
+                AND equipe IS NOT NULL AND equipe != ''
+                GROUP BY equipe, unidade, EXTRACT(MONTH FROM data), EXTRACT(YEAR FROM data)
+                ORDER BY total_cirurgias DESC
+            """)
+            
+            result_equipe = db.session.execute(sql_equipe, {
+                'month': current_month, 
+                'year': current_year
+            })
+            cirurgias_equipe = result_equipe.fetchall()
+            
+            # Dados históricos (últimos 6 meses)
+            sql_historico = text("""
+                SELECT unidade, equipe, COUNT(*) as total_cirurgias,
+                       EXTRACT(MONTH FROM data) as mes,
+                       EXTRACT(YEAR FROM data) as ano,
+                       TO_CHAR(data, 'MM/YYYY') as mes_ano
+                FROM surgery
+                WHERE data >= CURRENT_DATE - INTERVAL '6 months'
+                GROUP BY unidade, equipe, EXTRACT(MONTH FROM data), EXTRACT(YEAR FROM data), TO_CHAR(data, 'MM/YYYY')
+                ORDER BY ano DESC, mes DESC, total_cirurgias DESC
+            """)
+            
+            result_historico = db.session.execute(sql_historico)
+            historico = result_historico.fetchall()
+            
+            # Organizar dados para o template
+            dados_unidade = []
+            for row in cirurgias_unidade:
+                dados_unidade.append({
+                    'unidade': row.unidade,
+                    'total': row.total_cirurgias,
+                    'mes': row.mes,
+                    'ano': row.ano
+                })
+            
+            dados_equipe = []
+            for row in cirurgias_equipe:
+                dados_equipe.append({
+                    'equipe': row.equipe,
+                    'unidade': row.unidade,
+                    'total': row.total_cirurgias,
+                    'mes': row.mes,
+                    'ano': row.ano
+                })
+            
+            dados_historico = []
+            for row in historico:
+                dados_historico.append({
+                    'unidade': row.unidade,
+                    'equipe': row.equipe,
+                    'total': row.total_cirurgias,
+                    'mes_ano': row.mes_ano
+                })
+            
+            return render_template('controle_dashboard.html', 
+                cirurgias_unidade=dados_unidade,
+                cirurgias_equipe=dados_equipe,
+                historico=dados_historico,
+                mes_atual=current_month,
+                ano_atual=current_year,
+                mes_nome=['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                           'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'][current_month]
+            )
+            
+    except Exception as e:
+        logger.error(f"Erro no controle dashboard: {str(e)}")
+        return render_template('controle_dashboard.html', 
+            cirurgias_unidade=[],
+            cirurgias_equipe=[],
+            historico=[],
+            error=f'Erro ao carregar dados: {str(e)}'
+        )
+
+@app.route('/controle_logout')
+def controle_logout():
+    """Logout do controle de cirurgias"""
+    session.pop('controle_authenticated', None)
+    return redirect(url_for('controle_cirurgias_login'))
+
 # Configure Flask app
 app.config['ENV'] = 'production'
 app.config['DEBUG'] = False
