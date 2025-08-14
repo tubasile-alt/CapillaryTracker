@@ -3606,6 +3606,51 @@ def controle_dashboard():
             result_unidades = db.session.execute(sql_unidades_disponiveis)
             unidades_disponiveis = [row.unidade for row in result_unidades.fetchall()]
             
+            # Performance da equipe de Ribeirão Preto
+            sql_equipe_rp = text("""
+                WITH individual_counts AS (
+                  SELECT 
+                    'Ana' as membro,
+                    COUNT(*) as total_cirurgias
+                  FROM surgery 
+                  WHERE unidade = 'Ribeirão Preto' 
+                  AND equipe LIKE '%Ana%'
+                  
+                  UNION ALL
+                  
+                  SELECT 
+                    'Aline' as membro,
+                    COUNT(*) as total_cirurgias
+                  FROM surgery 
+                  WHERE unidade = 'Ribeirão Preto' 
+                  AND equipe LIKE '%Aline%'
+                  
+                  UNION ALL
+                  
+                  SELECT 
+                    'Natália' as membro,
+                    COUNT(*) as total_cirurgias
+                  FROM surgery 
+                  WHERE unidade = 'Ribeirão Preto' 
+                  AND equipe LIKE '%Natália%'
+                  
+                  UNION ALL
+                  
+                  SELECT 
+                    'Lavínia' as membro,
+                    COUNT(*) as total_cirurgias
+                  FROM surgery 
+                  WHERE unidade = 'Ribeirão Preto' 
+                  AND equipe LIKE '%Lavínia%'
+                )
+                SELECT membro, total_cirurgias 
+                FROM individual_counts 
+                ORDER BY total_cirurgias DESC
+            """)
+            
+            result_equipe_rp = db.session.execute(sql_equipe_rp)
+            equipe_rp = result_equipe_rp.fetchall()
+            
             # Organizar dados para o template
             dados_unidade = []
             for row in cirurgias_unidade:
@@ -3614,10 +3659,19 @@ def controle_dashboard():
                     'total': row.total_cirurgias
                 })
             
+            # Dados da equipe de Ribeirão Preto
+            dados_equipe_rp = []
+            for row in equipe_rp:
+                dados_equipe_rp.append({
+                    'membro': row.membro,
+                    'total': row.total_cirurgias
+                })
+            
 
             
             return render_template('controle_dashboard.html', 
                 cirurgias_unidade=dados_unidade,
+                equipe_ribeirao=dados_equipe_rp,
                 unidades_disponiveis=unidades_disponiveis,
                 filter_unit=filter_unit,
                 filter_month=filter_month,
@@ -3632,6 +3686,7 @@ def controle_dashboard():
         logger.error(f"Erro no controle dashboard: {str(e)}")
         return render_template('controle_dashboard.html', 
             cirurgias_unidade=[],
+            equipe_ribeirao=[],
             unidades_disponiveis=[],
             filter_unit='all',
             filter_month=str(datetime.now().month),
