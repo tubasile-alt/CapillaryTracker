@@ -261,85 +261,10 @@
                 {% endif %}
             </div>
             
-            <!-- Performance da Equipe - Resumo -->
-            <div class="card">
-                <h2>👥 Performance da Equipe - Resumo</h2>
-                {% if cirurgias_equipe %}
-                    <div class="table-container">
-                        {% for item in cirurgias_equipe %}
-                            <div class="equipe-item">
-                                <div class="equipe-info">
-                                    <div class="equipe-nome">{{ item.equipe }}</div>
-                                    <div class="equipe-unidade">
-                                        {{ item.unidades }}
-                                        {% if item.num_unidades > 1 %}
-                                            <span style="color: #28a745; font-weight: bold;">({{ item.num_unidades }} unidades)</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="equipe-cirurgias">{{ item.total }}</div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="no-data">Nenhum membro da equipe com cirurgias registradas</div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Performance da Equipe - Detalhado por Unidade -->
-        {% if cirurgias_equipe_detalhado %}
-        <div class="card">
-            <h2>👥 Performance da Equipe - Detalhado por Unidade</h2>
-            <div class="table-container">
-                {% set current_member = '' %}
-                {% for item in cirurgias_equipe_detalhado %}
-                    {% if item.equipe != current_member %}
-                        {% set current_member = item.equipe %}
-                        <div style="background: #667eea; color: white; padding: 0.75rem; margin: 0.5rem 0; border-radius: 5px; font-weight: bold;">
-                            👤 {{ item.equipe }}
-                        </div>
-                    {% endif %}
-                    <div class="equipe-item" style="margin-left: 1rem; border-left: 3px solid #667eea;">
-                        <div class="equipe-info">
-                            <div class="equipe-nome" style="font-size: 0.9rem;">{{ item.unidade }}</div>
-                        </div>
-                        <div class="equipe-cirurgias" style="background: #e8f4f8;">{{ item.total }}</div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-        
-        <div class="dashboard-grid">
-            <!-- Placeholder for other cards -->
         </div>
         </div>
         
-        <!-- Histórico dos Últimos 6 Meses -->
-        {% if historico %}
-            <div class="card">
-                <h2>📈 Histórico - Últimos 6 Meses</h2>
-                <div class="table-container">
-                    {% set current_month = '' %}
-                    {% for item in historico %}
-                        {% if item.mes_ano != current_month %}
-                            {% set current_month = item.mes_ano %}
-                            <div style="background: #667eea; color: white; padding: 0.5rem; margin: 0.5rem 0; border-radius: 5px; font-weight: bold; text-align: center;">
-                                📅 {{ item.mes_ano }}
-                            </div>
-                        {% endif %}
-                        <div class="equipe-item">
-                            <div class="equipe-info">
-                                <div class="equipe-nome">{{ item.equipe or 'N/A' }}</div>
-                                <div class="equipe-unidade">{{ item.unidade }}</div>
-                            </div>
-                            <div class="equipe-cirurgias">{{ item.total }}</div>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        {% endif %}
+
         
         <!-- Botões de Navegação -->
         <div style="text-align: center; margin: 2rem 0;">

@@ -3595,35 +3595,6 @@ def controle_dashboard():
             result_unidade = db.session.execute(sql_unidade, sql_params)
             cirurgias_unidade = result_unidade.fetchall()
             
-            # Cirurgias por membro da equipe (agregado por nome, mostrando todas as unidades)
-            sql_equipe = text(f"""
-                SELECT equipe, 
-                       STRING_AGG(DISTINCT unidade, ', ') as unidades,
-                       COUNT(*) as total_cirurgias,
-                       COUNT(DISTINCT unidade) as num_unidades
-                FROM surgery
-                WHERE {where_clause}
-                AND equipe IS NOT NULL AND equipe != ''
-                GROUP BY equipe
-                ORDER BY total_cirurgias DESC, equipe ASC
-            """)
-            
-            result_equipe = db.session.execute(sql_equipe, sql_params)
-            cirurgias_equipe = result_equipe.fetchall()
-            
-            # Cirurgias por membro da equipe POR UNIDADE (detalhado)
-            sql_equipe_detalhado = text(f"""
-                SELECT equipe, unidade, COUNT(*) as total_cirurgias
-                FROM surgery
-                WHERE {where_clause}
-                AND equipe IS NOT NULL AND equipe != ''
-                GROUP BY equipe, unidade
-                ORDER BY equipe ASC, total_cirurgias DESC
-            """)
-            
-            result_equipe_detalhado = db.session.execute(sql_equipe_detalhado, sql_params)
-            cirurgias_equipe_detalhado = result_equipe_detalhado.fetchall()
-            
             # Lista de unidades disponíveis para filtro
             sql_unidades_disponiveis = text("""
                 SELECT DISTINCT unidade
@@ -3635,21 +3606,6 @@ def controle_dashboard():
             result_unidades = db.session.execute(sql_unidades_disponiveis)
             unidades_disponiveis = [row.unidade for row in result_unidades.fetchall()]
             
-            # Dados históricos (últimos 6 meses)
-            sql_historico = text("""
-                SELECT unidade, equipe, COUNT(*) as total_cirurgias,
-                       EXTRACT(MONTH FROM data) as mes,
-                       EXTRACT(YEAR FROM data) as ano,
-                       TO_CHAR(data, 'MM/YYYY') as mes_ano
-                FROM surgery
-                WHERE data >= CURRENT_DATE - INTERVAL '6 months'
-                GROUP BY unidade, equipe, EXTRACT(MONTH FROM data), EXTRACT(YEAR FROM data), TO_CHAR(data, 'MM/YYYY')
-                ORDER BY ano DESC, mes DESC, total_cirurgias DESC
-            """)
-            
-            result_historico = db.session.execute(sql_historico)
-            historico = result_historico.fetchall()
-            
             # Organizar dados para o template
             dados_unidade = []
             for row in cirurgias_unidade:
@@ -3658,39 +3614,10 @@ def controle_dashboard():
                     'total': row.total_cirurgias
                 })
             
-            # Dados da equipe agregados (sem duplicação)
-            dados_equipe = []
-            for row in cirurgias_equipe:
-                dados_equipe.append({
-                    'equipe': row.equipe,
-                    'unidades': row.unidades,
-                    'total': row.total_cirurgias,
-                    'num_unidades': row.num_unidades
-                })
-            
-            # Dados da equipe detalhados por unidade
-            dados_equipe_detalhado = []
-            for row in cirurgias_equipe_detalhado:
-                dados_equipe_detalhado.append({
-                    'equipe': row.equipe,
-                    'unidade': row.unidade,
-                    'total': row.total_cirurgias
-                })
-            
-            dados_historico = []
-            for row in historico:
-                dados_historico.append({
-                    'unidade': row.unidade,
-                    'equipe': row.equipe,
-                    'total': row.total_cirurgias,
-                    'mes_ano': row.mes_ano
-                })
+
             
             return render_template('controle_dashboard.html', 
                 cirurgias_unidade=dados_unidade,
-                cirurgias_equipe=dados_equipe,
-                cirurgias_equipe_detalhado=dados_equipe_detalhado,
-                historico=dados_historico,
                 unidades_disponiveis=unidades_disponiveis,
                 filter_unit=filter_unit,
                 filter_month=filter_month,
@@ -3705,9 +3632,6 @@ def controle_dashboard():
         logger.error(f"Erro no controle dashboard: {str(e)}")
         return render_template('controle_dashboard.html', 
             cirurgias_unidade=[],
-            cirurgias_equipe=[],
-            cirurgias_equipe_detalhado=[],
-            historico=[],
             unidades_disponiveis=[],
             filter_unit='all',
             filter_month=str(datetime.now().month),
