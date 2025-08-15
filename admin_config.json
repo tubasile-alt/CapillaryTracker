@@ -5,7 +5,8 @@
     "Goiania",
     "Ribeirão Preto",
     "Rio de Janeiro",
-    "São Paulo"
+    "São Paulo",
+    "Uberlândia"
   ],
   "medicos_por_unidade": {
     "Ribeirão Preto": [
@@ -35,7 +36,8 @@
       "Dra. Leticia",
       "Dra. Natalia"
     ],
-    "Goiania": []
+    "Goiania": [],
+    "Uberlândia": []
   },
   "equipe_por_unidade": {
     "Ribeirão Preto": [
@@ -84,6 +86,31 @@
       "Layla Cardoso",
       "Thamara Maciel"
     ],
-    "Goiania": []
+    "Goiania": [],
+    "Uberlândia": [
+      "Aline",
+      "Ana",
+      "Lavinia", 
+      "Natália",
+      "Adriana Almeida",
+      "Ana Paula dos Santos",
+      "Dani Curti",
+      "Eliene Rodrigues",
+      "Gabriela Cruz",
+      "Greice Barbosa",
+      "Jaiza Valentim",
+      "Joyce Eugênia Da Silva",
+      "Josefa Wilma Vieira",
+      "Merielen Venâncio Oliveira",
+      "Rosana Pereira",
+      "Sabrina Crott",
+      "Thaís Paiva",
+      "Thamiris Santos",
+      "Angélica Sousa",
+      "Betânia Almeida",
+      "Dayse Fernandes",
+      "Layla Cardoso",
+      "Thamara Maciel"
+    ]
   }
 }

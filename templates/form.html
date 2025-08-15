@@ -36,12 +36,7 @@
                                 <div id="{{ field.name }}_container" class="checkbox-group">
                                     <p class="select-message">Selecione a unidade primeiro...</p>
                                 </div>
-                                <div class="extra-people-fields">
-                                    <label for="extra_person_1">Técnica Extra 1:</label>
-                                    <input type="text" name="extra_person_1" id="extra_person_1">
-                                    <label for="extra_person_2">Técnica Extra 2:</label>
-                                    <input type="text" name="extra_person_2" id="extra_person_2">
-                                </div>
+
                             {% else %}
                                 <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
                                     <option value="">Selecione a unidade primeiro...</option>
@@ -434,9 +429,27 @@
                 {% endfor %}
             </div>
 
+            <h3>Técnicas Extras</h3>
+            <div class="form-section">
+                {% for field in form.fields[40:42] %}
+                    <div class="form-group">
+                        <label for="{{ field.name }}">
+                            {{ field.label }}
+                            {% if field.required %}*{% endif %}
+                        </label>
+
+                        {% if field.type == 'select_all_members' %}
+                            <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
+                                <option value="">Carregando membros...</option>
+                            </select>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
             <h3>Comentários e Finalização</h3>
             <div class="form-section">
-                {% for field in form.fields[40:] %}
+                {% for field in form.fields[42:] %}
                     <div class="form-group">
                         <label for="{{ field.name }}">
                             {{ field.label }}
@@ -886,14 +899,14 @@
         const selectedEquipe = Array.from(checkboxes).map(checkbox => checkbox.value);
         
         // Add extra team members
-        const extraPerson1 = document.getElementById('extra_person_1').value;
-        const extraPerson2 = document.getElementById('extra_person_2').value;
+        const extraPerson1 = document.getElementById('extra_person_1');
+        const extraPerson2 = document.getElementById('extra_person_2');
         
-        if (extraPerson1) {
-            selectedEquipe.push(`Técnica Extra 1: ${extraPerson1}`);
+        if (extraPerson1 && extraPerson1.value) {
+            selectedEquipe.push(`Técnica Extra 1: ${extraPerson1.value}`);
         }
-        if (extraPerson2) {
-            selectedEquipe.push(`Técnica Extra 2: ${extraPerson2}`);
+        if (extraPerson2 && extraPerson2.value) {
+            selectedEquipe.push(`Técnica Extra 2: ${extraPerson2.value}`);
         }
         
         if (selectedEquipe.length > 0) {
@@ -912,6 +925,38 @@
         // Submit the form
         console.log('Submitting form with all data...');
         document.getElementById('cadastroForm').submit();
+    }
+
+    // Função para carregar todos os membros das equipes nos campos Técnica Extra
+    function carregarMembrosEquipeParaTecnicaExtra() {
+        fetch('/get_all_team_members')
+            .then(response => response.json())
+            .then(data => {
+                console.log("Todos os membros carregados:", data);
+                
+                // Atualizar ambos os campos de Técnica Extra
+                ['extra_person_1', 'extra_person_2'].forEach(fieldId => {
+                    const select = document.getElementById(fieldId);
+                    if (select) {
+                        select.innerHTML = '<option value="">Selecione um membro...</option>';
+                        data.membros.forEach(membro => {
+                            const option = document.createElement('option');
+                            option.value = membro;
+                            option.textContent = membro;
+                            select.appendChild(option);
+                        });
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar todos os membros:', error);
+                ['extra_person_1', 'extra_person_2'].forEach(fieldId => {
+                    const select = document.getElementById(fieldId);
+                    if (select) {
+                        select.innerHTML = '<option value="">Erro ao carregar membros</option>';
+                    }
+                });
+            });
     }
 
     // Inicializar quando a página carregar
@@ -957,6 +1002,9 @@
         if (bloqueioSelect) {
             toggleBloqueioSeringas(bloqueioSelect.value);
         }
+        
+        // Carregar membros para os campos de Técnica Extra
+        carregarMembrosEquipeParaTecnicaExtra();
     });
 </script>
 {% endblock %}

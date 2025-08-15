@@ -197,6 +197,9 @@ class Surgery(db.Model):
     pernas_comentarios = db.Column(db.Text, default='')
     tecnica = db.Column(db.String(255))
     solucao_frente = db.Column(db.Integer)
+    # Campos para técnicas extras
+    extra_person_1 = db.Column(db.String(255))
+    extra_person_2 = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class UnitProgress(db.Model):
@@ -1483,6 +1486,10 @@ def novo_cadastro():
              'options': ['Sim', 'Não']},
             {'name': 'antecedentes', 'label': 'Antecedentes Pessoais', 'type': 'textarea', 'required': False},
 
+            # Técnicas Extras
+            {'name': 'extra_person_1', 'label': 'Técnica Extra 1', 'type': 'select_all_members', 'required': False},
+            {'name': 'extra_person_2', 'label': 'Técnica Extra 2', 'type': 'select_all_members', 'required': False},
+            
             # Comentários e Finalização
             {'name': 'comentarios', 'label': 'Comentários', 'type': 'textarea', 'required': False}
         ]
@@ -1608,6 +1615,25 @@ def get_equipe(unidade):
     # Recarregar configurações para garantir que estão atualizadas
     reload_admin_config()
     return {'equipe': EQUIPE_POR_UNIDADE.get(unidade, [])}
+
+@app.route('/get_all_team_members')
+def get_all_team_members():
+    """Retorna todos os membros das equipes de todas as unidades para os campos Técnica Extra"""
+    logger.info("Retrieving all team members for Técnica Extra fields")
+    # Recarregar configurações para garantir que estão atualizadas
+    reload_admin_config()
+    
+    # Coletar todos os membros de todas as equipes
+    all_members = []
+    for unidade, membros in EQUIPE_POR_UNIDADE.items():
+        for membro in membros:
+            if membro not in all_members:  # Evitar duplicatas
+                all_members.append(membro)
+    
+    # Ordenar alfabeticamente
+    all_members.sort()
+    
+    return {'membros': all_members}
 
 def process_dashboard_data(df):
     """Process dataframe into dashboard-ready data"""
