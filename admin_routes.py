@@ -55,10 +55,15 @@ def save_config(config):
 
 def update_app_py(config):
     """Atualiza o arquivo app.py com as novas configurações"""
-    # Não precisamos mais atualizar o app.py diretamente
-    # As configurações são carregadas dinamicamente do arquivo JSON
-    logger.info("Configurações salvas no arquivo JSON. App.py carregará automaticamente.")
-    return True
+    try:
+        # Importar a função de recarregamento do app.py
+        from app import reload_admin_config
+        reload_admin_config()
+        logger.info("Configurações recarregadas no app.py com sucesso.")
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao recarregar configurações no app.py: {e}")
+        return False
 
 # Decorator para verificar se o usuário está autenticado como administrador
 def admin_required(func):
