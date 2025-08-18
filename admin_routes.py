@@ -48,8 +48,29 @@ def load_config():
         }
     }
 
+def sync_uberlandia_teams(config):
+    """Sincroniza automaticamente a equipe de Uberlândia com São Paulo, Goiânia, Ribeirão Preto e Brasília"""
+    source_units = ["São Paulo", "Goiania", "Ribeirão Preto", "Brasília"]
+    uberlandia_team = []
+    
+    for unit in source_units:
+        if unit in config['equipe_por_unidade']:
+            uberlandia_team.extend(config['equipe_por_unidade'][unit])
+    
+    # Remover duplicatas e ordenar
+    uberlandia_team = sorted(list(set(uberlandia_team)))
+    
+    # Atualizar Uberlândia
+    config['equipe_por_unidade']['Uberlândia'] = uberlandia_team
+    
+    print(f"✅ Uberlândia sincronizada com {len(uberlandia_team)} membros das equipes de: {', '.join(source_units)}")
+    return config
+
 def save_config(config):
     """Salva a configuração de médicos e equipe"""
+    # Sempre sincronizar Uberlândia antes de salvar
+    config = sync_uberlandia_teams(config)
+    
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
 

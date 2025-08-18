@@ -97,6 +97,13 @@ This is a comprehensive hair surgery management system for Instituto Capilar do 
 
 ```
 Changelog:
+- August 18, 2025. Implemented automatic team synchronization for Uberlândia unit:
+  - Created sync_uberlandia_teams() function to automatically combine teams from São Paulo, Goiânia, Ribeirão Preto, and Brasília
+  - Any changes to team members in source units automatically updates Uberlândia
+  - Uberlândia now maintains 23 combined team members from all source units
+  - Added extra_person_1 and extra_person_2 database columns for Técnica Extra fields
+  - Implemented /get_all_team_members API endpoint to populate Técnica Extra dropdowns with all 36 team members
+  - Fixed internal server errors and added HTML form fields for Técnica Extra functionality
 - August 14, 2025. Major database cleanup and surgery control system improvements:
   - Implemented comprehensive equipe field cleanup across all medical units
   - Removed 800+ duplicate entries from surgery records database
