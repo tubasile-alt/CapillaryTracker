@@ -19,6 +19,10 @@
             <div class="stat-value" id="taxa-necrose">--</div>
         </div>
         <div class="stat-card">
+            <div class="stat-title">Casos com Safira</div>
+            <div class="stat-value" id="casos-safira">--</div>
+        </div>
+        <div class="stat-card">
             <div class="stat-title">Média Densidade Sketch</div>
             <div class="stat-value" id="media-densidade">--</div>
         </div>
@@ -607,6 +611,7 @@ function updateStatistics() {
             document.getElementById('total-casos').textContent = data.total_surgeries || '--';
             document.getElementById('total-necroses').textContent = data.total_necroses || '--';
             document.getElementById('taxa-necrose').textContent = data.necrose_rate || '--';
+            document.getElementById('casos-safira').textContent = data.metrics?.casos_safira || '--';
             document.getElementById('media-densidade').textContent = data.metrics?.media_densidade_sketch ? data.metrics.media_densidade_sketch.toFixed(1) : '--';
             document.getElementById('media-solucao-frente').textContent = data.metrics?.media_solucao_frente ? data.metrics.media_solucao_frente.toFixed(1) : '--';
             document.getElementById('media-infiltracao').textContent = data.metrics?.media_infiltracao ? data.metrics.media_infiltracao.toFixed(1) : '--';
@@ -658,7 +663,7 @@ function displayUnitSummary(statsByUnit) {
                     <div class="unit-stat-label">Casos Moderados</div>
                 </div>
                 <div class="unit-stat-item">
-                    <span class="unit-stat-value">${stats.tamanho_medio ? stats.tamanho_medio.toFixed(1) + ' cm' : 'N/A'}</span>
+                    <span class="unit-stat-value">${stats.tamanho_medio ? stats.tamanho_medio.toFixed(1) + ' cm' : '—'}</span>
                     <div class="unit-stat-label">Tamanho Médio</div>
                 </div>
             </div>

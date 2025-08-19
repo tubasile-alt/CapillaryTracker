@@ -2447,6 +2447,7 @@ def necrose_summary():
             sangramento_values = []
             infiltracao_values = []
             transamin_count = 0
+            safira_count = 0
             
             for necrose, surgery in necroses_with_surgery:
                 # Densidade Sketch
@@ -2461,18 +2462,35 @@ def necrose_summary():
                 
                 # Sangramento (converter string para número)
                 sangramento = getattr(surgery, 'sangramento', None)
-                if sangramento and sangramento.isdigit():
-                    sangramento_values.append(int(sangramento))
+                if sangramento:
+                    try:
+                        if isinstance(sangramento, str) and sangramento.isdigit():
+                            sangramento_values.append(int(sangramento))
+                        elif isinstance(sangramento, (int, float)) and sangramento > 0:
+                            sangramento_values.append(sangramento)
+                    except (ValueError, TypeError):
+                        pass
                 
                 # Infiltração (converter string para número)
                 infiltracao = getattr(surgery, 'infiltracao', None)
-                if infiltracao and infiltracao.isdigit():
-                    infiltracao_values.append(int(infiltracao))
+                if infiltracao:
+                    try:
+                        if isinstance(infiltracao, str) and infiltracao.isdigit():
+                            infiltracao_values.append(int(infiltracao))
+                        elif isinstance(infiltracao, (int, float)) and infiltracao > 0:
+                            infiltracao_values.append(infiltracao)
+                    except (ValueError, TypeError):
+                        pass
                 
                 # Contar casos com Transamin (assumindo que está no campo tadalafila)
                 tadalafila = getattr(surgery, 'tadalafila', None)
                 if tadalafila and ('sim' in tadalafila.lower() if tadalafila else False):
                     transamin_count += 1
+                
+                # Contar casos com Safira
+                safira = getattr(surgery, 'safira', None)
+                if safira and ('sim' in safira.lower() if safira else False):
+                    safira_count += 1
             
             # Calcular médias
             media_densidade = round(sum(densidade_values) / len(densidade_values), 1) if densidade_values else 0
@@ -2492,7 +2510,8 @@ def necrose_summary():
                     'media_solucao_frente': media_solucao,
                     'media_sangramento': media_sangramento,
                     'media_infiltracao': media_infiltracao,
-                    'casos_transamin': transamin_count
+                    'casos_transamin': transamin_count,
+                    'casos_safira': safira_count
                 }
             })
     except Exception as e:
@@ -2761,7 +2780,7 @@ def api_necrose_analise_data():
                 'sangramento': surgery.sangramento,
                 'tempo_cirurgia': surgery.tempo_cirurgia,
                 'sedacao': getattr(surgery, 'sedacao', None),
-                'densidade_sketch': getattr(surgery, 'densidade_scketh', None),
+                'densidade_sketch': getattr(surgery, 'densidade_scketh', None) if hasattr(surgery, 'densidade_scketh') else None,
                 'safira': getattr(surgery, 'safira', False),
                 'total_foliculos': getattr(surgery, 'total_foliculos', None),
                 'tadalafila': surgery.tadalafila,
@@ -2805,6 +2824,8 @@ def api_necrose_analise_data():
             tamanho_total = sum(t for t in tamanhos if t is not None)
             if tamanho_total > 0:
                 stats_by_unit[unit]['total_tamanhos'].append(tamanho_total)
+            
+
         
         # Calcular tamanho médio para cada unidade
         for unit_stats in stats_by_unit.values():
