@@ -36,8 +36,13 @@
       "Dra. Leticia",
       "Dra. Natalia"
     ],
-    "Goiania": [],
-    "Uberlândia": []
+    "Goiania": [
+      "Dra. Debora",
+      "Dra. Francyelle"
+    ],
+    "Uberlândia": [
+      "Dr. Tiago"
+    ]
   },
   "equipe_por_unidade": {
     "Ribeirão Preto": [

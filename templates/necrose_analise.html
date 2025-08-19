@@ -522,15 +522,31 @@ function displayAnalysisCards(necroses) {
                     <div class="metrics-grid">
                         <div class="metric-item">
                             <div class="metric-label">Infiltração</div>
-                            <div class="metric-value">${necrose.infiltracao ? necrose.infiltracao + ' seringas' : '—'}</div>
+                            <div class="metric-value">${necrose.infiltracao ? necrose.infiltracao + '/3' : '—'}</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-label">Sangramento</div>
-                            <div class="metric-value">${necrose.sangramento ? necrose.sangramento + '/10' : '—'}</div>
+                            <div class="metric-value">${necrose.sangramento ? necrose.sangramento + '/3' : '—'}</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-label">Tempo</div>
                             <div class="metric-value">${necrose.tempo_cirurgia ? necrose.tempo_cirurgia + 'h' : '—'}</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Sedação</div>
+                            <div class="metric-value">${necrose.sedacao ? necrose.sedacao + '/3' : '—'}</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Densidade Sketch</div>
+                            <div class="metric-value">${necrose.densidade_sketch || '—'}</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Safira</div>
+                            <div class="metric-value">${necrose.safira ? 'Sim' : 'Não'}</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Total Folículos</div>
+                            <div class="metric-value">${necrose.total_foliculos || '—'}</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-label">Tadalafila</div>
