@@ -516,30 +516,33 @@ function displayAnalysisCards(necroses) {
                 
                 <div class="surgical-metrics">
                     <h4>📊 Métricas Cirúrgicas</h4>
+                    <div class="metrics-note">
+                        ${necrose.infiltracao || necrose.sangramento || necrose.tadalafila || necrose.tecnica || necrose.solucao_frente ? '' : '<small style="color: #6c757d;">⚠️ Dados cirúrgicos não disponíveis para este caso</small>'}
+                    </div>
                     <div class="metrics-grid">
                         <div class="metric-item">
                             <div class="metric-label">Infiltração</div>
-                            <div class="metric-value">${necrose.infiltracao || 'N/A'}</div>
+                            <div class="metric-value">${necrose.infiltracao ? necrose.infiltracao + ' seringas' : '—'}</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-label">Sangramento</div>
-                            <div class="metric-value">${necrose.sangramento || 'N/A'}</div>
+                            <div class="metric-value">${necrose.sangramento ? necrose.sangramento + '/10' : '—'}</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-label">Tempo</div>
-                            <div class="metric-value">${necrose.tempo_cirurgia || 'N/A'}h</div>
+                            <div class="metric-value">${necrose.tempo_cirurgia ? necrose.tempo_cirurgia + 'h' : '—'}</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-label">Tadalafila</div>
-                            <div class="metric-value">${necrose.tadalafila || 'N/A'}</div>
+                            <div class="metric-value">${necrose.tadalafila || '—'}</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-label">Técnica</div>
-                            <div class="metric-value">${necrose.tecnica || 'N/A'}</div>
+                            <div class="metric-value">${necrose.tecnica || '—'}</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-label">Solução Frente</div>
-                            <div class="metric-value">${necrose.solucao_frente || 'N/A'}</div>
+                            <div class="metric-value">${necrose.solucao_frente ? necrose.solucao_frente + ' ml' : '—'}</div>
                         </div>
                     </div>
                 </div>
