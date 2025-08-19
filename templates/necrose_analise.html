@@ -11,7 +11,7 @@
             <div class="stat-value" id="total-casos">--</div>
         </div>
         <div class="stat-card">
-            <div class="stat-title">Média Densidade 1ª Faixa</div>
+            <div class="stat-title">Média Densidade Sketch</div>
             <div class="stat-value" id="media-densidade">--</div>
         </div>
         <div class="stat-card">
@@ -597,12 +597,12 @@ function updateStatistics() {
         .then(response => response.json())
         .then(data => {
             document.getElementById('total-casos').textContent = data.total_surgeries || '--';
-            document.getElementById('media-densidade').textContent = data.avg_densidade ? data.avg_densidade.toFixed(1) : '--';
-            document.getElementById('media-solucao-frente').textContent = data.avg_solucao_frente ? data.avg_solucao_frente.toFixed(1) : '--';
-            document.getElementById('media-infiltracao').textContent = data.avg_infiltracao ? data.avg_infiltracao.toFixed(1) : '--';
-            document.getElementById('media-sangramento').textContent = data.avg_sangramento ? data.avg_sangramento.toFixed(1) : '--';
-            document.getElementById('casos-transamin').textContent = data.transamin_count || '--';
-            document.getElementById('casos-tadalafil').textContent = data.tadalafil_count || '--';
+            document.getElementById('media-densidade').textContent = data.metrics?.media_densidade_sketch ? data.metrics.media_densidade_sketch.toFixed(1) : '--';
+            document.getElementById('media-solucao-frente').textContent = data.metrics?.media_solucao_frente ? data.metrics.media_solucao_frente.toFixed(1) : '--';
+            document.getElementById('media-infiltracao').textContent = data.metrics?.media_infiltracao ? data.metrics.media_infiltracao.toFixed(1) : '--';
+            document.getElementById('media-sangramento').textContent = data.metrics?.media_sangramento ? data.metrics.media_sangramento.toFixed(1) : '--';
+            document.getElementById('casos-transamin').textContent = data.metrics?.casos_transamin || '--';
+            document.getElementById('casos-tadalafil').textContent = data.metrics?.casos_transamin || '--';
         })
         .catch(error => {
             console.error('Erro ao carregar estatísticas:', error);

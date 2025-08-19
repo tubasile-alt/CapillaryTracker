@@ -2438,13 +2438,62 @@ def necrose_summary():
                         'rate': f"{unit_rate:.1f}%"
                     }
 
+            # Calcular médias das métricas cirúrgicas para casos de necrose
+            necroses_with_surgery = db.session.query(Necrose, Surgery).join(Surgery).filter(Necrose.tem_necrose == True).all()
+            
+            # Coletar valores para cálculo de médias
+            densidade_values = []
+            solucao_values = []
+            sangramento_values = []
+            infiltracao_values = []
+            transamin_count = 0
+            
+            for necrose, surgery in necroses_with_surgery:
+                # Densidade Sketch
+                densidade = getattr(surgery, 'densidade_scketh', None)
+                if densidade and densidade > 0:
+                    densidade_values.append(densidade)
+                
+                # Solução Frente
+                solucao = getattr(surgery, 'solucao_frente', None)
+                if solucao and solucao > 0:
+                    solucao_values.append(solucao)
+                
+                # Sangramento (converter string para número)
+                sangramento = getattr(surgery, 'sangramento', None)
+                if sangramento and sangramento.isdigit():
+                    sangramento_values.append(int(sangramento))
+                
+                # Infiltração (converter string para número)
+                infiltracao = getattr(surgery, 'infiltracao', None)
+                if infiltracao and infiltracao.isdigit():
+                    infiltracao_values.append(int(infiltracao))
+                
+                # Contar casos com Transamin (assumindo que está no campo tadalafila)
+                tadalafila = getattr(surgery, 'tadalafila', None)
+                if tadalafila and ('sim' in tadalafila.lower() if tadalafila else False):
+                    transamin_count += 1
+            
+            # Calcular médias
+            media_densidade = round(sum(densidade_values) / len(densidade_values), 1) if densidade_values else 0
+            media_solucao = round(sum(solucao_values) / len(solucao_values), 1) if solucao_values else 0
+            media_sangramento = round(sum(sangramento_values) / len(sangramento_values), 1) if sangramento_values else 0
+            media_infiltracao = round(sum(infiltracao_values) / len(infiltracao_values), 1) if infiltracao_values else 0
+
             logger.info(f"Necrose summary: {total_surgeries} surgeries, {total_necroses} necroses, rate: {necrose_rate}")
             
             return jsonify({
                 'total_surgeries': total_surgeries,
                 'total_necroses': total_necroses,
                 'necrose_rate': necrose_rate,
-                'by_unit': unit_data
+                'by_unit': unit_data,
+                'metrics': {
+                    'media_densidade_sketch': media_densidade,
+                    'media_solucao_frente': media_solucao,
+                    'media_sangramento': media_sangramento,
+                    'media_infiltracao': media_infiltracao,
+                    'casos_transamin': transamin_count
+                }
             })
     except Exception as e:
         logger.error(f"Error getting necrose summary: {str(e)}\n{traceback.format_exc()}")
