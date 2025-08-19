@@ -149,7 +149,7 @@
 
 .card-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: between;
     align-items: center;
     margin-bottom: 15px;
     padding-bottom: 10px;
@@ -268,11 +268,6 @@
     color: white;
 }
 
-.btn-success {
-    background: #28a745;
-    color: white;
-}
-
 .btn:hover {
     opacity: 0.9;
     transform: translateY(-1px);
@@ -326,6 +321,7 @@
     border: 2px solid #dee2e6;
 }
 
+/* Thumbnails de fotos */
 .photo-thumbnails {
     display: flex;
     gap: 8px;
@@ -348,6 +344,7 @@
     transform: scale(1.05);
 }
 
+/* Modal para popup das fotos */
 .photo-modal {
     display: none;
     position: fixed;
@@ -387,6 +384,7 @@
     opacity: 0.7;
 }
 
+/* Cards de resumo por unidade */
 .unit-summary-section {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -448,6 +446,8 @@
 </style>
 
 <script>
+
+
 function displayAnalysisCards(necroses) {
     const cardsContainer = document.getElementById('analysis-cards');
     
@@ -457,6 +457,7 @@ function displayAnalysisCards(necroses) {
     }
     
     const cardsHTML = necroses.map(necrose => {
+        // Criar thumbnails das fotos
         let photosHTML = '';
         if (necrose.photos && necrose.photos.length > 0) {
             photosHTML = `
@@ -478,6 +479,7 @@ function displayAnalysisCards(necroses) {
             <div class="necrose-card">
                 <div class="card-header">
                     <div style="display: flex; align-items: center;">
+                        <img src="/static/img/user-icon.svg" alt="Paciente" class="patient-photo">
                         <div class="patient-name">${necrose.paciente_nome}</div>
                     </div>
                     <div class="necrose-grade grade-${necrose.grau_necrose?.toLowerCase() || 'leve'}">
@@ -550,12 +552,15 @@ function displayAnalysisCards(necroses) {
     cardsContainer.innerHTML = cardsHTML;
 }
 
+// Função principal para carregar dados de análise
 function loadAnalysisData() {
     const cardsContainer = document.getElementById('analysis-cards');
     cardsContainer.innerHTML = '<div class="loading-message">Carregando dados...</div>';
     
+    // Carregar dados estatísticos
     updateStatistics();
     
+    // Carregar cards de análise
     fetch('/api/necrose_analise_data')
         .then(response => response.json())
         .then(data => {
@@ -573,6 +578,7 @@ function loadAnalysisData() {
         });
 }
 
+// Função para atualizar estatísticas
 function updateStatistics() {
     fetch('/necrose_summary')
         .then(response => response.json())
@@ -590,6 +596,7 @@ function updateStatistics() {
         });
 }
 
+// Função para popular filtros
 function populateFilters(units) {
     const unitSelect = document.getElementById('filter-unit');
     unitSelect.innerHTML = '<option value="">Todas as Unidades</option>';
@@ -604,6 +611,7 @@ function populateFilters(units) {
     }
 }
 
+// Função para exibir resumo por unidade
 function displayUnitSummary(statsByUnit) {
     const container = document.getElementById('unit-summary-cards');
     
@@ -639,6 +647,7 @@ function displayUnitSummary(statsByUnit) {
     container.innerHTML = summaryHTML;
 }
 
+// Função para aplicar filtros
 function applyFilters() {
     const unit = document.getElementById('filter-unit').value;
     const month = document.getElementById('filter-month').value;
@@ -674,6 +683,7 @@ function applyFilters() {
         });
 }
 
+// Função para exportar dados
 function exportData() {
     const unit = document.getElementById('filter-unit').value;
     const month = document.getElementById('filter-month').value;
@@ -693,7 +703,9 @@ function exportData() {
     window.open(url, '_blank');
 }
 
+// Função para abrir modal de foto
 function openPhotoModal(imagePath, description) {
+    // Criar modal se não existir
     let modal = document.getElementById('photo-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -707,6 +719,7 @@ function openPhotoModal(imagePath, description) {
         `;
         document.body.appendChild(modal);
         
+        // Adicionar evento de fechar
         modal.querySelector('.close-modal').onclick = function() {
             modal.style.display = 'none';
         };
@@ -718,14 +731,359 @@ function openPhotoModal(imagePath, description) {
         };
     }
     
+    // Exibir imagem no modal
     const modalImage = document.getElementById('modal-image');
     modalImage.src = imagePath;
     modalImage.alt = description;
     modal.style.display = 'block';
 }
 
+// Inicializar quando a página carregar
 document.addEventListener('DOMContentLoaded', function() {
     loadAnalysisData();
 });
 </script>
+{% endblock %}item" style="grid-column: 1 / -1;">
+                    <span class="info-label">🎯 Faixas Acometidas:</span>
+                    <span class="info-value">${necrose.faixas_acometidas}</span>
+                </div>
+            </div>
+            
+            <div class="surgical-metrics">
+                <h4>📊 Métricas Cirúrgicas</h4>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-label">Seringas</div>
+                        <div class="metric-value">${necrose.infiltracao || 'N/A'}</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Sangramento</div>
+                        <div class="metric-value">${necrose.sangramento || 'N/A'}</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Tempo (horas)</div>
+                        <div class="metric-value">${necrose.tempo_cirurgia || 'N/A'}</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Tadalafila</div>
+                        <div class="metric-value">${necrose.tadalafila || 'N/A'}</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Solução Frente</div>
+                        <div class="metric-value">${necrose.solucao_frente || 'N/A'}</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Técnica</div>
+                        <div class="metric-value">${necrose.tecnica || 'N/A'}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    cardsContainer.innerHTML = cardsHTML;
+}
+
+// Função para abrir modal de foto
+function openPhotoModal(imagePath, description) {
+    // Criar modal se não existir
+    let modal = document.getElementById('photo-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'photo-modal';
+        modal.className = 'photo-modal';
+        modal.innerHTML = `
+            <div class="photo-modal-content">
+                <span class="close-modal" onclick="closePhotoModal()">&times;</span>
+                <img id="modal-image" class="modal-image" src="" alt="">
+                <div id="modal-description" style="color: white; text-align: center; margin-top: 10px; font-size: 16px;"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Fechar modal ao clicar fora da imagem
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closePhotoModal();
+            }
+        });
+    }
+    
+    // Atualizar imagem e descrição
+    document.getElementById('modal-image').src = imagePath;
+    document.getElementById('modal-description').textContent = description;
+    modal.style.display = 'block';
+    
+    // Fechar com tecla ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closePhotoModal();
+        }
+    });
+}
+
+// Função para fechar modal de foto
+function closePhotoModal() {
+    const modal = document.getElementById('photo-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Função para exibir cards de resumo por unidade
+function displayUnitSummaryCards(statsByUnit, allUnits) {
+    const summaryContainer = document.getElementById('unit-summary-cards');
+    
+    if (!statsByUnit || Object.keys(statsByUnit).length === 0) {
+        summaryContainer.innerHTML = '<div class="loading-message">Nenhum dado disponível por unidade</div>';
+        return;
+    }
+    
+    // Incluir unidades sem dados também
+    const unitsToShow = allUnits || Object.keys(statsByUnit);
+    
+    const cardsHTML = unitsToShow.map(unit => {
+        const stats = statsByUnit[unit] || {
+            total_casos: 0,
+            casos_leves: 0,
+            casos_moderados: 0,
+            casos_severos: 0,
+            tamanho_medio: 0
+        };
+        
+        const gradientClass = stats.total_casos > 0 
+            ? (stats.casos_severos > 0 ? 'gradient-red' : 'gradient-green')
+            : 'gradient-gray';
+        
+        return `
+            <div class="unit-summary-card ${gradientClass}" onclick="filterByUnit('${unit}')">
+                <div class="unit-title">📍 ${unit}</div>
+                <div class="unit-stats">
+                    <div class="unit-stat-item">
+                        <span class="unit-stat-value">${stats.total_casos}</span>
+                        <div class="unit-stat-label">Total de Casos</div>
+                    </div>
+                    <div class="unit-stat-item">
+                        <span class="unit-stat-value">${stats.casos_severos}</span>
+                        <div class="unit-stat-label">Casos Severos</div>
+                    </div>
+                    <div class="unit-stat-item">
+                        <span class="unit-stat-value">${stats.tamanho_medio}</span>
+                        <div class="unit-stat-label">Tamanho Médio (cm)</div>
+                    </div>
+                    <div class="unit-stat-item">
+                        <span class="unit-stat-value">${stats.casos_leves}</span>
+                        <div class="unit-stat-label">Casos Leves</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    summaryContainer.innerHTML = cardsHTML;
+}
+
+// Função para filtrar por unidade específica
+function filterByUnit(unit) {
+    const unitFilter = document.getElementById('filter-unit');
+    unitFilter.value = unit;
+    applyFilters();
+}
+
+function updateStats(necroses, selectedUnit) {
+    // Total de casos
+    document.getElementById('total-casos').textContent = necroses.length;
+    
+    // Unidade selecionada
+    document.getElementById('unidade-selecionada').textContent = selectedUnit || 'Todas';
+    
+    // Casos severos
+    const casesSeveros = necroses.filter(necrose => 
+        necrose.grau_necrose && necrose.grau_necrose.toLowerCase().includes('severo')
+    ).length;
+    document.getElementById('casos-severos').textContent = casesSeveros;
+    
+    // Tamanho médio
+    const tamanhos = necroses.map(necrose => necrose.tamanho_total).filter(t => t > 0);
+    const tamanhoMedio = tamanhos.length > 0 
+        ? (tamanhos.reduce((a, b) => a + b, 0) / tamanhos.length).toFixed(2)
+        : '0.00';
+    document.getElementById('tamanho-medio').textContent = `${tamanhoMedio} cm`;
+}
+
+let allNecroses = []; // Armazenar todos os dados para filtrar
+let allStatsByUnit = {}; // Armazenar estatísticas por unidade
+let allUnits = []; // Armazenar todas as unidades
+
+function loadAnalysisData() {
+    const cardsContainer = document.getElementById('analysis-cards');
+    const summaryContainer = document.getElementById('unit-summary-cards');
+    
+    cardsContainer.innerHTML = '<div class="loading-message">Carregando dados...</div>';
+    summaryContainer.innerHTML = '<div class="loading-message">Carregando resumo...</div>';
+    
+    // Carregar dados de análise e estatísticas em paralelo
+    Promise.all([
+        fetch('/api/necrose_analise_data').then(response => response.json()),
+        fetch('/api/necrose_statistics').then(response => response.json())
+    ])
+    .then(([analysisData, statisticsData]) => {
+        if (analysisData.success) {
+            allNecroses = analysisData.data;
+            allStatsByUnit = analysisData.stats_by_unit;
+            allUnits = analysisData.all_units;
+            
+            // Atualizar filtro de unidades
+            updateUnitFilter();
+            
+            // Exibir cards de resumo por unidade
+            displayUnitSummaryCards(allStatsByUnit, allUnits);
+            
+            // Exibir cards de análise
+            displayAnalysisCards(allNecroses);
+            updateStats(allNecroses);
+        } else {
+            cardsContainer.innerHTML = '<div class="loading-message">Erro ao carregar dados</div>';
+            summaryContainer.innerHTML = '';
+            console.error('Erro na API de análise:', analysisData.error);
+        }
+        
+        // Atualizar cartões de estatísticas específicas
+        if (statisticsData.success) {
+            updateStatisticsCards(statisticsData.statistics);
+        } else {
+            console.error('Erro na API de estatísticas:', statisticsData.error);
+        }
+    })
+    .catch(error => {
+        cardsContainer.innerHTML = '<div class="loading-message">Erro de conexão</div>';
+        summaryContainer.innerHTML = '';
+        console.error('Erro:', error);
+    });
+}
+
+function updateStatisticsCards(stats) {
+    // Atualizar os cartões com os dados específicos solicitados
+    document.getElementById('total-casos').textContent = stats.total_casos || '--';
+    document.getElementById('media-densidade').textContent = stats.media_densidade_primeira_faixa || '--';
+    document.getElementById('media-solucao-frente').textContent = stats.media_solucao_frente || '--';
+    document.getElementById('media-infiltracao').textContent = stats.media_infiltracao || '--';
+    document.getElementById('media-sangramento').textContent = stats.media_sangramento || '--';
+    document.getElementById('casos-transamin').textContent = stats.casos_com_transamin || '--';
+    document.getElementById('casos-tadalafil').textContent = stats.casos_com_tadalafil || '--';
+}
+
+function updateUnitFilter() {
+    const unitFilter = document.getElementById('filter-unit');
+    const currentValue = unitFilter.value;
+    
+    // Limpar opções existentes (exceto "Todas as Unidades")
+    unitFilter.innerHTML = '<option value="">Todas as Unidades</option>';
+    
+    // Adicionar todas as unidades disponíveis
+    allUnits.forEach(unit => {
+        const option = document.createElement('option');
+        option.value = unit;
+        option.textContent = unit;
+        unitFilter.appendChild(option);
+    });
+    
+    // Restaurar valor selecionado
+    unitFilter.value = currentValue;
+}
+
+function applyFilters() {
+    const unitFilter = document.getElementById('filter-unit').value;
+    const monthFilter = document.getElementById('filter-month').value;
+    const yearFilter = document.getElementById('filter-year').value;
+    
+    let filteredNecroses = allNecroses;
+    
+    // Filtrar por unidade
+    if (unitFilter) {
+        filteredNecroses = filteredNecroses.filter(necrose => 
+            necrose.unidade === unitFilter
+        );
+    }
+    
+    // Filtrar por mês
+    if (monthFilter) {
+        filteredNecroses = filteredNecroses.filter(necrose => {
+            const date = necrose.data_cirurgia || necrose.data_avaliacao;
+            if (date) {
+                const month = date.split('/')[1];
+                return month === monthFilter;
+            }
+            return false;
+        });
+    }
+    
+    // Filtrar por ano
+    if (yearFilter) {
+        filteredNecroses = filteredNecroses.filter(necrose => {
+            const date = necrose.data_cirurgia || necrose.data_avaliacao;
+            if (date) {
+                const year = date.split('/')[2];
+                return year === yearFilter;
+            }
+            return false;
+        });
+    }
+    
+    // Atualizar exibição
+    displayAnalysisCards(filteredNecroses);
+    updateStats(filteredNecroses, unitFilter);
+}
+
+function exportData() {
+    const unitFilter = document.getElementById('filter-unit').value;
+    const monthFilter = document.getElementById('filter-month').value;
+    const yearFilter = document.getElementById('filter-year').value;
+    
+    const params = new URLSearchParams();
+    if (unitFilter) params.append('unit', unitFilter);
+    if (monthFilter) params.append('month', monthFilter);
+    if (yearFilter) params.append('year', yearFilter);
+    
+    const url = `/download_combined_data?${params.toString()}`;
+    window.open(url, '_blank');
+}
+
+// Adicionar gradientes adicionais para os cards de unidade
+const additionalStyles = `
+    .gradient-red {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    }
+    .gradient-green {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    }
+    .gradient-gray {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+    }
+`;
+
+// Adicionar estilos ao documento
+if (!document.getElementById('dynamic-styles')) {
+    const styleElement = document.createElement('style');
+    styleElement.id = 'dynamic-styles';
+    styleElement.textContent = additionalStyles;
+    document.head.appendChild(styleElement);
+}
+
+// Carregar dados quando a página carrega
+document.addEventListener('DOMContentLoaded', function() {
+    loadAnalysisData();
+    
+    // Adicionar event listeners após DOM estar carregado
+    const unitFilter = document.getElementById('filter-unit');
+    const monthFilter = document.getElementById('filter-month');
+    const yearFilter = document.getElementById('filter-year');
+    
+    if (unitFilter) unitFilter.addEventListener('change', applyFilters);
+    if (monthFilter) monthFilter.addEventListener('change', applyFilters);
+    if (yearFilter) yearFilter.addEventListener('change', applyFilters);
+});
+
+</script>
+
 {% endblock %}
