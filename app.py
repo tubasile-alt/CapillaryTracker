@@ -200,6 +200,8 @@ class Surgery(db.Model):
     # Campos para técnicas extras
     extra_person_1 = db.Column(db.String(255))
     extra_person_2 = db.Column(db.String(255))
+    # Campo adicional para necrose
+    safira = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class UnitProgress(db.Model):
@@ -2709,10 +2711,10 @@ def api_necrose_analise_data():
                 'infiltracao': surgery.infiltracao,
                 'sangramento': surgery.sangramento,
                 'tempo_cirurgia': surgery.tempo_cirurgia,
-                'sedacao': surgery.sedacao,
-                'densidade_sketch': surgery.densidade_sketch,
-                'safira': surgery.safira,
-                'total_foliculos': surgery.total_foliculos,
+                'sedacao': getattr(surgery, 'sedacao', None),
+                'densidade_sketch': getattr(surgery, 'densidade_scketh', None),
+                'safira': getattr(surgery, 'safira', False),
+                'total_foliculos': getattr(surgery, 'total_foliculos', None),
                 'tadalafila': surgery.tadalafila,
                 'solucao_frente': surgery.solucao_frente,
                 'tecnica': surgery.tecnica,
