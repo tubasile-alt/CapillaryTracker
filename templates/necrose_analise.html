@@ -655,16 +655,16 @@ function displayUnitSummary(statsByUnit) {
                     <div class="unit-stat-label">Casos de Necrose</div>
                 </div>
                 <div class="unit-stat-item">
-                    <span class="unit-stat-value">${stats.casos_leves || 0}</span>
-                    <div class="unit-stat-label">Casos Leves</div>
+                    <span class="unit-stat-value">${stats.media_solucao_frente ? stats.media_solucao_frente.toFixed(1) : '—'}</span>
+                    <div class="unit-stat-label">Solução Frente Média</div>
                 </div>
                 <div class="unit-stat-item">
-                    <span class="unit-stat-value">${stats.casos_moderados || 0}</span>
-                    <div class="unit-stat-label">Casos Moderados</div>
+                    <span class="unit-stat-value">${stats.media_densidade_sketch ? stats.media_densidade_sketch.toFixed(1) : '—'}</span>
+                    <div class="unit-stat-label">Média Densidade Sketch</div>
                 </div>
                 <div class="unit-stat-item">
-                    <span class="unit-stat-value">${stats.tamanho_medio ? stats.tamanho_medio.toFixed(1) + ' cm' : '—'}</span>
-                    <div class="unit-stat-label">Tamanho Médio</div>
+                    <span class="unit-stat-value">${stats.media_sangramento ? stats.media_sangramento.toFixed(1) : '—'}</span>
+                    <div class="unit-stat-label">Média Sangramento</div>
                 </div>
             </div>
         </div>

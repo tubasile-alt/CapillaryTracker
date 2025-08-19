@@ -2805,7 +2805,10 @@ def api_necrose_analise_data():
                     'casos_moderados': 0,
                     'casos_severos': 0,
                     'tamanho_medio': 0.0,
-                    'total_tamanhos': []
+                    'total_tamanhos': [],
+                    'solucao_frente_values': [],
+                    'densidade_sketch_values': [],
+                    'sangramento_values': []
                 }
             
             stats_by_unit[unit]['total_casos'] += 1
@@ -2825,15 +2828,70 @@ def api_necrose_analise_data():
             if tamanho_total > 0:
                 stats_by_unit[unit]['total_tamanhos'].append(tamanho_total)
             
+            # Adicionar métricas para cálculos de média
+            if hasattr(surgery, 'solucao_frente') and surgery.solucao_frente:
+                try:
+                    if isinstance(surgery.solucao_frente, (int, float)) and surgery.solucao_frente > 0:
+                        stats_by_unit[unit]['solucao_frente_values'].append(surgery.solucao_frente)
+                except (ValueError, TypeError):
+                    pass
+            
+            if hasattr(surgery, 'densidade_scketh') and surgery.densidade_scketh:
+                try:
+                    if isinstance(surgery.densidade_scketh, (int, float)) and surgery.densidade_scketh > 0:
+                        stats_by_unit[unit]['densidade_sketch_values'].append(surgery.densidade_scketh)
+                except (ValueError, TypeError):
+                    pass
+                    
+            if hasattr(surgery, 'sangramento') and surgery.sangramento:
+                try:
+                    if isinstance(surgery.sangramento, str) and surgery.sangramento.isdigit():
+                        sangramento_val = int(surgery.sangramento)
+                        if sangramento_val > 0:
+                            stats_by_unit[unit]['sangramento_values'].append(sangramento_val)
+                    elif isinstance(surgery.sangramento, (int, float)) and surgery.sangramento > 0:
+                        stats_by_unit[unit]['sangramento_values'].append(surgery.sangramento)
+                except (ValueError, TypeError):
+                    pass
 
         
-        # Calcular tamanho médio para cada unidade
+        # Calcular médias para cada unidade
         for unit_stats in stats_by_unit.values():
+            # Tamanho médio
             if unit_stats['total_tamanhos']:
                 unit_stats['tamanho_medio'] = round(
                     sum(unit_stats['total_tamanhos']) / len(unit_stats['total_tamanhos']), 2
                 )
-            del unit_stats['total_tamanhos']  # Remover array temporário
+            
+            # Média solução frente
+            if unit_stats['solucao_frente_values']:
+                unit_stats['media_solucao_frente'] = round(
+                    sum(unit_stats['solucao_frente_values']) / len(unit_stats['solucao_frente_values']), 1
+                )
+            else:
+                unit_stats['media_solucao_frente'] = None
+                
+            # Média densidade sketch
+            if unit_stats['densidade_sketch_values']:
+                unit_stats['media_densidade_sketch'] = round(
+                    sum(unit_stats['densidade_sketch_values']) / len(unit_stats['densidade_sketch_values']), 1
+                )
+            else:
+                unit_stats['media_densidade_sketch'] = None
+                
+            # Média sangramento
+            if unit_stats['sangramento_values']:
+                unit_stats['media_sangramento'] = round(
+                    sum(unit_stats['sangramento_values']) / len(unit_stats['sangramento_values']), 1
+                )
+            else:
+                unit_stats['media_sangramento'] = None
+            
+            # Remover arrays temporários
+            del unit_stats['total_tamanhos']
+            del unit_stats['solucao_frente_values']
+            del unit_stats['densidade_sketch_values']
+            del unit_stats['sangramento_values']
         
         # Carregar todas as unidades disponíveis da configuração
         reload_admin_config()
