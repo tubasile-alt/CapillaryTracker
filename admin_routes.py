@@ -7,7 +7,9 @@ import functools
 import logging
 import json
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+import shutil
+import traceback
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from flask import current_app as app
 
 # Configurar logging
@@ -20,10 +22,33 @@ admin_bp = Blueprint('admin', __name__)
 CONFIG_FILE = 'admin_config.json'
 
 def load_config():
-    """Carrega a configuração de médicos e equipe"""
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
+    """Carrega a configuração de médicos e equipe com tratamento robusto de erros"""
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                logger.info(f"✅ Configuração carregada: {len(config.get('unidades', []))} unidades")
+                return config
+        else:
+            logger.warning(f"⚠️ Arquivo {CONFIG_FILE} não encontrado, usando configuração padrão")
+    except (json.JSONDecodeError, IOError) as e:
+        logger.error(f"❌ Erro ao carregar {CONFIG_FILE}: {e}")
+        
+        # Tentar carregar do backup
+        backup_file = CONFIG_FILE.replace('.json', '_backup.json')
+        if os.path.exists(backup_file):
+            try:
+                with open(backup_file, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                    logger.info(f"🔄 Configuração carregada do backup: {len(config.get('unidades', []))} unidades")
+                    # Restaurar o arquivo principal
+                    shutil.copy2(backup_file, CONFIG_FILE)
+                    logger.info(f"✅ Arquivo principal restaurado do backup")
+                    return config
+            except Exception as backup_error:
+                logger.error(f"❌ Erro ao carregar backup: {backup_error}")
+        
+        logger.warning("🔄 Usando configuração padrão devido a erros")
 
     # Configuração padrão
     return {
@@ -67,23 +92,79 @@ def sync_uberlandia_teams(config):
     return config
 
 def save_config(config):
-    """Salva a configuração de médicos e equipe"""
-    # Sempre sincronizar Uberlândia antes de salvar
-    config = sync_uberlandia_teams(config)
-    
-    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-        json.dump(config, f, ensure_ascii=False, indent=2)
+    """Salva a configuração de médicos e equipe com backup automático"""
+    try:
+        # Sempre sincronizar Uberlândia antes de salvar
+        config = sync_uberlandia_teams(config)
+        
+        # Criar backup do arquivo atual antes de salvar
+        backup_file = CONFIG_FILE.replace('.json', '_backup.json')
+        if os.path.exists(CONFIG_FILE):
+            try:
+                shutil.copy2(CONFIG_FILE, backup_file)
+                logger.info(f"✅ Backup criado: {backup_file}")
+            except Exception as e:
+                logger.error(f"⚠️ Erro ao criar backup: {e}")
+        
+        # Salvar em arquivo temporário primeiro
+        temp_file = CONFIG_FILE + '.tmp'
+        with open(temp_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        
+        # Verificar se o arquivo temporário foi criado corretamente
+        if os.path.exists(temp_file) and os.path.getsize(temp_file) > 0:
+            # Mover arquivo temporário para o arquivo final
+            shutil.move(temp_file, CONFIG_FILE)
+            logger.info(f"✅ Configuração salva com sucesso em {CONFIG_FILE}")
+            logger.info(f"📊 Dados salvos: {len(config.get('unidades', []))} unidades, {len(config.get('medicos_por_unidade', {}))} grupos de médicos")
+        else:
+            logger.error(f"❌ Erro: arquivo temporário {temp_file} não foi criado corretamente")
+            raise Exception("Falha ao criar arquivo temporário")
+            
+    except Exception as e:
+        logger.error(f"❌ Erro ao salvar configuração: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        # Tentar restaurar do backup se existir
+        backup_file = CONFIG_FILE.replace('.json', '_backup.json')
+        if os.path.exists(backup_file):
+            try:
+                shutil.copy2(backup_file, CONFIG_FILE)
+                logger.info(f"🔄 Configuração restaurada do backup: {backup_file}")
+            except Exception as restore_error:
+                logger.error(f"❌ Erro ao restaurar backup: {restore_error}")
+        raise e
 
 def update_app_py(config):
-    """Atualiza o arquivo app.py com as novas configurações"""
+    """Atualiza o arquivo app.py com as novas configurações e verifica integridade"""
     try:
         # Importar a função de recarregamento do app.py
         from app import reload_admin_config
         reload_admin_config()
-        logger.info("Configurações recarregadas no app.py com sucesso.")
-        return True
+        
+        # Verificar se as configurações foram realmente atualizadas
+        from app import UNIDADES, MEDICOS_POR_UNIDADE, EQUIPE_POR_UNIDADE
+        
+        # Verificar integridade dos dados carregados
+        expected_units = set(config.get('unidades', []))
+        actual_units = set(UNIDADES)
+        
+        if expected_units == actual_units:
+            logger.info("✅ Configurações recarregadas e verificadas no app.py com sucesso.")
+            logger.info(f"📊 Unidades sincronizadas: {len(UNIDADES)} unidades")
+            return True
+        else:
+            missing_units = expected_units - actual_units
+            extra_units = actual_units - expected_units
+            logger.warning(f"⚠️ Inconsistência detectada:")
+            if missing_units:
+                logger.warning(f"   Unidades faltando: {missing_units}")
+            if extra_units:
+                logger.warning(f"   Unidades extras: {extra_units}")
+            return False
+            
     except Exception as e:
-        logger.error(f"Erro ao recarregar configurações no app.py: {e}")
+        logger.error(f"❌ Erro ao recarregar configurações no app.py: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return False
 
 # Decorator para verificar se o usuário está autenticado como administrador
@@ -362,5 +443,73 @@ def delete_unidade():
         flash(f'Unidade {nome} removida com sucesso!', 'success')
     else:
         flash(f'Unidade removida, mas houve erro ao atualizar o sistema. Reinicie a aplicação.', 'warning')
+    
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/verify_config')
+@admin_required
+def verify_config():
+    """Endpoint para verificar a integridade da configuração"""
+    try:
+        # Carregar configuração do arquivo
+        file_config = load_config()
+        
+        # Importar configuração atual do app
+        from app import UNIDADES, MEDICOS_POR_UNIDADE, EQUIPE_POR_UNIDADE
+        app_config = {
+            'unidades': UNIDADES,
+            'medicos_por_unidade': MEDICOS_POR_UNIDADE,
+            'equipe_por_unidade': EQUIPE_POR_UNIDADE
+        }
+        
+        # Verificar se estão sincronizados
+        file_units = set(file_config.get('unidades', []))
+        app_units = set(app_config.get('unidades', []))
+        
+        is_synced = file_units == app_units
+        
+        response = {
+            'status': 'success' if is_synced else 'warning',
+            'is_synced': is_synced,
+            'file_config': {
+                'units_count': len(file_config.get('unidades', [])),
+                'doctors_count': sum(len(docs) for docs in file_config.get('medicos_por_unidade', {}).values()),
+                'team_count': sum(len(team) for team in file_config.get('equipe_por_unidade', {}).values())
+            },
+            'app_config': {
+                'units_count': len(app_config.get('unidades', [])),
+                'doctors_count': sum(len(docs) for docs in app_config.get('medicos_por_unidade', {}).values()),
+                'team_count': sum(len(team) for team in app_config.get('equipe_por_unidade', {}).values())
+            },
+            'file_units': sorted(list(file_units)),
+            'app_units': sorted(list(app_units))
+        }
+        
+        if not is_synced:
+            response['missing_in_app'] = sorted(list(file_units - app_units))
+            response['extra_in_app'] = sorted(list(app_units - file_units))
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao verificar configuração: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@admin_bp.route('/force_reload')
+@admin_required
+def force_reload():
+    """Força o recarregamento das configurações"""
+    try:
+        config = load_config()
+        if update_app_py(config):
+            flash('✅ Configurações recarregadas com sucesso!', 'success')
+        else:
+            flash('⚠️ Houve problemas ao recarregar as configurações. Verifique os logs.', 'warning')
+    except Exception as e:
+        logger.error(f"❌ Erro ao forçar recarregamento: {e}")
+        flash(f'❌ Erro ao recarregar configurações: {str(e)}', 'danger')
     
     return redirect(url_for('admin.dashboard'))

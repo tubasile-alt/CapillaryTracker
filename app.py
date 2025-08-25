@@ -42,9 +42,26 @@ def load_admin_config():
         try:
             with open(config_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
+                logger.info(f"✅ Admin config carregada: {len(config.get('unidades', []))} unidades")
                 return config
         except Exception as e:
-            logger.error(f"Erro ao carregar admin_config.json: {e}")
+            logger.error(f"❌ Erro ao carregar admin_config.json: {e}")
+            
+            # Tentar carregar do backup
+            backup_file = 'admin_config_backup.json'
+            if os.path.exists(backup_file):
+                try:
+                    with open(backup_file, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                        logger.info(f"🔄 Admin config carregada do backup: {len(config.get('unidades', []))} unidades")
+                        # Restaurar o arquivo principal
+                        shutil.copy2(backup_file, config_file)
+                        logger.info(f"✅ Arquivo principal restaurado do backup")
+                        return config
+                except Exception as backup_error:
+                    logger.error(f"❌ Erro ao carregar backup: {backup_error}")
+    else:
+        logger.warning(f"⚠️ Arquivo {config_file} não encontrado, usando configuração padrão")
     
     # Configuração padrão se o arquivo não existir
     return {
@@ -73,13 +90,44 @@ def load_admin_config():
 
 # Carregar configurações dinamicamente
 def reload_admin_config():
-    """Recarrega as configurações administrativas"""
+    """Recarrega as configurações administrativas com verificação de integridade"""
     global UNIDADES, MEDICOS_POR_UNIDADE, EQUIPE_POR_UNIDADE
-    admin_config = load_admin_config()
-    UNIDADES = admin_config.get('unidades', ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília'])
-    MEDICOS_POR_UNIDADE = admin_config.get('medicos_por_unidade', {})
-    EQUIPE_POR_UNIDADE = admin_config.get('equipe_por_unidade', {})
-    logger.info(f"Configurações recarregadas: {len(UNIDADES)} unidades, {len(MEDICOS_POR_UNIDADE)} grupos de médicos")
+    try:
+        admin_config = load_admin_config()
+        
+        # Verificar se a configuração carregada é válida
+        if admin_config and isinstance(admin_config, dict):
+            UNIDADES = admin_config.get('unidades', ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília'])
+            MEDICOS_POR_UNIDADE = admin_config.get('medicos_por_unidade', {})
+            EQUIPE_POR_UNIDADE = admin_config.get('equipe_por_unidade', {})
+            
+            # Verificar integridade dos dados
+            if not isinstance(UNIDADES, list) or not isinstance(MEDICOS_POR_UNIDADE, dict) or not isinstance(EQUIPE_POR_UNIDADE, dict):
+                raise ValueError("Estrutura de dados inválida na configuração")
+                
+            logger.info(f"✅ Configurações recarregadas: {len(UNIDADES)} unidades, {len(MEDICOS_POR_UNIDADE)} grupos de médicos")
+        else:
+            raise ValueError("Configuração carregada é inválida ou vazia")
+            
+    except Exception as e:
+        logger.error(f"❌ Erro ao recarregar configurações: {e}")
+        logger.warning("🔄 Usando configuração padrão de segurança")
+        # Usar configuração padrão segura
+        UNIDADES = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília']
+        MEDICOS_POR_UNIDADE = {
+            'Ribeirão Preto': ['Dr. Arthur', 'Dr. Daniel'],
+            'Campinas': ['Dra. Adriana', 'Dra. Isadora'],
+            'Rio de Janeiro': ['Dra. Ana Clara', 'Dra. Paula'],
+            'São Paulo': ['Dr. Daniel', 'Dr. Renan', 'Dra. Ariane', 'Dra. Isabella', 'Dra. Talita', 'Dra. Thaiza'],
+            'Brasília': ['Dra. Leticia', 'Dra. Natalia']
+        }
+        EQUIPE_POR_UNIDADE = {
+            'Ribeirão Preto': ['Aline', 'Ana', 'Lavinia', 'Natália'],
+            'Campinas': ['Bruna Galhardo', 'Dayane Andrade', 'Eduarda de Sousa', 'Isabelle de Campos'],
+            'Rio de Janeiro': ['Assistente Extra', 'Dayane', 'Mariana Moro', 'Mariana Silva'],
+            'São Paulo': ['Adriana Almeida', 'Ana Paula dos Santos', 'Dani Curti', 'Eliene Rodrigues'],
+            'Brasília': ['Angélica Sousa', 'Betânia Almeida', 'Dayse Fernandes', 'Layla Cardoso', 'Thamara Maciel']
+        }
 
 # Inicializar configurações
 reload_admin_config()

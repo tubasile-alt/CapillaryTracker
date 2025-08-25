@@ -1,0 +1,121 @@
+{
+  "unidades": [
+    "Brasília",
+    "Campinas",
+    "Goiania",
+    "Ribeirão Preto",
+    "Rio de Janeiro",
+    "São Paulo",
+    "Uberlândia"
+  ],
+  "medicos_por_unidade": {
+    "Ribeirão Preto": [
+      "Dr. Arthur",
+      "Dr. Daniel"
+    ],
+    "Campinas": [
+      "Dra. Adriana",
+      "Dra. Isadora"
+    ],
+    "Rio de Janeiro": [
+      "Dra. Ana Clara",
+      "Dra. Paula"
+    ],
+    "São Paulo": [
+      "Dr. Daniel",
+      "Dr. Renan",
+      "Dra Gabriela",
+      "Dra Haline",
+      "Dra. Ariane",
+      "Dra. Isabella",
+      "Dra. Juliana Costa",
+      "Dra. Talita",
+      "Dra. Thaiza"
+    ],
+    "Brasília": [
+      "Dra. Leticia",
+      "Dra. Natalia"
+    ],
+    "Goiania": [
+      "Dra. Debora",
+      "Dra. Francyelle"
+    ],
+    "Uberlândia": [
+      "Dr. Tiago"
+    ]
+  },
+  "equipe_por_unidade": {
+    "Ribeirão Preto": [
+      "Aline",
+      "Ana",
+      "Lavinia",
+      "Natália"
+    ],
+    "Campinas": [
+      "Bruna Galhardo",
+      "Dayane Andrade",
+      "Eduarda de Sousa",
+      "Isabelle de Campos",
+      "Juliana Nunes",
+      "Kesley Sabrina",
+      "Larissa Hellen",
+      "Thalita Corrêa",
+      "Vitória Delino"
+    ],
+    "Rio de Janeiro": [
+      "Assistente Extra",
+      "Dayane",
+      "Mariana Moro",
+      "Mariana Silva"
+    ],
+    "São Paulo": [
+      "Adriana Almeida",
+      "Ana Paula dos Santos",
+      "Dani Curti",
+      "Eliene Rodrigues",
+      "Gabriela Cruz",
+      "Greice Barbosa",
+      "Jaiza Valentim",
+      "Joyce Eugênia Da Silva",
+      "Josefa Wilma Vieira",
+      "Merielen Venâncio Oliveira",
+      "Rosana Pereira",
+      "Sabrina Crott",
+      "Thaís Paiva",
+      "Thamiris Santos"
+    ],
+    "Brasília": [
+      "Angélica Sousa",
+      "Betânia Almeida",
+      "Dayse Fernandes",
+      "Layla Cardoso",
+      "Thamara Maciel"
+    ],
+    "Goiania": [],
+    "Uberlândia": [
+      "Adriana Almeida",
+      "Aline",
+      "Ana",
+      "Ana Paula dos Santos",
+      "Angélica Sousa",
+      "Betânia Almeida",
+      "Dani Curti",
+      "Dayse Fernandes",
+      "Eliene Rodrigues",
+      "Gabriela Cruz",
+      "Greice Barbosa",
+      "Jaiza Valentim",
+      "Josefa Wilma Vieira",
+      "Joyce Eugênia Da Silva",
+      "Lavinia",
+      "Layla Cardoso",
+      "Merielen Venâncio Oliveira",
+      "Natália",
+      "Rosana Pereira",
+      "Sabrina Crott",
+      "Thamara Maciel",
+      "Thamiris Santos",
+      "Thaís Paiva"
+    ]
+  }
+}
