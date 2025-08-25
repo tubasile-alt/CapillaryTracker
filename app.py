@@ -1183,8 +1183,16 @@ def ping():
 
 @app.route('/success')
 def success():
-    logger.info("Accessing success page")
+    logger.info("🎯 Accessing success page")
     saved_data = session.get('last_saved_data', {})
+    logger.info(f"📋 Dados recuperados da sessão: {len(saved_data)} campos")
+    
+    if not saved_data:
+        logger.warning("⚠️ Nenhum dado encontrado na sessão!")
+        flash("⚠️ Não foi possível carregar o resumo dos dados. Verifique se os dados foram salvos corretamente.", "warning")
+    else:
+        logger.info(f"✅ Exibindo resumo com dados do paciente: {saved_data.get('nome', 'Não informado')}")
+        
     return render_template('success.html', saved_data=saved_data)
 
 @app.route('/clear_data', methods=['POST'])
@@ -1431,27 +1439,28 @@ def novo_cadastro():
                     del form_data[key]
 
             # Save to Excel and database
-            logger.info("Calling save_to_excel function")
+            logger.info("🔄 Calling save_to_excel function")
             success, message = save_to_excel(form_data)
-            logger.info(f"Save result: success={success}, message={message}")
+            logger.info(f"💾 Save result: success={success}, message='{message}'")
+
+            # ✅ SEMPRE salvar dados na sessão para o resumo, independente do resultado
+            logger.info("💾 Salvando dados na sessão para o resumo...")
+            session['last_saved_data'] = form_data.copy()  # Fazer uma cópia para garantir
+            logger.info(f"📋 Dados salvos na sessão: {len(form_data)} campos")
 
             if success:
                 flash("✅ Dados salvos com sucesso! 🎉", "success")
-                logger.info("Flashed success message")
-                
-                # Salvar dados na sessão para mostrar na página de sucesso
-                session['last_saved_data'] = form_data
-                
+                logger.info("✅ Flashed success message")
             else:
-                flash(message, "error")
-                logger.error(f"Flashed error message: {message}")
+                flash(f"⚠️ {message}", "error")
+                logger.error(f"❌ Erro no salvamento: {message}")
 
             # Se for uma chamada da API (não do formulário web)
             if request.headers.get('Content-Type') == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                logger.info("API call detected, returning JSON response")
-                return jsonify({"status": "success", "message": "Dados salvos com sucesso"})
+                logger.info("📡 API call detected, returning JSON response")
+                return jsonify({"status": "success" if success else "error", "message": message})
             else:
-                logger.info("Redirecting to success page")
+                logger.info("🔄 Redirecting to success page")
                 return redirect(url_for('success'))
         except Exception as e:
             error_msg = f"Error saving data: {str(e)}"
