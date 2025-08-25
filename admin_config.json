@@ -3,6 +3,7 @@
     "Brasília",
     "Campinas",
     "Goiania",
+    "Recife",
     "Ribeirão Preto",
     "Rio de Janeiro",
     "São Paulo",
@@ -42,7 +43,8 @@
     ],
     "Uberlândia": [
       "Dr. Tiago"
-    ]
+    ],
+    "Recife": []
   },
   "equipe_por_unidade": {
     "Ribeirão Preto": [
@@ -116,6 +118,7 @@
       "Thamara Maciel",
       "Thamiris Santos",
       "Thaís Paiva"
-    ]
+    ],
+    "Recife": []
   }
 }
