@@ -97,6 +97,16 @@ This is a comprehensive hair surgery management system for Instituto Capilar do 
 
 ```
 Changelog:
+- August 26, 2025. RESOLUÇÃO CRÍTICA: Implementado sistema robusto de persistência administrativa:
+  - Criado sistema de logs detalhados com IDs únicos para rastrear cada operação de salvamento
+  - Implementado backup automático com timestamp para todas as mudanças administrativas
+  - Adicionado verificação de integridade de arquivos antes e depois de cada salvamento
+  - Criado sistema de monitoramento em tempo real (/admin/health_check) para detectar problemas
+  - Implementado tratamento de erro robusto com fallback automático para backups
+  - Adicionado endpoint de monitoramento (/admin/monitor_changes) para verificar sincronização
+  - Sistema de teste automático para validar persistência de dados administrativos
+  - Melhoradas mensagens de erro com feedback específico sobre o estado do salvamento
+  - Garantia de que mudanças em equipes, médicos e unidades sejam SEMPRE salvas permanentemente
 - August 18, 2025. Implemented automatic team synchronization for Uberlândia unit:
   - Created sync_uberlandia_teams() function to automatically combine teams from São Paulo, Goiânia, Ribeirão Preto, and Brasília
   - Any changes to team members in source units automatically updates Uberlândia

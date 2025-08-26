@@ -9,6 +9,8 @@ import json
 import os
 import shutil
 import traceback
+import uuid
+from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from flask import current_app as app
 
@@ -92,46 +94,96 @@ def sync_uberlandia_teams(config):
     return config
 
 def save_config(config):
-    """Salva a configuração de médicos e equipe com backup automático"""
+    """Salva a configuração de médicos e equipe com backup automático e verificação de integridade"""
+    start_time = datetime.now()
+    operation_id = str(uuid.uuid4())[:8]
+    logger.info(f"🔄 [{operation_id}] Iniciando salvamento de configuração...")
+    
     try:
+        # Log estado inicial
+        original_units = len(config.get('unidades', []))
+        original_doctors = sum(len(docs) for docs in config.get('medicos_por_unidade', {}).values())
+        original_team = sum(len(team) for team in config.get('equipe_por_unidade', {}).values())
+        
+        logger.info(f"📋 [{operation_id}] Estado inicial: {original_units} unidades, {original_doctors} médicos, {original_team} membros equipe")
+        
         # Sempre sincronizar Uberlândia antes de salvar
         config = sync_uberlandia_teams(config)
         
-        # Criar backup do arquivo atual antes de salvar
+        # Criar backup com timestamp
         backup_file = CONFIG_FILE.replace('.json', '_backup.json')
+        timestamped_backup = CONFIG_FILE.replace('.json', f'_backup_{start_time.strftime("%Y%m%d_%H%M%S")}.json')
+        
         if os.path.exists(CONFIG_FILE):
             try:
+                # Backup principal
                 shutil.copy2(CONFIG_FILE, backup_file)
-                logger.info(f"✅ Backup criado: {backup_file}")
+                # Backup com timestamp
+                shutil.copy2(CONFIG_FILE, timestamped_backup)
+                logger.info(f"✅ [{operation_id}] Backups criados: {backup_file} e {timestamped_backup}")
             except Exception as e:
-                logger.error(f"⚠️ Erro ao criar backup: {e}")
+                logger.error(f"⚠️ [{operation_id}] Erro ao criar backup: {e}")
         
         # Salvar em arquivo temporário primeiro
         temp_file = CONFIG_FILE + '.tmp'
-        with open(temp_file, 'w', encoding='utf-8') as f:
-            json.dump(config, f, ensure_ascii=False, indent=2)
-        
-        # Verificar se o arquivo temporário foi criado corretamente
-        if os.path.exists(temp_file) and os.path.getsize(temp_file) > 0:
-            # Mover arquivo temporário para o arquivo final
-            shutil.move(temp_file, CONFIG_FILE)
-            logger.info(f"✅ Configuração salva com sucesso em {CONFIG_FILE}")
-            logger.info(f"📊 Dados salvos: {len(config.get('unidades', []))} unidades, {len(config.get('medicos_por_unidade', {}))} grupos de médicos")
-        else:
-            logger.error(f"❌ Erro: arquivo temporário {temp_file} não foi criado corretamente")
-            raise Exception("Falha ao criar arquivo temporário")
+        try:
+            with open(temp_file, 'w', encoding='utf-8') as f:
+                json.dump(config, f, ensure_ascii=False, indent=2)
+            
+            # Verificar integridade do arquivo temporário
+            if os.path.exists(temp_file) and os.path.getsize(temp_file) > 10:  # Pelo menos 10 bytes
+                # Validar JSON
+                with open(temp_file, 'r', encoding='utf-8') as f:
+                    test_config = json.load(f)
+                
+                # Verificar se tem as estruturas necessárias
+                if not all(key in test_config for key in ['unidades', 'medicos_por_unidade', 'equipe_por_unidade']):
+                    raise ValueError("Estrutura JSON inválida")
+                
+                # Mover arquivo temporário para o arquivo final
+                shutil.move(temp_file, CONFIG_FILE)
+                
+                # Verificar se o arquivo final foi criado corretamente
+                final_size = os.path.getsize(CONFIG_FILE)
+                logger.info(f"✅ [{operation_id}] Configuração salva: {CONFIG_FILE} ({final_size} bytes)")
+                
+                # Log estado final
+                final_units = len(config.get('unidades', []))
+                final_doctors = sum(len(docs) for docs in config.get('medicos_por_unidade', {}).values())
+                final_team = sum(len(team) for team in config.get('equipe_por_unidade', {}).values())
+                
+                logger.info(f"📊 [{operation_id}] Estado final: {final_units} unidades, {final_doctors} médicos, {final_team} membros equipe")
+                
+                elapsed = (datetime.now() - start_time).total_seconds()
+                logger.info(f"⏱️ [{operation_id}] Salvamento concluído em {elapsed:.2f}s")
+                
+            else:
+                raise Exception(f"Arquivo temporário inválido: {temp_file}")
+                
+        except Exception as temp_error:
+            # Limpar arquivo temporário se existir
+            if os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                except:
+                    pass
+            raise temp_error
             
     except Exception as e:
-        logger.error(f"❌ Erro ao salvar configuração: {e}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
+        elapsed = (datetime.now() - start_time).total_seconds()
+        logger.error(f"❌ [{operation_id}] ERRO CRÍTICO ao salvar configuração após {elapsed:.2f}s: {e}")
+        logger.error(f"Traceback completo:\n{traceback.format_exc()}")
+        
         # Tentar restaurar do backup se existir
         backup_file = CONFIG_FILE.replace('.json', '_backup.json')
         if os.path.exists(backup_file):
             try:
                 shutil.copy2(backup_file, CONFIG_FILE)
-                logger.info(f"🔄 Configuração restaurada do backup: {backup_file}")
+                logger.info(f"🔄 [{operation_id}] Configuração restaurada do backup: {backup_file}")
             except Exception as restore_error:
-                logger.error(f"❌ Erro ao restaurar backup: {restore_error}")
+                logger.error(f"❌ [{operation_id}] ERRO DUPLO - Falha ao restaurar backup: {restore_error}")
+        
+        # Re-raise para que a aplicação saiba que houve erro
         raise e
 
 def update_app_py(config):
@@ -249,14 +301,21 @@ def add_medico():
     config['medicos_por_unidade'][unidade].append(nome)
     config['medicos_por_unidade'][unidade].sort()  # Ordenar em ordem alfabética
 
-    # Salvar configuração
-    save_config(config)
-
-    # Atualizar app.py
-    if update_app_py(config):
-        flash(f'Médico {nome} adicionado com sucesso à unidade {unidade}!', 'success')
-    else:
-        flash(f'Médico adicionado, mas houve erro ao atualizar o sistema. Reinicie a aplicação.', 'warning')
+    # Salvar configuração com verificação
+    try:
+        save_config(config)
+        logger.info(f"✅ Configuração salva ao adicionar médico {nome}")
+        
+        # Atualizar app.py
+        if update_app_py(config):
+            flash(f'✅ Médico {nome} adicionado com sucesso à unidade {unidade}!', 'success')
+            logger.info(f"🎯 Médico {nome} adicionado e sistema atualizado")
+        else:
+            flash(f'⚠️ Médico {nome} adicionado, mas houve erro ao atualizar o sistema. As mudanças foram salvas mas podem não aparecer até reiniciar.', 'warning')
+            logger.warning(f"⚠️ Médico {nome} salvo mas app.py não foi atualizado")
+    except Exception as save_error:
+        logger.error(f"❌ ERRO CRÍTICO ao salvar médico {nome}: {save_error}")
+        flash(f'❌ ERRO: Não foi possível salvar o médico {nome}. Erro: {str(save_error)}', 'danger')
 
     return redirect(url_for('admin.dashboard'))
 
@@ -282,14 +341,21 @@ def delete_medico():
     # Remover médico
     config['medicos_por_unidade'][unidade].remove(nome)
 
-    # Salvar configuração
-    save_config(config)
-
-    # Atualizar app.py
-    if update_app_py(config):
-        flash(f'Médico {nome} removido com sucesso da unidade {unidade}!', 'success')
-    else:
-        flash(f'Médico removido, mas houve erro ao atualizar o sistema. Reinicie a aplicação.', 'warning')
+    # Salvar configuração com verificação
+    try:
+        save_config(config)
+        logger.info(f"✅ Configuração salva ao remover médico {nome}")
+        
+        # Atualizar app.py
+        if update_app_py(config):
+            flash(f'✅ Médico {nome} removido com sucesso da unidade {unidade}!', 'success')
+            logger.info(f"🎯 Médico {nome} removido e sistema atualizado")
+        else:
+            flash(f'⚠️ Médico {nome} removido, mas houve erro ao atualizar o sistema. As mudanças foram salvas mas podem não aparecer até reiniciar.', 'warning')
+            logger.warning(f"⚠️ Médico {nome} removido mas app.py não foi atualizado")
+    except Exception as save_error:
+        logger.error(f"❌ ERRO CRÍTICO ao remover médico {nome}: {save_error}")
+        flash(f'❌ ERRO: Não foi possível remover o médico {nome}. Erro: {str(save_error)}', 'danger')
 
     return redirect(url_for('admin.dashboard'))
 
@@ -319,14 +385,21 @@ def add_equipe():
     config['equipe_por_unidade'][unidade].append(nome)
     config['equipe_por_unidade'][unidade].sort()  # Ordenar em ordem alfabética
 
-    # Salvar configuração
-    save_config(config)
-
-    # Atualizar app.py
-    if update_app_py(config):
-        flash(f'Membro {nome} adicionado com sucesso à equipe da unidade {unidade}!', 'success')
-    else:
-        flash(f'Membro adicionado, mas houve erro ao atualizar o sistema. Reinicie a aplicação.', 'warning')
+    # Salvar configuração com verificação
+    try:
+        save_config(config)
+        logger.info(f"✅ Configuração salva ao adicionar membro {nome}")
+        
+        # Atualizar app.py
+        if update_app_py(config):
+            flash(f'✅ Membro {nome} adicionado com sucesso à equipe da unidade {unidade}!', 'success')
+            logger.info(f"🎯 Membro {nome} adicionado e sistema atualizado")
+        else:
+            flash(f'⚠️ Membro {nome} adicionado, mas houve erro ao atualizar o sistema. As mudanças foram salvas mas podem não aparecer até reiniciar.', 'warning')
+            logger.warning(f"⚠️ Membro {nome} salvo mas app.py não foi atualizado")
+    except Exception as save_error:
+        logger.error(f"❌ ERRO CRÍTICO ao salvar membro {nome}: {save_error}")
+        flash(f'❌ ERRO: Não foi possível salvar o membro {nome}. Erro: {str(save_error)}', 'danger')
 
     return redirect(url_for('admin.dashboard'))
 
@@ -352,14 +425,21 @@ def delete_equipe():
     # Remover membro
     config['equipe_por_unidade'][unidade].remove(nome)
 
-    # Salvar configuração
-    save_config(config)
-
-    # Atualizar app.py
-    if update_app_py(config):
-        flash(f'Membro {nome} removido com sucesso da equipe da unidade {unidade}!', 'success')
-    else:
-        flash(f'Membro removido, mas houve erro ao atualizar o sistema. Reinicie a aplicação.', 'warning')
+    # Salvar configuração com verificação
+    try:
+        save_config(config)
+        logger.info(f"✅ Configuração salva ao remover membro {nome}")
+        
+        # Atualizar app.py
+        if update_app_py(config):
+            flash(f'✅ Membro {nome} removido com sucesso da equipe da unidade {unidade}!', 'success')
+            logger.info(f"🎯 Membro {nome} removido e sistema atualizado")
+        else:
+            flash(f'⚠️ Membro {nome} removido, mas houve erro ao atualizar o sistema. As mudanças foram salvas mas podem não aparecer até reiniciar.', 'warning')
+            logger.warning(f"⚠️ Membro {nome} removido mas app.py não foi atualizado")
+    except Exception as save_error:
+        logger.error(f"❌ ERRO CRÍTICO ao remover membro {nome}: {save_error}")
+        flash(f'❌ ERRO: Não foi possível remover o membro {nome}. Erro: {str(save_error)}', 'danger')
 
     return redirect(url_for('admin.dashboard'))
 
@@ -397,14 +477,21 @@ def add_unidade():
     config['medicos_por_unidade'][nome] = []
     config['equipe_por_unidade'][nome] = []
     
-    # Salvar configuração
-    save_config(config)
-    
-    # Atualizar app.py
-    if update_app_py(config):
-        flash(f'Unidade {nome} adicionada com sucesso!', 'success')
-    else:
-        flash(f'Unidade adicionada, mas houve erro ao atualizar o sistema. Reinicie a aplicação.', 'warning')
+    # Salvar configuração com verificação
+    try:
+        save_config(config)
+        logger.info(f"✅ Configuração salva ao adicionar unidade {nome}")
+        
+        # Atualizar app.py
+        if update_app_py(config):
+            flash(f'✅ Unidade {nome} adicionada com sucesso!', 'success')
+            logger.info(f"🎯 Unidade {nome} adicionada e sistema atualizado")
+        else:
+            flash(f'⚠️ Unidade {nome} adicionada, mas houve erro ao atualizar o sistema. As mudanças foram salvas mas podem não aparecer até reiniciar.', 'warning')
+            logger.warning(f"⚠️ Unidade {nome} salva mas app.py não foi atualizado")
+    except Exception as save_error:
+        logger.error(f"❌ ERRO CRÍTICO ao salvar unidade {nome}: {save_error}")
+        flash(f'❌ ERRO: Não foi possível salvar a unidade {nome}. Erro: {str(save_error)}', 'danger')
     
     return redirect(url_for('admin.dashboard'))
 
@@ -435,18 +522,144 @@ def delete_unidade():
     if nome in config.get('equipe_por_unidade', {}):
         del config['equipe_por_unidade'][nome]
     
-    # Salvar configuração
-    save_config(config)
-    
-    # Atualizar app.py
-    if update_app_py(config):
-        flash(f'Unidade {nome} removida com sucesso!', 'success')
-    else:
-        flash(f'Unidade removida, mas houve erro ao atualizar o sistema. Reinicie a aplicação.', 'warning')
+    # Salvar configuração com verificação
+    try:
+        save_config(config)
+        logger.info(f"✅ Configuração salva ao remover unidade {nome}")
+        
+        # Atualizar app.py
+        if update_app_py(config):
+            flash(f'✅ Unidade {nome} removida com sucesso!', 'success')
+            logger.info(f"🎯 Unidade {nome} removida e sistema atualizado")
+        else:
+            flash(f'⚠️ Unidade {nome} removida, mas houve erro ao atualizar o sistema. As mudanças foram salvas mas podem não aparecer até reiniciar.', 'warning')
+            logger.warning(f"⚠️ Unidade {nome} removida mas app.py não foi atualizado")
+    except Exception as save_error:
+        logger.error(f"❌ ERRO CRÍTICO ao remover unidade {nome}: {save_error}")
+        flash(f'❌ ERRO: Não foi possível remover a unidade {nome}. Erro: {str(save_error)}', 'danger')
     
     return redirect(url_for('admin.dashboard'))
 
-@admin_bp.route('/verify_config')
+@admin_bp.route('/monitor_changes')
+@admin_required
+def monitor_changes():
+    """Monitora mudanças e verifica integridade dos dados"""
+    try:
+        # Verificar integridade dos arquivos
+        results = {
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'files_check': {},
+            'app_sync': {},
+            'recommendations': []
+        }
+        
+        # 1. Verificar arquivo principal
+        if os.path.exists(CONFIG_FILE):
+            size = os.path.getsize(CONFIG_FILE)
+            results['files_check']['main_file'] = {
+                'exists': True,
+                'size': size,
+                'status': 'OK' if size > 50 else 'PROBLEMA - Arquivo muito pequeno'
+            }
+        else:
+            results['files_check']['main_file'] = {
+                'exists': False,
+                'status': 'CRÍTICO - Arquivo não encontrado'
+            }
+            results['recommendations'].append('Arquivo de configuração principal não encontrado!')
+        
+        # 2. Verificar backup
+        backup_file = CONFIG_FILE.replace('.json', '_backup.json')
+        if os.path.exists(backup_file):
+            backup_size = os.path.getsize(backup_file)
+            results['files_check']['backup_file'] = {
+                'exists': True,
+                'size': backup_size,
+                'status': 'OK' if backup_size > 50 else 'PROBLEMA'
+            }
+        else:
+            results['files_check']['backup_file'] = {
+                'exists': False,
+                'status': 'AVISO - Sem backup recente'
+            }
+        
+        # 3. Verificar sincronização com app
+        try:
+            file_config = load_config()
+            from app import UNIDADES, MEDICOS_POR_UNIDADE, EQUIPE_POR_UNIDADE
+            
+            file_units = set(file_config.get('unidades', []))
+            app_units = set(UNIDADES)
+            
+            results['app_sync'] = {
+                'file_units': len(file_units),
+                'app_units': len(app_units),
+                'synchronized': file_units == app_units,
+                'missing_in_app': list(file_units - app_units),
+                'extra_in_app': list(app_units - file_units)
+            }
+            
+            if not results['app_sync']['synchronized']:
+                results['recommendations'].append('Dados do arquivo e aplicação não estão sincronizados!')
+                
+        except Exception as sync_error:
+            results['app_sync']['error'] = str(sync_error)
+            results['recommendations'].append(f'Erro na verificação de sincronização: {sync_error}')
+        
+        # 4. Recomendações finais
+        if not results['recommendations']:
+            results['recommendations'].append('✅ Todos os sistemas estão funcionando corretamente')
+        
+        return jsonify({
+            'status': 'success',
+            'data': results
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Erro no monitoramento: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@admin_bp.route('/health_check')
+def health_check():
+    """Verificação rápida de saúde do sistema"""
+    try:
+        health_status = {
+            'timestamp': datetime.now().isoformat(),
+            'config_file': os.path.exists(CONFIG_FILE),
+            'backup_file': os.path.exists(CONFIG_FILE.replace('.json', '_backup.json')),
+            'can_load_config': False,
+            'app_responsive': True
+        }
+        
+        # Tentar carregar configuração
+        try:
+            config = load_config()
+            health_status['can_load_config'] = bool(config and len(config.get('unidades', [])) > 0)
+            health_status['units_count'] = len(config.get('unidades', []))
+        except:
+            health_status['can_load_config'] = False
+            
+        overall_health = all([
+            health_status['config_file'],
+            health_status['can_load_config'],
+            health_status['app_responsive']
+        ])
+        
+        return jsonify({
+            'status': 'healthy' if overall_health else 'unhealthy',
+            'details': health_status
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@admin_bp.route('/verify_config', methods=['GET'])
 @admin_required
 def verify_config():
     """Endpoint para verificar a integridade da configuração"""
