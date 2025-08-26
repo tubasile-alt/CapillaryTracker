@@ -44,7 +44,9 @@
     "Uberlândia": [
       "Dr. Tiago"
     ],
-    "Recife": []
+    "Recife": [
+      "Dra. Maria Thaiene"
+    ]
   },
   "equipe_por_unidade": {
     "Ribeirão Preto": [
@@ -119,6 +121,10 @@
       "Thamiris Santos",
       "Thaís Paiva"
     ],
-    "Recife": []
+    "Recife": [
+      "Alice",
+      "Halida",
+      "Mirely"
+    ]
   }
 }
