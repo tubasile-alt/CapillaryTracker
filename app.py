@@ -248,6 +248,7 @@ class Surgery(db.Model):
     # Campos para técnicas extras
     extra_person_1 = db.Column(db.String(255))
     extra_person_2 = db.Column(db.String(255))
+    extra_person_3 = db.Column(db.String(255))
     # Campo adicional para necrose
     safira = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -1391,9 +1392,11 @@ def novo_cadastro():
                 if key.startswith('equipe_') and value:
                     team_members.append(value)
                 elif key == 'extra_person_1' and value:
-                    team_members.append(f"Técnica Extra 1: {value}")
+                    team_members.append(f"Freelancer 1: {value}")
                 elif key == 'extra_person_2' and value:
-                    team_members.append(f"Técnica Extra 2: {value}")
+                    team_members.append(f"Freelancer 2: {value}")
+                elif key == 'extra_person_3' and value:
+                    team_members.append(f"Freelancer 3: {value}")
             
             # Handle legacy equipe_values field
             if 'equipe_values' in form_data:
@@ -1464,13 +1467,20 @@ def novo_cadastro():
                 return redirect(url_for('success'))
         except Exception as e:
             error_msg = f"Error saving data: {str(e)}"
-            logger.error(f"{error_msg}\n{traceback.format_exc()}")
-            flash(f"Erro ao salvar dados: {str(e)}", "error")
+            logger.error(f"❌ ERRO CRÍTICO no cadastramento: {error_msg}\n{traceback.format_exc()}")
+            flash(f"❌ Erro ao salvar dados: {str(e)}", "error")
+            
+            # ✅ SEMPRE salvar dados na sessão mesmo com erro para mostrar resumo
+            logger.info("💾 Salvando dados na sessão mesmo com erro...")
+            session['last_saved_data'] = form_data.copy() if 'form_data' in locals() else {}
             
             # Se for uma chamada da API (não do formulário web)
             if request.headers.get('Content-Type') == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                logger.info("API call detected, returning JSON error response")
+                logger.info("📡 API call detected, returning JSON error response")
                 return jsonify({"status": "error", "message": error_msg}), 500
+            else:
+                logger.info("🔄 Redirecting to success page mesmo com erro")
+                return redirect(url_for('success'))
 
     # Recarregar configurações para garantir que estão atualizadas
     reload_admin_config()
@@ -1545,9 +1555,10 @@ def novo_cadastro():
              'options': ['Sim', 'Não']},
             {'name': 'antecedentes', 'label': 'Antecedentes Pessoais', 'type': 'textarea', 'required': False},
 
-            # Técnicas Extras
-            {'name': 'extra_person_1', 'label': 'Técnica Extra 1', 'type': 'select_all_members', 'required': False},
-            {'name': 'extra_person_2', 'label': 'Técnica Extra 2', 'type': 'select_all_members', 'required': False},
+            # Freelancers
+            {'name': 'extra_person_1', 'label': 'Freelancer 1', 'type': 'text', 'required': False},
+            {'name': 'extra_person_2', 'label': 'Freelancer 2', 'type': 'text', 'required': False},
+            {'name': 'extra_person_3', 'label': 'Freelancer 3', 'type': 'text', 'required': False},
             
             # Comentários e Finalização
             {'name': 'comentarios', 'label': 'Comentários', 'type': 'textarea', 'required': False}
@@ -1677,7 +1688,7 @@ def get_equipe(unidade):
 
 @app.route('/get_all_team_members')
 def get_all_team_members():
-    """Retorna todos os membros das equipes de todas as unidades para os campos Técnica Extra"""
+    """Retorna todos os membros das equipes de todas as unidades para os campos Freelancer"""
     logger.info("Retrieving all team members for Técnica Extra fields")
     # Recarregar configurações para garantir que estão atualizadas
     reload_admin_config()

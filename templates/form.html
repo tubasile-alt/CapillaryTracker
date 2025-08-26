@@ -444,16 +444,21 @@
                 {% endfor %}
             </div>
 
-            <h3>Técnicas Extras</h3>
+            <h3>Freelancers</h3>
             <div class="form-section">
-                {% for field in form.fields[40:42] %}
+                {% for field in form.fields[40:43] %}
                     <div class="form-group">
                         <label for="{{ field.name }}">
                             {{ field.label }}
                             {% if field.required %}*{% endif %}
                         </label>
 
-                        {% if field.type == 'select_all_members' %}
+                        {% if field.type == 'text' %}
+                            <input type="text" name="{{ field.name }}" id="{{ field.name }}"
+                                value="{{ data.get(field.name, '') }}"
+                                placeholder="Digite o nome..."
+                                {% if field.required %}required{% endif %}>
+                        {% elif field.type == 'select_all_members' %}
                             <select name="{{ field.name }}" id="{{ field.name }}" {% if field.required %}required{% endif %}>
                                 <option value="">Carregando membros...</option>
                             </select>
@@ -464,7 +469,7 @@
 
             <h3>Comentários e Finalização</h3>
             <div class="form-section">
-                {% for field in form.fields[42:] %}
+                {% for field in form.fields[43:] %}
                     <div class="form-group">
                         <label for="{{ field.name }}">
                             {{ field.label }}

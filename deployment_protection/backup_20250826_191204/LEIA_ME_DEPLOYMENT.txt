@@ -1,0 +1,26 @@
+
+# INSTRUÇÕES DE PROTEÇÃO DE DADOS - DEPLOYMENT
+
+## Backup criado em: 2025-08-26T19:12:07.098861
+
+### ANTES DO DEPLOYMENT:
+✅ Backup completo criado em: deployment_protection/backup_20250826_191204
+
+### APÓS O DEPLOYMENT:
+1. Execute a verificação de integridade:
+   python3 deployment_protection/backup_20250826_191204/check_integrity.py
+
+2. Se houver dados ausentes, execute a restauração:
+   bash deployment_protection/backup_20250826_191204/restore.sh
+
+### ARQUIVOS PROTEGIDOS:
+- admin_config.json
+- admin_config_backup.json
+- admin_config_safe_backup.json
+
+### CONTATOS EM CASO DE EMERGÊNCIA:
+- Verifique logs em: /var/log/
+- Execute testes de integridade regularmente
+- Mantenha este backup seguro
+
+IMPORTANTE: NÃO DELETE ESTE DIRETÓRIO APÓS O DEPLOYMENT!
