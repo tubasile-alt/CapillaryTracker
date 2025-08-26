@@ -47,6 +47,51 @@
             display: block;
         }
         
+        /* Mensagens de feedback melhoradas */
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .alert-success::before {
+            content: "✅";
+            font-size: 20px;
+        }
+        
+        .alert-warning::before {
+            content: "⚠️";
+            font-size: 20px;
+        }
+        
+        .alert-danger::before {
+            content: "❌";
+            font-size: 20px;
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
@@ -109,23 +154,7 @@
             cursor: pointer;
         }
         
-        .alert {
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-        }
-        
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
+        /* Remover estilos antigos - agora usando os novos estilos acima */
         
         .btn-logout {
             background-color: #6c757d;
@@ -147,6 +176,29 @@
             max-width: 80px;
             height: auto;
         }
+        
+        /* Animações para mensagens */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Efeito visual extra para sucesso */
+        .alert-success {
+            animation: pulse 0.5s ease;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -162,8 +214,10 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">
-                            {{ message }}
+                        <div class="alert alert-{{ category }}" id="flash-message" style="animation: slideIn 0.5s ease;">
+                            <span>{{ message }}</span>
+                            <button onclick="this.parentElement.style.display='none'" 
+                                    style="float: right; background: none; border: none; font-size: 18px; cursor: pointer; color: inherit; margin-left: 10px;">×</button>
                         </div>
                     {% endfor %}
                 {% endif %}

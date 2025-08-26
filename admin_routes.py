@@ -308,14 +308,14 @@ def add_medico():
         
         # Atualizar app.py
         if update_app_py(config):
-            flash(f'✅ Médico {nome} adicionado com sucesso à unidade {unidade}!', 'success')
+            flash(f'✅ DADOS SALVOS COM SUCESSO! Médico {nome} foi adicionado à unidade {unidade} e já está disponível no sistema.', 'success')
             logger.info(f"🎯 Médico {nome} adicionado e sistema atualizado")
         else:
-            flash(f'⚠️ Médico {nome} adicionado, mas houve erro ao atualizar o sistema. As mudanças foram salvas mas podem não aparecer até reiniciar.', 'warning')
+            flash(f'⚠️ SALVAMENTO PARCIAL: Médico {nome} foi salvo no arquivo mas pode não aparecer imediatamente no sistema. Recarregue a página ou reinicie se necessário.', 'warning')
             logger.warning(f"⚠️ Médico {nome} salvo mas app.py não foi atualizado")
     except Exception as save_error:
         logger.error(f"❌ ERRO CRÍTICO ao salvar médico {nome}: {save_error}")
-        flash(f'❌ ERRO: Não foi possível salvar o médico {nome}. Erro: {str(save_error)}', 'danger')
+        flash(f'❌ DADOS NÃO FORAM SALVOS! Não foi possível adicionar o médico {nome}. Tente novamente. Erro técnico: {str(save_error)}', 'danger')
 
     return redirect(url_for('admin.dashboard'))
 
@@ -348,14 +348,14 @@ def delete_medico():
         
         # Atualizar app.py
         if update_app_py(config):
-            flash(f'✅ Médico {nome} removido com sucesso da unidade {unidade}!', 'success')
+            flash(f'✅ DADOS SALVOS COM SUCESSO! Médico {nome} foi removido da unidade {unidade} e a mudança já está ativa.', 'success')
             logger.info(f"🎯 Médico {nome} removido e sistema atualizado")
         else:
-            flash(f'⚠️ Médico {nome} removido, mas houve erro ao atualizar o sistema. As mudanças foram salvas mas podem não aparecer até reiniciar.', 'warning')
+            flash(f'⚠️ SALVAMENTO PARCIAL: Médico {nome} foi removido do arquivo mas pode ainda aparecer temporariamente no sistema. Recarregue a página.', 'warning')
             logger.warning(f"⚠️ Médico {nome} removido mas app.py não foi atualizado")
     except Exception as save_error:
         logger.error(f"❌ ERRO CRÍTICO ao remover médico {nome}: {save_error}")
-        flash(f'❌ ERRO: Não foi possível remover o médico {nome}. Erro: {str(save_error)}', 'danger')
+        flash(f'❌ DADOS NÃO FORAM SALVOS! Não foi possível remover o médico {nome}. O médico permanece no sistema. Tente novamente.', 'danger')
 
     return redirect(url_for('admin.dashboard'))
 
@@ -392,14 +392,14 @@ def add_equipe():
         
         # Atualizar app.py
         if update_app_py(config):
-            flash(f'✅ Membro {nome} adicionado com sucesso à equipe da unidade {unidade}!', 'success')
+            flash(f'✅ DADOS SALVOS COM SUCESSO! Membro {nome} foi adicionado à equipe da unidade {unidade} e já está disponível.', 'success')
             logger.info(f"🎯 Membro {nome} adicionado e sistema atualizado")
         else:
-            flash(f'⚠️ Membro {nome} adicionado, mas houve erro ao atualizar o sistema. As mudanças foram salvas mas podem não aparecer até reiniciar.', 'warning')
+            flash(f'⚠️ SALVAMENTO PARCIAL: Membro {nome} foi salvo no arquivo mas pode não aparecer imediatamente na lista. Recarregue a página.', 'warning')
             logger.warning(f"⚠️ Membro {nome} salvo mas app.py não foi atualizado")
     except Exception as save_error:
         logger.error(f"❌ ERRO CRÍTICO ao salvar membro {nome}: {save_error}")
-        flash(f'❌ ERRO: Não foi possível salvar o membro {nome}. Erro: {str(save_error)}', 'danger')
+        flash(f'❌ DADOS NÃO FORAM SALVOS! Não foi possível adicionar {nome} à equipe. Tente novamente.', 'danger')
 
     return redirect(url_for('admin.dashboard'))
 
@@ -432,14 +432,14 @@ def delete_equipe():
         
         # Atualizar app.py
         if update_app_py(config):
-            flash(f'✅ Membro {nome} removido com sucesso da equipe da unidade {unidade}!', 'success')
+            flash(f'✅ DADOS SALVOS COM SUCESSO! Membro {nome} foi removido da equipe da unidade {unidade}.', 'success')
             logger.info(f"🎯 Membro {nome} removido e sistema atualizado")
         else:
-            flash(f'⚠️ Membro {nome} removido, mas houve erro ao atualizar o sistema. As mudanças foram salvas mas podem não aparecer até reiniciar.', 'warning')
+            flash(f'⚠️ SALVAMENTO PARCIAL: Membro {nome} foi removido do arquivo mas pode ainda aparecer temporariamente. Recarregue a página.', 'warning')
             logger.warning(f"⚠️ Membro {nome} removido mas app.py não foi atualizado")
     except Exception as save_error:
         logger.error(f"❌ ERRO CRÍTICO ao remover membro {nome}: {save_error}")
-        flash(f'❌ ERRO: Não foi possível remover o membro {nome}. Erro: {str(save_error)}', 'danger')
+        flash(f'❌ DADOS NÃO FORAM SALVOS! Não foi possível remover {nome} da equipe. O membro permanece na lista. Tente novamente.', 'danger')
 
     return redirect(url_for('admin.dashboard'))
 
@@ -484,14 +484,14 @@ def add_unidade():
         
         # Atualizar app.py
         if update_app_py(config):
-            flash(f'✅ Unidade {nome} adicionada com sucesso!', 'success')
+            flash(f'✅ DADOS SALVOS COM SUCESSO! Unidade {nome} foi criada e já está disponível no sistema.', 'success')
             logger.info(f"🎯 Unidade {nome} adicionada e sistema atualizado")
         else:
-            flash(f'⚠️ Unidade {nome} adicionada, mas houve erro ao atualizar o sistema. As mudanças foram salvas mas podem não aparecer até reiniciar.', 'warning')
+            flash(f'⚠️ SALVAMENTO PARCIAL: Unidade {nome} foi salva no arquivo mas pode não aparecer imediatamente nas listas. Recarregue a página.', 'warning')
             logger.warning(f"⚠️ Unidade {nome} salva mas app.py não foi atualizado")
     except Exception as save_error:
         logger.error(f"❌ ERRO CRÍTICO ao salvar unidade {nome}: {save_error}")
-        flash(f'❌ ERRO: Não foi possível salvar a unidade {nome}. Erro: {str(save_error)}', 'danger')
+        flash(f'❌ DADOS NÃO FORAM SALVOS! Não foi possível criar a unidade {nome}. Tente novamente.', 'danger')
     
     return redirect(url_for('admin.dashboard'))
 
@@ -529,14 +529,14 @@ def delete_unidade():
         
         # Atualizar app.py
         if update_app_py(config):
-            flash(f'✅ Unidade {nome} removida com sucesso!', 'success')
+            flash(f'✅ DADOS SALVOS COM SUCESSO! Unidade {nome} foi removida completamente do sistema.', 'success')
             logger.info(f"🎯 Unidade {nome} removida e sistema atualizado")
         else:
-            flash(f'⚠️ Unidade {nome} removida, mas houve erro ao atualizar o sistema. As mudanças foram salvas mas podem não aparecer até reiniciar.', 'warning')
+            flash(f'⚠️ SALVAMENTO PARCIAL: Unidade {nome} foi removida do arquivo mas pode ainda aparecer temporariamente. Recarregue a página.', 'warning')
             logger.warning(f"⚠️ Unidade {nome} removida mas app.py não foi atualizado")
     except Exception as save_error:
         logger.error(f"❌ ERRO CRÍTICO ao remover unidade {nome}: {save_error}")
-        flash(f'❌ ERRO: Não foi possível remover a unidade {nome}. Erro: {str(save_error)}', 'danger')
+        flash(f'❌ DADOS NÃO FORAM SALVOS! Não foi possível remover a unidade {nome}. A unidade permanece no sistema. Tente novamente.', 'danger')
     
     return redirect(url_for('admin.dashboard'))
 
