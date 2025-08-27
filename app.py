@@ -1185,16 +1185,31 @@ def ping():
 @app.route('/success')
 def success():
     logger.info("🎯 Accessing success page")
-    saved_data = session.get('last_saved_data', {})
-    logger.info(f"📋 Dados recuperados da sessão: {len(saved_data)} campos")
-    
-    if not saved_data:
-        logger.warning("⚠️ Nenhum dado encontrado na sessão!")
-        flash("⚠️ Não foi possível carregar o resumo dos dados. Verifique se os dados foram salvos corretamente.", "warning")
-    else:
-        logger.info(f"✅ Exibindo resumo com dados do paciente: {saved_data.get('nome', 'Não informado')}")
+    try:
+        saved_data = session.get('last_saved_data', {})
+        logger.info(f"📋 Dados recuperados da sessão: {len(saved_data)} campos")
         
-    return render_template('success.html', saved_data=saved_data)
+        if not saved_data:
+            logger.warning("⚠️ Nenhum dado encontrado na sessão!")
+            flash("⚠️ Não foi possível carregar o resumo dos dados. Verifique se os dados foram salvos corretamente.", "warning")
+        else:
+            logger.info(f"✅ Exibindo resumo com dados do paciente: {saved_data.get('nome', 'Não informado')}")
+            
+        # ✅ SEMPRE renderizar a página, mesmo sem dados
+        return render_template('success.html', saved_data=saved_data)
+        
+    except Exception as e:
+        # ✅ NUNCA deixar o usuário sem resposta
+        logger.error(f"❌ ERRO CRÍTICO na página de sucesso: {str(e)}\n{traceback.format_exc()}")
+        flash(f"⚠️ Houve um problema ao exibir o resumo, mas os dados foram salvos.", "warning")
+        
+        # Tentar recuperar dados básicos da sessão de forma segura
+        try:
+            saved_data = session.get('last_saved_data', {})
+        except:
+            saved_data = {}
+            
+        return render_template('success.html', saved_data=saved_data)
 
 @app.route('/clear_data', methods=['POST'])
 def clear_data():

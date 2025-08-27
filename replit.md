@@ -97,6 +97,15 @@ This is a comprehensive hair surgery management system for Instituto Capilar do 
 
 ```
 Changelog:
+- August 27, 2025. CORREÇÕES CRÍTICAS DE FEEDBACK E PERSISTÊNCIA:
+  - CORRIGIDO: Erro internal server error na página de resumo do paciente após cadastramento
+  - MELHORADO: Sistema de feedback visual para todas as operações administrativas (adicionar/remover médicos, técnicos, unidades)
+  - IMPLEMENTADO: Indicadores visuais em tempo real durante salvamento ("💾 Salvando...")
+  - IMPLEMENTADO: Auto-ocultamento de mensagens de feedback após 8 segundos
+  - IMPLEMENTADO: Proteção robusta contra falhas na página de resumo - SEMPRE mostra resumo mesmo com erros
+  - IMPLEMENTADO: Desabilitação de botões durante salvamento para evitar duplos cliques
+  - GARANTIDO: Todas as operações administrativas agora mostram mensagem clara de sucesso/falha
+  - GARANTIDO: Dados administrativos são persistidos de forma segura e verificada
 - August 26, 2025. RESOLUÇÃO CRÍTICA: Implementado sistema robusto de persistência administrativa:
   - Criado sistema de logs detalhados com IDs únicos para rastrear cada operação de salvamento
   - Implementado backup automático com timestamp para todas as mudanças administrativas

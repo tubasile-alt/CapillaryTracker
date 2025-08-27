@@ -214,7 +214,7 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}" id="flash-message" style="animation: slideIn 0.5s ease;">
+                        <div class="alert alert-{{ category }}" id="flash-message" style="animation: slideIn 0.5s ease; position: relative; z-index: 1000;">
                             <span>{{ message }}</span>
                             <button onclick="this.parentElement.style.display='none'" 
                                     style="float: right; background: none; border: none; font-size: 18px; cursor: pointer; color: inherit; margin-left: 10px;">×</button>
@@ -222,6 +222,12 @@
                     {% endfor %}
                 {% endif %}
             {% endwith %}
+            
+            <!-- Adicionar indicador de salvamento em tempo real -->
+            <div id="saving-indicator" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 2000; 
+                 background: #007bff; color: white; padding: 10px; border-radius: 5px;">
+                💾 Salvando...
+            </div>
             
             <div class="admin-tabs">
                 <button class="admin-tab active" onclick="showTab('unidades')">Unidades</button>
@@ -421,6 +427,19 @@
             const forms = document.querySelectorAll('form[action*="/admin/"]');
             forms.forEach(form => {
                 form.addEventListener('submit', function(e) {
+                    // Mostrar indicador de salvamento
+                    const indicator = document.getElementById('saving-indicator');
+                    if (indicator) {
+                        indicator.style.display = 'block';
+                    }
+                    
+                    // Desabilitar botão de submit para evitar duplo click
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '💾 Salvando...';
+                    }
+                    
                     // Aguardar o envio do formulário e depois recarregar a página
                     setTimeout(() => {
                         reloadServerConfigurations();
@@ -431,6 +450,17 @@
 
             // Recarregar configurações ao carregar a página
             reloadServerConfigurations();
+            
+            // Auto-hide flash messages após 8 segundos
+            const flashMessages = document.querySelectorAll('.alert');
+            flashMessages.forEach(message => {
+                setTimeout(() => {
+                    message.style.opacity = '0.5';
+                    setTimeout(() => {
+                        message.style.display = 'none';
+                    }, 500);
+                }, 8000);
+            });
         });
     </script>
 </body>
