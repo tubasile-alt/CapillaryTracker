@@ -1189,6 +1189,30 @@ def success():
         saved_data = session.get('last_saved_data', {})
         logger.info(f"📋 Dados recuperados da sessão: {len(saved_data)} campos")
         
+        # ✅ PROTEÇÃO TOTAL: Limpar dados problemáticos que podem causar erro no template
+        if saved_data:
+            # Proteger campos numéricos
+            numeric_fields = ['q1_taxa_quebra', 'q2_taxa_quebra', 'q3_taxa_quebra', 'q4_taxa_quebra']
+            for field in numeric_fields:
+                if saved_data.get(field) is not None:
+                    try:
+                        # Verificar se é numérico e válido
+                        float(saved_data[field])
+                    except (ValueError, TypeError):
+                        saved_data[field] = None
+            
+            # Proteger campo de data
+            if saved_data.get('data') and isinstance(saved_data.get('data'), str):
+                if '-' not in saved_data['data'] or len(saved_data['data'].split('-')) != 3:
+                    logger.warning(f"⚠️ Data em formato inválido: {saved_data['data']}")
+                    # Não apagar, só deixar como está para mostrar
+            
+            # Proteger campo de equipe
+            if saved_data.get('equipe') is None:
+                saved_data['equipe'] = 'N/A'
+            
+            logger.info(f"✅ Dados protegidos e validados para o template")
+        
         if not saved_data:
             logger.warning("⚠️ Nenhum dado encontrado na sessão!")
             flash("⚠️ Não foi possível carregar o resumo dos dados. Verifique se os dados foram salvos corretamente.", "warning")
