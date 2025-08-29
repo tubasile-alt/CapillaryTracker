@@ -5,6 +5,7 @@ diretamente, garantindo persistência real dos dados.
 """
 
 import logging
+import traceback
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from datetime import datetime
 import functools
@@ -87,9 +88,10 @@ def dashboard():
 @admin_bp.route('/add_unit', methods=['POST'])
 @admin_required
 def add_unit():
-    """Adiciona nova unidade"""
+    """Adiciona nova unidade usando sistema JSON"""
     try:
-        from app import Unit, db
+        from app import load_admin_config
+        import json
         
         name = request.form.get('name', '').strip()
         
@@ -97,31 +99,29 @@ def add_unit():
             flash('Nome da unidade é obrigatório!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
+        # Carregar configuração atual
+        config = load_admin_config()
+        
         # Verificar se unidade já existe
-        existing = Unit.query.filter_by(name=name).first()
-        if existing:
-            if existing.is_active:
-                flash(f'A unidade "{name}" já existe!', 'danger')
-            else:
-                # Reativar unidade desativada
-                existing.is_active = True
-                existing.updated_at = datetime.utcnow()
-                db.session.commit()
-                flash(f'Unidade "{name}" reativada com sucesso!', 'success')
-                logger.info(f"Unidade {name} reativada")
+        if name in config.get('unidades', []):
+            flash(f'A unidade "{name}" já existe!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
-        # Criar nova unidade
-        new_unit = Unit(name=name)
-        db.session.add(new_unit)
-        db.session.commit()
+        # Adicionar nova unidade
+        config['unidades'].append(name)
+        config['medicos_por_unidade'][name] = []
+        config['equipe_por_unidade'][name] = []
+        
+        # Salvar configuração
+        with open('admin_config.json', 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
         
         flash(f'Unidade "{name}" criada com sucesso!', 'success')
         logger.info(f"Nova unidade criada: {name}")
         
     except Exception as e:
-        db.session.rollback()
         logger.error(f"Erro ao adicionar unidade: {e}")
+        logger.error(f"Traceback completo: {traceback.format_exc()}")
         flash('Erro ao criar unidade. Tente novamente.', 'danger')
     
     return redirect(url_for('admin.dashboard'))
