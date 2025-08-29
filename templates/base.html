@@ -20,7 +20,7 @@
             <a href="{{ url_for('login_medicos') }}" class="nav-link">Dashboard Médicos</a>
             <a href="{{ url_for('controle_cirurgias') }}" class="nav-link">Controle de Cirurgias</a>
             <a href="{{ url_for('necrose') }}" class="nav-link">Registrar Necrose</a>
-            <a href="{{ url_for('admin.login_page') }}" class="nav-link">Administração</a>
+            <a href="{{ url_for('admin.login') }}" class="nav-link">Administração</a>
         </nav>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}

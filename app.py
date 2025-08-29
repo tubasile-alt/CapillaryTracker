@@ -34,6 +34,7 @@ app.config['ADMIN_PASSWORD'] = '12345'
 app.config['UPLOAD_FOLDER'] = 'static/uploads/necrose_photos'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
+
 # Função para carregar configurações do arquivo JSON
 def load_admin_config():
     """Carrega configurações de unidades, médicos e equipe do arquivo admin_config.json"""
@@ -310,6 +311,76 @@ class NecrosePhoto(db.Model):
     
     # Relacionamento
     necrose = db.relationship('Necrose', backref='photos')
+
+# NOVOS MODELOS PARA ADMINISTRAÇÃO - SUBSTITUINDO O SISTEMA JSON
+class Unit(db.Model):
+    __tablename__ = 'units'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relacionamentos
+    doctors = db.relationship('Doctor', backref='unit_obj', lazy=True, cascade='all, delete-orphan')
+    team_members = db.relationship('TeamMember', backref='unit_obj', lazy=True, cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<Unit {self.name}>'
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+class Doctor(db.Model):
+    __tablename__ = 'doctors'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    unit_id = db.Column(db.Integer, db.ForeignKey('units.id'), nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<Doctor {self.name}>'
+    
+    def to_dict(self):
+        unit = Unit.query.get(self.unit_id) if self.unit_id else None
+        return {
+            'id': self.id,
+            'name': self.name,
+            'unit_id': self.unit_id,
+            'unit_name': unit.name if unit else None,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+class TeamMember(db.Model):
+    __tablename__ = 'team_members'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    unit_id = db.Column(db.Integer, db.ForeignKey('units.id'), nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<TeamMember {self.name}>'
+    
+    def to_dict(self):
+        unit = Unit.query.get(self.unit_id) if self.unit_id else None
+        return {
+            'id': self.id,
+            'name': self.name,
+            'unit_id': self.unit_id,
+            'unit_name': unit.name if unit else None,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 # Configure Flask-Migrate
 from flask_migrate import Migrate
