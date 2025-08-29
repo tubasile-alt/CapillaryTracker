@@ -7,58 +7,20 @@
     "Ribeirão Preto",
     "Rio de Janeiro",
     "São Paulo",
-    "Uberlândia",
-    "Belo Horizonte"
+    "Uberlândia"
   ],
   "medicos_por_unidade": {
-    "Ribeirão Preto": [
-      "Dr. Arthur",
-      "Dr. Daniel"
-    ],
-    "Campinas": [
-      "Dra. Adriana",
-      "Dra. Isadora"
-    ],
-    "Rio de Janeiro": [
-      "Dra. Ana Clara",
-      "Dra. Paula"
-    ],
-    "São Paulo": [
-      "Dr. Daniel",
-      "Dr. Renan",
-      "Dra Gabriela",
-      "Dra Haline",
-      "Dra. Ariane",
-      "Dra. Isabella",
-      "Dra. Juliana Costa",
-      "Dra. Talita",
-      "Dra. Thaiza"
-    ],
-    "Brasília": [
-      "Dra. Leticia",
-      "Dra. Natalia"
-    ],
-    "Goiania": [
-      "Dra. Debora",
-      "Dra. Francyelle"
-    ],
-    "Uberlândia": [
-      "Dr. Tiago"
-    ],
-    "Recife": [
-      "Dra. Maria Thaiene"
-    ],
-    "Belo Horizonte": [
-      "Dr.Leonardo"
-    ]
+    "Ribeirão Preto": ["Dr. Arthur", "Dr. Daniel"],
+    "Campinas": ["Dra. Adriana", "Dra. Isadora"],
+    "Rio de Janeiro": ["Dra. Ana Clara", "Dra. Paula"],
+    "São Paulo": ["Dr. Daniel", "Dr. Renan", "Dra. Ariane", "Dra. Isabella", "Dra. Talita", "Dra. Thaiza"],
+    "Brasília": ["Dra. Leticia", "Dra. Natalia"],
+    "Goiania": ["Dra. Debora", "Dra. Francyelle"],
+    "Recife": ["Dra. Maria Thaiene"],
+    "Uberlândia": ["Dr. Tiago"]
   },
   "equipe_por_unidade": {
-    "Ribeirão Preto": [
-      "Aline",
-      "Ana",
-      "Lavinia",
-      "Natália"
-    ],
+    "Ribeirão Preto": ["Aline", "Ana", "Lavinia", "Natália"],
     "Campinas": [
       "Bruna Galhardo",
       "Dayane Andrade",
@@ -70,11 +32,7 @@
       "Thalita Corrêa",
       "Vitória Delino"
     ],
-    "Rio de Janeiro": [
-      "Assistente Extra",
-      "Mariana Moro",
-      "Mariana Silva"
-    ],
+    "Rio de Janeiro": ["Assistente Extra", "Mariana Moro", "Mariana Silva"],
     "São Paulo": [
       "Adriana Almeida",
       "Ana Paula dos Santos",
@@ -91,14 +49,9 @@
       "Thaís Paiva",
       "Thamiris Santos"
     ],
-    "Brasília": [
-      "Angélica Sousa",
-      "Betânia Almeida",
-      "Dayse Fernandes",
-      "Layla Cardoso",
-      "Thamara Maciel"
-    ],
+    "Brasília": ["Angélica Sousa", "Betânia Almeida", "Dayse Fernandes", "Layla Cardoso", "Thamara Maciel"],
     "Goiania": [],
+    "Recife": ["Alice", "Halida", "Mirely"],
     "Uberlândia": [
       "Adriana Almeida",
       "Aline",
@@ -123,14 +76,6 @@
       "Thamara Maciel",
       "Thamiris Santos",
       "Thaís Paiva"
-    ],
-    "Recife": [
-      "Alice",
-      "Halida",
-      "Mirely"
-    ],
-    "Belo Horizonte": [
-      "Claudia"
     ]
   }
 }
