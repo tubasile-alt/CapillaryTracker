@@ -286,11 +286,11 @@
                     <div class="stat-label">Unidades Ativas</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">{% set total_doctors = 0 %}{% for unit_doctors in doctors_by_unit.values() %}{% set total_doctors = total_doctors + unit_doctors|length %}{% endfor %}{{ total_doctors }}</div>
+                    <div class="stat-number">{{ total_doctors }}</div>
                     <div class="stat-label">Médicos Ativos</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">{% set total_members = 0 %}{% for unit_members in teams_by_unit.values() %}{% set total_members = total_members + unit_members|length %}{% endfor %}{{ total_members }}</div>
+                    <div class="stat-number">{{ total_members }}</div>
                     <div class="stat-label">Membros da Equipe</div>
                 </div>
             </div>

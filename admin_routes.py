@@ -72,12 +72,18 @@ def dashboard():
         doctors_by_unit = config.get('medicos_por_unidade', {})
         teams_by_unit = config.get('equipe_por_unidade', {})
         
-        logger.info(f"Dashboard carregado com {len(units)} unidades")
+        # Calcular totais para estatísticas
+        total_doctors = sum(len(doctors) for doctors in doctors_by_unit.values())
+        total_members = sum(len(members) for members in teams_by_unit.values())
+        
+        logger.info(f"Dashboard carregado com {len(units)} unidades, {total_doctors} médicos, {total_members} membros")
         
         return render_template('admin_new.html', 
                              units=units,
                              doctors_by_unit=doctors_by_unit,
-                             teams_by_unit=teams_by_unit)
+                             teams_by_unit=teams_by_unit,
+                             total_doctors=total_doctors,
+                             total_members=total_members)
         
     except Exception as e:
         logger.error(f"Erro ao carregar dashboard: {e}")
