@@ -364,7 +364,7 @@
                             <select name="unit_id" id="doctor_unit" required>
                                 <option value="">Selecione a Unidade</option>
                                 {% for unit in units %}
-                                <option value="{{ unit.id }}">{{ unit.name }}</option>
+                                <option value="{{ unit.name }}">{{ unit.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -394,12 +394,13 @@
                                         <tbody>
                                             {% for doctor in doctors %}
                                             <tr>
-                                                <td>{{ doctor.name }}</td>
-                                                <td>{{ doctor.created_at.strftime('%d/%m/%Y') if doctor.created_at else 'N/A' }}</td>
+                                                <td>{{ doctor }}</td>
+                                                <td>Ativo</td>
                                                 <td>
                                                     <form action="{{ url_for('admin.delete_doctor') }}" method="post" 
-                                                          onsubmit="return confirm('Tem certeza que deseja remover o médico {{ doctor.name }}?');">
-                                                        <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
+                                                          onsubmit="return confirm('Tem certeza que deseja remover o médico {{ doctor }}?');">
+                                                        <input type="hidden" name="doctor_name" value="{{ doctor }}">
+                                                        <input type="hidden" name="unit_name" value="{{ unit_name }}">
                                                         <button type="submit" class="btn btn-danger">Remover</button>
                                                     </form>
                                                 </td>
@@ -426,7 +427,7 @@
                             <select name="unit_id" id="team_unit" required>
                                 <option value="">Selecione a Unidade</option>
                                 {% for unit in units %}
-                                <option value="{{ unit.id }}">{{ unit.name }}</option>
+                                <option value="{{ unit.name }}">{{ unit.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -456,12 +457,13 @@
                                         <tbody>
                                             {% for member in team_members %}
                                             <tr>
-                                                <td>{{ member.name }}</td>
-                                                <td>{{ member.created_at.strftime('%d/%m/%Y') if member.created_at else 'N/A' }}</td>
+                                                <td>{{ member }}</td>
+                                                <td>Ativo</td>
                                                 <td>
                                                     <form action="{{ url_for('admin.delete_team_member') }}" method="post" 
-                                                          onsubmit="return confirm('Tem certeza que deseja remover o membro {{ member.name }}?');">
-                                                        <input type="hidden" name="member_id" value="{{ member.id }}">
+                                                          onsubmit="return confirm('Tem certeza que deseja remover o membro {{ member }}?');">
+                                                        <input type="hidden" name="member_name" value="{{ member }}">
+                                                        <input type="hidden" name="unit_name" value="{{ unit_name }}">
                                                         <button type="submit" class="btn btn-danger">Remover</button>
                                                     </form>
                                                 </td>

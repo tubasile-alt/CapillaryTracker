@@ -129,45 +129,45 @@ def add_unit():
 @admin_bp.route('/delete_unit', methods=['POST'])
 @admin_required
 def delete_unit():
-    """Remove unidade (desativa)"""
+    """Remove unidade usando sistema JSON"""
     try:
-        from app import Unit, Doctor, TeamMember, db
+        from app import load_admin_config
+        import json
         
-        unit_id = request.form.get('unit_id')
+        unit_name = request.form.get('unit_name')
         
-        if not unit_id:
-            flash('ID da unidade é obrigatório!', 'danger')
+        if not unit_name:
+            flash('Nome da unidade é obrigatório!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
-        unit = Unit.query.get(unit_id)
-        if not unit:
+        # Carregar configuração atual
+        config = load_admin_config()
+        
+        # Verificar se unidade existe
+        if unit_name not in config.get('unidades', []):
             flash('Unidade não encontrada!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
-        # Desativar unidade e todos médicos/equipe relacionados
-        unit.is_active = False
-        unit.updated_at = datetime.utcnow()
+        # Remover unidade e dados relacionados
+        config['unidades'].remove(unit_name)
         
-        # Desativar médicos da unidade
-        Doctor.query.filter_by(unit_id=unit_id).update({
-            'is_active': False,
-            'updated_at': datetime.utcnow()
-        })
+        # Remover médicos e equipe da unidade
+        if 'medicos_por_unidade' in config and unit_name in config['medicos_por_unidade']:
+            del config['medicos_por_unidade'][unit_name]
         
-        # Desativar membros da equipe
-        TeamMember.query.filter_by(unit_id=unit_id).update({
-            'is_active': False,
-            'updated_at': datetime.utcnow()
-        })
+        if 'equipe_por_unidade' in config and unit_name in config['equipe_por_unidade']:
+            del config['equipe_por_unidade'][unit_name]
         
-        db.session.commit()
+        # Salvar configuração
+        with open('admin_config.json', 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
         
-        flash(f'Unidade "{unit.name}" removida com sucesso!', 'success')
-        logger.info(f"Unidade {unit.name} desativada")
+        flash(f'Unidade "{unit_name}" removida com sucesso!', 'success')
+        logger.info(f"Unidade {unit_name} removida")
         
     except Exception as e:
-        db.session.rollback()
         logger.error(f"Erro ao remover unidade: {e}")
+        logger.error(f"Traceback completo: {traceback.format_exc()}")
         flash('Erro ao remover unidade. Tente novamente.', 'danger')
     
     return redirect(url_for('admin.dashboard'))
@@ -176,48 +176,50 @@ def delete_unit():
 @admin_bp.route('/add_doctor', methods=['POST'])
 @admin_required
 def add_doctor():
-    """Adiciona novo médico"""
+    """Adiciona novo médico usando sistema JSON"""
     try:
-        from app import Unit, Doctor, db
+        from app import load_admin_config
+        import json
         
         name = request.form.get('name', '').strip()
-        unit_id = request.form.get('unit_id')
+        unit_name = request.form.get('unit_id')  # Na verdade é o nome da unidade
         
-        if not name or not unit_id:
+        if not name or not unit_name:
             flash('Nome do médico e unidade são obrigatórios!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
-        # Verificar se unidade existe
-        unit = Unit.query.get(unit_id)
-        if not unit:
+        # Carregar configuração atual
+        config = load_admin_config()
+        
+        # Verificar se a unidade existe
+        if unit_name not in config.get('unidades', []):
             flash('Unidade não encontrada!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
         # Verificar se médico já existe na unidade
-        existing = Doctor.query.filter_by(name=name, unit_id=unit_id).first()
-        if existing:
-            if existing.is_active:
-                flash(f'O médico "{name}" já existe na unidade "{unit.name}"!', 'danger')
-            else:
-                # Reativar médico
-                existing.is_active = True
-                existing.updated_at = datetime.utcnow()
-                db.session.commit()
-                flash(f'Médico "{name}" reativado na unidade "{unit.name}"!', 'success')
-                logger.info(f"Médico {name} reativado na unidade {unit.name}")
+        unit_doctors = config.get('medicos_por_unidade', {}).get(unit_name, [])
+        if name in unit_doctors:
+            flash(f'O médico "{name}" já existe na unidade "{unit_name}"!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
-        # Criar novo médico
-        new_doctor = Doctor(name=name, unit_id=unit_id)
-        db.session.add(new_doctor)
-        db.session.commit()
+        # Adicionar novo médico
+        if 'medicos_por_unidade' not in config:
+            config['medicos_por_unidade'] = {}
+        if unit_name not in config['medicos_por_unidade']:
+            config['medicos_por_unidade'][unit_name] = []
         
-        flash(f'Médico "{name}" adicionado à unidade "{unit.name}" com sucesso!', 'success')
-        logger.info(f"Novo médico criado: {name} na unidade {unit.name}")
+        config['medicos_por_unidade'][unit_name].append(name)
+        
+        # Salvar configuração
+        with open('admin_config.json', 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        
+        flash(f'Médico "{name}" adicionado à unidade "{unit_name}" com sucesso!', 'success')
+        logger.info(f"Novo médico criado: {name} na unidade {unit_name}")
         
     except Exception as e:
-        db.session.rollback()
         logger.error(f"Erro ao adicionar médico: {e}")
+        logger.error(f"Traceback completo: {traceback.format_exc()}")
         flash('Erro ao adicionar médico. Tente novamente.', 'danger')
     
     return redirect(url_for('admin.dashboard'))
@@ -225,33 +227,45 @@ def add_doctor():
 @admin_bp.route('/delete_doctor', methods=['POST'])
 @admin_required
 def delete_doctor():
-    """Remove médico (desativa)"""
+    """Remove médico usando sistema JSON"""
     try:
-        from app import Doctor, db
+        from app import load_admin_config
+        import json
         
-        doctor_id = request.form.get('doctor_id')
+        doctor_name = request.form.get('doctor_name')
+        unit_name = request.form.get('unit_name')
         
-        if not doctor_id:
-            flash('ID do médico é obrigatório!', 'danger')
+        if not doctor_name or not unit_name:
+            flash('Nome do médico e unidade são obrigatórios!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
-        doctor = Doctor.query.get(doctor_id)
-        if not doctor:
-            flash('Médico não encontrado!', 'danger')
+        # Carregar configuração atual
+        config = load_admin_config()
+        
+        # Verificar se a unidade existe
+        if unit_name not in config.get('unidades', []):
+            flash('Unidade não encontrada!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
-        # Desativar médico
-        doctor.is_active = False
-        doctor.updated_at = datetime.utcnow()
-        db.session.commit()
+        # Verificar se médico existe na unidade
+        unit_doctors = config.get('medicos_por_unidade', {}).get(unit_name, [])
+        if doctor_name not in unit_doctors:
+            flash('Médico não encontrado nesta unidade!', 'danger')
+            return redirect(url_for('admin.dashboard'))
         
-        unit_name = doctor.unit_obj.name if doctor.unit_obj else "Unidade desconhecida"
-        flash(f'Médico "{doctor.name}" removido da unidade "{unit_name}" com sucesso!', 'success')
-        logger.info(f"Médico {doctor.name} desativado da unidade {unit_name}")
+        # Remover médico
+        config['medicos_por_unidade'][unit_name].remove(doctor_name)
+        
+        # Salvar configuração
+        with open('admin_config.json', 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        
+        flash(f'Médico "{doctor_name}" removido da unidade "{unit_name}" com sucesso!', 'success')
+        logger.info(f"Médico {doctor_name} removido da unidade {unit_name}")
         
     except Exception as e:
-        db.session.rollback()
         logger.error(f"Erro ao remover médico: {e}")
+        logger.error(f"Traceback completo: {traceback.format_exc()}")
         flash('Erro ao remover médico. Tente novamente.', 'danger')
     
     return redirect(url_for('admin.dashboard'))
@@ -260,48 +274,50 @@ def delete_doctor():
 @admin_bp.route('/add_team_member', methods=['POST'])
 @admin_required
 def add_team_member():
-    """Adiciona novo membro da equipe"""
+    """Adiciona novo membro da equipe usando sistema JSON"""
     try:
-        from app import Unit, TeamMember, db
+        from app import load_admin_config
+        import json
         
         name = request.form.get('name', '').strip()
-        unit_id = request.form.get('unit_id')
+        unit_name = request.form.get('unit_id')  # Na verdade é o nome da unidade
         
-        if not name or not unit_id:
+        if not name or not unit_name:
             flash('Nome do membro da equipe e unidade são obrigatórios!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
-        # Verificar se unidade existe
-        unit = Unit.query.get(unit_id)
-        if not unit:
+        # Carregar configuração atual
+        config = load_admin_config()
+        
+        # Verificar se a unidade existe
+        if unit_name not in config.get('unidades', []):
             flash('Unidade não encontrada!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
         # Verificar se membro já existe na unidade
-        existing = TeamMember.query.filter_by(name=name, unit_id=unit_id).first()
-        if existing:
-            if existing.is_active:
-                flash(f'O membro "{name}" já existe na equipe da unidade "{unit.name}"!', 'danger')
-            else:
-                # Reativar membro
-                existing.is_active = True
-                existing.updated_at = datetime.utcnow()
-                db.session.commit()
-                flash(f'Membro "{name}" reativado na equipe da unidade "{unit.name}"!', 'success')
-                logger.info(f"Membro {name} reativado na unidade {unit.name}")
+        unit_members = config.get('equipe_por_unidade', {}).get(unit_name, [])
+        if name in unit_members:
+            flash(f'O membro "{name}" já existe na equipe da unidade "{unit_name}"!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
-        # Criar novo membro
-        new_member = TeamMember(name=name, unit_id=unit_id)
-        db.session.add(new_member)
-        db.session.commit()
+        # Adicionar novo membro
+        if 'equipe_por_unidade' not in config:
+            config['equipe_por_unidade'] = {}
+        if unit_name not in config['equipe_por_unidade']:
+            config['equipe_por_unidade'][unit_name] = []
         
-        flash(f'Membro "{name}" adicionado à equipe da unidade "{unit.name}" com sucesso!', 'success')
-        logger.info(f"Novo membro criado: {name} na unidade {unit.name}")
+        config['equipe_por_unidade'][unit_name].append(name)
+        
+        # Salvar configuração
+        with open('admin_config.json', 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        
+        flash(f'Membro "{name}" adicionado à equipe da unidade "{unit_name}" com sucesso!', 'success')
+        logger.info(f"Novo membro criado: {name} na unidade {unit_name}")
         
     except Exception as e:
-        db.session.rollback()
         logger.error(f"Erro ao adicionar membro da equipe: {e}")
+        logger.error(f"Traceback completo: {traceback.format_exc()}")
         flash('Erro ao adicionar membro da equipe. Tente novamente.', 'danger')
     
     return redirect(url_for('admin.dashboard'))
@@ -309,33 +325,45 @@ def add_team_member():
 @admin_bp.route('/delete_team_member', methods=['POST'])
 @admin_required
 def delete_team_member():
-    """Remove membro da equipe (desativa)"""
+    """Remove membro da equipe usando sistema JSON"""
     try:
-        from app import TeamMember, db
+        from app import load_admin_config
+        import json
         
-        member_id = request.form.get('member_id')
+        member_name = request.form.get('member_name')
+        unit_name = request.form.get('unit_name')
         
-        if not member_id:
-            flash('ID do membro da equipe é obrigatório!', 'danger')
+        if not member_name or not unit_name:
+            flash('Nome do membro e unidade são obrigatórios!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
-        member = TeamMember.query.get(member_id)
-        if not member:
-            flash('Membro da equipe não encontrado!', 'danger')
+        # Carregar configuração atual
+        config = load_admin_config()
+        
+        # Verificar se a unidade existe
+        if unit_name not in config.get('unidades', []):
+            flash('Unidade não encontrada!', 'danger')
             return redirect(url_for('admin.dashboard'))
         
-        # Desativar membro
-        member.is_active = False
-        member.updated_at = datetime.utcnow()
-        db.session.commit()
+        # Verificar se membro existe na unidade
+        unit_members = config.get('equipe_por_unidade', {}).get(unit_name, [])
+        if member_name not in unit_members:
+            flash('Membro não encontrado nesta unidade!', 'danger')
+            return redirect(url_for('admin.dashboard'))
         
-        unit_name = member.unit_obj.name if member.unit_obj else "Unidade desconhecida"
-        flash(f'Membro "{member.name}" removido da equipe da unidade "{unit_name}" com sucesso!', 'success')
-        logger.info(f"Membro {member.name} desativado da unidade {unit_name}")
+        # Remover membro
+        config['equipe_por_unidade'][unit_name].remove(member_name)
+        
+        # Salvar configuração
+        with open('admin_config.json', 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        
+        flash(f'Membro "{member_name}" removido da equipe da unidade "{unit_name}" com sucesso!', 'success')
+        logger.info(f"Membro {member_name} removido da unidade {unit_name}")
         
     except Exception as e:
-        db.session.rollback()
         logger.error(f"Erro ao remover membro da equipe: {e}")
+        logger.error(f"Traceback completo: {traceback.format_exc()}")
         flash('Erro ao remover membro da equipe. Tente novamente.', 'danger')
     
     return redirect(url_for('admin.dashboard'))
