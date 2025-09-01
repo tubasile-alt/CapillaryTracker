@@ -1,61 +1,40 @@
 {
   "unidades": [
+    "Belo Horizonte",
     "Brasília",
     "Campinas",
+    "Campo Grande",
+    "Curitiba",
+    "Florianópolis",
+    "Fortaleza",
     "Goiania",
+    "Porto Alegre",
     "Recife",
     "Ribeirão Preto",
     "Rio de Janeiro",
+    "Salvador",
     "São Paulo",
-    "Uberlândia",
-    "Belo Horizonte"
+    "Uberlândia"
   ],
   "medicos_por_unidade": {
-    "Ribeirão Preto": [
-      "Dr. Arthur",
-      "Dr. Daniel"
-    ],
-    "Campinas": [
-      "Dra. Adriana",
-      "Dra. Isadora"
-    ],
-    "Rio de Janeiro": [
-      "Dra. Ana Clara",
-      "Dra. Paula"
-    ],
-    "São Paulo": [
-      "Dr. Daniel",
-      "Dr. Renan",
-      "Dra. Ariane",
-      "Dra. Isabella",
-      "Dra. Talita",
-      "Dra. Thaiza"
-    ],
-    "Brasília": [
-      "Dra. Leticia",
-      "Dra. Natalia"
-    ],
-    "Goiania": [
-      "Dra. Debora",
-      "Dra. Francyelle"
-    ],
-    "Recife": [
-      "Dra. Maria Thaiene"
-    ],
-    "Uberlândia": [
-      "Dr. Tiago"
-    ],
-    "Belo Horizonte": [
-      "Dr.Leonardo"
-    ]
+    "Ribeirão Preto": ["Dr. Arthur", "Dr. Daniel"],
+    "Campinas": ["Dra. Adriana", "Dra. Isadora"],
+    "Rio de Janeiro": ["Dra. Ana Clara", "Dra. Paula"],
+    "São Paulo": ["Dr. Daniel", "Dr. Renan", "Dra. Ariane", "Dra. Isabella", "Dra. Talita", "Dra. Thaiza"],
+    "Brasília": ["Dra. Leticia", "Dra. Natalia"],
+    "Goiania": ["Dra. Debora", "Dra. Francyelle"],
+    "Recife": ["Dra. Maria Thaiene"],
+    "Uberlândia": ["Dr. Tiago"],
+    "Belo Horizonte": ["Dr. Leonardo"],
+    "Curitiba": [],
+    "Campo Grande": [],
+    "Salvador": [],
+    "Porto Alegre": [],
+    "Florianópolis": [],
+    "Fortaleza": []
   },
   "equipe_por_unidade": {
-    "Ribeirão Preto": [
-      "Aline",
-      "Ana",
-      "Lavinia",
-      "Natália"
-    ],
+    "Ribeirão Preto": ["Aline", "Ana", "Lavinia", "Natália"],
     "Campinas": [
       "Bruna Galhardo",
       "Dayane Andrade",
@@ -67,11 +46,7 @@
       "Thalita Corrêa",
       "Vitória Delino"
     ],
-    "Rio de Janeiro": [
-      "Assistente Extra",
-      "Mariana Moro",
-      "Mariana Silva"
-    ],
+    "Rio de Janeiro": ["Assistente Extra", "Mariana Moro", "Mariana Silva"],
     "São Paulo": [
       "Adriana Almeida",
       "Ana Paula dos Santos",
@@ -88,18 +63,17 @@
       "Thaís Paiva",
       "Thamiris Santos"
     ],
-    "Brasília": [
-      "Angélica Sousa",
-      "Betânia Almeida",
-      "Dayse Fernandes",
-      "Layla Cardoso",
-      "Thamara Maciel"
+    "Brasília": ["Angélica Sousa", "Betânia Almeida", "Dayse Fernandes", "Layla Cardoso", "Thamara Maciel"],
+    "Goiania": [
+      "Esteffany Borges",
+      "Letícia Paiva",
+      "Gabriela dias",
+      "Luana Lima"
     ],
-    "Goiania": [],
     "Recife": [
-      "Alice",
-      "Halida",
-      "Mirely"
+      "Alice Santos",
+      "Hálida Mendes",
+      "Mirelly Santos"
     ],
     "Uberlândia": [
       "Adriana Almeida",
@@ -126,6 +100,40 @@
       "Thamiris Santos",
       "Thaís Paiva"
     ],
-    "Belo Horizonte": []
+    "Curitiba": [
+      "Débora Cruz",
+      "Tabatta Mattana",
+      "Camila Coimbra",
+      "Jhenifer Ramos"
+    ],
+    "Campo Grande": [
+      "Letícia Caceres",
+      "Laisa Nunes",
+      "Thaienne terencio"
+    ],
+    "Salvador": [
+      "Jessica Ruanne",
+      "Jessica Moreira",
+      "Stefane sacramento",
+      "Adriana Gomes"
+    ],
+    "Porto Alegre": [
+      "Mariana Garcia",
+      "Renata Lopes"
+    ],
+    "Florianópolis": [
+      "Bianka Medeiro"
+    ],
+    "Fortaleza": [
+      "Alexia Rodrigues",
+      "Camila Freitas",
+      "Kelly de Lima"
+    ],
+    "Belo Horizonte": [
+      "Bruna Braga",
+      "Camila Aparecida",
+      "Vanessa Santos",
+      "Claudia Sathler"
+    ]
   }
 }
