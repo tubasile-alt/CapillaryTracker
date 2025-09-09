@@ -169,22 +169,14 @@
                 <label for="filterUnit">Unidade Principal:</label>
                 <select id="filterUnit" onchange="updateDashboard()">
                     <option value="all">Todas as Unidades</option>
-                    <option value="Ribeirão Preto">Ribeirão Preto</option>
-                    <option value="Campinas">Campinas</option>
-                    <option value="Rio de Janeiro">Rio de Janeiro</option>
-                    <option value="São Paulo">São Paulo</option>
-                    <option value="Brasília">Brasília</option>
+                    <!-- Unidades carregadas dinamicamente -->
                 </select>
             </div>
             <div class="filter-group">
                 <label for="compareUnit">Comparar com:</label>
                 <select id="compareUnit" onchange="updateDashboard()">
                     <option value="">Nenhuma</option>
-                    <option value="Ribeirão Preto">Ribeirão Preto</option>
-                    <option value="Campinas">Campinas</option>
-                    <option value="Rio de Janeiro">Rio de Janeiro</option>
-                    <option value="São Paulo">São Paulo</option>
-                    <option value="Brasília">Brasília</option>
+                    <!-- Unidades carregadas dinamicamente -->
                 </select>
             </div>
         </div>
@@ -575,7 +567,74 @@
         }
         
         // Carregar dados iniciais
+        // Função para carregar unidades dinamicamente
+        function loadAvailableUnits() {
+            console.log('Carregando unidades disponíveis para dashboard médicos...');
+            
+            fetch('/get_available_units')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Unidades carregadas:', data.units);
+                    
+                    const filterUnit = document.getElementById('filterUnit');
+                    const compareUnit = document.getElementById('compareUnit');
+                    
+                    if (filterUnit && data.units && data.units.length > 0) {
+                        // Manter a primeira opção "Todas as Unidades"
+                        const firstOption = filterUnit.firstElementChild;
+                        filterUnit.innerHTML = '';
+                        filterUnit.appendChild(firstOption);
+                        
+                        // Adicionar todas as unidades
+                        data.units.sort().forEach(unit => {
+                            const option = document.createElement('option');
+                            option.value = unit;
+                            option.textContent = unit;
+                            filterUnit.appendChild(option);
+                        });
+                    }
+                    
+                    if (compareUnit && data.units && data.units.length > 0) {
+                        // Manter a primeira opção "Nenhuma"
+                        const firstOption = compareUnit.firstElementChild;
+                        compareUnit.innerHTML = '';
+                        compareUnit.appendChild(firstOption);
+                        
+                        // Adicionar todas as unidades
+                        data.units.sort().forEach(unit => {
+                            const option = document.createElement('option');
+                            option.value = unit;
+                            option.textContent = unit;
+                            compareUnit.appendChild(option);
+                        });
+                    }
+                    
+                    console.log(`${data.units.length} unidades carregadas nos seletores do dashboard médicos`);
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar unidades:', error);
+                    // Fallback para unidades básicas
+                    const fallbackUnits = ['Brasília', 'Campinas', 'Rio de Janeiro', 'Ribeirão Preto', 'São Paulo'];
+                    
+                    [document.getElementById('filterUnit'), document.getElementById('compareUnit')].forEach(select => {
+                        if (select) {
+                            const firstOption = select.firstElementChild;
+                            select.innerHTML = '';
+                            select.appendChild(firstOption);
+                            
+                            fallbackUnits.forEach(unit => {
+                                const option = document.createElement('option');
+                                option.value = unit;
+                                option.textContent = unit;
+                                select.appendChild(option);
+                            });
+                        }
+                    });
+                });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            loadAvailableUnits(); // Carregar unidades primeiro
             updateDashboard();
         });
     </script>
