@@ -1963,17 +1963,25 @@ def get_unit_progress():
 
 @app.route('/get_available_units')
 def get_available_units():
-    """Endpoint para obter todas asunidades disponíveis no banco de dados"""
-    logger.info("Obtendo unidades disponíveis")
+    """Endpoint para obter todas as unidades disponíveis do admin_config.json"""
+    logger.info("Obtendo unidades disponíveis do admin_config")
     try:
-        with app.app_context():
-            units = [unit.unidade for unit in Surgery.query.distinct(Surgery.unidade).all()]
-            # Garantir que todas as unidades padrão estejam sempre disponíveis
-            default_units = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']
-            for unit in default_units:
-                if unit not in units:
-                    units.append(unit)
-            return jsonify({'units': units})
+        # Carregar unidades do admin_config.json
+        admin_config = load_admin_config()
+        units = admin_config.get('unidades', [])
+        
+        # Se não houver unidades no config, buscar do banco como fallback
+        if not units:
+            with app.app_context():
+                units = [unit.unidade for unit in Surgery.query.distinct(Surgery.unidade).all()]
+                # Garantir que todas as unidades padrão estejam sempre disponíveis
+                default_units = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']
+                for unit in default_units:
+                    if unit not in units:
+                        units.append(unit)
+        
+        logger.info(f"Unidades carregadas: {len(units)} unidades")
+        return jsonify({'units': sorted(units)})
     except Exception as e:
         logger.error(f"Erro ao obter unidades: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'units': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro']})

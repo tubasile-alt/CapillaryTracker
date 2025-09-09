@@ -38,11 +38,7 @@
             <label for="unit-select">Unidade</label>
             <select id="unit-select" class="form-control">
                 <option value="">Selecione a Unidade</option>
-                <option value="Ribeirão Preto">Ribeirão Preto</option>
-                <option value="Campinas">Campinas</option>
-                <option value="Rio de Janeiro">Rio de Janeiro</option>
-                <option value="São Paulo">São Paulo</option>
-                <option value="Brasília">Brasília</option>
+                <!-- Unidades carregadas dinamicamente -->
             </select>
         </div>
     </div>
@@ -670,9 +666,48 @@ function loadNecroseSummary() {
         });
 }
 
+// Função para carregar unidades disponíveis dinamicamente
+function loadAvailableUnits() {
+    console.log('Carregando unidades disponíveis...');
+    const unitSelect = document.getElementById('unit-select');
+    if (!unitSelect) return;
+    
+    fetch('/get_available_units')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Unidades carregadas:', data.units);
+            // Limpar opções existentes exceto a primeira
+            unitSelect.innerHTML = '<option value="">Selecione a Unidade</option>';
+            
+            // Adicionar todas as unidades dinamicamente
+            if (data.units && data.units.length > 0) {
+                data.units.sort().forEach(unit => {
+                    const option = document.createElement('option');
+                    option.value = unit;
+                    option.textContent = unit;
+                    unitSelect.appendChild(option);
+                });
+                console.log(`${data.units.length} unidades carregadas no seletor`);
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar unidades:', error);
+            // Fallback para unidades básicas
+            const fallbackUnits = ['Brasília', 'Campinas', 'Rio de Janeiro', 'Ribeirão Preto', 'São Paulo'];
+            unitSelect.innerHTML = '<option value="">Selecione a Unidade</option>';
+            fallbackUnits.forEach(unit => {
+                const option = document.createElement('option');
+                option.value = unit;
+                option.textContent = unit;
+                unitSelect.appendChild(option);
+            });
+        });
+}
+
 // Aguardar o DOM carregar completamente
 document.addEventListener('DOMContentLoaded', function() {
     loadNecroseSummary();
+    loadAvailableUnits(); // Carregar unidades dinamicamente
     // NÃO carregar lista automaticamente - usuário deve clicar no botão
     
     // Habilitar campo de busca apenas quando a unidade for selecionada
