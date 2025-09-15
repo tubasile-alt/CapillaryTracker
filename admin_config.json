@@ -13,6 +13,7 @@
     "Ribeirão Preto",
     "Rio de Janeiro",
     "Salvador",
+    "Santos",
     "São Paulo",
     "Uberlândia"
   ],
@@ -29,6 +30,7 @@
     "Curitiba": [],
     "Campo Grande": [],
     "Salvador": [],
+    "Santos": ["Dra. Juliana"],
     "Porto Alegre": [],
     "Florianópolis": [],
     "Fortaleza": []
@@ -129,6 +131,7 @@
       "Camila Freitas",
       "Kelly de Lima"
     ],
+    "Santos": [],
     "Belo Horizonte": [
       "Bruna Braga",
       "Camila Aparecida",
