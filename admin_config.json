@@ -24,16 +24,16 @@
     "São Paulo": ["Dr. Daniel", "Dr. Renan", "Dra. Ariane", "Dra. Isabella", "Dra. Talita", "Dra. Thaiza"],
     "Brasília": ["Dra. Leticia", "Dra. Natalia"],
     "Goiania": ["Dra. Debora", "Dra. Francyelle"],
-    "Recife": ["Dra. Maria Thaiene"],
+    "Recife": ["Dra. Maria Thaiene", "Dra. Ana Carolina"],
     "Uberlândia": ["Dr. Tiago"],
     "Belo Horizonte": ["Dr. Leonardo", "Dra. Rayssa"],
-    "Curitiba": [],
-    "Campo Grande": [],
-    "Salvador": [],
+    "Curitiba": ["Dr. Nicolas", "Dra. Marina"],
+    "Campo Grande": ["Dra. Layana"],
+    "Salvador": ["Dra. Alexia"],
     "Santos": ["Dra. Juliana", "Dra. Thaiza"],
-    "Porto Alegre": [],
-    "Florianópolis": [],
-    "Fortaleza": []
+    "Porto Alegre": ["Dra. Vitoria"],
+    "Florianópolis": ["Dr. Tiago"],
+    "Fortaleza": ["Dra. Roberta"]
   },
   "equipe_por_unidade": {
     "Ribeirão Preto": ["Aline", "Ana", "Lavinia", "Natália"],
@@ -45,10 +45,11 @@
       "Juliana Nunes",
       "Kesley Sabrina",
       "Larissa Hellen",
+      "Maria Laura Rodrigues",
       "Thalita Corrêa",
       "Vitória Delino"
     ],
-    "Rio de Janeiro": ["Assistente Extra", "Mariana Moro", "Mariana Silva"],
+    "Rio de Janeiro": ["Assistente Extra", "Daiana Arruda", "Mariana Moro", "Mariana Silva", "Wanda Lopes"],
     "São Paulo": [
       "Adriana Almeida",
       "Ana Paula dos Santos",
@@ -125,6 +126,7 @@
     ],
     "Porto Alegre": [
       "Mariana Garcia",
+      "Renata Dorneles",
       "Renata Lopes"
     ],
     "Florianópolis": [
@@ -135,7 +137,22 @@
       "Camila Freitas",
       "Kelly de Lima"
     ],
-    "Santos": [],
+    "Santos": [
+      "Adriana Almeida",
+      "Ana Paula dos Santos",
+      "Dani Curti",
+      "Eliene Rodrigues",
+      "Gabriela Cruz",
+      "Greice Barbosa",
+      "Jaiza Valentim",
+      "Joyce Eugênia Da Silva",
+      "Josefa Wilma Vieira",
+      "Merielen Venâncio Oliveira",
+      "Rosana Pereira",
+      "Sabrina Crott",
+      "Thaís Paiva",
+      "Thamiris Santos"
+    ],
     "Belo Horizonte": [
       "Bruna Braga",
       "Camila Aparecida",
