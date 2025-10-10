@@ -5,7 +5,7 @@
     <div class="success-box">
         <h2 class="success-title">✅ Dados salvos com sucesso!</h2>
         <p class="success-message">Os dados do paciente foram registrados no sistema.</p>
-        
+
         {% if saved_data %}
         <div class="surgery-summary" style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left; border: 1px solid #dee2e6;">
             <h3 style="color: #495057; margin-bottom: 15px; text-align: center;">📋 Resumo Completo dos Dados Cadastrados</h3>
@@ -25,13 +25,13 @@ DADOS DA CIRURGIA:
 • Frente: {{ saved_data.get('frente', 'N/A') }}
 • Coroa: {{ saved_data.get('coroa', 'N/A') }}
 • Scalpe: {{ saved_data.get('scalpe', 'N/A') }}
-• Península direita: {{ saved_data.get('peninsula_direita', 'N/A') }}
-• Península esquerda: {{ saved_data.get('peninsula_esquerda', 'N/A') }}
+• Península direita: {{ saved_data.get('peninsula_direita', saved_data.get('Península Direita', 'N/A')) }}
+• Península esquerda: {{ saved_data.get('peninsula_esquerda', saved_data.get('Península Esquerda', 'N/A')) }}
 
-DENSIDADE E MEDIDAS:
-• Densidade Scketh: {{ saved_data.get('densidade_scketh', 'N/A') }}
+RETOQUE: {{ saved_data.get('retoque', saved_data.get('Retoque', 'Não')) }}
+TIPO DE IMPLANTE: {{ saved_data.get('tipo_implante', saved_data.get('Tipo de Implante', 'Não informado')) }}
 
-INSTRUMENTOS:
+=== PROCEDIMENTOS E FERRAMENTAS ===
 • Safira: {{ saved_data.get('safira', 'N/A') }}
 • Punch: {{ saved_data.get('punch', 'N/A') }}
 
@@ -87,7 +87,7 @@ HISTÓRICO MÉDICO:
 
 COMENTÁRIOS GERAIS:
 {{ saved_data.get('comentarios', 'Nenhum comentário adicional') }}</div>
-            
+
             <div style="text-align: center; margin-top: 15px;">
                 <button id="copyButton" onclick="copySummary()" class="btn btn-success" style="background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold;">
                     📋 Copiar Resumo Completo
@@ -98,7 +98,7 @@ COMENTÁRIOS GERAIS:
             </div>
         </div>
         {% endif %}
-        
+
         <div class="success-actions">
             <a href="{{ url_for('novo_cadastro') }}" class="btn btn-primary" style="display: inline-block; background-color: #007bff; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; margin: 10px;">
                 <span style="margin-right: 8px;">➕</span> Cadastrar Novo Paciente
@@ -115,7 +115,7 @@ function copySummary() {
     const summaryText = document.querySelector('.summary-content').textContent;
     const button = document.getElementById('copyButton');
     const originalText = button.innerHTML;
-    
+
     try {
         // Tentar usar a API moderna do clipboard
         if (navigator.clipboard && window.isSecureContext) {
@@ -141,7 +141,7 @@ function fallbackCopyMethod(text, button, originalText) {
     document.body.appendChild(textarea);
     textarea.focus();
     textarea.select();
-    
+
     try {
         const successful = document.execCommand('copy');
         if (successful) {
@@ -160,7 +160,7 @@ function showCopySuccess(button, originalText) {
     button.innerHTML = '✅ Copiado com Sucesso!';
     button.style.backgroundColor = '#20c997';
     button.style.transform = 'scale(1.05)';
-    
+
     setTimeout(() => {
         button.innerHTML = originalText;
         button.style.backgroundColor = '#28a745';
@@ -171,12 +171,12 @@ function showCopySuccess(button, originalText) {
 function showCopyError(button, originalText) {
     button.innerHTML = '⚠️ Erro ao Copiar';
     button.style.backgroundColor = '#dc3545';
-    
+
     setTimeout(() => {
         button.innerHTML = originalText;
         button.style.backgroundColor = '#28a745';
     }, 3000);
-    
+
     alert('Não foi possível copiar automaticamente. Por favor, selecione o texto manualmente e pressione Ctrl+C (ou Cmd+C no Mac)');
 }
 </script>

@@ -47,7 +47,7 @@ def load_admin_config():
                 return config
         except Exception as e:
             logger.error(f"❌ Erro ao carregar admin_config.json: {e}")
-            
+
             # Tentar carregar do backup
             backup_file = 'admin_config_backup.json'
             if os.path.exists(backup_file):
@@ -63,7 +63,7 @@ def load_admin_config():
                     logger.error(f"❌ Erro ao carregar backup: {backup_error}")
     else:
         logger.warning(f"⚠️ Arquivo {config_file} não encontrado, usando configuração padrão")
-    
+
     # Configuração padrão se o arquivo não existir
     return {
         'unidades': ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília', 'Goiania'],
@@ -95,21 +95,21 @@ def reload_admin_config():
     global UNIDADES, MEDICOS_POR_UNIDADE, EQUIPE_POR_UNIDADE
     try:
         admin_config = load_admin_config()
-        
+
         # Verificar se a configuração carregada é válida
         if admin_config and isinstance(admin_config, dict):
             UNIDADES = admin_config.get('unidades', ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília'])
             MEDICOS_POR_UNIDADE = admin_config.get('medicos_por_unidade', {})
             EQUIPE_POR_UNIDADE = admin_config.get('equipe_por_unidade', {})
-            
+
             # Verificar integridade dos dados
             if not isinstance(UNIDADES, list) or not isinstance(MEDICOS_POR_UNIDADE, dict) or not isinstance(EQUIPE_POR_UNIDADE, dict):
                 raise ValueError("Estrutura de dados inválida na configuração")
-                
+
             logger.info(f"✅ Configurações recarregadas: {len(UNIDADES)} unidades, {len(MEDICOS_POR_UNIDADE)} grupos de médicos")
         else:
             raise ValueError("Configuração carregada é inválida ou vazia")
-            
+
     except Exception as e:
         logger.error(f"❌ Erro ao recarregar configurações: {e}")
         logger.warning("🔄 Usando configuração padrão de segurança")
@@ -270,7 +270,7 @@ class Necrose(db.Model):
     data_cirurgia = db.Column(db.Date, nullable=False)
     data_avaliacao = db.Column(db.Date, nullable=False)
     medico_responsavel = db.Column(db.String(100))
-    
+
     # Dados de necrose
     tem_necrose = db.Column(db.Boolean, default=False)
     grau_necrose = db.Column(db.String(50))  # Leve, Moderada, Severa
@@ -280,7 +280,7 @@ class Necrose(db.Model):
     tamanho_2_cm = db.Column(db.Float)  # Tamanho da 2ª necrose em cm (se houver)
     tamanho_3_cm = db.Column(db.Float)  # Tamanho da 3ª necrose em cm (se houver)
     tamanho_4_cm = db.Column(db.Float)  # Tamanho da 4ª necrose em cm (se houver)
-    
+
     # Regiões acometidas (múltiplas possíveis)
     primeira_faixa = db.Column(db.Boolean, default=False)
     segunda_faixa = db.Column(db.Boolean, default=False)
@@ -289,15 +289,15 @@ class Necrose(db.Model):
     descricao = db.Column(db.Text)
     tratamento_aplicado = db.Column(db.Text)
     observacoes = db.Column(db.Text)
-    
+
     # Campos de acompanhamento
     status = db.Column(db.String(50), default='Em acompanhamento')  # Em acompanhamento, Resolvida, etc.
     data_resolucao = db.Column(db.Date)
-    
+
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relacionamento
     surgery = db.relationship('Surgery', backref='necroses')
 
@@ -311,7 +311,7 @@ class NecrosePhoto(db.Model):
     mime_type = db.Column(db.String(100))
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relacionamento
     necrose = db.relationship('Necrose', backref='photos')
 
@@ -323,14 +323,14 @@ class Unit(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relacionamentos
     doctors = db.relationship('Doctor', backref='unit_obj', lazy=True, cascade='all, delete-orphan')
     team_members = db.relationship('TeamMember', backref='unit_obj', lazy=True, cascade='all, delete-orphan')
-    
+
     def __repr__(self):
         return f'<Unit {self.name}>'
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -347,10 +347,10 @@ class Doctor(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def __repr__(self):
         return f'<Doctor {self.name}>'
-    
+
     def to_dict(self):
         unit = Unit.query.get(self.unit_id) if self.unit_id else None
         return {
@@ -370,10 +370,10 @@ class TeamMember(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def __repr__(self):
         return f'<TeamMember {self.name}>'
-    
+
     def to_dict(self):
         unit = Unit.query.get(self.unit_id) if self.unit_id else None
         return {
@@ -399,20 +399,20 @@ logger.info("✅ Flask-Migrate initialized")
 def trigger_automatic_backup():
     """
     Dispara backup automático com múltiplas estratégias (Dropbox + local)
-    
+
     Returns:
         tuple: (success: bool, message: str)
     """
     try:
         logger.info("🔄 Iniciando backup automático multicanal...")
-        
+
         # Buscar todos os dados para backup
         surgeries = Surgery.query.order_by(Surgery.data.desc()).all()
         necroses = Necrose.query.order_by(Necrose.data_avaliacao.desc()).all()
-        
+
         if not surgeries:
             return False, "Nenhum dado de cirurgia encontrado para backup"
-        
+
         # Criar DataFrame com dados de cirurgias
         surgery_data = []
         for surgery in surgeries:
@@ -444,7 +444,7 @@ def trigger_automatic_backup():
                 'Created_At': surgery.created_at.strftime('%d/%m/%Y %H:%M') if surgery.created_at else ''
             }
             surgery_data.append(surgery_dict)
-        
+
         # Criar DataFrame com dados de necroses
         necrose_data = []
         for necrose in necroses:
@@ -472,16 +472,16 @@ def trigger_automatic_backup():
                 'Updated_At': necrose.updated_at.strftime('%d/%m/%Y %H:%M') if necrose.updated_at else ''
             }
             necrose_data.append(necrose_dict)
-        
+
         # Criar timestamp para backup
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
+
         # ESTRATÉGIA 1: Backup Local (sempre funciona)
         local_backup_success = create_local_backup(surgery_data, necrose_data, timestamp)
-        
+
         # ESTRATÉGIA 2: Backup Dropbox (se token válido)
         dropbox_backup_success = create_dropbox_backup(surgery_data, necrose_data, timestamp)
-        
+
         # Resultado final
         if local_backup_success and dropbox_backup_success:
             return True, f"Backup completo (Local + Dropbox) - {timestamp}"
@@ -491,7 +491,7 @@ def trigger_automatic_backup():
             return True, f"Backup Dropbox realizado - {timestamp} (Local falhou)"
         else:
             return False, "Falha em todos os backups"
-            
+
     except Exception as e:
         logger.error(f"Erro no backup automático: {e}")
         return False, f"Erro: {str(e)}"
@@ -502,19 +502,19 @@ def create_local_backup(surgery_data, necrose_data, timestamp):
         # Garantir que diretório existe
         backup_dir = 'data_backup'
         os.makedirs(backup_dir, exist_ok=True)
-        
+
         # Nome do arquivo local
         local_filename = f"{backup_dir}/backup_automatico_{timestamp}.xlsx"
-        
+
         # Criar arquivo Excel com múltiplas planilhas
         import tempfile
         with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
             temp_filename = temp_file.name
-        
+
         # Usar openpyxl para criar múltiplas planilhas
         from openpyxl import Workbook
         wb = Workbook()
-        
+
         # Planilha de pacientes (dados de cirurgia)
         ws_pacientes = wb.active
         ws_pacientes.title = "Pacientes"
@@ -522,20 +522,20 @@ def create_local_backup(surgery_data, necrose_data, timestamp):
             surgery_df = pd.DataFrame(surgery_data)
             for row in dataframe_to_rows(surgery_df, index=False, header=True):
                 ws_pacientes.append(row)
-        
+
         # Planilha de necroses
         if necrose_data:
             ws_necroses = wb.create_sheet(title="Necroses")
             necrose_df = pd.DataFrame(necrose_data)
             for row in dataframe_to_rows(necrose_df, index=False, header=True):
                 ws_necroses.append(row)
-        
+
         # Salvar arquivo
         wb.save(local_filename)
-        
+
         logger.info(f"💾 Backup local criado: {local_filename}")
         return True
-        
+
     except Exception as e:
         logger.error(f"Erro no backup local: {e}")
         return False
@@ -548,16 +548,16 @@ def create_dropbox_backup(surgery_data, necrose_data, timestamp):
         if not dropbox_token:
             logger.warning("Token Dropbox não configurado")
             return False
-        
+
         # Criar arquivo Excel temporário
         import tempfile
         with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
             temp_filename = temp_file.name
-        
+
         # Criar workbook
         from openpyxl import Workbook
         wb = Workbook()
-        
+
         # Planilha de pacientes (dados de cirurgia)
         ws_pacientes = wb.active
         ws_pacientes.title = "Pacientes"
@@ -565,38 +565,38 @@ def create_dropbox_backup(surgery_data, necrose_data, timestamp):
             surgery_df = pd.DataFrame(surgery_data)
             for row in dataframe_to_rows(surgery_df, index=False, header=True):
                 ws_pacientes.append(row)
-        
+
         # Planilha de necroses
         if necrose_data:
             ws_necroses = wb.create_sheet(title="Necroses")
             necrose_df = pd.DataFrame(necrose_data)
             for row in dataframe_to_rows(necrose_df, index=False, header=True):
                 ws_necroses.append(row)
-        
+
         # Salvar arquivo temporário
         wb.save(temp_filename)
-        
+
         # Upload para Dropbox
         dbx = dropbox.Dropbox(dropbox_token)
-        
+
         with open(temp_filename, 'rb') as f:
             excel_content = f.read()
-        
+
         # Nome do arquivo no Dropbox
         dropbox_path = f"/backup_automatico_{timestamp}.xlsx"
-        
+
         dbx.files_upload(
             excel_content,
             dropbox_path,
             mode=dropbox.files.WriteMode.overwrite
         )
-        
+
         # Limpar arquivo temporário
         os.unlink(temp_filename)
-        
+
         logger.info(f"☁️ Backup Dropbox criado: {dropbox_path}")
         return True
-        
+
     except Exception as e:
         logger.error(f"Erro no backup Dropbox: {e}")
         return False
@@ -604,10 +604,10 @@ def create_dropbox_backup(surgery_data, necrose_data, timestamp):
 def export_and_backup(df=None):
     """
     Exporta DataFrame para Excel e faz backup automático no Dropbox.
-    
+
     Args:
         df: DataFrame para backup. Se None, busca todos os dados do banco.
-    
+
     Returns:
         tuple: (success: bool, message: str)
     """
@@ -617,26 +617,26 @@ def export_and_backup(df=None):
         if not dropbox_token:
             logger.warning("DROPBOX_ACCESS_TOKEN não configurado - backup desabilitado")
             return False, "Token do Dropbox não configurado"
-        
+
         # Limpar e validar o token
         dropbox_token = dropbox_token.strip().replace('\\t', '').replace('\t', '').replace('\n', '').replace('\r', '').replace(' ', '')
-        
+
         # Validação básica do comprimento do token
         if len(dropbox_token) < 10:
             logger.error(f"Token do Dropbox muito curto - comprimento: {len(dropbox_token)}")
             return False, "Token do Dropbox muito curto"
-        
+
         logger.info(f"Token validado - comprimento: {len(dropbox_token)}, inicia com: {dropbox_token[:4]}...")
-        
+
         # Se não foi fornecido DataFrame, buscar todos os dados do banco
         if df is None:
             logger.info("Buscando dados do banco para backup...")
             surgeries = Surgery.query.order_by(Surgery.data.desc()).all()
-            
+
             if not surgeries:
                 logger.info("Nenhum dado encontrado no banco para backup")
                 return False, "Nenhum dado encontrado para backup"
-            
+
             # Converter dados do banco para DataFrame usando EXATAMENTE o mesmo formato do download_complete_data
             data_list = []
             for surgery in surgeries:
@@ -706,32 +706,32 @@ def export_and_backup(df=None):
                     'Data de Criação': surgery.created_at.strftime('%d/%m/%Y %H:%M:%S') if surgery.created_at else ''
                 }
                 data_list.append(surgery_dict)
-            
+
             df = pd.DataFrame(data_list)
-        
+
         # Criar arquivo temporário no disco para gerar o Excel
         import tempfile
         logger.info("Criando arquivo Excel temporário para backup...")
-        
+
         with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
             temp_filename = temp_file.name
             df.to_excel(temp_filename, sheet_name='Cirurgias', index=False, engine='openpyxl')
-        
+
         # Ler o arquivo Excel como bytes
         with open(temp_filename, 'rb') as f:
             excel_content = f.read()
-        
+
         # Remover arquivo temporário
         os.unlink(temp_filename)
-        
+
         # Conectar ao Dropbox
         logger.info("Conectando ao Dropbox...")
         dbx = dropbox.Dropbox(dropbox_token)
-        
+
         # Nome fixo do arquivo (sempre o mesmo)
         filename = "relatorio_cirurgias_backup.xlsx"
         dropbox_path = f"/{filename}"
-        
+
         # Upload para o Dropbox (sobrescrever se existir)
         logger.info(f"Fazendo upload para Dropbox: {dropbox_path}")
         dbx.files_upload(
@@ -740,10 +740,10 @@ def export_and_backup(df=None):
             mode=dropbox.files.WriteMode.overwrite,
             autorename=False
         )
-        
+
         logger.info(f"✅ Backup realizado com sucesso no Dropbox: {filename}")
         return True, f"Arquivo '{filename}' atualizado com sucesso no Dropbox"
-        
+
     except dropbox.exceptions.AuthError as e:
         if 'expired_access_token' in str(e):
             logger.error("Token do Dropbox expirado")
@@ -900,7 +900,7 @@ def dashboard():
                     df['data_parsed'] = pd.to_datetime(df['data'], errors='coerce')
                     df = df[df['data_parsed'].notna()]
                     df = df[df['data_parsed'].dt.year >= 1900]
-                    
+
                     if df.empty:
                         logger.warning("Nenhuma data válida encontrada após filtro")
                         dashboard_data['has_follicle_data'] = False
@@ -939,7 +939,7 @@ def dashboard():
                         dashboard_data['follicles_data']['labels'] = monthly_data.index.tolist()
                         dashboard_data['follicles_data']['averages'] = monthly_data['total_foliculos'].round().astype(int).tolist()
                         dashboard_data['follicles_data']['le_density'] = monthly_data['densidade_scketh'].round().astype(int).tolist()
-                        
+
                 except Exception as e:
                     logger.error(f"Erro ao processar datas no dashboard: {str(e)}")
                     dashboard_data['has_follicle_data'] = False
@@ -1008,7 +1008,7 @@ def save_to_excel(data):
             try:
                 # Verificar se o campo data está presente ou usar o campo formatado
                 logger.info(f"Data keys available: {list(data.keys())}")
-                
+
                 if 'data' in data and data['data']:
                     logger.info(f"Using 'data' field: {data['data']}")
                     try:
@@ -1143,7 +1143,7 @@ def save_to_excel(data):
             os.rename(temp_file, filename)
 
         logger.info("✅ Data saved to Excel successfully!")
-        
+
         # Executar backup automático para Dropbox após salvar os dados
         try:
             logger.info("Iniciando backup automático para Dropbox...")
@@ -1155,7 +1155,7 @@ def save_to_excel(data):
         except Exception as backup_e:
             logger.error(f"Erro no backup automático: {str(backup_e)}")
             # Não falhar o salvamento por causa de erro no backup
-        
+
         return True, "Dados salvos com sucesso!"
     except Exception as e:
         logging.error(f"Error saving data: {str(e)}")
@@ -1168,7 +1168,7 @@ def check_duplicate_surgery(data):
         # Extract key identifiers for duplicate checking
         nome = data.get('Paciente', data.get('nome', '')).strip()
         data_cirurgia = None
-        
+
         # Parse date
         if 'data' in data and data['data']:
             try:
@@ -1177,21 +1177,21 @@ def check_duplicate_surgery(data):
                 data_cirurgia = datetime.strptime(data['data'], '%d/%m/%Y').date()
         elif 'Data (DD/MM/AAAA)' in data and data['Data (DD/MM/AAAA)']:
             data_cirurgia = datetime.strptime(data['Data (DD/MM/AAAA)'], '%d/%m/%Y').date()
-        
+
         if not nome or not data_cirurgia:
             return False, "Dados insuficientes para verificação de duplicata"
-            
+
         # Search for existing records with same name and date
         existing = Surgery.query.filter(
             Surgery.nome.ilike(f"%{nome}%"),
             Surgery.data == data_cirurgia
         ).first()
-        
+
         if existing:
             return True, f"Cirurgia já cadastrada para {nome} na data {data_cirurgia.strftime('%d/%m/%Y')}"
-            
+
         return False, "Sem duplicatas encontradas"
-        
+
     except Exception as e:
         logger.error(f"Erro na verificação de duplicata: {str(e)}")
         return False, f"Erro na verificação: {str(e)}"
@@ -1200,15 +1200,15 @@ def clean_equipe_string(equipe_str):
     """Clean and normalize team member strings to prevent duplicates"""
     if not equipe_str:
         return equipe_str
-    
+
     # Split by comma and clean each name
     nomes = [nome.strip() for nome in equipe_str.split(',')]
-    
+
     # Remove duplicates while preserving order
     nomes_unicos = []
     for nome in nomes:
         nome_clean = nome.strip()
-        
+
         # Remove extra text like "(extra)", "Técnica Extra", etc
         if '(' in nome_clean and 'extra' in nome_clean.lower():
             continue
@@ -1216,13 +1216,13 @@ def clean_equipe_string(equipe_str):
             continue
         if ':' in nome_clean and any(x in nome_clean.lower() for x in ['técnica', 'extra']):
             continue
-            
+
         # Clean multiple spaces
         nome_clean = re.sub(r'\s+', ' ', nome_clean)
-        
+
         if nome_clean and nome_clean not in nomes_unicos:
             nomes_unicos.append(nome_clean)
-    
+
     return ', '.join(nomes_unicos)
 
 # Initialize empty Excel files if they don't exist
@@ -1265,7 +1265,7 @@ def success():
     try:
         saved_data = session.get('last_saved_data', {})
         logger.info(f"📋 Dados recuperados da sessão: {len(saved_data)} campos")
-        
+
         # ✅ PROTEÇÃO TOTAL: Limpar dados problemáticos que podem causar erro no template
         if saved_data:
             # Proteger campos numéricos
@@ -1277,39 +1277,39 @@ def success():
                         float(saved_data[field])
                     except (ValueError, TypeError):
                         saved_data[field] = None
-            
+
             # Proteger campo de data
             if saved_data.get('data') and isinstance(saved_data.get('data'), str):
                 if '-' not in saved_data['data'] or len(saved_data['data'].split('-')) != 3:
                     logger.warning(f"⚠️ Data em formato inválido: {saved_data['data']}")
                     # Não apagar, só deixar como está para mostrar
-            
+
             # Proteger campo de equipe
             if saved_data.get('equipe') is None:
                 saved_data['equipe'] = 'N/A'
-            
+
             logger.info(f"✅ Dados protegidos e validados para o template")
-        
+
         if not saved_data:
             logger.warning("⚠️ Nenhum dado encontrado na sessão!")
             flash("⚠️ Não foi possível carregar o resumo dos dados. Verifique se os dados foram salvos corretamente.", "warning")
         else:
             logger.info(f"✅ Exibindo resumo com dados do paciente: {saved_data.get('nome', 'Não informado')}")
-            
+
         # ✅ SEMPRE renderizar a página, mesmo sem dados
         return render_template('success.html', saved_data=saved_data)
-        
+
     except Exception as e:
         # ✅ NUNCA deixar o usuário sem resposta
         logger.error(f"❌ ERRO CRÍTICO na página de sucesso: {str(e)}\n{traceback.format_exc()}")
         flash(f"⚠️ Houve um problema ao exibir o resumo, mas os dados foram salvos.", "warning")
-        
+
         # Tentar recuperar dados básicos da sessão de forma segura
         try:
             saved_data = session.get('last_saved_data', {})
         except:
             saved_data = {}
-            
+
         return render_template('success.html', saved_data=saved_data)
 
 @app.route('/clear_data', methods=['POST'])
@@ -1428,10 +1428,10 @@ def delete_patient():
     try:
         data = request.get_json()
         patient_name = data.get('patient_name')
-        
+
         if not patient_name:
             return jsonify({'success': False, 'message': 'Nome do paciente não fornecido'})
-            
+
         with app.app_context():
             patient = Surgery.query.filter_by(nome=patient_name).first()
             if patient:
@@ -1479,7 +1479,7 @@ def novo_cadastro():
             form_data = request.form.to_dict()
             logger.info(f"Received form data keys: {list(form_data.keys())}")
             logger.info(f"Request headers: {dict(request.headers)}")
-            
+
             # Log de detalhes específicos importantes
             if 'Paciente' in form_data:
                 logger.info(f"Paciente: {form_data['Paciente']}")
@@ -1487,7 +1487,7 @@ def novo_cadastro():
                 logger.info(f"Data: {form_data['Data (DD/MM/AAAA)']}")
             if 'Unidade' in form_data:
                 logger.info(f"Unidade: {form_data['Unidade']}")
-            
+
             # Log específico dos campos calculados para debugging
             quadrant_fields = ['q1_densidade', 'q1_taxa_quebra', 'q2_densidade', 'q2_taxa_quebra', 
                              'q3_densidade', 'q3_taxa_quebra', 'q4_densidade', 'q4_taxa_quebra']
@@ -1496,13 +1496,13 @@ def novo_cadastro():
                     logger.info(f"📊 Campo calculado encontrado - {field}: {form_data[field]}")
                 else:
                     logger.warning(f"⚠️ Campo calculado AUSENTE - {field}")
-            
+
             # Log completo dos dados para auditoria
             logger.info(f"💾 Dados completos recebidos: {form_data}")
 
             # Process multiple checkboxes for team members
             team_members = []
-            
+
             # Collect all team-related fields
             for key, value in form_data.items():
                 if key.startswith('equipe_') and value:
@@ -1513,17 +1513,17 @@ def novo_cadastro():
                     team_members.append(f"Freelancer 2: {value}")
                 elif key == 'extra_person_3' and value:
                     team_members.append(f"Freelancer 3: {value}")
-            
+
             # Handle legacy equipe_values field
             if 'equipe_values' in form_data:
                 if form_data['equipe_values']:
                     team_members.append(form_data['equipe_values'])
                 del form_data['equipe_values']
-            
+
             # Combine all team members
             if team_members:
                 form_data['equipe'] = ', '.join(team_members)
-            
+
             logger.info(f"📋 Equipe processada: {form_data.get('equipe', 'Nenhuma')}")
             logger.info(f"🔧 Membros coletados: {team_members}")
 
@@ -1534,19 +1534,19 @@ def novo_cadastro():
                 logger.info(f"💉 Tipo de Implante processado: {form_data['tipo_implante']}")
             else:
                 form_data['tipo_implante'] = ''
-            
+
             # Process body hair checkbox and data
             body_hair_checked = form_data.get('body_hair_check') == 'on'
             form_data['pelos_corporais'] = 'Sim' if body_hair_checked else 'Não'
-            
+
             logger.info(f"🧔 Body hair checkbox: {body_hair_checked} -> {form_data['pelos_corporais']}")
-            
+
             # Process individual body hair parts
             body_hair_parts = ['barba', 'peitoral', 'abdome', 'pernas']
             for part in body_hair_parts:
                 # Handle checkbox for each part
                 part_checked = form_data.get(f'{part}_check') == 'on'
-                
+
                 # Set furos, fios, comentários based on checkbox state
                 if part_checked:
                     form_data[f'{part}_furos'] = int(form_data.get(f'{part}_furos', 0) or 0)
@@ -1557,9 +1557,9 @@ def novo_cadastro():
                     form_data[f'{part}_furos'] = 0
                     form_data[f'{part}_fios'] = 0
                     form_data[f'{part}_comentarios'] = ''
-                
+
                 logger.info(f"🎯 {part.title()}: checked={part_checked}, furos={form_data[f'{part}_furos']}, fios={form_data[f'{part}_fios']}")
-            
+
             # Clean up checkbox fields that don't need to be saved
             for key in list(form_data.keys()):
                 if key.endswith('_check'):
@@ -1593,11 +1593,11 @@ def novo_cadastro():
             error_msg = f"Error saving data: {str(e)}"
             logger.error(f"❌ ERRO CRÍTICO no cadastramento: {error_msg}\n{traceback.format_exc()}")
             flash(f"❌ Erro ao salvar dados: {str(e)}", "error")
-            
+
             # ✅ SEMPRE salvar dados na sessão mesmo com erro para mostrar resumo
             logger.info("💾 Salvando dados na sessão mesmo com erro...")
             session['last_saved_data'] = form_data.copy() if 'form_data' in locals() else {}
-            
+
             # Se for uma chamada da API (não do formulário web)
             if request.headers.get('Content-Type') == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 logger.info("📡 API call detected, returning JSON error response")
@@ -1608,7 +1608,7 @@ def novo_cadastro():
 
     # Recarregar configurações para garantir que estão atualizadas
     reload_admin_config()
-    
+
     # Complete form structure
     form_data = {
         'title': 'Cadastro de Cirurgia Capilar',
@@ -1683,7 +1683,7 @@ def novo_cadastro():
             {'name': 'extra_person_1', 'label': 'Freelancer 1', 'type': 'text', 'required': False},
             {'name': 'extra_person_2', 'label': 'Freelancer 2', 'type': 'text', 'required': False},
             {'name': 'extra_person_3', 'label': 'Freelancer 3', 'type': 'text', 'required': False},
-            
+
             # Comentários e Finalização
             {'name': 'comentarios', 'label': 'Comentários', 'type': 'textarea', 'required': False}
         ]
@@ -1816,17 +1816,17 @@ def get_all_team_members():
     logger.info("Retrieving all team members for Técnica Extra fields")
     # Recarregar configurações para garantir que estão atualizadas
     reload_admin_config()
-    
+
     # Coletar todos os membros de todas as equipes
     all_members = []
     for unidade, membros in EQUIPE_POR_UNIDADE.items():
         for membro in membros:
             if membro not in all_members:  # Evitar duplicatas
                 all_members.append(membro)
-    
+
     # Ordenar alfabeticamente
     all_members.sort()
-    
+
     return {'membros': all_members}
 
 def process_dashboard_data(df):
@@ -1983,7 +1983,7 @@ def get_available_units():
         # Carregar unidades do admin_config.json
         admin_config = load_admin_config()
         units = admin_config.get('unidades', [])
-        
+
         # Se não houver unidades no config, buscar do banco como fallback
         if not units:
             with app.app_context():
@@ -1993,7 +1993,7 @@ def get_available_units():
                 for unit in default_units:
                     if unit not in units:
                         units.append(unit)
-        
+
         logger.info(f"Unidades carregadas: {len(units)} unidades")
         return jsonify({'units': sorted(units)})
     except Exception as e:
@@ -2045,9 +2045,9 @@ def get_equipe_data():
             unit_filter = request.args.get('unit', 'all')
             year_filter = request.args.get('year', 'all')
             month_filter = request.args.get('month', 'all')
-            
+
             logger.info(f"Filtros aplicados: unidade={unit_filter}, ano={year_filter}, mês={month_filter}")
-            
+
             # Inicializar lista para armazenar os dados da equipe
             equipe_data = []
 
@@ -2071,24 +2071,24 @@ def get_equipe_data():
                 # Dicionário para rastrear participações únicas por cirurgia para cada pessoa
                 # Estrutura: {membro: {id_cirurgia1, id_cirurgia2, ...}}
                 participacoes_por_pessoa = {}
-                
+
                 # Construir a query com filtros
                 query = Surgery.query
-                
+
                 # Aplicar filtro de unidade se não for 'all'
                 if unit_filter != 'all':
                     query = query.filter(Surgery.unidade == unit_filter)
-                
+
                 # Aplicar filtro de ano se não for 'all'
                 if year_filter != 'all':
                     # Extrair o ano da data
                     query = query.filter(extract('year', Surgery.data) == int(year_filter))
-                
+
                 # Aplicar filtro de mês se não for 'all'
                 if month_filter != 'all':
                     # Extrair o mês da data
                     query = query.filter(extract('month', Surgery.data) == int(month_filter))
-                
+
                 # Iterar sobre cada linha para contar participações
                 for surgery in query.all():
                     unidade = surgery.unidade if surgery.unidade else "Não especificada"
@@ -2391,11 +2391,11 @@ def download_complete_data():
             # Buscar todas as cirurgias
             surgeries = Surgery.query.order_by(Surgery.data.desc()).all()
             logger.info(f"Encontrados {len(surgeries)} registros no banco")
-            
+
             if not surgeries:
                 flash("Nenhum dado encontrado no banco de dados", "error")
                 return redirect(url_for('dashboard'))
-            
+
             # Converter para lista de dicionários com TODOS os campos
             data_list = []
             for surgery in surgeries:
@@ -2462,21 +2462,23 @@ def download_complete_data():
                     'Q4 Densidade': surgery.q4_densidade or 0,
                     'Q4 Taxa Quebra': surgery.q4_taxa_quebra or 0,
                     'Densidade Extração': surgery.densidade_extracao or 0,
+                    'Retoque': surgery.retoque or 'Não',
+                    'Tipo de Implante': surgery.tipo_implante or '',
                     'Data de Criação': surgery.created_at.strftime('%d/%m/%Y %H:%M:%S') if surgery.created_at else ''
                 }
                 data_list.append(surgery_dict)
-            
+
             # Criar DataFrame e salvar em Excel
             df = pd.DataFrame(data_list)
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f"dados_completos_banco_{timestamp}.xlsx"
             temp_file = f"temp_{filename}"
-            
+
             # Salvar no arquivo temporário
             df.to_excel(temp_file, index=False, engine='openpyxl')
-            
+
             logger.info(f"Exportação criada com {len(data_list)} registros: {filename}")
-            
+
             # Enviar arquivo e depois deletar
             return_data = send_file(
                 temp_file,
@@ -2484,15 +2486,15 @@ def download_complete_data():
                 as_attachment=True,
                 download_name=filename
             )
-            
+
             # Limpar arquivo temporário
             try:
                 os.remove(temp_file)
             except:
                 pass
-                
+
             return return_data
-            
+
     except Exception as e:
         logger.error(f"Erro ao exportar dados completos: {str(e)}")
         logger.error(traceback.format_exc())
@@ -2530,24 +2532,24 @@ def check_duplicate():
     try:
         nome = request.args.get('nome', '')
         data_str = request.args.get('data', '')
-        
+
         if not nome or not data_str:
             return jsonify({"exists": False, "error": "Nome e data são obrigatórios"})
-            
+
         # Converter data de string para objeto data
         try:
             # Espera o formato DD/MM/AAAA
             data = datetime.strptime(data_str, '%d/%m/%Y').date()
         except ValueError:
             return jsonify({"exists": False, "error": "Formato de data inválido. Use DD/MM/AAAA"})
-            
+
         # Verificar se o paciente existe na mesma data
         with app.app_context():
             exists = Surgery.query.filter(
                 Surgery.nome == nome,
                 Surgery.data == data
             ).first() is not None
-            
+
         return jsonify({"exists": exists})
     except Exception as e:
         logger.error(f"Erro ao verificar duplicata: {str(e)}")
@@ -2568,14 +2570,14 @@ def search_patients():
         with app.app_context():
             # Construir query base
             query = Surgery.query
-            
+
             # Filtrar por unidade se especificado
             if unit and unit.strip():
                 query = query.filter(Surgery.unidade == unit)
-            
+
             # Buscar pacientes que contenham o termo no nome
             query = query.filter(Surgery.nome.ilike(f'%{term}%'))
-            
+
             # Executar query e ordenar por data mais recente
             surgeries = query.order_by(Surgery.data.desc()).limit(15).all()
 
@@ -2598,7 +2600,7 @@ def search_patients():
 
         logger.info(f"Found {len(patients)} patients for term '{term}' in unit '{unit}'")
         return jsonify(patients)
-        
+
     except Exception as e:
         logger.error(f"Error searching patients: {str(e)}\n{traceback.format_exc()}")
         return jsonify([])
@@ -2611,7 +2613,7 @@ def necrose_summary():
         with app.app_context():
             total_surgeries = Surgery.query.count()
             total_necroses = Necrose.query.filter_by(tem_necrose=True).count()
-            
+
             necrose_rate = "0%"
             if total_surgeries > 0:
                 taxa = (total_necroses / total_surgeries) * 100
@@ -2620,7 +2622,7 @@ def necrose_summary():
             # Dados por unidade
             unit_data = {}
             units = db.session.query(Surgery.unidade.distinct()).all()
-            
+
             for unit_tuple in units:
                 unit = unit_tuple[0]
                 if unit:
@@ -2629,9 +2631,9 @@ def necrose_summary():
                         Surgery.unidade == unit,
                         Necrose.tem_necrose == True
                     ).count()
-                    
+
                     unit_rate = (unit_necroses / unit_surgeries * 100) if unit_surgeries > 0 else 0
-                    
+
                     unit_data[unit] = {
                         'surgeries': unit_surgeries,
                         'necroses': unit_necroses,
@@ -2640,7 +2642,7 @@ def necrose_summary():
 
             # Calcular médias das métricas cirúrgicas para casos de necrose
             necroses_with_surgery = db.session.query(Necrose, Surgery).join(Surgery).filter(Necrose.tem_necrose == True).all()
-            
+
             # Coletar valores para cálculo de médias
             densidade_values = []
             solucao_values = []
@@ -2648,18 +2650,18 @@ def necrose_summary():
             infiltracao_values = []
             transamin_count = 0
             safira_count = 0
-            
+
             for necrose, surgery in necroses_with_surgery:
                 # Densidade Sketch
                 densidade = getattr(surgery, 'densidade_scketh', None)
                 if densidade and densidade > 0:
                     densidade_values.append(densidade)
-                
+
                 # Solução Frente
                 solucao = getattr(surgery, 'solucao_frente', None)
                 if solucao and solucao > 0:
                     solucao_values.append(solucao)
-                
+
                 # Sangramento (converter string para número)
                 sangramento = getattr(surgery, 'sangramento', None)
                 if sangramento:
@@ -2670,7 +2672,7 @@ def necrose_summary():
                             sangramento_values.append(sangramento)
                     except (ValueError, TypeError):
                         pass
-                
+
                 # Infiltração (converter string para número)
                 infiltracao = getattr(surgery, 'infiltracao', None)
                 if infiltracao:
@@ -2681,17 +2683,17 @@ def necrose_summary():
                             infiltracao_values.append(infiltracao)
                     except (ValueError, TypeError):
                         pass
-                
+
                 # Contar casos com Transamin (assumindo que está no campo tadalafila)
                 tadalafila = getattr(surgery, 'tadalafila', None)
                 if tadalafila and ('sim' in tadalafila.lower() if tadalafila else False):
                     transamin_count += 1
-                
+
                 # Contar casos com Safira
                 safira = getattr(surgery, 'safira', None)
                 if safira and ('sim' in safira.lower() if safira else False):
                     safira_count += 1
-            
+
             # Calcular médias
             media_densidade = round(sum(densidade_values) / len(densidade_values), 1) if densidade_values else 0
             media_solucao = round(sum(solucao_values) / len(solucao_values), 1) if solucao_values else 0
@@ -2699,7 +2701,7 @@ def necrose_summary():
             media_infiltracao = round(sum(infiltracao_values) / len(infiltracao_values), 1) if infiltracao_values else 0
 
             logger.info(f"Necrose summary: {total_surgeries} surgeries, {total_necroses} necroses, rate: {necrose_rate}")
-            
+
             return jsonify({
                 'total_surgeries': total_surgeries,
                 'total_necroses': total_necroses,
@@ -2730,19 +2732,19 @@ def save_necrose():
     logger.info("Saving necrose data to database")
     logger.info(f"Form data received: {dict(request.form)}")
     logger.info(f"Files received: {list(request.files.keys())}")
-    
+
     try:
         # Obter dados do formulário
         patient_id = request.form.get('patient_id')
         logger.info(f"Patient ID: {patient_id}")
-        
+
         if not patient_id:
             logger.error("Patient ID is missing")
             return jsonify({
                 'success': False,
                 'message': 'ID do paciente é obrigatório'
             }), 400
-        
+
         # Buscar dados da cirurgia
         surgery = Surgery.query.get(patient_id)
         if not surgery:
@@ -2750,25 +2752,25 @@ def save_necrose():
                 'success': False,
                 'message': 'Paciente não encontrado'
             }), 404
-        
+
         # Verificar se já existe registro de necrose para este paciente
         existing_necrose = Necrose.query.filter_by(surgery_id=patient_id).first()
-        
+
         # Validar campos obrigatórios
         data_avaliacao = request.form.get('data_avaliacao')
         numero_necroses = request.form.get('numero_necroses')
-        
+
         logger.info(f"Data avaliacao: {data_avaliacao}")
         logger.info(f"Numero necroses: {numero_necroses}")
-        
+
         if not data_avaliacao:
             logger.error("Data avaliacao is missing")
             return jsonify({'success': False, 'message': 'Data da avaliação é obrigatória'})
-        
+
         if not numero_necroses:
             logger.error("Numero necroses is missing")
             return jsonify({'success': False, 'message': 'Número de necroses é obrigatório'})
-            
+
         # Validar tamanhos baseado no número de necroses
         numero_necroses_int = int(numero_necroses)
         tamanhos = []
@@ -2777,7 +2779,7 @@ def save_necrose():
             if not tamanho:
                 return jsonify({'success': False, 'message': f'Tamanho da {i}ª necrose é obrigatório'})
             tamanhos.append(float(tamanho))
-        
+
         # Verificar se pelo menos uma faixa foi selecionada
         faixas_selecionadas = [
             request.form.get('primeira_faixa') == 'true',
@@ -2785,10 +2787,10 @@ def save_necrose():
             request.form.get('terceira_faixa') == 'true',
             request.form.get('coroa') == 'true'
         ]
-        
+
         if not any(faixas_selecionadas):
             return jsonify({'success': False, 'message': 'Selecione pelo menos uma faixa acometida'})
-        
+
         # Regiões acometidas
         primeira_faixa = request.form.get('primeira_faixa') == 'true'
         segunda_faixa = request.form.get('segunda_faixa') == 'true'
@@ -2796,17 +2798,17 @@ def save_necrose():
         coroa_acometida = request.form.get('coroa') == 'true'
         data_avaliacao_date = datetime.strptime(data_avaliacao, '%Y-%m-%d').date()
         medico_responsavel = surgery.medico  # Pega o médico da cirurgia
-        
+
         # Processar fotos
         photos = request.files.getlist('fotos_necrose')
         # Filtrar fotos vazias (quando nenhum arquivo é selecionado, Flask pode retornar um arquivo vazio)
         photos = [photo for photo in photos if photo and photo.filename and photo.filename.strip()]
         logger.info(f"Number of valid photos received: {len(photos)}")
-        
+
         # Validar número de fotos - permitir 0 ou mais fotos (até 3)
         if len(photos) > 3:
             return jsonify({'success': False, 'message': 'Máximo de 3 fotos permitidas'})
-        
+
         if existing_necrose:
             # Atualizar registro existente
             existing_necrose.tem_necrose = True
@@ -2818,13 +2820,13 @@ def save_necrose():
             existing_necrose.data_avaliacao = data_avaliacao_date
             existing_necrose.medico_responsavel = medico_responsavel
             existing_necrose.status = 'Em acompanhamento'
-            
+
             # Atualizar tamanhos
             existing_necrose.tamanho_1_cm = tamanhos[0] if len(tamanhos) > 0 else None
             existing_necrose.tamanho_2_cm = tamanhos[1] if len(tamanhos) > 1 else None
             existing_necrose.tamanho_3_cm = tamanhos[2] if len(tamanhos) > 2 else None
             existing_necrose.tamanho_4_cm = tamanhos[3] if len(tamanhos) > 3 else None
-            
+
             existing_necrose.updated_at = datetime.utcnow()
             necrose_record = existing_necrose
         else:
@@ -2849,28 +2851,28 @@ def save_necrose():
                 tamanho_4_cm=tamanhos[3] if len(tamanhos) > 3 else None
             )
             db.session.add(necrose_record)
-        
+
         # Salvar no banco antes de processar fotos
         db.session.commit()
-        
+
         # Processar upload de fotos
         uploaded_files = []
         # Usar as fotos já filtradas anteriormente
-        
+
         for photo in photos:
             if photo and photo.filename:
                 if allowed_file(photo.filename):
                     # Gerar nome único para o arquivo
                     filename = secure_filename(photo.filename)
                     unique_filename = f"{uuid.uuid4().hex}_{filename}"
-                    
+
                     # Criar diretório se não existir
                     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-                    
+
                     # Salvar arquivo
                     file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                     photo.save(file_path)
-                    
+
                     # Salvar informações da foto no banco
                     photo_record = NecrosePhoto(
                         necrose_id=necrose_record.id,
@@ -2883,14 +2885,14 @@ def save_necrose():
                     )
                     db.session.add(photo_record)
                     uploaded_files.append(unique_filename)
-        
+
         # Commit final
         db.session.commit()
-        
+
         logger.info(f"Dados de necrose salvos para paciente: {surgery.nome} (ID: {patient_id})")
         if uploaded_files:
             logger.info(f"Fotos carregadas: {uploaded_files}")
-        
+
         # Disparar backup automático após salvar necrose
         try:
             logger.info("Iniciando backup automático após registro de necrose...")
@@ -2901,14 +2903,14 @@ def save_necrose():
                 logger.warning(f"⚠️ Backup automático falhou: {backup_message}")
         except Exception as backup_error:
             logger.error(f"Erro no backup automático: {backup_error}")
-        
+
         return jsonify({
             'success': True,
             'message': f'Necrose registrada com sucesso! {len(uploaded_files)} foto(s) carregada(s).',
             'necrose_id': necrose_record.id,
             'photos_uploaded': len(uploaded_files)
         })
-        
+
     except Exception as e:
         db.session.rollback()
         logger.error(f"Erro ao salvar dados de necrose: {str(e)}")
@@ -2935,14 +2937,14 @@ def api_necrose_analise_data():
         necroses_data = db.session.query(Necrose, Surgery).join(
             Surgery, Necrose.surgery_id == Surgery.id
         ).all()
-        
+
         # Organizar dados para cards
         analysis_cards = []
         for necrose, surgery in necroses_data:
             # Calcular tamanho total das necroses
             tamanhos = [necrose.tamanho_1_cm, necrose.tamanho_2_cm, necrose.tamanho_3_cm, necrose.tamanho_4_cm]
             tamanho_total = sum(t for t in tamanhos if t is not None)
-            
+
             # Identificar faixas acometidas
             faixas_acometidas = []
             if necrose.primeira_faixa:
@@ -2953,7 +2955,7 @@ def api_necrose_analise_data():
                 faixas_acometidas.append("3ª Faixa")
             if necrose.coroa:
                 faixas_acometidas.append("Coroa")
-            
+
             # Buscar fotos associadas a esta necrose
             photos = NecrosePhoto.query.filter_by(necrose_id=necrose.id).all()
             photo_thumbnails = []
@@ -2964,7 +2966,7 @@ def api_necrose_analise_data():
                     'path': photo.file_path or f'/static/uploads/necrose_photos/{photo.filename}',
                     'description': photo.description or 'Foto da necrose'
                 })
-            
+
             card_data = {
                 'id': necrose.id,
                 'paciente_nome': necrose.paciente_nome,
@@ -2989,15 +2991,15 @@ def api_necrose_analise_data():
                 'photos': photo_thumbnails
             }
             analysis_cards.append(card_data)
-        
+
         # Calcular estatísticas por unidade
         stats_by_unit = {}
         all_units = set()
-        
+
         for necrose, surgery in necroses_data:
             unit = necrose.unidade
             all_units.add(unit)
-            
+
             if unit not in stats_by_unit:
                 stats_by_unit[unit] = {
                     'total_casos': 0,
@@ -3010,9 +3012,9 @@ def api_necrose_analise_data():
                     'densidade_sketch_values': [],
                     'sangramento_values': []
                 }
-            
+
             stats_by_unit[unit]['total_casos'] += 1
-            
+
             # Contar por grau
             grau = necrose.grau_necrose.lower() if necrose.grau_necrose else ''
             if 'leve' in grau:
@@ -3021,13 +3023,13 @@ def api_necrose_analise_data():
                 stats_by_unit[unit]['casos_moderados'] += 1
             elif 'severa' in grau or 'severo' in grau:
                 stats_by_unit[unit]['casos_severos'] += 1
-            
+
             # Calcular tamanho total da necrose
             tamanhos = [necrose.tamanho_1_cm, necrose.tamanho_2_cm, necrose.tamanho_3_cm, necrose.tamanho_4_cm]
             tamanho_total = sum(t for t in tamanhos if t is not None)
             if tamanho_total > 0:
                 stats_by_unit[unit]['total_tamanhos'].append(tamanho_total)
-            
+
             # Adicionar métricas para cálculos de média
             if hasattr(surgery, 'solucao_frente') and surgery.solucao_frente:
                 try:
@@ -3035,14 +3037,14 @@ def api_necrose_analise_data():
                         stats_by_unit[unit]['solucao_frente_values'].append(surgery.solucao_frente)
                 except (ValueError, TypeError):
                     pass
-            
+
             if hasattr(surgery, 'densidade_scketh') and surgery.densidade_scketh:
                 try:
                     if isinstance(surgery.densidade_scketh, (int, float)) and surgery.densidade_scketh > 0:
                         stats_by_unit[unit]['densidade_sketch_values'].append(surgery.densidade_scketh)
                 except (ValueError, TypeError):
                     pass
-                    
+
             if hasattr(surgery, 'sangramento') and surgery.sangramento:
                 try:
                     if isinstance(surgery.sangramento, str) and surgery.sangramento.isdigit():
@@ -3054,7 +3056,7 @@ def api_necrose_analise_data():
                 except (ValueError, TypeError):
                     pass
 
-        
+
         # Calcular médias para cada unidade
         for unit_stats in stats_by_unit.values():
             # Tamanho médio
@@ -3062,7 +3064,7 @@ def api_necrose_analise_data():
                 unit_stats['tamanho_medio'] = round(
                     sum(unit_stats['total_tamanhos']) / len(unit_stats['total_tamanhos']), 2
                 )
-            
+
             # Média solução frente
             if unit_stats['solucao_frente_values']:
                 unit_stats['media_solucao_frente'] = round(
@@ -3070,7 +3072,7 @@ def api_necrose_analise_data():
                 )
             else:
                 unit_stats['media_solucao_frente'] = None
-                
+
             # Média densidade sketch
             if unit_stats['densidade_sketch_values']:
                 unit_stats['media_densidade_sketch'] = round(
@@ -3078,7 +3080,7 @@ def api_necrose_analise_data():
                 )
             else:
                 unit_stats['media_densidade_sketch'] = None
-                
+
             # Média sangramento
             if unit_stats['sangramento_values']:
                 unit_stats['media_sangramento'] = round(
@@ -3086,13 +3088,13 @@ def api_necrose_analise_data():
                 )
             else:
                 unit_stats['media_sangramento'] = None
-            
+
             # Remover arrays temporários
             del unit_stats['total_tamanhos']
             del unit_stats['solucao_frente_values']
             del unit_stats['densidade_sketch_values']
             del unit_stats['sangramento_values']
-        
+
         # Carregar todas as unidades disponíveis da configuração
         reload_admin_config()
         all_configured_units = UNIDADES
@@ -3104,7 +3106,7 @@ def api_necrose_analise_data():
             'stats_by_unit': stats_by_unit,
             'all_units': list(all_configured_units)
         })
-        
+
     except Exception as e:
         logger.error(f"Erro ao buscar dados de análise de necrose: {str(e)}")
         return jsonify({
@@ -3122,7 +3124,7 @@ def api_necrose_statistics():
         necroses_with_surgery = db.session.query(Necrose, Surgery).join(
             Surgery, Necrose.surgery_id == Surgery.id
         ).all()
-        
+
         # Inicializar contadores
         total_casos = len(necroses)
         densidade_primeira_faixa = []
@@ -3131,7 +3133,7 @@ def api_necrose_statistics():
         sangramento_values = []
         transamin_count = 0
         tadalafil_count = 0
-        
+
         # Processar dados das cirurgias associadas a necroses
         for necrose, surgery in necroses_with_surgery:
             # Densidade da primeira faixa (q1_densidade ou densidade_scketh)
@@ -3145,45 +3147,45 @@ def api_necrose_statistics():
                     densidade_primeira_faixa.append(float(surgery.densidade_scketh))
                 except (ValueError, TypeError):
                     pass
-            
+
             # Solução frente
             if surgery.solucao_frente:
                 try:
                     solucao_frente_values.append(float(surgery.solucao_frente))
                 except (ValueError, TypeError):
                     pass
-            
+
             # Infiltração
             if surgery.infiltracao:
                 try:
                     infiltracao_values.append(float(surgery.infiltracao))
                 except (ValueError, TypeError):
                     pass
-            
+
             # Sangramento
             if surgery.sangramento:
                 try:
                     sangramento_values.append(float(surgery.sangramento))
                 except (ValueError, TypeError):
                     pass
-            
+
             # Transamin (buscar nos campos da cirurgia)
             surgery_dict = surgery.__dict__
             for key, value in surgery_dict.items():
                 if 'transamin' in str(key).lower() and value and str(value).lower() in ['sim', 'yes', 'true', '1']:
                     transamin_count += 1
                     break
-            
+
             # Tadalafil
             if surgery.tadalafila and str(surgery.tadalafila).lower() in ['sim', 'yes', 'true', '1']:
                 tadalafil_count += 1
-        
+
         # Calcular médias
         media_densidade = round(sum(densidade_primeira_faixa) / len(densidade_primeira_faixa), 2) if densidade_primeira_faixa else 0
         media_solucao_frente = round(sum(solucao_frente_values) / len(solucao_frente_values), 2) if solucao_frente_values else 0
         media_infiltracao = round(sum(infiltracao_values) / len(infiltracao_values), 2) if infiltracao_values else 0
         media_sangramento = round(sum(sangramento_values) / len(sangramento_values), 2) if sangramento_values else 0
-        
+
         return jsonify({
             'success': True,
             'statistics': {
@@ -3196,7 +3198,7 @@ def api_necrose_statistics():
                 'casos_com_tadalafil': tadalafil_count
             }
         })
-        
+
     except Exception as e:
         logger.error(f"Erro ao calcular estatísticas de necrose: {str(e)}")
         return jsonify({
@@ -3212,13 +3214,13 @@ def api_registered_necrose_patients():
         necroses_data = db.session.query(Necrose, Surgery).join(
             Surgery, Necrose.surgery_id == Surgery.id
         ).order_by(Necrose.created_at.desc()).all()
-        
+
         patients_data = []
         for necrose, surgery in necroses_data:
             # Calcular tamanho total das necroses
             tamanhos = [necrose.tamanho_1_cm, necrose.tamanho_2_cm, necrose.tamanho_3_cm, necrose.tamanho_4_cm]
             tamanho_total = sum(t for t in tamanhos if t is not None)
-            
+
             # Identificar faixas acometidas
             faixas_acometidas = []
             if necrose.primeira_faixa:
@@ -3229,12 +3231,12 @@ def api_registered_necrose_patients():
                 faixas_acometidas.append("3ª Faixa")
             if necrose.coroa:
                 faixas_acometidas.append("Coroa")
-            
+
             # Buscar fotos associadas a esta necrose
             photos = NecrosePhoto.query.filter_by(necrose_id=necrose.id).all()
             photo_data = []
             logger.info(f"Buscando fotos para necrose ID {necrose.id}: {len(photos)} fotos encontradas")
-            
+
             for photo in photos:
                 # Construir caminho da foto
                 if photo.file_path:
@@ -3260,9 +3262,9 @@ def api_registered_necrose_patients():
                     web_path = f'/{file_path}'
                     storage_type = 'local'
                     exists = os.path.exists(file_path)
-                
+
                 logger.info(f"Verificando foto: {photo.filename} -> {web_path} ({storage_type})")
-                
+
                 # Adicionar foto
                 photo_data.append({
                     'id': photo.id,
@@ -3272,7 +3274,7 @@ def api_registered_necrose_patients():
                     'storage': storage_type,
                     'exists': exists
                 })
-            
+
             patient_info = {
                 'id': necrose.id,
                 'paciente_nome': necrose.paciente_nome,
@@ -3288,12 +3290,12 @@ def api_registered_necrose_patients():
                 'photos': photo_data
             }
             patients_data.append(patient_info)
-        
+
         return jsonify({
             'success': True,
             'patients': patients_data
         })
-        
+
     except Exception as e:
         logger.error(f"Error getting registered necrose patients: {str(e)}")
         return jsonify({
@@ -3307,13 +3309,13 @@ def api_upload_necrose_photos():
     try:
         necrose_id = request.form.get('necrose_id')
         description = request.form.get('description', '')
-        
+
         if not necrose_id:
             return jsonify({
                 'success': False,
                 'error': 'ID da necrose é obrigatório'
             }), 400
-            
+
         # Verificar se a necrose existe
         necrose = Necrose.query.get(necrose_id)
         if not necrose:
@@ -3321,33 +3323,33 @@ def api_upload_necrose_photos():
                 'success': False,
                 'error': 'Registro de necrose não encontrado'
             }), 404
-            
+
         # Verificar se há fotos para upload
         if 'photos' not in request.files:
             return jsonify({
                 'success': False,
                 'error': 'Nenhuma foto foi enviada'
             }), 400
-            
+
         photos = request.files.getlist('photos')
         if not photos or len(photos) == 0:
             return jsonify({
                 'success': False,
                 'error': 'Nenhuma foto foi selecionada'
             }), 400
-            
+
         if len(photos) > 3:
             return jsonify({
                 'success': False,
                 'error': 'Máximo de 3 fotos por vez'
             }), 400
-            
+
         # Criar diretório local temporário
         temp_dir = 'static/uploads/necrose_photos'
         os.makedirs(temp_dir, exist_ok=True)
-        
+
         uploaded_photos = []
-        
+
         # Configurar Dropbox
         try:
             import dropbox
@@ -3362,30 +3364,30 @@ def api_upload_necrose_photos():
         except ImportError:
             use_dropbox = False
             logger.warning("Módulo dropbox não disponível, usando armazenamento local")
-        
+
         for photo in photos:
             if photo and photo.filename:
                 # Gerar nome único para o arquivo
                 file_extension = photo.filename.rsplit('.', 1)[1].lower() if '.' in photo.filename else 'jpg'
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                 unique_filename = f"necrose_{necrose_id}_{timestamp}_{uuid.uuid4().hex[:8]}.{file_extension}"
-                
+
                 # Salvar temporariamente no local
                 temp_file_path = os.path.join(temp_dir, unique_filename)
                 photo.save(temp_file_path)
-                
+
                 if use_dropbox:
                     try:
                         # Upload para Dropbox na pasta específica de necrose
                         dropbox_path = f"/fotos_necrose/{unique_filename}"
-                        
+
                         with open(temp_file_path, 'rb') as f:
                             dbx.files_upload(
                                 f.read(),
                                 dropbox_path,
                                 mode=dropbox.files.WriteMode.overwrite
                             )
-                        
+
                         # Obter link compartilhável
                         try:
                             shared_link = dbx.sharing_create_shared_link(dropbox_path)
@@ -3396,10 +3398,10 @@ def api_upload_necrose_photos():
                         except:
                             # Fallback para path do Dropbox
                             file_path = f"dropbox:{dropbox_path}"
-                        
+
                         # Remover arquivo temporário
                         os.remove(temp_file_path)
-                        
+
                     except Exception as e:
                         logger.error(f"Erro ao fazer upload para Dropbox: {e}")
                         # Manter arquivo local como fallback
@@ -3407,7 +3409,7 @@ def api_upload_necrose_photos():
                 else:
                     # Usar armazenamento local
                     file_path = f"/{temp_file_path}"
-                
+
                 # Salvar no banco de dados
                 new_photo = NecrosePhoto(
                     necrose_id=necrose_id,
@@ -3416,16 +3418,16 @@ def api_upload_necrose_photos():
                     description=description
                 )
                 db.session.add(new_photo)
-                
+
                 uploaded_photos.append({
                     'filename': unique_filename,
                     'path': file_path,
                     'storage': 'dropbox' if use_dropbox and file_path.startswith('http') else 'local'
                 })
-                
+
         db.session.commit()
         logger.info(f"Uploaded {len(uploaded_photos)} photos for necrose ID {necrose_id}")
-        
+
         storage_info = "no Dropbox" if use_dropbox else "localmente"
         return jsonify({
             'success': True,
@@ -3433,7 +3435,7 @@ def api_upload_necrose_photos():
             'photos': uploaded_photos,
             'storage_type': 'dropbox' if use_dropbox else 'local'
         })
-        
+
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error uploading photos for necrose: {str(e)}")
@@ -3453,10 +3455,10 @@ def api_delete_necrose(necrose_id):
                 'success': False,
                 'error': 'Registro de necrose não encontrado'
             }), 404
-        
+
         # Buscar e excluir fotos associadas
         photos = NecrosePhoto.query.filter_by(necrose_id=necrose_id).all()
-        
+
         for photo in photos:
             # Excluir arquivo físico se existir
             if photo.file_path and os.path.exists(photo.file_path):
@@ -3465,25 +3467,25 @@ def api_delete_necrose(necrose_id):
                     logger.info(f"Arquivo de foto excluído: {photo.file_path}")
                 except Exception as e:
                     logger.warning(f"Erro ao excluir arquivo de foto {photo.file_path}: {str(e)}")
-            
+
             # Excluir registro da foto do banco
             db.session.delete(photo)
-        
+
         # Armazenar informações para log
         patient_name = necrose.paciente_nome
         patient_unit = necrose.unidade
-        
+
         # Excluir registro de necrose
         db.session.delete(necrose)
         db.session.commit()
-        
+
         logger.info(f"Registro de necrose excluído: Paciente {patient_name} da unidade {patient_unit}")
-        
+
         return jsonify({
             'success': True,
             'message': f'Registro de necrose de {patient_name} excluído com sucesso'
         })
-        
+
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error deleting necrose record {necrose_id}: {str(e)}")
@@ -3496,7 +3498,7 @@ def api_delete_necrose(necrose_id):
 def download_combined_data():
     """Endpoint para baixar dados combinados de cirurgia e necrose em Excel"""
     logger.info("Gerando exportação combinada de cirurgia e necrose...")
-    
+
     # Obter filtros da query string
     unit_filter = request.args.get('unit')
     month_filter = request.args.get('month')
@@ -3507,14 +3509,14 @@ def download_combined_data():
             query = db.session.query(Surgery, Necrose).outerjoin(
                 Necrose, Surgery.id == Necrose.surgery_id
             ).order_by(Surgery.data.desc())
-            
+
             results = query.all()
             logger.info(f"Encontrados {len(results)} registros para exportação")
-            
+
             if not results:
                 flash("Nenhum dado encontrado no banco de dados", "error")
                 return redirect(url_for('necrose'))
-            
+
             # Converter para lista de dicionários combinando dados de cirurgia e necrose
             data_list = []
             for surgery, necrose in results:
@@ -3540,6 +3542,12 @@ def download_combined_data():
                     'Sangramento': getattr(surgery, 'sangramento', '') or '',
                     'Tadalafila': surgery.tadalafila or '',
                     'Bloqueio de Seringas': surgery.bloqueio_seringas or '',
+                    'Fonte 1': surgery.fonte_1 or '',
+                    'Fonte 2': surgery.fonte_2 or '',
+                    'Fonte 3': surgery.fonte_3 or '',
+                    'Fonte 4': surgery.fonte_4 or '',
+                    'Fonte 5': surgery.fonte_5 or '',
+                    'Pelos Corporais': surgery.pelos_corporais or '',
                     'Técnica': surgery.tecnica or '',
                     'Solução Frente (ml)': surgery.solucao_frente or 0,
                     'Q1 Área': surgery.q1_area or 0,
@@ -3564,20 +3572,20 @@ def download_combined_data():
                     'Q4 Taxa Quebra': surgery.q4_taxa_quebra or 0,
                     'Densidade Extração': surgery.densidade_extracao or 0,
                     'Data de Criação': surgery.created_at.strftime('%d/%m/%Y %H:%M:%S') if surgery.created_at else '',
-                    
+
                     # Dados da Necrose
                     'Tem Necrose': 'Sim' if necrose and necrose.tem_necrose else 'Não',
                     'Número de Necrose': necrose.numero_necroses if necrose else '',
                     'Data Avaliação Necrose': necrose.data_avaliacao.strftime('%d/%m/%Y') if necrose and necrose.data_avaliacao else '',
                     'Médico Responsável Necrose': necrose.medico_responsavel if necrose else '',
                     'Grau da Necrose': necrose.grau_necrose if necrose else '',
-                    
+
                     # Regiões Acometidas
                     'Primeira Faixa Acometida': 'Sim' if necrose and necrose.primeira_faixa else 'Não',
                     'Segunda Faixa Acometida': 'Sim' if necrose and necrose.segunda_faixa else 'Não',
                     'Terceira Faixa Acometida': 'Sim' if necrose and necrose.terceira_faixa else 'Não',
                     'Coroa Acometida': 'Sim' if necrose and necrose.coroa else 'Não',
-                    
+
                     'Localização Detalhada': necrose.localizacao if necrose else '',
                     'Tamanho da Necrose (mm)': necrose.tamanho_mm if necrose else '',
                     'Descrição da Necrose': necrose.descricao if necrose else '',
@@ -3587,24 +3595,24 @@ def download_combined_data():
                     'Data Resolução': necrose.data_resolucao.strftime('%d/%m/%Y') if necrose and necrose.data_resolucao else '',
                     'Necrose Criada em': necrose.created_at.strftime('%d/%m/%Y %H:%M:%S') if necrose and necrose.created_at else '',
                     'Necrose Atualizada em': necrose.updated_at.strftime('%d/%m/%Y %H:%M:%S') if necrose and necrose.updated_at else '',
-                    
+
                     # Informações sobre as 3 fotos obrigatórias para avaliação futura
                     'Fotos para Avaliação Futura': len(necrose.photos) if necrose and hasattr(necrose, 'photos') else 0,
                     'Arquivos das 3 Fotos': ', '.join([photo.filename for photo in necrose.photos]) if necrose and hasattr(necrose, 'photos') else ''
                 }
                 data_list.append(combined_dict)
-            
+
             # Criar DataFrame e salvar em Excel
             df = pd.DataFrame(data_list)
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f"dados_cirurgia_necrose_{timestamp}.xlsx"
             temp_file = f"temp_{filename}"
-            
+
             # Salvar no arquivo temporário
             df.to_excel(temp_file, index=False, engine='openpyxl')
-            
+
             logger.info(f"Exportação combinada criada com {len(data_list)} registros: {filename}")
-            
+
             # Enviar arquivo e depois deletar
             return_data = send_file(
                 temp_file,
@@ -3612,7 +3620,7 @@ def download_combined_data():
                 as_attachment=True,
                 download_name=filename
             )
-            
+
             # Agendar remoção do arquivo temporário
             import threading
             def remove_temp_file():
@@ -3622,11 +3630,11 @@ def download_combined_data():
                     os.remove(temp_file)
                 except:
                     pass
-            
+
             threading.Thread(target=remove_temp_file).start()
-            
+
             return return_data
-            
+
     except Exception as e:
         logger.error(f"Erro ao gerar exportação combinada: {str(e)}\n{traceback.format_exc()}")
         flash(f"Erro ao gerar arquivo: {str(e)}", "error")
@@ -3643,7 +3651,7 @@ def login_medicos():
             return redirect(url_for('dashboard_medicos'))
         else:
             flash('Senha incorreta', 'error')
-    
+
     return render_template('login_medicos.html')
 
 @app.route('/medicos/dashboard')
@@ -3651,7 +3659,7 @@ def dashboard_medicos():
     """Dashboard médicos - requer autenticação"""
     if not session.get('medicos_logged_in'):
         return redirect(url_for('login_medicos'))
-    
+
     return render_template('dashboard_medicos.html')
 
 @app.route('/medicos/logout')
@@ -3665,23 +3673,23 @@ def get_medicos_dashboard_data():
     """Endpoint para dados do dashboard médicos"""
     if not session.get('medicos_logged_in'):
         return jsonify({'error': 'Não autorizado'}), 401
-    
+
     try:
         unit_filter = request.args.get('unit', 'all')
-        
+
         with app.app_context():
             # Construir query base
             query = Surgery.query
-            
+
             # Aplicar filtro de unidade se especificado
             if unit_filter != 'all':
                 query = query.filter(Surgery.unidade == unit_filter)
-            
+
             surgeries = query.all()
-            
+
             # Calcular estatísticas
             total_surgeries = len(surgeries)
-            
+
             # Coletar dados de furos e taxa de quebra por quadrante
             q1_furos = []
             q2_furos = []
@@ -3691,7 +3699,7 @@ def get_medicos_dashboard_data():
             q2_taxas = []
             q3_taxas = []
             q4_taxas = []
-            
+
             # Extrair dados reais dos quadrantes (apenas valores > 0)
             for surgery in surgeries:
                 if hasattr(surgery, 'q1_furos') and surgery.q1_furos is not None and surgery.q1_furos > 0:
@@ -3702,7 +3710,7 @@ def get_medicos_dashboard_data():
                     q3_furos.append(surgery.q3_furos)
                 if hasattr(surgery, 'q4_furos') and surgery.q4_furos is not None and surgery.q4_furos > 0:
                     q4_furos.append(surgery.q4_furos)
-                    
+
                 if hasattr(surgery, 'q1_taxa_quebra') and surgery.q1_taxa_quebra is not None and surgery.q1_taxa_quebra >= 0:
                     q1_taxas.append(surgery.q1_taxa_quebra)
                 if hasattr(surgery, 'q2_taxa_quebra') and surgery.q2_taxa_quebra is not None and surgery.q2_taxa_quebra >= 0:
@@ -3711,63 +3719,63 @@ def get_medicos_dashboard_data():
                     q3_taxas.append(surgery.q3_taxa_quebra)
                 if hasattr(surgery, 'q4_taxa_quebra') and surgery.q4_taxa_quebra is not None and surgery.q4_taxa_quebra >= 0:
                     q4_taxas.append(surgery.q4_taxa_quebra)
-            
+
             # Calcular máximos de furos por quadrante
             max_q1 = max(q1_furos) if q1_furos else 0
             max_q2 = max(q2_furos) if q2_furos else 0
             max_q3 = max(q3_furos) if q3_furos else 0
             max_q4 = max(q4_furos) if q4_furos else 0
-            
+
             # Calcular taxa média de quebra por quadrante (converter decimal para porcentagem)
             avg_q1_taxa = round((sum(q1_taxas) / len(q1_taxas)) * 100, 2) if q1_taxas else 0
             avg_q2_taxa = round((sum(q2_taxas) / len(q2_taxas)) * 100, 2) if q2_taxas else 0
             avg_q3_taxa = round((sum(q3_taxas) / len(q3_taxas)) * 100, 2) if q3_taxas else 0
             avg_q4_taxa = round((sum(q4_taxas) / len(q4_taxas)) * 100, 2) if q4_taxas else 0
-            
+
             breakage_rates = [avg_q1_taxa, avg_q2_taxa, avg_q3_taxa, avg_q4_taxa]
-            
+
             # Taxa média geral de quebra (converter decimal para porcentagem)
             all_taxas = q1_taxas + q2_taxas + q3_taxas + q4_taxas
             avg_breakage_rate = round((sum(all_taxas) / len(all_taxas)) * 100, 2) if all_taxas else 0
-            
+
             # Coletar dados de densidade de extração (apenas valores > 0)
             densidades_extracao = []
             for surgery in surgeries:
                 if hasattr(surgery, 'densidade_extracao') and surgery.densidade_extracao is not None and surgery.densidade_extracao > 0:
                     densidades_extracao.append(surgery.densidade_extracao)
-            
+
             avg_densidade_extracao = round(sum(densidades_extracao) / len(densidades_extracao), 2) if densidades_extracao else 0
-            
+
             # Coletar dados de tempo de cirurgia (apenas valores > 0)
             tempos_cirurgia = []
             for surgery in surgeries:
                 if hasattr(surgery, 'tempo_cirurgia') and surgery.tempo_cirurgia is not None and surgery.tempo_cirurgia > 0:
                     tempos_cirurgia.append(surgery.tempo_cirurgia)
-            
+
             avg_tempo_cirurgia = round(sum(tempos_cirurgia) / len(tempos_cirurgia), 2) if tempos_cirurgia else 0
-            
+
             # Coletar dados de solução frente (apenas valores > 0)
             solucoes_frente = []
             for surgery in surgeries:
                 if hasattr(surgery, 'solucao_frente') and surgery.solucao_frente is not None and surgery.solucao_frente > 0:
                     solucoes_frente.append(surgery.solucao_frente)
-            
+
             avg_solucao_frente = round(sum(solucoes_frente) / len(solucoes_frente), 2) if solucoes_frente else 0
-            
+
             # Coletar dados de sangramento (apenas valores não nulos)
             sangramentos = []
             for surgery in surgeries:
                 if hasattr(surgery, 'sangramento') and surgery.sangramento is not None and surgery.sangramento.strip():
                     sangramentos.append(surgery.sangramento.strip())
-            
+
             # Calcular a média de sangramento (exemplo: porcentagem de casos com sangramento mínimo/moderado/intenso)
             sangramento_counts = {}
             for sang in sangramentos:
                 sangramento_counts[sang] = sangramento_counts.get(sang, 0) + 1
-            
+
             # Retornar o tipo de sangramento mais comum
             avg_sangramento = max(sangramento_counts, key=sangramento_counts.get) if sangramento_counts else "N/A"
-            
+
             # Contar cirurgias com body hair (pelos corporais)
             body_hair_count = 0
             for surgery in surgeries:
@@ -3775,84 +3783,84 @@ def get_medicos_dashboard_data():
                     # Verifica se pelos_corporais é True ou string não vazia
                     if surgery.pelos_corporais is True or (isinstance(surgery.pelos_corporais, str) and surgery.pelos_corporais.strip().lower() in ['sim', 'yes', 'true', '1']):
                         body_hair_count += 1
-            
+
             # Calcular métricas gerais para comparação (quando filtro específico está aplicado)
             general_avg_tempo_cirurgia = None
             general_avg_solucao_frente = None
             general_avg_sangramento = None
             general_body_hair_count = None
-            
+
             if unit_filter != 'all':
                 # Buscar dados de todas as unidades para comparação
                 all_surgeries = Surgery.query.all()
-                
+
                 # Calcular métricas gerais
                 all_tempos_cirurgia = [s.tempo_cirurgia for s in all_surgeries if hasattr(s, 'tempo_cirurgia') and s.tempo_cirurgia is not None and s.tempo_cirurgia > 0]
                 general_avg_tempo_cirurgia = round(sum(all_tempos_cirurgia) / len(all_tempos_cirurgia), 2) if all_tempos_cirurgia else 0
-                
+
                 all_solucoes_frente = [s.solucao_frente for s in all_surgeries if hasattr(s, 'solucao_frente') and s.solucao_frente is not None and s.solucao_frente > 0]
                 general_avg_solucao_frente = round(sum(all_solucoes_frente) / len(all_solucoes_frente), 2) if all_solucoes_frente else 0
-                
+
                 all_sangramentos = [s.sangramento.strip() for s in all_surgeries if hasattr(s, 'sangramento') and s.sangramento is not None and s.sangramento.strip()]
                 if all_sangramentos:
                     all_sangramento_counts = {}
                     for sang in all_sangramentos:
                         all_sangramento_counts[sang] = all_sangramento_counts.get(sang, 0) + 1
                     general_avg_sangramento = max(all_sangramento_counts, key=all_sangramento_counts.get)
-                    
+
                 # Contar body hair de todas as unidades para comparação
                 general_body_hair_count = 0
                 for surgery in all_surgeries:
                     if hasattr(surgery, 'pelos_corporais') and surgery.pelos_corporais:
                         if surgery.pelos_corporais is True or (isinstance(surgery.pelos_corporais, str) and surgery.pelos_corporais.strip().lower() in ['sim', 'yes', 'true', '1']):
                             general_body_hair_count += 1
-            
+
             # Calcular média de furos por quadrante global
             avg_q1_furos = round(sum(q1_furos) / len(q1_furos), 1) if q1_furos else 0
             avg_q2_furos = round(sum(q2_furos) / len(q2_furos), 1) if q2_furos else 0
             avg_q3_furos = round(sum(q3_furos) / len(q3_furos), 1) if q3_furos else 0
             avg_q4_furos = round(sum(q4_furos) / len(q4_furos), 1) if q4_furos else 0
-            
+
             # Dados por unidade
             units_data = []
             if unit_filter == 'all':
                 all_units = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro', 'São Paulo', 'Brasília']
                 for unit in all_units:
                     unit_surgeries = [s for s in surgeries if s.unidade == unit]
-                    
+
                     if unit_surgeries:
                         # Calcular estatísticas para esta unidade (apenas dados > 0)
                         unit_q1_furos = [s.q1_furos for s in unit_surgeries if hasattr(s, 'q1_furos') and s.q1_furos is not None and s.q1_furos > 0]
                         unit_q2_furos = [s.q2_furos for s in unit_surgeries if hasattr(s, 'q2_furos') and s.q2_furos is not None and s.q2_furos > 0]
                         unit_q3_furos = [s.q3_furos for s in unit_surgeries if hasattr(s, 'q3_furos') and s.q3_furos is not None and s.q3_furos > 0]
                         unit_q4_furos = [s.q4_furos for s in unit_surgeries if hasattr(s, 'q4_furos') and s.q4_furos is not None and s.q4_furos > 0]
-                        
+
                         # Calcular taxas de quebra médias por quadrante para esta unidade (dados >= 0)
                         unit_q1_taxas = [s.q1_taxa_quebra for s in unit_surgeries if hasattr(s, 'q1_taxa_quebra') and s.q1_taxa_quebra is not None and s.q1_taxa_quebra >= 0]
                         unit_q2_taxas = [s.q2_taxa_quebra for s in unit_surgeries if hasattr(s, 'q2_taxa_quebra') and s.q2_taxa_quebra is not None and s.q2_taxa_quebra >= 0]
                         unit_q3_taxas = [s.q3_taxa_quebra for s in unit_surgeries if hasattr(s, 'q3_taxa_quebra') and s.q3_taxa_quebra is not None and s.q3_taxa_quebra >= 0]
                         unit_q4_taxas = [s.q4_taxa_quebra for s in unit_surgeries if hasattr(s, 'q4_taxa_quebra') and s.q4_taxa_quebra is not None and s.q4_taxa_quebra >= 0]
-                        
+
                         # Taxa média de quebra geral da unidade (converter decimal para porcentagem)
                         all_unit_taxas = unit_q1_taxas + unit_q2_taxas + unit_q3_taxas + unit_q4_taxas
                         unit_avg_breakage = round((sum(all_unit_taxas) / len(all_unit_taxas)) * 100, 2) if all_unit_taxas else 0
-                        
+
                         # Densidade de extração da unidade (apenas dados > 0)
                         unit_densidades = [s.densidade_extracao for s in unit_surgeries if hasattr(s, 'densidade_extracao') and s.densidade_extracao is not None and s.densidade_extracao > 0]
                         unit_avg_densidade = round(sum(unit_densidades) / len(unit_densidades), 2) if unit_densidades else 0
-                        
+
                         # Média de furos por quadrante da unidade
                         avg_q1_furos = round(sum(unit_q1_furos) / len(unit_q1_furos), 1) if unit_q1_furos else 0
                         avg_q2_furos = round(sum(unit_q2_furos) / len(unit_q2_furos), 1) if unit_q2_furos else 0
                         avg_q3_furos = round(sum(unit_q3_furos) / len(unit_q3_furos), 1) if unit_q3_furos else 0
                         avg_q4_furos = round(sum(unit_q4_furos) / len(unit_q4_furos), 1) if unit_q4_furos else 0
-                        
+
                         # Taxa média de quebra por quadrante da unidade (converter decimal para porcentagem)
                         avg_q1_taxa_unit = round((sum(unit_q1_taxas) / len(unit_q1_taxas)) * 100, 2) if unit_q1_taxas else 0
                         avg_q2_taxa_unit = round((sum(unit_q2_taxas) / len(unit_q2_taxas)) * 100, 2) if unit_q2_taxas else 0
                         avg_q3_taxa_unit = round((sum(unit_q3_taxas) / len(unit_q3_taxas)) * 100, 2) if unit_q3_taxas else 0
                         avg_q4_taxa_unit = round((sum(unit_q4_taxas) / len(unit_q4_taxas)) * 100, 2) if unit_q4_taxas else 0
-                        
+
                         units_data.append({
                             'name': unit,
                             'surgeries': len(unit_surgeries),
@@ -3894,7 +3902,7 @@ def get_medicos_dashboard_data():
                             'avg_q3_taxa': 0,
                             'avg_q4_taxa': 0
                         })
-            
+
             response_data = {
                 'stats': {
                     'total_surgeries': total_surgeries,
@@ -3928,48 +3936,167 @@ def get_medicos_dashboard_data():
                 },
                 'units': units_data
             }
-            
+
             return jsonify(response_data)
-            
+
     except Exception as e:
-        logger.error(f"Erro ao obter dados do dashboard médicos: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({'error': str(e)}), 500
-
-        # Adicionar novo registro
-        #Necroses model needs to be defined and populated
-
-
-        return jsonify({'success': True})
-    except Exception as e:
-        logger.error(f"Error saving necrose data: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/test_backup')
-def test_backup():
-    """Rota para testar o backup manual para Dropbox"""
-    try:
-        logger.info("Iniciando teste de backup manual...")
-        success, message = export_and_backup()
-        
-        if success:
-            logger.info(f"✅ Teste de backup bem-sucedido: {message}")
-            return jsonify({
-                'success': True, 
-                'message': message
-            })
-        else:
-            logger.warning(f"⚠️ Falha no teste de backup: {message}")
-            return jsonify({
-                'success': False, 
-                'message': f'Falha no backup: {message}'
-            })
-            
-    except Exception as e:
-        logger.error(f"Erro no teste de backup: {str(e)}")
+        logger.error(f"Error filtering dashboard data: {str(e)}\n{traceback.format_exc()}")
         return jsonify({
-            'success': False, 
-            'message': f'Erro no teste de backup: {str(e)}'
+            'error': str(e),
+            'labels': [],
+            'datasets': [{'label': 'Cirurgias', 'data': []}],
+            'has_follicle_data': False,
+            'follicles_data': {'labels': [], 'averages': [], 'le_density': []},
+            'total_surgeries': 0,
+            'avg_follicles': 0,
+            'avg_density': 0
         })
+
+@app.route('/download_combined_data')
+def download_combined_data():
+    """Endpoint para baixar dados combinados de cirurgia e necrose em Excel"""
+    logger.info("Gerando exportação combinada de cirurgia e necrose...")
+
+    # Obter filtros da query string
+    unit_filter = request.args.get('unit')
+    month_filter = request.args.get('month')
+    year_filter = request.args.get('year')
+    try:
+        with app.app_context():
+            # Buscar todas as cirurgias com LEFT JOIN para incluir dados de necrose
+            query = db.session.query(Surgery, Necrose).outerjoin(
+                Necrose, Surgery.id == Necrose.surgery_id
+            ).order_by(Surgery.data.desc())
+
+            results = query.all()
+            logger.info(f"Encontrados {len(results)} registros para exportação")
+
+            if not results:
+                flash("Nenhum dado encontrado no banco de dados", "error")
+                return redirect(url_for('necrose'))
+
+            # Converter para lista de dicionários combinando dados de cirurgia e necrose
+            data_list = []
+            for surgery, necrose in results:
+                combined_dict = {
+                    # Dados da Cirurgia
+                    'ID Cirurgia': surgery.id,
+                    'Data da Cirurgia': surgery.data.strftime('%d/%m/%Y') if surgery.data else '',
+                    'Paciente': surgery.nome or '',
+                    'Unidade': surgery.unidade or '',
+                    'Médico': surgery.medico or '',
+                    'Equipe': surgery.equipe or '',
+                    'Hora da Cirurgia': surgery.hora_cirurgia or '',
+                    'Tempo de Cirurgia (horas)': surgery.tempo_cirurgia or 0,
+                    'Total de Folículos': surgery.total_foliculos or 0,
+                    'Frente': surgery.frente or 0,
+                    'Densidade Scketh': surgery.densidade_scketh or 0,
+                    'Coroa': surgery.coroa or 0,
+                    'Scalpe': surgery.scalpe or 0,
+                    'Península Direita': surgery.peninsula_direita or 0,
+                    'Península Esquerda': surgery.peninsula_esquerda or 0,
+                    'Infiltração': surgery.infiltracao or '',
+                    'Sedação': getattr(surgery, 'sedacao', '') or '',
+                    'Sangramento': getattr(surgery, 'sangramento', '') or '',
+                    'Tadalafila': surgery.tadalafila or '',
+                    'Bloqueio de Seringas': surgery.bloqueio_seringas or '',
+                    'Fonte 1': surgery.fonte_1 or '',
+                    'Fonte 2': surgery.fonte_2 or '',
+                    'Fonte 3': surgery.fonte_3 or '',
+                    'Fonte 4': surgery.fonte_4 or '',
+                    'Fonte 5': surgery.fonte_5 or '',
+                    'Pelos Corporais': surgery.pelos_corporais or '',
+                    'Técnica': surgery.tecnica or '',
+                    'Solução Frente (ml)': surgery.solucao_frente or 0,
+                    'Q1 Área': surgery.q1_area or 0,
+                    'Q1 Furos': surgery.q1_furos or 0,
+                    'Q1 Fios': surgery.q1_fios or 0,
+                    'Q1 Densidade': surgery.q1_densidade or 0,
+                    'Q1 Taxa Quebra': surgery.q1_taxa_quebra or 0,
+                    'Q2 Área': surgery.q2_area or 0,
+                    'Q2 Furos': surgery.q2_furos or 0,
+                    'Q2 Fios': surgery.q2_fios or 0,
+                    'Q2 Densidade': surgery.q2_densidade or 0,
+                    'Q2 Taxa Quebra': surgery.q2_taxa_quebra or 0,
+                    'Q3 Área': surgery.q3_area or 0,
+                    'Q3 Furos': surgery.q3_furos or 0,
+                    'Q3 Fios': surgery.q3_fios or 0,
+                    'Q3 Densidade': surgery.q3_densidade or 0,
+                    'Q3 Taxa Quebra': surgery.q3_taxa_quebra or 0,
+                    'Q4 Área': surgery.q4_area or 0,
+                    'Q4 Furos': surgery.q4_furos or 0,
+                    'Q4 Fios': surgery.q4_fios or 0,
+                    'Q4 Densidade': surgery.q4_densidade or 0,
+                    'Q4 Taxa Quebra': surgery.q4_taxa_quebra or 0,
+                    'Densidade Extração': surgery.densidade_extracao or 0,
+                    'Data de Criação': surgery.created_at.strftime('%d/%m/%Y %H:%M:%S') if surgery.created_at else '',
+
+                    # Dados da Necrose
+                    'Tem Necrose': 'Sim' if necrose and necrose.tem_necrose else 'Não',
+                    'Número de Necrose': necrose.numero_necroses if necrose else '',
+                    'Data Avaliação Necrose': necrose.data_avaliacao.strftime('%d/%m/%Y') if necrose and necrose.data_avaliacao else '',
+                    'Médico Responsável Necrose': necrose.medico_responsavel if necrose else '',
+                    'Grau da Necrose': necrose.grau_necrose if necrose else '',
+
+                    # Regiões Acometidas
+                    'Primeira Faixa Acometida': 'Sim' if necrose and necrose.primeira_faixa else 'Não',
+                    'Segunda Faixa Acometida': 'Sim' if necrose and necrose.segunda_faixa else 'Não',
+                    'Terceira Faixa Acometida': 'Sim' if necrose and necrose.terceira_faixa else 'Não',
+                    'Coroa Acometida': 'Sim' if necrose and necrose.coroa else 'Não',
+
+                    'Localização Detalhada': necrose.localizacao if necrose else '',
+                    'Tamanho da Necrose (mm)': necrose.tamanho_mm if necrose else '',
+                    'Descrição da Necrose': necrose.descricao if necrose else '',
+                    'Tratamento Aplicado': necrose.tratamento_aplicado if necrose else '',
+                    'Observações Necrose': necrose.observacoes if necrose else '',
+                    'Status da Necrose': necrose.status if necrose else '',
+                    'Data Resolução': necrose.data_resolucao.strftime('%d/%m/%Y') if necrose and necrose.data_resolucao else '',
+                    'Necrose Criada em': necrose.created_at.strftime('%d/%m/%Y %H:%M:%S') if necrose and necrose.created_at else '',
+                    'Necrose Atualizada em': necrose.updated_at.strftime('%d/%m/%Y %H:%M:%S') if necrose and necrose.updated_at else '',
+
+                    # Informações sobre as 3 fotos obrigatórias para avaliação futura
+                    'Fotos para Avaliação Futura': len(necrose.photos) if necrose and hasattr(necrose, 'photos') else 0,
+                    'Arquivos das 3 Fotos': ', '.join([photo.filename for photo in necrose.photos]) if necrose and hasattr(necrose, 'photos') else ''
+                }
+                data_list.append(combined_dict)
+
+            # Criar DataFrame e salvar em Excel
+            df = pd.DataFrame(data_list)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"dados_cirurgia_necrose_{timestamp}.xlsx"
+            temp_file = f"temp_{filename}"
+
+            # Salvar no arquivo temporário
+            df.to_excel(temp_file, index=False, engine='openpyxl')
+
+            logger.info(f"Exportação combinada criada com {len(data_list)} registros: {filename}")
+
+            # Enviar arquivo e depois deletar
+            return_data = send_file(
+                temp_file,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name=filename
+            )
+
+            # Agendar remoção do arquivo temporário
+            import threading
+            def remove_temp_file():
+                try:
+                    import time
+                    time.sleep(2)  # Aguardar download
+                    os.remove(temp_file)
+                except:
+                    pass
+
+            threading.Thread(target=remove_temp_file).start()
+
+            return return_data
+
+    except Exception as e:
+        logger.error(f"Erro ao gerar exportação combinada: {str(e)}\n{traceback.format_exc()}")
+        flash(f"Erro ao gerar arquivo: {str(e)}", "error")
+        return redirect(url_for('necrose'))
 
 # Controle de Cirurgias - Rotas com autenticação
 @app.route('/controle_cirurgias')
@@ -3993,32 +4120,32 @@ def controle_dashboard():
     """Dashboard de controle de cirurgias com filtro por nome"""
     if not session.get('controle_authenticated'):
         return redirect(url_for('controle_cirurgias'))
-    
+
     # Obter filtros da URL - filtros por nome e unidade
     filter_name = request.args.get('name', 'all')
     filter_unit = request.args.get('unit', 'all')
     filter_month = request.args.get('month', str(datetime.now().month))
     filter_year = request.args.get('year', str(datetime.now().year))
-    
+
     try:
         with app.app_context():
             current_month = int(filter_month)
             current_year = int(filter_year)
-            
+
             # Base SQL com filtros opcionais
             where_conditions = [
                 "EXTRACT(MONTH FROM data) = :month",
                 "EXTRACT(YEAR FROM data) = :year"
             ]
             sql_params = {'month': current_month, 'year': current_year}
-            
+
             # Filtro por nome ao invés de unidade
             if filter_name != 'all':
                 where_conditions.append("equipe ILIKE :name_filter")
                 sql_params['name_filter'] = f'%{filter_name}%'
-            
+
             where_clause = " AND ".join(where_conditions)
-            
+
             # Se filtro por nome específico, mostrar cirurgias por unidade para esse membro
             if filter_name != 'all':
                 sql_membro_unidades = text(f"""
@@ -4067,10 +4194,10 @@ def controle_dashboard():
                 ORDER BY membro
                 LIMIT 50
             """)
-            
+
             result_membros_disp = db.session.execute(sql_membros_disponiveis)
             membros_disponiveis = [row.membro for row in result_membros_disp.fetchall()]
-            
+
             # Lista de unidades disponíveis para filtro
             sql_unidades_disponiveis = text("SELECT DISTINCT unidade FROM surgery WHERE unidade IS NOT NULL ORDER BY unidade")
             result_unidades_disp = db.session.execute(sql_unidades_disponiveis)
@@ -4094,10 +4221,10 @@ def controle_dashboard():
                 LEFT JOIN cirurgias_periodo cp ON tu.unidade = cp.unidade
                 ORDER BY total_cirurgias DESC, tu.unidade
             """)
-            
+
             result_unidade = db.session.execute(sql_por_unidade, {'month': current_month, 'year': current_year})
             cirurgias_por_unidade_data = result_unidade.fetchall()
-            
+
             # Membros da unidade selecionada (só quando unidade != 'all')
             membros_unidade_data = []
             if filter_unit != 'all':
@@ -4125,9 +4252,9 @@ def controle_dashboard():
                     'unit': filter_unit
                 })
                 membros_unidade_data = result_membros_unidade.fetchall()
-            
 
-            
+
+
             # Organizar dados para o template baseado no tipo de filtro
             if filter_name != 'all':
                 # Dados por unidade para membro específico
@@ -4147,7 +4274,7 @@ def controle_dashboard():
                         'total': row.total_cirurgias
                     })
                 titulo_secao = "👥 Membros da Equipe - Total de Cirurgias"
-            
+
             # Dados das cirurgias por unidade
             dados_por_unidade = []
             for row in cirurgias_por_unidade_data:
@@ -4155,7 +4282,7 @@ def controle_dashboard():
                     'unidade': row.unidade,
                     'total': row.total_cirurgias
                 })
-            
+
             # Dados dos membros da unidade selecionada
             dados_membros_unidade = []
             for row in membros_unidade_data:
@@ -4180,7 +4307,7 @@ def controle_dashboard():
                 mes_nome=['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
                            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'][current_month]
             )
-            
+
     except Exception as e:
         logger.error(f"Erro no controle dashboard: {str(e)}")
         return render_template('controle_dashboard.html', 
