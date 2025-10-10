@@ -93,6 +93,10 @@ deploymentTarget = "cloudrun"
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 38515
+externalPort = 3000
+
 [agent]
 expertMode = true
 integrations = ["javascript_database==1.0.0"]
