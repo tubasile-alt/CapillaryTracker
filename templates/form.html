@@ -115,6 +115,39 @@
                         {% endif %}
                     </div>
                 {% endfor %}
+                
+                <!-- Novo campo: Retoque -->
+                <div class="form-group">
+                    <label for="retoque">Retoque:</label>
+                    <select name="retoque" id="retoque">
+                        <option value="">Selecione...</option>
+                        <option value="Sim">Sim</option>
+                        <option value="Não">Não</option>
+                    </select>
+                </div>
+                
+                <!-- Novo campo: Tipo de Implante (checkboxes) -->
+                <div class="form-group">
+                    <label>Tipo de Implante:</label>
+                    <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 8px;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                            <input type="checkbox" name="tipo_implante" value="Exclusivo Capilar">
+                            Exclusivo Capilar
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                            <input type="checkbox" name="tipo_implante" value="Body Hair">
+                            Body Hair
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                            <input type="checkbox" name="tipo_implante" value="Transplante de Barba">
+                            Transplante de Barba
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                            <input type="checkbox" name="tipo_implante" value="Transplante de Sobrancelha">
+                            Transplante de Sobrancelha
+                        </label>
+                    </div>
+                </div>
             </div>
 
             <h3>Procedimentos e Ferramentas</h3>

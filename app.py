@@ -219,6 +219,9 @@ class Surgery(db.Model):
     q4_densidade = db.Column(db.Float)
     q4_taxa_quebra = db.Column(db.Float)
     densidade_extracao = db.Column(db.Float)
+    # Novos campos de informações do implante
+    retoque = db.Column(db.String(3))  # Sim ou Não
+    tipo_implante = db.Column(db.String(255))  # Múltiplas opções separadas por vírgula
     # Campos da segunda página do formulário
     infiltracao = db.Column(db.String(255))
     sedacao = db.Column(db.String(255))
@@ -1095,7 +1098,10 @@ def save_to_excel(data):
                 q4_fios=int(data.get('Q4 Fios', data.get('q4_fios', 0)) or 0),
                 q4_densidade=float(data.get('Q4 Densidade', data.get('q4_densidade', 0)) or 0),
                 q4_taxa_quebra=float(data.get('Q4 Taxa Quebra', data.get('q4_taxa_quebra', 0)) or 0),
-                densidade_extracao=float(data.get('Densidade Extração', data.get('densidade_extracao', 0)) or 0)
+                densidade_extracao=float(data.get('Densidade Extração', data.get('densidade_extracao', 0)) or 0),
+                # Novos campos de informações do implante
+                retoque=str(data.get('Retoque', data.get('retoque', '')) or ''),
+                tipo_implante=str(data.get('Tipo de Implante', data.get('tipo_implante', '')) or '')
             )
 
             logger.info("Surgery object created, committing to database...")
@@ -1521,6 +1527,14 @@ def novo_cadastro():
             logger.info(f"📋 Equipe processada: {form_data.get('equipe', 'Nenhuma')}")
             logger.info(f"🔧 Membros coletados: {team_members}")
 
+            # Process tipo_implante checkboxes
+            tipo_implante_values = request.form.getlist('tipo_implante')
+            if tipo_implante_values:
+                form_data['tipo_implante'] = ', '.join(tipo_implante_values)
+                logger.info(f"💉 Tipo de Implante processado: {form_data['tipo_implante']}")
+            else:
+                form_data['tipo_implante'] = ''
+            
             # Process body hair checkbox and data
             body_hair_checked = form_data.get('body_hair_check') == 'on'
             form_data['pelos_corporais'] = 'Sim' if body_hair_checked else 'Não'
