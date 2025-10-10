@@ -120,15 +120,33 @@
                 <div class="form-group">
                     <label for="retoque">Retoque:</label>
                     <select name="retoque" id="retoque">
-                        <option value="">Selecione...</option>
+                        <option value="Não" selected>Não</option>
                         <option value="Sim">Sim</option>
-                        <option value="Não">Não</option>
                     </select>
                 </div>
                 
-                <!-- Novo campo: Tipo de Implante (checkboxes) -->
-                <div class="form-group">
-                    <label>Tipo de Implante:</label>
+                <!-- Novo campo: Tipo de Implante (checkboxes em layout compacto) -->
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="margin-bottom: 8px; display: block; font-weight: 600;">Tipo de Implante:</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #dee2e6;">
+                        <div style="display: flex; align-items: center;">
+                            <input type="checkbox" name="tipo_implante" value="Exclusivo Capilar" id="tipo_exclusivo" style="width: auto; margin-right: 8px;">
+                            <label for="tipo_exclusivo" style="margin: 0; font-weight: normal; cursor: pointer;">Exclusivo Capilar</label>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <input type="checkbox" name="tipo_implante" value="Body Hair" id="tipo_body" style="width: auto; margin-right: 8px;">
+                            <label for="tipo_body" style="margin: 0; font-weight: normal; cursor: pointer;">Body Hair</label>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <input type="checkbox" name="tipo_implante" value="Transplante de Barba" id="tipo_barba" style="width: auto; margin-right: 8px;">
+                            <label for="tipo_barba" style="margin: 0; font-weight: normal; cursor: pointer;">Transplante de Barba</label>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <input type="checkbox" name="tipo_implante" value="Transplante de Sobrancelha" id="tipo_sobrancelha" style="width: auto; margin-right: 8px;">
+                            <label for="tipo_sobrancelha" style="margin: 0; font-weight: normal; cursor: pointer;">Transplante de Sobrancelha</label>
+                        </div>
+                    </div>
+                </div>nte:</label>
                     <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 8px;">
                         <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
                             <input type="checkbox" name="tipo_implante" value="Exclusivo Capilar">
