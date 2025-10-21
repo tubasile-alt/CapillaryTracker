@@ -377,6 +377,48 @@
                             <option value="">Todos</option>
                         </select>
                     </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-transamin">Transamin:</label>
+                        <select id="filter-transamin">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-diprospam">Diprospam/Beta 30:</label>
+                        <select id="filter-diprospam">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-fumante">Fumante:</label>
+                        <select id="filter-fumante">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-implante-secundario">Implante Secundário:</label>
+                        <select id="filter-implante-secundario">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-infiltracao">Infiltração:</label>
+                        <select id="filter-infiltracao">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-safira">Safira:</label>
+                        <select id="filter-safira">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             
@@ -503,6 +545,12 @@
                 populateDropdown('filter-tecnica', filterOptions.surgery.tecnica);
                 populateDropdown('filter-retoque', filterOptions.surgery.retoque);
                 populateDropdown('filter-tipo-implante', filterOptions.surgery.tipo_implante);
+                populateDropdown('filter-transamin', filterOptions.surgery.transamin);
+                populateDropdown('filter-diprospam', filterOptions.surgery.diprospam);
+                populateDropdown('filter-fumante', filterOptions.surgery.fumante);
+                populateDropdown('filter-implante-secundario', filterOptions.surgery.implante_secundario);
+                populateDropdown('filter-infiltracao', filterOptions.surgery.infiltracao);
+                populateDropdown('filter-safira', filterOptions.surgery.safira);
                 
                 // Preencher dropdowns de necrose
                 populateDropdown('filter-necrose-unidade', filterOptions.necrose.unidade);
@@ -543,7 +591,13 @@
                 'filter-bloqueio': 'bloqueio_seringas',
                 'filter-tecnica': 'tecnica',
                 'filter-retoque': 'retoque',
-                'filter-tipo-implante': 'tipo_implante'
+                'filter-tipo-implante': 'tipo_implante',
+                'filter-transamin': 'transamin',
+                'filter-diprospam': 'diprospam',
+                'filter-fumante': 'fumante',
+                'filter-implante-secundario': 'implante_secundario',
+                'filter-infiltracao': 'infiltracao',
+                'filter-safira': 'safira'
             };
             
             for (const [selectId, fieldName] of Object.entries(filterMappings)) {

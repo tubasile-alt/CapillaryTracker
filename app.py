@@ -4231,6 +4231,14 @@ def api_estudo_filter_options():
             tecnica_opts = db.session.query(Surgery.tecnica).distinct().filter(Surgery.tecnica.isnot(None)).all()
             retoque_opts = db.session.query(Surgery.retoque).distinct().filter(Surgery.retoque.isnot(None)).all()
             
+            # Novos campos solicitados pelo usuário
+            transamin_opts = db.session.query(Surgery.transamin).distinct().filter(Surgery.transamin.isnot(None)).all()
+            diprospam_opts = db.session.query(Surgery.diprospam).distinct().filter(Surgery.diprospam.isnot(None)).all()
+            fumante_opts = db.session.query(Surgery.fumante).distinct().filter(Surgery.fumante.isnot(None)).all()
+            implante_secundario_opts = db.session.query(Surgery.implante_secundario).distinct().filter(Surgery.implante_secundario.isnot(None)).all()
+            infiltracao_opts = db.session.query(Surgery.infiltracao).distinct().filter(Surgery.infiltracao.isnot(None)).all()
+            safira_opts = db.session.query(Surgery.safira).distinct().filter(Surgery.safira.isnot(None)).all()
+            
             # Tipo de implante pode ter múltiplos valores separados por vírgula
             tipo_implante_raw = db.session.query(Surgery.tipo_implante).distinct().filter(Surgery.tipo_implante.isnot(None)).all()
             tipo_implante_opts = set()
@@ -4256,7 +4264,13 @@ def api_estudo_filter_options():
                     'bloqueio_seringas': sorted([b[0] for b in bloqueio_opts if b[0]]),
                     'tecnica': sorted([t[0] for t in tecnica_opts if t[0]]),
                     'retoque': sorted([r[0] for r in retoque_opts if r[0]]),
-                    'tipo_implante': sorted(list(tipo_implante_opts))
+                    'tipo_implante': sorted(list(tipo_implante_opts)),
+                    'transamin': sorted([t[0] for t in transamin_opts if t[0]]),
+                    'diprospam': sorted([d[0] for d in diprospam_opts if d[0]]),
+                    'fumante': sorted([f[0] for f in fumante_opts if f[0]]),
+                    'implante_secundario': sorted([i[0] for i in implante_secundario_opts if i[0]]),
+                    'infiltracao': sorted([i[0] for i in infiltracao_opts if i[0]]),
+                    'safira': ['Sim', 'Não']
                 },
                 'necrose': {
                     'unidade': sorted([u[0] for u in unidades_necrose if u[0]]),
