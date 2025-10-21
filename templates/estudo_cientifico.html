@@ -19,6 +19,7 @@
             border-radius: 12px;
             margin-bottom: 30px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
         }
         
         .header-section h1 {
@@ -32,6 +33,26 @@
             font-size: 1.1em;
         }
         
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+        
         .controls-panel {
             background: white;
             padding: 25px;
@@ -40,76 +61,110 @@
             margin-bottom: 25px;
         }
         
-        .filter-builder {
-            display: grid;
-            gap: 20px;
-        }
-        
-        .filter-group {
+        .filter-section {
             background: #f8f9fa;
             padding: 20px;
             border-radius: 8px;
+            margin-bottom: 20px;
             border-left: 4px solid #667eea;
         }
         
-        .filter-group h3 {
+        .filter-section h3 {
             margin-top: 0;
             color: #667eea;
-            font-size: 1.2em;
+            font-size: 1.3em;
+            margin-bottom: 20px;
         }
         
-        .filter-row {
+        .filter-grid {
             display: grid;
-            grid-template-columns: 200px 200px 1fr 100px;
-            gap: 15px;
-            align-items: center;
-            margin-bottom: 15px;
-            padding: 15px;
-            background: white;
-            border-radius: 6px;
-            border: 1px solid #e0e0e0;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
         }
         
-        .filter-row select,
-        .filter-row input {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-item label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
             font-size: 0.95em;
         }
         
-        .filter-row button {
-            padding: 8px 12px;
-            background: #dc3545;
-            color: white;
-            border: none;
+        .filter-item select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
             border-radius: 6px;
+            font-size: 0.95em;
+            background: white;
             cursor: pointer;
-            font-size: 0.9em;
-        }
-        
-        .filter-row button:hover {
-            background: #c82333;
-        }
-        
-        .add-filter-btn,
-        .add-card-btn {
-            padding: 12px 24px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 500;
             transition: all 0.3s;
         }
         
-        .add-filter-btn:hover,
-        .add-card-btn:hover {
-            background: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        .filter-item select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .metrics-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .metrics-section h3 {
+            margin-top: 0;
+            color: #28a745;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .metric-checkbox {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .metric-checkbox:hover {
+            border-color: #28a745;
+            background: #f0f9f0;
+        }
+        
+        .metric-checkbox input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .metric-checkbox label {
+            cursor: pointer;
+            margin: 0;
+            font-weight: 500;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
         }
         
         .analyze-btn {
@@ -121,7 +176,6 @@
             cursor: pointer;
             font-size: 1.1em;
             font-weight: 600;
-            margin-top: 20px;
             transition: all 0.3s;
         }
         
@@ -130,9 +184,39 @@
             box-shadow: 0 6px 12px rgba(0,0,0,0.3);
         }
         
+        .clear-btn {
+            padding: 15px 30px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        
+        .clear-btn:hover {
+            background: #5a6268;
+        }
+        
+        .export-btn {
+            padding: 15px 30px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        
+        .export-btn:hover {
+            background: #0056b3;
+        }
+        
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
             margin-top: 30px;
         }
@@ -142,7 +226,6 @@
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            position: relative;
             transition: all 0.3s;
         }
         
@@ -151,37 +234,21 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
         
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        
         .card-title {
             font-size: 1.1em;
             font-weight: 600;
             color: #333;
-        }
-        
-        .card-remove {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85em;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
         }
         
         .card-value {
-            font-size: 3em;
+            font-size: 2.5em;
             font-weight: 700;
             color: #667eea;
             text-align: center;
-            margin: 20px 0;
+            margin: 15px 0;
         }
         
         .card-description {
@@ -192,7 +259,7 @@
         }
         
         .card-details {
-            margin-top: 20px;
+            margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid #f0f0f0;
         }
@@ -200,7 +267,7 @@
         .detail-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
+            padding: 6px 0;
             font-size: 0.9em;
         }
         
@@ -226,47 +293,6 @@
             color: #999;
             font-style: italic;
         }
-        
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .export-btn {
-            padding: 12px 24px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 500;
-        }
-        
-        .export-btn:hover {
-            background: #0056b3;
-        }
-        
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 2px solid white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-        
-        .back-btn:hover {
-            background: white;
-            color: #667eea;
-        }
     </style>
 </head>
 <body>
@@ -274,35 +300,169 @@
         <div class="header-section">
             <a href="/" class="back-btn">← Voltar</a>
             <h1>📊 Estudo Científico</h1>
-            <p>Configure filtros personalizados para análise e comparação de dados cirúrgicos e de necrose</p>
+            <p>Selecione os filtros e métricas para análise de dados cirúrgicos e de necrose</p>
         </div>
         
         <div class="controls-panel">
-            <div class="filter-builder">
-                <!-- Filtros de Cirurgias -->
-                <div class="filter-group">
-                    <h3>🔬 Filtros de Cirurgias</h3>
-                    <div id="surgery-filters"></div>
-                    <button class="add-filter-btn" onclick="addFilter('surgery')">+ Adicionar Filtro de Cirurgia</button>
-                </div>
-                
-                <!-- Filtros de Necroses -->
-                <div class="filter-group">
-                    <h3>⚠️ Filtros de Necrose</h3>
-                    <div id="necrose-filters"></div>
-                    <button class="add-filter-btn" onclick="addFilter('necrose')">+ Adicionar Filtro de Necrose</button>
-                </div>
-                
-                <!-- Configuração de Cards -->
-                <div class="filter-group">
-                    <h3>📈 Cards de Análise</h3>
-                    <div id="card-configs"></div>
-                    <button class="add-card-btn" onclick="addCard()">+ Adicionar Card</button>
+            <!-- Filtros de Cirurgias -->
+            <div class="filter-section">
+                <h3>🔬 Filtros de Cirurgias</h3>
+                <div class="filter-grid">
+                    <div class="filter-item">
+                        <label for="filter-unidade">Unidade:</label>
+                        <select id="filter-unidade">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-medico">Médico:</label>
+                        <select id="filter-medico">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-equipe">Membro da Equipe:</label>
+                        <select id="filter-equipe">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-tadalafila">Tadalafila:</label>
+                        <select id="filter-tadalafila">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-sedacao">Sedação:</label>
+                        <select id="filter-sedacao">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-sangramento">Sangramento:</label>
+                        <select id="filter-sangramento">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-bloqueio">Bloqueio de Seringas:</label>
+                        <select id="filter-bloqueio">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-tecnica">Técnica:</label>
+                        <select id="filter-tecnica">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-retoque">Retoque:</label>
+                        <select id="filter-retoque">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-tipo-implante">Tipo de Implante:</label>
+                        <select id="filter-tipo-implante">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             
-            <div class="btn-group">
+            <!-- Filtros de Necrose -->
+            <div class="filter-section">
+                <h3>⚠️ Filtros de Necrose</h3>
+                <div class="filter-grid">
+                    <div class="filter-item">
+                        <label for="filter-necrose-unidade">Unidade:</label>
+                        <select id="filter-necrose-unidade">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-necrose-medico">Médico Responsável:</label>
+                        <select id="filter-necrose-medico">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-tem-necrose">Tem Necrose:</label>
+                        <select id="filter-tem-necrose">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-grau-necrose">Grau da Necrose:</label>
+                        <select id="filter-grau-necrose">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-item">
+                        <label for="filter-status-necrose">Status:</label>
+                        <select id="filter-status-necrose">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Métricas para Análise -->
+            <div class="metrics-section">
+                <h3>📈 Selecione as Métricas para Análise</h3>
+                <div class="metrics-grid">
+                    <div class="metric-checkbox">
+                        <input type="checkbox" id="metric-count" value="count">
+                        <label for="metric-count">Contagem de Cirurgias</label>
+                    </div>
+                    <div class="metric-checkbox">
+                        <input type="checkbox" id="metric-avg-foliculos" value="avg_foliculos">
+                        <label for="metric-avg-foliculos">Média de Folículos</label>
+                    </div>
+                    <div class="metric-checkbox">
+                        <input type="checkbox" id="metric-sum-foliculos" value="sum_foliculos">
+                        <label for="metric-sum-foliculos">Soma de Folículos</label>
+                    </div>
+                    <div class="metric-checkbox">
+                        <input type="checkbox" id="metric-avg-tempo" value="avg_tempo">
+                        <label for="metric-avg-tempo">Média de Tempo</label>
+                    </div>
+                    <div class="metric-checkbox">
+                        <input type="checkbox" id="metric-avg-densidade" value="avg_densidade">
+                        <label for="metric-avg-densidade">Média de Densidade</label>
+                    </div>
+                    <div class="metric-checkbox">
+                        <input type="checkbox" id="metric-avg-solucao" value="avg_solucao">
+                        <label for="metric-avg-solucao">Média de Solução (ml)</label>
+                    </div>
+                    <div class="metric-checkbox">
+                        <input type="checkbox" id="metric-necrose-count" value="necrose_count">
+                        <label for="metric-necrose-count">Contagem de Necroses</label>
+                    </div>
+                    <div class="metric-checkbox">
+                        <input type="checkbox" id="metric-necrose-rate" value="necrose_rate">
+                        <label for="metric-necrose-rate">Taxa de Necrose (%)</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="button-group">
                 <button class="analyze-btn" onclick="runAnalysis()">🔍 Executar Análise</button>
+                <button class="clear-btn" onclick="clearFilters()">🔄 Limpar Filtros</button>
                 <button class="export-btn" onclick="exportResults()">📥 Exportar Resultados</button>
             </div>
         </div>
@@ -313,136 +473,128 @@
     </div>
     
     <script>
-        // Campos disponíveis para filtros
-        const surgeryFields = {
-            'unidade': { label: 'Unidade', type: 'text' },
-            'medico': { label: 'Médico', type: 'text' },
-            'equipe': { label: 'Equipe (contém)', type: 'text' },
-            'data': { label: 'Data', type: 'date' },
-            'tadalafila': { label: 'Tadalafila', type: 'text' },
-            'sedacao': { label: 'Sedação', type: 'text' },
-            'sangramento': { label: 'Sangramento', type: 'text' },
-            'bloqueio_seringas': { label: 'Bloqueio de Seringas', type: 'text' },
-            'infiltracao': { label: 'Infiltração', type: 'text' },
-            'retoque': { label: 'Retoque', type: 'select', options: ['Sim', 'Não'] },
-            'tipo_implante': { label: 'Tipo de Implante (contém)', type: 'text' },
-            'tecnica': { label: 'Técnica', type: 'text' },
-            'total_foliculos': { label: 'Total de Folículos', type: 'number' },
-            'tempo_cirurgia': { label: 'Tempo de Cirurgia (h)', type: 'number' },
-            'densidade_scketh': { label: 'Densidade Scketh', type: 'number' },
-            'solucao_frente': { label: 'Solução Frente (ml)', type: 'number' }
-        };
+        let filterOptions = null;
         
-        const necroseFields = {
-            'unidade': { label: 'Unidade', type: 'text' },
-            'paciente_nome': { label: 'Paciente', type: 'text' },
-            'medico_responsavel': { label: 'Médico Responsável', type: 'text' },
-            'tem_necrose': { label: 'Tem Necrose', type: 'select', options: ['Sim', 'Não'] },
-            'grau_necrose': { label: 'Grau da Necrose', type: 'select', options: ['Leve', 'Moderada', 'Severa'] },
-            'numero_necroses': { label: 'Número de Necroses', type: 'number' },
-            'primeira_faixa': { label: 'Primeira Faixa', type: 'select', options: ['Sim', 'Não'] },
-            'segunda_faixa': { label: 'Segunda Faixa', type: 'select', options: ['Sim', 'Não'] },
-            'terceira_faixa': { label: 'Terceira Faixa', type: 'select', options: ['Sim', 'Não'] },
-            'coroa': { label: 'Coroa', type: 'select', options: ['Sim', 'Não'] },
-            'status': { label: 'Status', type: 'text' }
-        };
-        
-        const metrics = {
-            'count': 'Contar registros',
-            'avg_foliculos': 'Média de folículos',
-            'sum_foliculos': 'Soma de folículos',
-            'avg_tempo': 'Média de tempo de cirurgia',
-            'avg_densidade': 'Média de densidade',
-            'avg_solucao': 'Média de solução (ml)',
-            'necrose_count': 'Contagem de necroses',
-            'necrose_rate': 'Taxa de necrose (%)'
-        };
-        
-        let surgeryFilterCount = 0;
-        let necroseFilterCount = 0;
-        let cardCount = 0;
-        
-        function addFilter(type) {
-            const container = document.getElementById(`${type}-filters`);
-            const filterDiv = document.createElement('div');
-            filterDiv.className = 'filter-row';
-            
-            const fields = type === 'surgery' ? surgeryFields : necroseFields;
-            const filterIndex = type === 'surgery' ? surgeryFilterCount++ : necroseFilterCount++;
-            
-            filterDiv.innerHTML = `
-                <select class="filter-field" data-type="${type}" data-index="${filterIndex}">
-                    <option value="">Selecione o campo</option>
-                    ${Object.keys(fields).map(key => 
-                        `<option value="${key}">${fields[key].label}</option>`
-                    ).join('')}
-                </select>
-                <select class="filter-operator">
-                    <option value="equals">=</option>
-                    <option value="contains">Contém</option>
-                    <option value="gt">&gt;</option>
-                    <option value="lt">&lt;</option>
-                    <option value="gte">&gt;=</option>
-                    <option value="lte">&lt;=</option>
-                </select>
-                <input type="text" class="filter-value" placeholder="Valor">
-                <button onclick="this.parentElement.remove()">Remover</button>
-            `;
-            
-            container.appendChild(filterDiv);
+        // Carregar opções dos filtros ao iniciar
+        async function loadFilterOptions() {
+            try {
+                const response = await fetch('/api/estudo_filter_options');
+                
+                if (response.status === 401) {
+                    alert('Sessão expirada. Por favor, faça login novamente.');
+                    window.location.href = '/estudo_cientifico/login';
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
+                filterOptions = await response.json();
+                
+                // Preencher dropdowns de cirurgias
+                populateDropdown('filter-unidade', filterOptions.surgery.unidade);
+                populateDropdown('filter-medico', filterOptions.surgery.medico);
+                populateDropdown('filter-equipe', filterOptions.surgery.equipe);
+                populateDropdown('filter-tadalafila', filterOptions.surgery.tadalafila);
+                populateDropdown('filter-sedacao', filterOptions.surgery.sedacao);
+                populateDropdown('filter-sangramento', filterOptions.surgery.sangramento);
+                populateDropdown('filter-bloqueio', filterOptions.surgery.bloqueio_seringas);
+                populateDropdown('filter-tecnica', filterOptions.surgery.tecnica);
+                populateDropdown('filter-retoque', filterOptions.surgery.retoque);
+                populateDropdown('filter-tipo-implante', filterOptions.surgery.tipo_implante);
+                
+                // Preencher dropdowns de necrose
+                populateDropdown('filter-necrose-unidade', filterOptions.necrose.unidade);
+                populateDropdown('filter-necrose-medico', filterOptions.necrose.medico_responsavel);
+                populateDropdown('filter-tem-necrose', filterOptions.necrose.tem_necrose);
+                populateDropdown('filter-grau-necrose', filterOptions.necrose.grau_necrose);
+                populateDropdown('filter-status-necrose', filterOptions.necrose.status);
+            } catch (error) {
+                console.error('Erro ao carregar opções:', error);
+                alert('Erro ao carregar filtros. Tente recarregar a página.');
+            }
         }
         
-        function addCard() {
-            const container = document.getElementById('card-configs');
-            const cardDiv = document.createElement('div');
-            cardDiv.className = 'filter-row';
-            cardDiv.style.gridTemplateColumns = '1fr 1fr auto';
+        function populateDropdown(selectId, options) {
+            const select = document.getElementById(selectId);
+            if (!select || !options) return;
             
-            cardDiv.innerHTML = `
-                <input type="text" class="card-title-input" placeholder="Título do Card" style="grid-column: 1 / 3;">
-                <select class="card-metric">
-                    <option value="">Selecione a métrica</option>
-                    ${Object.keys(metrics).map(key => 
-                        `<option value="${key}">${metrics[key]}</option>`
-                    ).join('')}
-                </select>
-                <button onclick="this.parentElement.remove()">Remover</button>
-            `;
-            
-            container.appendChild(cardDiv);
+            options.forEach(option => {
+                const optElement = document.createElement('option');
+                optElement.value = option;
+                optElement.textContent = option;
+                select.appendChild(optElement);
+            });
         }
         
         function collectFilters() {
             const surgeryFilters = [];
-            document.querySelectorAll('#surgery-filters .filter-row').forEach(row => {
-                const field = row.querySelector('.filter-field').value;
-                const operator = row.querySelector('.filter-operator').value;
-                const value = row.querySelector('.filter-value').value;
-                
-                if (field && value) {
-                    surgeryFilters.push({ field, operator, value });
-                }
-            });
-            
             const necroseFilters = [];
-            document.querySelectorAll('#necrose-filters .filter-row').forEach(row => {
-                const field = row.querySelector('.filter-field').value;
-                const operator = row.querySelector('.filter-operator').value;
-                const value = row.querySelector('.filter-value').value;
-                
-                if (field && value) {
-                    necroseFilters.push({ field, operator, value });
-                }
-            });
             
-            const cards = [];
-            document.querySelectorAll('#card-configs .filter-row').forEach(row => {
-                const title = row.querySelector('.card-title-input').value;
-                const metric = row.querySelector('.card-metric').value;
-                
-                if (title && metric) {
-                    cards.push({ title, metric });
+            // Filtros de cirurgia
+            const filterMappings = {
+                'filter-unidade': 'unidade',
+                'filter-medico': 'medico',
+                'filter-equipe': 'equipe',
+                'filter-tadalafila': 'tadalafila',
+                'filter-sedacao': 'sedacao',
+                'filter-sangramento': 'sangramento',
+                'filter-bloqueio': 'bloqueio_seringas',
+                'filter-tecnica': 'tecnica',
+                'filter-retoque': 'retoque',
+                'filter-tipo-implante': 'tipo_implante'
+            };
+            
+            for (const [selectId, fieldName] of Object.entries(filterMappings)) {
+                const value = document.getElementById(selectId).value;
+                if (value) {
+                    surgeryFilters.push({
+                        field: fieldName,
+                        operator: fieldName === 'equipe' || fieldName === 'tipo_implante' ? 'contains' : 'equals',
+                        value: value
+                    });
                 }
+            }
+            
+            // Filtros de necrose
+            const necroseFilterMappings = {
+                'filter-necrose-unidade': 'unidade',
+                'filter-necrose-medico': 'medico_responsavel',
+                'filter-tem-necrose': 'tem_necrose',
+                'filter-grau-necrose': 'grau_necrose',
+                'filter-status-necrose': 'status'
+            };
+            
+            for (const [selectId, fieldName] of Object.entries(necroseFilterMappings)) {
+                const value = document.getElementById(selectId).value;
+                if (value) {
+                    necroseFilters.push({
+                        field: fieldName,
+                        operator: 'equals',
+                        value: value
+                    });
+                }
+            }
+            
+            // Coletar métricas selecionadas
+            const cards = [];
+            const metricLabels = {
+                'count': 'Contagem de Cirurgias',
+                'avg_foliculos': 'Média de Folículos',
+                'sum_foliculos': 'Soma Total de Folículos',
+                'avg_tempo': 'Média de Tempo de Cirurgia',
+                'avg_densidade': 'Média de Densidade',
+                'avg_solucao': 'Média de Solução',
+                'necrose_count': 'Contagem de Necroses',
+                'necrose_rate': 'Taxa de Necrose'
+            };
+            
+            document.querySelectorAll('.metric-checkbox input[type="checkbox"]:checked').forEach(checkbox => {
+                cards.push({
+                    title: metricLabels[checkbox.value],
+                    metric: checkbox.value
+                });
             });
             
             return { surgeryFilters, necroseFilters, cards };
@@ -452,7 +604,7 @@
             const filters = collectFilters();
             
             if (filters.cards.length === 0) {
-                alert('Adicione pelo menos um card para análise!');
+                alert('Selecione pelo menos uma métrica para análise!');
                 return;
             }
             
@@ -468,11 +620,21 @@
                     body: JSON.stringify(filters)
                 });
                 
+                if (response.status === 401) {
+                    alert('Sessão expirada. Por favor, faça login novamente.');
+                    window.location.href = '/estudo_cientifico/login';
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 displayResults(data);
             } catch (error) {
                 console.error('Erro ao buscar dados:', error);
-                resultsGrid.innerHTML = '<div class="no-data">❌ Erro ao carregar dados</div>';
+                resultsGrid.innerHTML = '<div class="no-data">❌ Erro ao carregar dados. Tente novamente.</div>';
             }
         }
         
@@ -484,15 +646,12 @@
                 return;
             }
             
-            resultsGrid.innerHTML = data.cards.map((card, index) => `
+            resultsGrid.innerHTML = data.cards.map(card => `
                 <div class="study-card">
-                    <div class="card-header">
-                        <div class="card-title">${card.title}</div>
-                        <button class="card-remove" onclick="this.closest('.study-card').remove()">✕</button>
-                    </div>
+                    <div class="card-title">${card.title}</div>
                     <div class="card-value">${card.value !== null ? card.value : 'N/A'}</div>
                     <div class="card-description">${card.description || ''}</div>
-                    ${card.details ? `
+                    ${card.details && Object.keys(card.details).length > 0 ? `
                         <div class="card-details">
                             ${Object.keys(card.details).map(key => `
                                 <div class="detail-row">
@@ -506,15 +665,31 @@
             `).join('');
         }
         
+        function clearFilters() {
+            // Limpar todos os dropdowns
+            document.querySelectorAll('select').forEach(select => {
+                select.selectedIndex = 0;
+            });
+            
+            // Desmarcar todas as métricas
+            document.querySelectorAll('.metric-checkbox input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Limpar resultados
+            document.getElementById('results-grid').innerHTML = '';
+        }
+        
         function exportResults() {
             const filters = collectFilters();
+            const resultsGrid = document.getElementById('results-grid');
             
-            if (filters.cards.length === 0) {
+            if (resultsGrid.children.length === 0 || resultsGrid.querySelector('.loading, .no-data')) {
                 alert('Execute uma análise primeiro!');
                 return;
             }
             
-            // Exportar como JSON
+            // Exportar configuração como JSON
             const dataStr = JSON.stringify(filters, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(dataBlob);
@@ -525,12 +700,8 @@
             URL.revokeObjectURL(url);
         }
         
-        // Inicializar com exemplos
-        window.onload = function() {
-            // Adicionar um filtro e card de exemplo
-            addFilter('surgery');
-            addCard();
-        };
+        // Carregar opções ao iniciar
+        window.onload = loadFilterOptions;
     </script>
 </body>
 </html>

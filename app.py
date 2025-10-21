@@ -4203,6 +4203,78 @@ def estudo_cientifico():
     
     return render_template('estudo_cientifico.html')
 
+@app.route('/api/estudo_filter_options')
+def api_estudo_filter_options():
+    """API endpoint para retornar opções dos filtros (dropdowns)"""
+    if not session.get('estudo_authenticated'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        with app.app_context():
+            # Buscar opções únicas de cirurgias
+            unidades = db.session.query(Surgery.unidade).distinct().filter(Surgery.unidade.isnot(None)).order_by(Surgery.unidade).all()
+            medicos = db.session.query(Surgery.medico).distinct().filter(Surgery.medico.isnot(None)).order_by(Surgery.medico).all()
+            
+            # Para equipe, precisamos extrair membros individuais
+            equipes_raw = db.session.query(Surgery.equipe).distinct().filter(Surgery.equipe.isnot(None)).all()
+            equipe_membros = set()
+            for equipe_tuple in equipes_raw:
+                if equipe_tuple[0]:
+                    membros = [m.strip() for m in equipe_tuple[0].split(',') if m.strip()]
+                    equipe_membros.update(membros)
+            
+            # Outros campos categóricos
+            tadalafila_opts = db.session.query(Surgery.tadalafila).distinct().filter(Surgery.tadalafila.isnot(None)).all()
+            sedacao_opts = db.session.query(Surgery.sedacao).distinct().filter(Surgery.sedacao.isnot(None)).all()
+            sangramento_opts = db.session.query(Surgery.sangramento).distinct().filter(Surgery.sangramento.isnot(None)).all()
+            bloqueio_opts = db.session.query(Surgery.bloqueio_seringas).distinct().filter(Surgery.bloqueio_seringas.isnot(None)).all()
+            tecnica_opts = db.session.query(Surgery.tecnica).distinct().filter(Surgery.tecnica.isnot(None)).all()
+            retoque_opts = db.session.query(Surgery.retoque).distinct().filter(Surgery.retoque.isnot(None)).all()
+            
+            # Tipo de implante pode ter múltiplos valores separados por vírgula
+            tipo_implante_raw = db.session.query(Surgery.tipo_implante).distinct().filter(Surgery.tipo_implante.isnot(None)).all()
+            tipo_implante_opts = set()
+            for tipo_tuple in tipo_implante_raw:
+                if tipo_tuple[0]:
+                    tipos = [t.strip() for t in tipo_tuple[0].split(',') if t.strip()]
+                    tipo_implante_opts.update(tipos)
+            
+            # Opções de necrose
+            unidades_necrose = db.session.query(Necrose.unidade).distinct().filter(Necrose.unidade.isnot(None)).order_by(Necrose.unidade).all()
+            medicos_necrose = db.session.query(Necrose.medico_responsavel).distinct().filter(Necrose.medico_responsavel.isnot(None)).order_by(Necrose.medico_responsavel).all()
+            grau_necrose_opts = db.session.query(Necrose.grau_necrose).distinct().filter(Necrose.grau_necrose.isnot(None)).all()
+            status_necrose_opts = db.session.query(Necrose.status).distinct().filter(Necrose.status.isnot(None)).all()
+            
+            return jsonify({
+                'surgery': {
+                    'unidade': sorted([u[0] for u in unidades if u[0]]),
+                    'medico': sorted([m[0] for m in medicos if m[0]]),
+                    'equipe': sorted(list(equipe_membros)),
+                    'tadalafila': sorted([t[0] for t in tadalafila_opts if t[0]]),
+                    'sedacao': sorted([s[0] for s in sedacao_opts if s[0]]),
+                    'sangramento': sorted([s[0] for s in sangramento_opts if s[0]]),
+                    'bloqueio_seringas': sorted([b[0] for b in bloqueio_opts if b[0]]),
+                    'tecnica': sorted([t[0] for t in tecnica_opts if t[0]]),
+                    'retoque': sorted([r[0] for r in retoque_opts if r[0]]),
+                    'tipo_implante': sorted(list(tipo_implante_opts))
+                },
+                'necrose': {
+                    'unidade': sorted([u[0] for u in unidades_necrose if u[0]]),
+                    'medico_responsavel': sorted([m[0] for m in medicos_necrose if m[0]]),
+                    'grau_necrose': sorted([g[0] for g in grau_necrose_opts if g[0]]),
+                    'status': sorted([s[0] for s in status_necrose_opts if s[0]]),
+                    'tem_necrose': ['Sim', 'Não'],
+                    'primeira_faixa': ['Sim', 'Não'],
+                    'segunda_faixa': ['Sim', 'Não'],
+                    'terceira_faixa': ['Sim', 'Não'],
+                    'coroa': ['Sim', 'Não']
+                }
+            })
+    
+    except Exception as e:
+        logger.error(f"Erro ao buscar opções de filtros: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/estudo_cientifico_data', methods=['POST'])
 def api_estudo_cientifico_data():
     """API endpoint para processar filtros e retornar dados agregados"""
