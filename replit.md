@@ -97,6 +97,18 @@ This is a comprehensive hair surgery management system for Instituto Capilar do 
 
 ```
 Changelog:
+- October 21, 2025. EXPANSÃO DE FILTROS: Estudo Científico - Adicionados 6 Novos Campos de Análise:
+  - ADICIONADO: Filtro "Transamin" (medicamento para controle de sangramento)
+  - ADICIONADO: Filtro "Diprospam/Beta 30" (medicamento corticoide)
+  - ADICIONADO: Filtro "Fumante" (histórico de tabagismo do paciente)
+  - ADICIONADO: Filtro "Implante Secundário" (se é retoque ou primeiro procedimento)
+  - ADICIONADO: Filtro "Infiltração" (níveis 1, 2, 3 de infiltração anestésica)
+  - ADICIONADO: Filtro "Safira" (uso de tecnologia safira no procedimento)
+  - DATABASE: Criadas colunas no banco de dados para armazenar os novos campos
+  - MODELO: Atualizado SQLAlchemy Surgery model com os 6 novos campos
+  - API: Endpoint /api/estudo_filter_options agora retorna opções para todos os novos filtros
+  - INTERFACE: 6 novos dropdowns adicionados à seção de Filtros de Cirurgias
+  - ANÁLISE: Sistema permite cruzar dados como "de 100 cirurgias, 2 tiveram necrose, dessas 2 quantas usou Transamin, quantas a sedação foi ruim"
 - October 21, 2025. MELHORIAS NA INTERFACE: Estudo Científico - Refatoração com Dropdowns:
   - REFATORADO: Interface de filtros agora usa dropdowns (select) ao invés de campos de texto livre
   - CRIADO: Endpoint /api/estudo_filter_options para carregar dinamicamente todas as opções dos dropdowns

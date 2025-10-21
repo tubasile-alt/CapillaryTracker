@@ -255,6 +255,11 @@ class Surgery(db.Model):
     extra_person_3 = db.Column(db.String(255))
     # Campo adicional para necrose
     safira = db.Column(db.Boolean, default=False)
+    # Campos do histórico do paciente
+    transamin = db.Column(db.String(10))
+    diprospam = db.Column(db.String(10))
+    fumante = db.Column(db.String(10))
+    implante_secundario = db.Column(db.String(10))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class UnitProgress(db.Model):
