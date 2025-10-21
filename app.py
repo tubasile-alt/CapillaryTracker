@@ -4180,6 +4180,204 @@ def controle_logout():
     session.pop('controle_authenticated', None)
     return redirect(url_for('controle_cirurgias'))
 
+# Estudo Científico - Rotas com autenticação
+@app.route('/estudo_cientifico/login', methods=['GET', 'POST'])
+def estudo_cientifico_login():
+    """Página de login para estudo científico"""
+    if request.method == 'POST':
+        password = request.form.get('password')
+        if password == '54321':
+            session['estudo_authenticated'] = True
+            return redirect(url_for('estudo_cientifico'))
+        else:
+            flash('Senha incorreta!', 'danger')
+            return redirect(url_for('estudo_cientifico_login'))
+    
+    return render_template('estudo_login.html')
+
+@app.route('/estudo_cientifico')
+def estudo_cientifico():
+    """Página principal de estudo científico"""
+    if not session.get('estudo_authenticated'):
+        return redirect(url_for('estudo_cientifico_login'))
+    
+    return render_template('estudo_cientifico.html')
+
+@app.route('/api/estudo_cientifico_data', methods=['POST'])
+def api_estudo_cientifico_data():
+    """API endpoint para processar filtros e retornar dados agregados"""
+    if not session.get('estudo_authenticated'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        data = request.get_json()
+        surgery_filters = data.get('surgeryFilters', [])
+        necrose_filters = data.get('necroseFilters', [])
+        cards = data.get('cards', [])
+        
+        logger.info(f"Processando estudo científico com {len(surgery_filters)} filtros de cirurgia, {len(necrose_filters)} filtros de necrose e {len(cards)} cards")
+        
+        results = {'cards': []}
+        
+        with app.app_context():
+            # Processar cada card
+            for card_config in cards:
+                card_title = card_config.get('title', 'Sem título')
+                card_metric = card_config.get('metric', 'count')
+                
+                # Construir query de cirurgias com filtros
+                surgery_query = db.session.query(Surgery)
+                for f in surgery_filters:
+                    field = f.get('field')
+                    operator = f.get('operator')
+                    value = f.get('value')
+                    
+                    if field and value:
+                        surgery_query = apply_filter(surgery_query, Surgery, field, operator, value)
+                
+                # Construir query de necroses com filtros
+                necrose_query = db.session.query(Necrose)
+                for f in necrose_filters:
+                    field = f.get('field')
+                    operator = f.get('operator')
+                    value = f.get('value')
+                    
+                    if field and value:
+                        necrose_query = apply_filter(necrose_query, Necrose, field, operator, value)
+                
+                # Calcular métrica
+                card_result = calculate_metric(surgery_query, necrose_query, card_metric)
+                card_result['title'] = card_title
+                results['cards'].append(card_result)
+        
+        return jsonify(results)
+    
+    except Exception as e:
+        logger.error(f"Erro ao processar estudo científico: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'error': str(e)}), 500
+
+def apply_filter(query, model, field, operator, value):
+    """Aplica um filtro à query baseado no operador"""
+    try:
+        column = getattr(model, field, None)
+        if column is None:
+            return query
+        
+        if operator == 'equals':
+            # Para campos booleanos
+            if field in ['tem_necrose', 'primeira_faixa', 'segunda_faixa', 'terceira_faixa', 'coroa']:
+                bool_value = value.lower() == 'sim'
+                return query.filter(column == bool_value)
+            # Para campos de texto
+            return query.filter(column == value)
+        elif operator == 'contains':
+            return query.filter(column.ilike(f'%{value}%'))
+        elif operator == 'gt':
+            return query.filter(column > float(value))
+        elif operator == 'lt':
+            return query.filter(column < float(value))
+        elif operator == 'gte':
+            return query.filter(column >= float(value))
+        elif operator == 'lte':
+            return query.filter(column <= float(value))
+        
+        return query
+    except Exception as e:
+        logger.error(f"Erro ao aplicar filtro {field} {operator} {value}: {str(e)}")
+        return query
+
+def calculate_metric(surgery_query, necrose_query, metric):
+    """Calcula a métrica solicitada"""
+    try:
+        result = {
+            'value': 0,
+            'description': '',
+            'details': {}
+        }
+        
+        if metric == 'count':
+            count = surgery_query.count()
+            result['value'] = count
+            result['description'] = f'{count} cirurgias encontradas'
+            
+        elif metric == 'avg_foliculos':
+            surgeries = surgery_query.all()
+            if surgeries:
+                avg = sum(s.total_foliculos or 0 for s in surgeries) / len(surgeries)
+                result['value'] = round(avg, 2)
+                result['description'] = f'Média de {round(avg, 2)} folículos'
+                result['details']['Total de cirurgias'] = len(surgeries)
+            
+        elif metric == 'sum_foliculos':
+            surgeries = surgery_query.all()
+            total = sum(s.total_foliculos or 0 for s in surgeries)
+            result['value'] = total
+            result['description'] = f'Total de {total} folículos'
+            result['details']['Total de cirurgias'] = len(surgeries)
+            
+        elif metric == 'avg_tempo':
+            surgeries = surgery_query.all()
+            valid_surgeries = [s for s in surgeries if s.tempo_cirurgia]
+            if valid_surgeries:
+                avg = sum(s.tempo_cirurgia for s in valid_surgeries) / len(valid_surgeries)
+                result['value'] = round(avg, 2)
+                result['description'] = f'Média de {round(avg, 2)} horas'
+                result['details']['Total de cirurgias'] = len(valid_surgeries)
+            
+        elif metric == 'avg_densidade':
+            surgeries = surgery_query.all()
+            valid_surgeries = [s for s in surgeries if s.densidade_scketh]
+            if valid_surgeries:
+                avg = sum(s.densidade_scketh for s in valid_surgeries) / len(valid_surgeries)
+                result['value'] = round(avg, 2)
+                result['description'] = f'Densidade média de {round(avg, 2)}'
+                result['details']['Total de cirurgias'] = len(valid_surgeries)
+            
+        elif metric == 'avg_solucao':
+            surgeries = surgery_query.all()
+            valid_surgeries = [s for s in surgeries if s.solucao_frente]
+            if valid_surgeries:
+                avg = sum(s.solucao_frente for s in valid_surgeries) / len(valid_surgeries)
+                result['value'] = round(avg, 2)
+                result['description'] = f'Média de {round(avg, 2)} ml'
+                result['details']['Total de cirurgias'] = len(valid_surgeries)
+            
+        elif metric == 'necrose_count':
+            count = necrose_query.filter(Necrose.tem_necrose == True).count()
+            result['value'] = count
+            result['description'] = f'{count} casos de necrose'
+            
+        elif metric == 'necrose_rate':
+            # Calcular taxa de necrose: (necroses / cirurgias) * 100
+            surgery_count = surgery_query.count()
+            necrose_count = necrose_query.filter(Necrose.tem_necrose == True).count()
+            
+            if surgery_count > 0:
+                rate = (necrose_count / surgery_count) * 100
+                result['value'] = round(rate, 2)
+                result['description'] = f'{round(rate, 2)}% de taxa de necrose'
+                result['details']['Total de cirurgias'] = surgery_count
+                result['details']['Total de necroses'] = necrose_count
+            else:
+                result['value'] = 0
+                result['description'] = 'Sem dados para calcular taxa'
+        
+        return result
+    
+    except Exception as e:
+        logger.error(f"Erro ao calcular métrica {metric}: {str(e)}")
+        return {
+            'value': 'Erro',
+            'description': f'Erro ao calcular: {str(e)}',
+            'details': {}
+        }
+
+@app.route('/estudo_cientifico/logout')
+def estudo_cientifico_logout():
+    """Logout do estudo científico"""
+    session.pop('estudo_authenticated', None)
+    return redirect(url_for('estudo_cientifico_login'))
+
 # Configure Flask app
 app.config['ENV'] = 'production'
 app.config['DEBUG'] = False

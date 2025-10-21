@@ -97,6 +97,16 @@ This is a comprehensive hair surgery management system for Instituto Capilar do 
 
 ```
 Changelog:
+- October 21, 2025. NOVA FUNCIONALIDADE: Estudo Científico - Sistema de Análise de Dados Customizável:
+  - IMPLEMENTADO: Nova aba "Estudo Científico" com autenticação dedicada (senha: 54321)
+  - CRIADO: Interface de filtros totalmente configuráveis para cirurgias e necroses
+  - IMPLEMENTADO: Sistema de cards customizáveis com métricas flexíveis
+  - ADICIONADO: Capacidade de cruzar dados entre cirurgias e necroses para pesquisa científica
+  - MÉTRICAS DISPONÍVEIS: Contagem, média de folículos, soma de folículos, média de tempo, densidade, solução, contagem de necroses, taxa de necrose
+  - FILTROS DISPONÍVEIS: Unidade, médico, equipe, tadalafila, sedação, sangramento, bloqueio de seringas, tipo de implante, técnica, e todos os campos numéricos
+  - OPERADORES: Igual, contém, maior que, menor que, maior ou igual, menor ou igual
+  - FUNCIONALIDADE: Exportação de configurações de análise em JSON
+  - EXEMPLOS DE USO: Comparar cirurgias em Ribeirão Preto com Tadalafila vs necroses, pacientes em Campinas com Beta30 vs casos de necrose
 - August 27, 2025. CORREÇÕES CRÍTICAS DE FEEDBACK E PERSISTÊNCIA:
   - CORRIGIDO: Erro internal server error na página de resumo do paciente após cadastramento
   - MELHORADO: Sistema de feedback visual para todas as operações administrativas (adicionar/remover médicos, técnicos, unidades)
