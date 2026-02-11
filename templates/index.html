@@ -23,27 +23,33 @@
 
         .top-header {
             background: linear-gradient(135deg, #141a24 0%, #1a2233 100%);
-            padding: 1.2rem 2rem;
+            padding: 0 2rem; /* Reduz padding vertical para permitir que o logo ocupe todo o espaço */
             display: flex;
             align-items: center;
-            justify-content: center; /* Centraliza o logo */
+            justify-content: center;
             position: relative;
             border-bottom: 1px solid rgba(255,255,255,0.06);
-            min-height: 80px;
+            min-height: 100px; /* Altura mínima do cabeçalho */
+            overflow: visible;
         }
 
         .header-logo-container {
             position: absolute;
             left: 50%;
-            transform: translateX(-50%);
+            top: 50%;
+            transform: translate(-50%, -50%);
             display: flex;
             align-items: center;
             justify-content: center;
+            height: 100%;
+            width: auto;
+            pointer-events: none; /* Garante que não bloqueie cliques em outros elementos se sobrepor */
         }
 
         .header-logo {
-            height: 60px;
+            height: 90px; /* Aumenta o logo para ocupar quase toda a altura (100px) */
             width: auto;
+            display: block;
         }
 
         .header-left {
