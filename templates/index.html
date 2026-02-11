@@ -26,8 +26,10 @@
             padding: 1.2rem 2rem;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center; /* Centraliza o conteúdo principal */
+            position: relative;
             border-bottom: 1px solid rgba(255,255,255,0.06);
+            min-height: 80px;
         }
 
         .header-left {
@@ -37,7 +39,7 @@
         }
 
         .header-logo {
-            height: 42px;
+            height: 60px; /* Logo maior conforme pedido anteriormente */
             width: auto;
         }
 
@@ -62,6 +64,8 @@
         }
 
         .header-badge {
+            position: absolute; /* Fixa o botão à direita sem afetar a centralização do logo */
+            right: 2rem;
             background: rgba(59, 130, 246, 0.15);
             border: 1px solid rgba(59, 130, 246, 0.3);
             color: #7ab3ef;
