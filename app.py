@@ -1170,11 +1170,9 @@ def save_to_excel(data):
 def check_duplicate_surgery(data):
     """Check if a surgery record already exists to prevent duplicates"""
     try:
-        # Extract key identifiers for duplicate checking
         nome = data.get('Paciente', data.get('nome', '')).strip()
         data_cirurgia = None
 
-        # Parse date
         if 'data' in data and data['data']:
             try:
                 data_cirurgia = datetime.strptime(data['data'], '%Y-%m-%d').date()
@@ -1186,9 +1184,9 @@ def check_duplicate_surgery(data):
         if not nome or not data_cirurgia:
             return False, "Dados insuficientes para verificação de duplicata"
 
-        # Search for existing records with same name and date
+        nome_normalizado = nome.strip().upper()
         existing = Surgery.query.filter(
-            Surgery.nome.ilike(f"%{nome}%"),
+            db.func.upper(db.func.trim(Surgery.nome)) == nome_normalizado,
             Surgery.data == data_cirurgia
         ).first()
 
