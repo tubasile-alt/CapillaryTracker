@@ -97,6 +97,22 @@ This is a comprehensive hair surgery management system for Instituto Capilar do 
 
 ```
 Changelog:
+- February 11, 2026. INTEGRAÇÃO GOOGLE SHEETS: Sincronização Automática de Dados:
+  - IMPLEMENTADO: Módulo google_sheets_sync.py para sincronizar dados com Google Sheets via conector Replit
+  - CRIADO: Planilha "ICB - Registro de Cirurgias" com abas "Cirurgias" e "Necroses"
+  - IMPLEMENTADO: Sincronização automática a cada novo cadastro de cirurgia
+  - IMPLEMENTADO: Sincronização automática a cada novo registro de necrose
+  - CAMPOS: Todos os campos do modelo Surgery (70 colunas) e Necrose (25 colunas) mapeados
+  - SEGURANÇA: Erros na sincronização não bloqueiam o fluxo principal do app
+  - DEPENDÊNCIAS: google-api-python-client, google-auth
+- February 11, 2026. REDESIGN HOMEPAGE: Nova Página Inicial com Tema Escuro:
+  - CRIADO: templates/index.html standalone com tema escuro (#0f1319)
+  - IMPLEMENTADO: Grid de cards com 7 módulos (4+3 layout)
+  - ATUALIZADO: Título para "Formulário de Transplante Capilar"
+  - ATUALIZADO: Versão do sistema para v2026
+  - ATUALIZADO: Rodapé com "Desenvolvido por ICB Tech since 2023"
+  - MANTIDO: Logo ICB centralizado no cabeçalho, botão "Painel de Controle" à direita
+  - MANTIDO: Botão "Início" nas páginas internas para voltar à homepage
 - October 21, 2025. EXPANSÃO DE FILTROS: Estudo Científico - Adicionados 6 Novos Campos de Análise:
   - ADICIONADO: Filtro "Transamin" (medicamento para controle de sangramento)
   - ADICIONADO: Filtro "Diprospam/Beta 30" (medicamento corticoide)

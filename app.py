@@ -18,6 +18,7 @@ import io
 from werkzeug.utils import secure_filename
 import uuid
 import mimetypes
+from google_sheets_sync import sync_surgery_to_sheets, sync_necrose_to_sheets
 
 # Configure logging
 logging.basicConfig(
@@ -1117,6 +1118,11 @@ def save_to_excel(data):
             # Verify the save by querying the database
             saved_surgery = Surgery.query.get(surgery.id)
             logger.info(f"Verified saved surgery: {saved_surgery.nome} (ID: {saved_surgery.id})")
+
+            try:
+                sync_surgery_to_sheets(saved_surgery)
+            except Exception as sheets_e:
+                logger.error(f"Erro ao sincronizar com Google Sheets: {sheets_e}")
 
         except Exception as e:
             logger.error(f"Error saving to database: {str(e)}")
@@ -2895,6 +2901,11 @@ def save_necrose():
         logger.info(f"Dados de necrose salvos para paciente: {surgery.nome} (ID: {patient_id})")
         if uploaded_files:
             logger.info(f"Fotos carregadas: {uploaded_files}")
+
+        try:
+            sync_necrose_to_sheets(necrose_record)
+        except Exception as sheets_e:
+            logger.error(f"Erro ao sincronizar necrose com Google Sheets: {sheets_e}")
 
         # Disparar backup automático após salvar necrose
         try:
