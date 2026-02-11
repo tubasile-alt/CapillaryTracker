@@ -355,3 +355,70 @@ def sync_necrose_to_sheets(necrose):
     except Exception as e:
         logger.error(f"❌ Erro ao sincronizar necrose com Google Sheets: {e}")
         return False
+
+
+def sync_all_to_sheets(surgeries, necroses):
+    try:
+        spreadsheet_id = _find_spreadsheet()
+        sheets = _get_sheets_service()
+
+        if spreadsheet_id:
+            sheets.spreadsheets().values().clear(
+                spreadsheetId=spreadsheet_id,
+                range=f"{SHEET_CIRURGIAS}!A:ZZ"
+            ).execute()
+            sheets.spreadsheets().values().clear(
+                spreadsheetId=spreadsheet_id,
+                range=f"{SHEET_NECROSES}!A:ZZ"
+            ).execute()
+        else:
+            spreadsheet_id = _create_spreadsheet()
+
+        surgery_last_col = _col_letter(len(SURGERY_HEADERS))
+        necrose_last_col = _col_letter(len(NECROSE_HEADERS))
+
+        BATCH_SIZE = 500
+
+        sheets.spreadsheets().values().update(
+            spreadsheetId=spreadsheet_id,
+            range=f"{SHEET_CIRURGIAS}!A1:{surgery_last_col}1",
+            valueInputOption="USER_ENTERED",
+            body={"values": [SURGERY_HEADERS]}
+        ).execute()
+
+        for i in range(0, len(surgeries), BATCH_SIZE):
+            batch = surgeries[i:i + BATCH_SIZE]
+            rows = [surgery_to_row(s) for s in batch]
+            sheets.spreadsheets().values().append(
+                spreadsheetId=spreadsheet_id,
+                range=f"{SHEET_CIRURGIAS}!A:{surgery_last_col}",
+                valueInputOption="USER_ENTERED",
+                insertDataOption="INSERT_ROWS",
+                body={"values": rows}
+            ).execute()
+            logger.info(f"📊 Cirurgias exportadas: {min(i + BATCH_SIZE, len(surgeries))}/{len(surgeries)}")
+
+        sheets.spreadsheets().values().update(
+            spreadsheetId=spreadsheet_id,
+            range=f"{SHEET_NECROSES}!A1:{necrose_last_col}1",
+            valueInputOption="USER_ENTERED",
+            body={"values": [NECROSE_HEADERS]}
+        ).execute()
+
+        if necroses:
+            necrose_rows = [necrose_to_row(n) for n in necroses]
+            sheets.spreadsheets().values().append(
+                spreadsheetId=spreadsheet_id,
+                range=f"{SHEET_NECROSES}!A:{necrose_last_col}",
+                valueInputOption="USER_ENTERED",
+                insertDataOption="INSERT_ROWS",
+                body={"values": necrose_rows}
+            ).execute()
+
+        _format_header(sheets, spreadsheet_id)
+
+        logger.info(f"✅ Exportação completa: {len(surgeries)} cirurgias, {len(necroses)} necroses")
+        return spreadsheet_id
+    except Exception as e:
+        logger.error(f"❌ Erro na exportação em lote: {e}")
+        raise
