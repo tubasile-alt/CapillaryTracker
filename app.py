@@ -1255,7 +1255,7 @@ initialize_empty_files()
 @app.route('/')
 def index():
     logger.info("Accessing index route")
-    return render_template('base.html')
+    return render_template('index.html')
 
 @app.route('/ping')
 def ping():
