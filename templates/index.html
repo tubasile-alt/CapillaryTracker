@@ -23,49 +23,56 @@
 
         .top-header {
             background: linear-gradient(135deg, #141a24 0%, #1a2233 100%);
-            padding: 1.2rem 2rem;
+            padding: 1.5rem 2rem;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            position: relative;
+            gap: 1rem;
             border-bottom: 1px solid rgba(255,255,255,0.06);
-            min-height: 80px;
+            position: relative;
         }
 
         .header-left {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 1.5rem;
+            text-align: center;
         }
 
         .header-logo {
-            height: 60px;
+            height: 100px;
             width: auto;
         }
 
         .header-title-group {
             display: flex;
             flex-direction: column;
+            align-items: center;
         }
 
         .header-title {
-            font-size: 1.4rem;
+            font-size: 1.6rem;
             font-weight: 700;
             color: #ffffff;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.5px;
+            margin-top: 0.5rem;
         }
 
         .header-subtitle {
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             color: #5b8fb9;
             text-transform: uppercase;
             letter-spacing: 2px;
             font-weight: 600;
+            margin-top: 0.2rem;
         }
 
         .header-badge {
             position: absolute;
             right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
             background: rgba(59, 130, 246, 0.15);
             border: 1px solid rgba(59, 130, 246, 0.3);
             color: #7ab3ef;
