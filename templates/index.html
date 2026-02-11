@@ -26,21 +26,30 @@
             padding: 1.2rem 2rem;
             display: flex;
             align-items: center;
-            justify-content: center; /* Centraliza o conteúdo principal */
+            justify-content: center; /* Centraliza o logo */
             position: relative;
             border-bottom: 1px solid rgba(255,255,255,0.06);
             min-height: 80px;
         }
 
-        .header-left {
+        .header-logo-container {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 1rem;
+            justify-content: center;
         }
 
         .header-logo {
-            height: 60px; /* Logo maior conforme pedido anteriormente */
+            height: 60px;
             width: auto;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            margin-right: auto; /* Mantém o texto à esquerda */
         }
 
         .header-title-group {
@@ -64,8 +73,6 @@
         }
 
         .header-badge {
-            position: absolute; /* Fixa o botão à direita sem afetar a centralização do logo */
-            right: 2rem;
             background: rgba(59, 130, 246, 0.15);
             border: 1px solid rgba(59, 130, 246, 0.3);
             color: #7ab3ef;
@@ -77,6 +84,7 @@
             text-transform: uppercase;
             text-decoration: none;
             transition: all 0.3s;
+            margin-left: auto; /* Mantém o botão à direita */
         }
 
         .header-badge:hover {
@@ -239,11 +247,13 @@
 <body>
     <header class="top-header">
         <div class="header-left">
-            <img src="{{ url_for('static', filename='img/icb_logo_new.png') }}" alt="ICB" class="header-logo">
             <div class="header-title-group">
                 <span class="header-title">Formulario de Transplante Capilar</span>
                 <span class="header-subtitle">CapillaryTracker v2026</span>
             </div>
+        </div>
+        <div class="header-logo-container">
+            <img src="{{ url_for('static', filename='img/icb_logo_new.png') }}" alt="ICB" class="header-logo">
         </div>
         <a href="{{ url_for('controle_cirurgias') }}" class="header-badge">Painel de Controle</a>
     </header>
