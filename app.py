@@ -1305,13 +1305,15 @@ def success():
         else:
             logger.info(f"✅ Exibindo resumo com dados do paciente: {saved_data.get('nome', 'Não informado')}")
 
+        save_success = session.pop('save_success', True)
+
         # ✅ SEMPRE renderizar a página, mesmo sem dados
-        return render_template('success.html', saved_data=saved_data)
+        return render_template('success.html', saved_data=saved_data, save_success=save_success)
 
     except Exception as e:
         # ✅ NUNCA deixar o usuário sem resposta
         logger.error(f"❌ ERRO CRÍTICO na página de sucesso: {str(e)}\n{traceback.format_exc()}")
-        flash(f"⚠️ Houve um problema ao exibir o resumo, mas os dados foram salvos.", "warning")
+        flash(f"⚠️ Houve um problema ao exibir o resumo.", "warning")
 
         # Tentar recuperar dados básicos da sessão de forma segura
         try:
@@ -1319,7 +1321,7 @@ def success():
         except:
             saved_data = {}
 
-        return render_template('success.html', saved_data=saved_data)
+        return render_template('success.html', saved_data=saved_data, save_success=False)
 
 @app.route('/clear_data', methods=['POST'])
 def clear_data():
@@ -1591,6 +1593,8 @@ def novo_cadastro():
                 flash(f"⚠️ {message}", "error")
                 logger.error(f"❌ Erro no salvamento: {message}")
 
+            session['save_success'] = success
+
             # Se for uma chamada da API (não do formulário web)
             if request.headers.get('Content-Type') == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 logger.info("📡 API call detected, returning JSON response")
@@ -1603,16 +1607,15 @@ def novo_cadastro():
             logger.error(f"❌ ERRO CRÍTICO no cadastramento: {error_msg}\n{traceback.format_exc()}")
             flash(f"❌ Erro ao salvar dados: {str(e)}", "error")
 
-            # ✅ SEMPRE salvar dados na sessão mesmo com erro para mostrar resumo
-            logger.info("💾 Salvando dados na sessão mesmo com erro...")
             session['last_saved_data'] = form_data.copy() if 'form_data' in locals() else {}
+            session['save_success'] = False
 
             # Se for uma chamada da API (não do formulário web)
             if request.headers.get('Content-Type') == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 logger.info("📡 API call detected, returning JSON error response")
                 return jsonify({"status": "error", "message": error_msg}), 500
             else:
-                logger.info("🔄 Redirecting to success page mesmo com erro")
+                logger.info("🔄 Redirecting to success page com indicador de erro")
                 return redirect(url_for('success'))
 
     # Recarregar configurações para garantir que estão atualizadas

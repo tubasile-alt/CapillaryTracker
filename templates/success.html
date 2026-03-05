@@ -3,8 +3,15 @@
 {% block content %}
 <div class="success-container">
     <div class="success-box">
+        {% if save_success %}
         <h2 class="success-title">✅ Dados salvos com sucesso!</h2>
         <p class="success-message">Os dados do paciente foram registrados no sistema.</p>
+        {% else %}
+        <h2 class="success-title" style="color: #dc3545;">❌ Erro ao salvar dados</h2>
+        <p class="success-message" style="color: #dc3545; background: #fff3f3; padding: 12px; border-radius: 8px; border: 1px solid #f5c6cb;">
+            Os dados <strong>não foram salvos</strong> no banco de dados. Por favor, tente novamente ou entre em contato com o suporte.
+        </p>
+        {% endif %}
 
         {% if saved_data %}
         <div class="surgery-summary" style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left; border: 1px solid #dee2e6;">
