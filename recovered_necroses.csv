@@ -1,0 +1,42 @@
+ID,Surgery_ID,Paciente,Unidade,Data_Cirurgia,Data_Avaliação,Médico_Responsável,Tem_Necrose,Número_Necroses,Grau_Necrose,Primeira_Faixa,Segunda_Faixa,Terceira_Faixa,Coroa,Tamanho_1_cm,Tamanho_2_cm,Tamanho_3_cm,Tamanho_4_cm,Status,Created_At,Updated_At
+42,3107,Siegfried Emanuel Alves da Silva ,São Paulo,22/12/2025,22/12/2025,Dra. Ariane,True,1,,True,False,False,False,3.0,,,,Em acompanhamento,27/01/2026 14:00,27/01/2026 14:00
+41,2524,Delvane Rodrigues de Oliveira ,Campinas,01/11/2025,03/11/2025,Dra. Isadora,True,2,,True,True,False,False,3.0,2.5,,,Em acompanhamento,07/11/2025 11:27,07/11/2025 11:27
+38,2155,Ivan Felipe da siva,Campinas,16/10/2025,17/10/2025,Dra. Isadora,True,2,,False,True,True,False,2.5,1.5,,,Em acompanhamento,05/11/2025 10:16,05/11/2025 10:16
+33,1876,Thiago Leonardo de Pinho,Campinas,11/09/2025,15/10/2025,Dra. Isadora,True,1,,True,True,True,False,2.0,,,,Em acompanhamento,15/10/2025 19:45,15/10/2025 19:45
+40,2523,Gian Carlo cestari ,São Paulo,06/10/2025,06/10/2025,Dra. Talita,True,1,,False,True,False,False,3.0,,,,Em acompanhamento,05/11/2025 11:13,05/11/2025 11:13
+32,1951,Cláudio Campos Souza ,Salvador,17/09/2025,20/09/2025,Dra. Alexia,True,2,,True,True,True,False,5.0,2.0,,,Em acompanhamento,15/10/2025 19:32,27/01/2026 14:14
+20,1493,Rodrigo Francisco do Nascimento ,São Paulo,16/09/2025,17/09/2025,Dra. Talita,True,1,,True,False,False,False,2.0,,,,Em acompanhamento,08/10/2025 11:21,01/11/2025 11:17
+43,1475,Paulo Roberto Batista Junior,Brasília,15/09/2025,16/09/2025,Dra. Natalia,True,1,,True,False,False,False,2.0,,,,Em acompanhamento,04/02/2026 12:13,04/02/2026 12:13
+37,1955,Chrystiano Gomes Brito lousado ,São Paulo,16/10/2025,06/09/2025,Dra. Talita,True,1,,True,False,False,False,2.0,,,,Em acompanhamento,29/10/2025 14:29,29/10/2025 14:29
+19,1233,João Dimas Fantinel Filho,Goiania,02/09/2025,03/09/2025,Dra. Francyelle,True,1,,True,True,False,False,2.0,,,,Em acompanhamento,17/09/2025 13:40,18/09/2025 17:01
+27,1634,HERMON PETERSON GUIMARAES ,Brasília,29/08/2025,30/08/2025,Dra. Natalia,True,1,,True,False,False,False,2.0,,,,Em acompanhamento,14/10/2025 17:13,14/10/2025 17:13
+36,2199,Gamal Fouad El Oumairi,Curitiba,28/07/2025,29/07/2025,Dra. Marina,True,1,,True,False,False,False,1.0,,,,Em acompanhamento,29/10/2025 14:24,29/10/2025 14:24
+22,726,Henrique vagner Batista Lemos Morais ,Brasília,25/06/2025,26/07/2025,Dra. Natalia,True,2,,True,False,False,False,2.0,1.0,,,Em acompanhamento,14/10/2025 13:20,14/10/2025 13:20
+35,2197,Fabrício Clementin Dalapola ,Curitiba,25/07/2025,26/07/2025,Dra. Marina,True,2,,True,True,False,False,1.5,0.5,,,Em acompanhamento,29/10/2025 14:22,29/10/2025 14:22
+11,757,Felipe José Bernardo,Rio de Janeiro,19/07/2025,20/07/2025,Dra. Paula,True,2,,True,True,False,False,2.0,1.5,,,Em acompanhamento,24/07/2025 14:02,24/07/2025 14:02
+12,737,Helio José Rodrigues Cabral Júnior,Rio de Janeiro,16/07/2025,18/07/2025,Dra. Paula,True,1,,True,False,False,False,1.5,,,,Em acompanhamento,24/07/2025 14:06,24/07/2025 14:06
+29,717,Henrique Fernandes Castro,Rio de Janeiro,14/07/2025,16/07/2025,Dra. Paula,True,1,,True,True,False,False,5.0,,,,Em acompanhamento,14/10/2025 18:16,17/10/2025 17:39
+44,1737,Pedro Lui Pessoa Michel ,Belo Horizonte,31/05/2025,15/06/2025,Dr. Leonardo,True,1,,True,False,False,False,0.5,,,,Em acompanhamento,11/02/2026 12:08,11/02/2026 12:08
+30,515,Pedro Julien Salvarani Borges ,Brasília,13/06/2025,14/06/2025,Dra. Leticia,True,1,,True,False,False,False,2.0,,,,Em acompanhamento,14/10/2025 18:58,14/10/2025 18:58
+2,507,Kraynner Menezes de Oliveira,Rio de Janeiro,06/06/2025,07/06/2025,Dra. Ana Clara,True,1,,True,True,True,False,10.0,,,,Em acompanhamento,08/07/2025 11:26,08/07/2025 11:26
+28,804,Andre Brito Pessoa ,Recife,30/05/2025,01/06/2025,Maria Thaiene,True,1,,True,True,False,False,4.0,,,,Em acompanhamento,14/10/2025 18:12,27/01/2026 14:08
+10,504,Rodrigo Isaac Gonzales Domingues,Rio de Janeiro,29/05/2025,30/05/2025,Dra. Paula,True,2,,True,True,False,False,2.5,1.5,,,Em acompanhamento,24/07/2025 13:05,24/07/2025 13:05
+39,2482,Edson Marcus de Freitas,Curitiba,23/05/2025,24/05/2025,Dra. Marina,True,1,,True,False,False,False,1.5,,,,Em acompanhamento,05/11/2025 10:20,05/11/2025 10:20
+23,725,Luiz Gustavo Lustosa Colombo ,Brasília,16/05/2025,17/05/2025,Dra. Leticia,True,1,,True,True,False,False,3.0,,,,Em acompanhamento,14/10/2025 13:29,14/10/2025 13:29
+15,807,LUCAS DE OLIVEIRA VIEIRA,São Paulo,08/04/2025,08/05/2025,Dra. Isabella,True,1,,True,False,False,False,4.0,,,,Em acompanhamento,01/09/2025 16:09,01/09/2025 16:09
+14,808,FRED JORGE GONÇALVES DIEGAS FILHO,São Paulo,04/04/2025,05/04/2025,Dr. Daniel,True,1,,True,False,False,False,4.0,,,,Em acompanhamento,01/09/2025 16:05,01/09/2025 16:05
+16,805,MAGNO DO NASCIMENTO,São Paulo,31/03/2025,01/04/2025,Dra. Talita,True,2,,False,True,True,False,1.5,3.5,,,Em acompanhamento,01/09/2025 16:12,09/10/2025 00:23
+13,806,MOISES MUNIZ SOUZA,São Paulo,21/03/2025,24/03/2025,Dr. Renan,True,1,,True,False,False,False,2.0,,,,Em acompanhamento,01/09/2025 13:20,01/09/2025 13:20
+9,723,Caio cesar Neves Magalhaes ,Brasília,28/02/2025,03/03/2025,Dra. Natalia,True,1,,True,False,False,False,2.0,,,,Em acompanhamento,23/07/2025 14:09,23/07/2025 14:09
+4,452,RICARDO DE SOUZA FREITAS,São Paulo,27/02/2025,28/02/2025,Dr. Daniel,True,2,,True,False,False,False,3.0,2.0,,,Em acompanhamento,09/07/2025 14:09,09/07/2025 14:09
+8,722,Andre Ferreira Rodrigues ,Brasília,20/02/2025,21/02/2025,Dra. Leticia,True,1,,True,False,False,False,2.0,,,,Em acompanhamento,23/07/2025 14:07,23/07/2025 14:07
+25,803,Jose Petrolino do Carmo Filho,Recife,14/02/2025,15/02/2025,Maria Thaiene,True,1,,True,False,False,False,3.5,,,,Em acompanhamento,14/10/2025 14:07,14/10/2025 14:07
+31,1940,Átila Alexandre da Silva ,Ribeirão Preto,14/02/2025,15/02/2025,Dr. Daniel,True,2,,True,False,False,False,9.5,2.0,,,Em acompanhamento,15/10/2025 17:40,15/10/2025 19:29
+5,396,PETER AMARAL DA SILVA,São Paulo,03/02/2025,04/02/2025,Dr. Renan,True,1,,False,True,False,False,2.0,,,,Em acompanhamento,09/07/2025 14:31,09/07/2025 14:31
+24,183,Mykola Kurenkev,Rio de Janeiro,31/01/2025,02/02/2025,Dra. Ana Clara,True,2,,True,True,False,False,2.5,2.0,,,Em acompanhamento,14/10/2025 13:37,14/10/2025 13:37
+26,1875,Widisley Brito de Oliveira,Campinas,14/01/2025,20/01/2025,Dra. Isadora,True,4,,True,True,True,False,4.0,3.0,2.0,2.0,Em acompanhamento,14/10/2025 15:33,14/10/2025 15:33
+17,802,FABIO DOS SANTOS GUALANDI,Rio de Janeiro,14/01/2025,15/01/2025,Dra. Paula,True,1,,True,False,False,False,1.5,,,,Em acompanhamento,01/09/2025 16:14,01/09/2025 16:14
+3,174,Marcelo Xavier de Almeida ,Rio de Janeiro,13/01/2025,14/01/2025,Dra. Paula,True,1,,True,True,False,False,2.5,,,,Em acompanhamento,08/07/2025 11:42,08/07/2025 11:42
+18,728,MARCIO LUIZ SOUZA DE OLIVEIRA,São Paulo,13/01/2025,14/01/2025,Dra. Isabella,True,4,,True,True,False,True,9.0,9.0,3.0,5.0,Em acompanhamento,01/09/2025 16:28,01/09/2025 16:28
+34,1952,Welligton Júlio Rigaud,Rio de Janeiro,09/01/2025,10/01/2025,Dra. Ana Clara,True,1,,True,False,False,False,2.0,,,,Em acompanhamento,17/10/2025 11:15,17/10/2025 11:15
+21,1302,Vinycius Rodrigues de Azevedo ,Goiania,06/01/2025,07/01/2025,Dra. Debora,True,2,,True,False,False,False,3.0,2.0,,,Em acompanhamento,14/10/2025 13:09,14/10/2025 13:09
