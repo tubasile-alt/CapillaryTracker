@@ -1306,6 +1306,10 @@ def initialize_empty_files():
 # Initialize empty files at startup
 initialize_empty_files()
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_file('static/img/generated-icon.png', mimetype='image/png')
+
 @app.route('/')
 def index():
     logger.info("Accessing index route")
