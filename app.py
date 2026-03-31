@@ -2006,8 +2006,14 @@ def process_dashboard_data(df):
         # Process dates
         if 'data' in df.columns:
             logger.info("Processing date-based data...")
-            # Convert dates properly
-            df['mes_ano'] = pd.to_datetime(df['data']).dt.strftime('%m/%Y')
+            # Convert dates properly with error handling for invalid dates
+            try:
+                df['mes_ano'] = pd.to_datetime(df['data'], errors='coerce').dt.strftime('%m/%Y')
+                # Fill NaT (invalid dates) with a default value
+                df['mes_ano'] = df['mes_ano'].fillna('01/2000')
+            except Exception as e:
+                logger.error(f"Error processing dates: {str(e)}")
+                df['mes_ano'] = '01/2000'
 
             # Group by month
             cirurgias_por_mes = df.groupby('mes_ano').size().reset_index(name='count')
