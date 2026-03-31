@@ -1002,6 +1002,12 @@ def dashboard():
             'version': '2.4'
         }, error=f"Erro ao carregar dashboard: {str(e)}")
 
+@app.route('/rh_analise')
+def rh_analise():
+    """Dashboard operacional de RH."""
+    logger.info("Accessing RH analysis route")
+    return render_template('rh_analise.html')
+
 def backup_excel_file(source_file):
     """Create a backup of the Excel file with timestamp"""
     if os.path.exists(source_file):
@@ -1519,8 +1525,15 @@ def get_patients_list():
             surgeries = Surgery.query.order_by(Surgery.unidade.asc(), Surgery.data.desc()).all()
             patients = [{
                 'nome': s.nome,
-                'data': s.data.strftime('%d/%m/%Y'),
-                'unidade': s.unidade
+                'data': s.data.strftime('%d/%m/%Y') if s.data else None,
+                'unidade': s.unidade,
+                'equipe': s.equipe,
+                'tempo_cirurgia': float(s.tempo_cirurgia) if s.tempo_cirurgia is not None else None,
+                'total_foliculos': int(s.total_foliculos) if s.total_foliculos is not None else None,
+                'q1_fios': int(s.q1_fios) if s.q1_fios is not None else 0,
+                'q2_fios': int(s.q2_fios) if s.q2_fios is not None else 0,
+                'q3_fios': int(s.q3_fios) if s.q3_fios is not None else 0,
+                'q4_fios': int(s.q4_fios) if s.q4_fios is not None else 0
             } for s in surgeries]
             return jsonify({'patients': patients})
     except Exception as e:
