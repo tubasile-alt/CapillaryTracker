@@ -435,17 +435,25 @@
         populateEquipeTable();
 
         // Atualizar os valores grandes no carregamento da página
-        const bigTotal = document.getElementById('big-total-surgeries');
-        const bigFollicles = document.getElementById('big-avg-follicles');
-        const bigDensity = document.getElementById('big-avg-density');
-        if (bigTotal) bigTotal.textContent = {{ data.total_surgeries or 0 }};
-        if (bigFollicles) bigFollicles.textContent = {{ data.avg_follicles or 0 }};
-        if (bigDensity) bigDensity.textContent = {{ data.avg_density or 0 }};
+        try {
+            const bigTotal = document.getElementById('big-total-surgeries');
+            const bigFollicles = document.getElementById('big-avg-follicles');
+            const bigDensity = document.getElementById('big-avg-density');
+            if (bigTotal) bigTotal.textContent = {{ data.total_surgeries or 0 }};
+            if (bigFollicles) bigFollicles.textContent = {{ data.avg_follicles or 0 }};
+            if (bigDensity) bigDensity.textContent = {{ data.avg_density or 0 }};
+        } catch (e) {
+            console.warn('Error updating summary values:', e);
+        }
 
         // Iniciar velocímetro e atualização automática (único setInterval)
-        updateGaugeChart();
-        if (_gaugeInterval) clearInterval(_gaugeInterval);
-        _gaugeInterval = setInterval(updateGaugeChart, 30000);
+        try {
+            updateGaugeChart();
+            if (_gaugeInterval) clearInterval(_gaugeInterval);
+            _gaugeInterval = setInterval(updateGaugeChart, 30000);
+        } catch (e) {
+            console.warn('Error initializing gauge chart:', e);
+        }
 
         // Bind modal close button com null check
         const closeModalBtn = document.querySelector('.close-modal');
@@ -534,7 +542,9 @@
 
     // Função simplificada para atualizar o velocímetro de meta
     function updateGaugeChart() {
-        const selectedUnit = document.getElementById('unitFilter').value || 'Rio de Janeiro';
+        const unitFilterElement = document.getElementById('unitFilter');
+        const selectedUnit = unitFilterElement ? (unitFilterElement.value || 'Rio de Janeiro') : 'Rio de Janeiro';
+        
         const fillElement = document.getElementById('gaugeFill');
         const markerElement = document.getElementById('gaugeMarker');
         const metaElement = document.getElementById('metaValue');
