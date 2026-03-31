@@ -245,9 +245,16 @@
             }
 
             // Atualizar os valores no dashboard
-            document.getElementById('big-total-surgeries').textContent = data.total_surgeries || 0;
-            document.getElementById('big-avg-follicles').textContent = data.avg_follicles || 0;
-            document.getElementById('big-avg-density').textContent = data.avg_density || 0;
+            try {
+                const el1 = document.getElementById('big-total-surgeries');
+                const el2 = document.getElementById('big-avg-follicles');
+                const el3 = document.getElementById('big-avg-density');
+                if (el1) el1.textContent = data.total_surgeries || 0;
+                if (el2) el2.textContent = data.avg_follicles || 0;
+                if (el3) el3.textContent = data.avg_density || 0;
+            } catch (e) {
+                console.warn('Error updating summary on filter:', e);
+            }
 
             // Atualizar tabela de equipe
             await populateEquipeTable();
@@ -663,16 +670,24 @@
 
     // Funções para o modal de senha
     function confirmClearData() {
-        document.getElementById('passwordModal').style.display = 'flex';
+        const modal = document.getElementById('passwordModal');
+        if (modal) modal.style.display = 'flex';
     }
 
     function closePasswordModal() {
-        document.getElementById('passwordModal').style.display = 'none';
-        document.getElementById('securityPassword').value = '';
+        const modal = document.getElementById('passwordModal');
+        const passField = document.getElementById('securityPassword');
+        if (modal) modal.style.display = 'none';
+        if (passField) passField.value = '';
     }
 
     function submitPassword() {
-        const password = document.getElementById('securityPassword').value;
+        const passField = document.getElementById('securityPassword');
+        if (!passField) {
+            alert('Erro: campo de senha não encontrado');
+            return;
+        }
+        const password = passField.value;
         if (password) {
             // Envia a senha para verificação
             fetch('/clear_data_protected', {
@@ -732,8 +747,10 @@
             const data = await response.json();
 
             if (data.success) {
-                document.getElementById('lastPatientName').textContent = data.patient_name;
-                document.getElementById('deleteLastModal').style.display = 'flex';
+                const nameEl = document.getElementById('lastPatientName');
+                const modalEl = document.getElementById('deleteLastModal');
+                if (nameEl) nameEl.textContent = data.patient_name;
+                if (modalEl) modalEl.style.display = 'flex';
             } else {
                 alert('❌ ' + (data.message || 'Erro ao buscar último registro'));
             }
