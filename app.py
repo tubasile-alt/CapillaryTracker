@@ -1002,6 +1002,12 @@ def dashboard():
             'version': '2.4'
         }, error=f"Erro ao carregar dashboard: {str(e)}")
 
+@app.route('/rh_analise')
+def rh_analise():
+    """Dashboard operacional de RH."""
+    logger.info("Accessing RH analysis route")
+    return render_template('rh_analise.html')
+
 def backup_excel_file(source_file):
     """Create a backup of the Excel file with timestamp"""
     if os.path.exists(source_file):
