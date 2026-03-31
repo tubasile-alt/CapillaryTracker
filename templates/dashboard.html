@@ -545,6 +545,12 @@
         const cirurgiasElement = document.getElementById('cirurgiasValue');
         const percentElement = document.getElementById('percentValue');
 
+        // Check if elements exist before proceeding
+        if (!fillElement || !markerElement || !metaElement || !cirurgiasElement || !percentElement) {
+            console.warn('updateGaugeChart: One or more required elements not found');
+            return;
+        }
+
         // Buscar dados da API
         fetch(`/get_unit_progress?unit=${encodeURIComponent(selectedUnit)}`)
             .then(response => response.json())
@@ -607,6 +613,10 @@
     // Função para preencher a tabela de equipe
     function populateEquipeTable() {
         const tableBody = document.querySelector("#equipeTable tbody");
+        if (!tableBody) {
+            console.warn('populateEquipeTable: equipeTable tbody not found');
+            return;
+        }
         tableBody.innerHTML = '<tr><td colspan="3">Carregando dados...</td></tr>';
 
         // Obter filtros atuais
