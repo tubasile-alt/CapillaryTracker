@@ -308,70 +308,79 @@
         }
         
         function updateStats(stats) {
-            document.getElementById('totalSurgeries').textContent = stats.total_surgeries;
-            document.getElementById('avgBreakageRate').textContent = stats.avg_breakage_rate + '%';
-            document.getElementById('avgDensidadeExtracao').textContent = stats.avg_densidade_extracao;
-            document.getElementById('avgTempoCirurgia').textContent = stats.avg_tempo_cirurgia ? stats.avg_tempo_cirurgia + 'h' : '-';
-            document.getElementById('avgSolucaoFrente').textContent = stats.avg_solucao_frente ? stats.avg_solucao_frente + ' seringas' : '-';
-            document.getElementById('avgSangramento').textContent = stats.avg_sangramento || '-';
-            document.getElementById('bodyHairCount').textContent = stats.body_hair_count || '0';
+            // Helper function to safely update element
+            const safeUpdate = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+            
+            safeUpdate('totalSurgeries', stats.total_surgeries);
+            safeUpdate('avgBreakageRate', stats.avg_breakage_rate + '%');
+            safeUpdate('avgDensidadeExtracao', stats.avg_densidade_extracao);
+            safeUpdate('avgTempoCirurgia', stats.avg_tempo_cirurgia ? stats.avg_tempo_cirurgia + 'h' : '-');
+            safeUpdate('avgSolucaoFrente', stats.avg_solucao_frente ? stats.avg_solucao_frente + ' seringas' : '-');
+            safeUpdate('avgSangramento', stats.avg_sangramento || '-');
+            safeUpdate('bodyHairCount', stats.body_hair_count || '0');
             
             // Adicionar comparações se disponíveis
             if (stats.general_avg_tempo_cirurgia !== undefined) {
-                document.getElementById('tempoCirurgiaComparison').textContent = 
-                    `Geral: ${stats.general_avg_tempo_cirurgia}h`;
+                safeUpdate('tempoCirurgiaComparison', `Geral: ${stats.general_avg_tempo_cirurgia}h`);
             } else {
-                document.getElementById('tempoCirurgiaComparison').textContent = '';
+                safeUpdate('tempoCirurgiaComparison', '');
             }
             
             if (stats.general_avg_solucao_frente !== undefined) {
-                document.getElementById('solucaoFrenteComparison').textContent = 
-                    `Geral: ${stats.general_avg_solucao_frente} seringas`;
+                safeUpdate('solucaoFrenteComparison', `Geral: ${stats.general_avg_solucao_frente} seringas`);
             } else {
-                document.getElementById('solucaoFrenteComparison').textContent = '';
+                safeUpdate('solucaoFrenteComparison', '');
             }
             
             if (stats.general_avg_sangramento !== undefined) {
-                document.getElementById('sangramentoComparison').textContent = 
-                    `Geral: ${stats.general_avg_sangramento}`;
+                safeUpdate('sangramentoComparison', `Geral: ${stats.general_avg_sangramento}`);
             } else {
-                document.getElementById('sangramentoComparison').textContent = '';
+                safeUpdate('sangramentoComparison', '');
             }
             
             if (stats.general_body_hair_count !== undefined) {
-                document.getElementById('bodyHairComparison').textContent = 
-                    `Geral: ${stats.general_body_hair_count}`;
+                safeUpdate('bodyHairComparison', `Geral: ${stats.general_body_hair_count}`);
             } else {
-                document.getElementById('bodyHairComparison').textContent = '';
+                safeUpdate('bodyHairComparison', '');
             }
         }
         
         function updateStatsComparison(primaryStats, compareStats, primaryUnit, compareUnit) {
+            // Helper function to safely update element
+            const safeUpdate = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+            
             // Atualizar valores principais
-            document.getElementById('totalSurgeries').textContent = primaryStats.total_surgeries;
-            document.getElementById('avgBreakageRate').textContent = primaryStats.avg_breakage_rate + '%';
-            document.getElementById('avgDensidadeExtracao').textContent = primaryStats.avg_densidade_extracao;
-            document.getElementById('avgTempoCirurgia').textContent = primaryStats.avg_tempo_cirurgia ? primaryStats.avg_tempo_cirurgia + 'h' : '-';
-            document.getElementById('avgSolucaoFrente').textContent = primaryStats.avg_solucao_frente ? primaryStats.avg_solucao_frente + ' seringas' : '-';
-            document.getElementById('avgSangramento').textContent = primaryStats.avg_sangramento || '-';
-            document.getElementById('bodyHairCount').textContent = primaryStats.body_hair_count || '0';
+            safeUpdate('totalSurgeries', primaryStats.total_surgeries);
+            safeUpdate('avgBreakageRate', primaryStats.avg_breakage_rate + '%');
+            safeUpdate('avgDensidadeExtracao', primaryStats.avg_densidade_extracao);
+            safeUpdate('avgTempoCirurgia', primaryStats.avg_tempo_cirurgia ? primaryStats.avg_tempo_cirurgia + 'h' : '-');
+            safeUpdate('avgSolucaoFrente', primaryStats.avg_solucao_frente ? primaryStats.avg_solucao_frente + ' seringas' : '-');
+            safeUpdate('avgSangramento', primaryStats.avg_sangramento || '-');
+            safeUpdate('bodyHairCount', primaryStats.body_hair_count || '0');
             
             // Atualizar comparações com a segunda unidade
-            document.getElementById('tempoCirurgiaComparison').textContent = 
-                `${compareUnit}: ${compareStats.avg_tempo_cirurgia ? compareStats.avg_tempo_cirurgia + 'h' : '-'}`;
-            document.getElementById('solucaoFrenteComparison').textContent = 
-                `${compareUnit}: ${compareStats.avg_solucao_frente ? compareStats.avg_solucao_frente + ' seringas' : '-'}`;
-            document.getElementById('sangramentoComparison').textContent = 
-                `${compareUnit}: ${compareStats.avg_sangramento || '-'}`;
-            document.getElementById('bodyHairComparison').textContent = 
-                `${compareUnit}: ${compareStats.body_hair_count || '0'}`;
+            safeUpdate('tempoCirurgiaComparison', `${compareUnit}: ${compareStats.avg_tempo_cirurgia ? compareStats.avg_tempo_cirurgia + 'h' : '-'}`);
+            safeUpdate('solucaoFrenteComparison', `${compareUnit}: ${compareStats.avg_solucao_frente ? compareStats.avg_solucao_frente + ' seringas' : '-'}`);
+            safeUpdate('sangramentoComparison', `${compareUnit}: ${compareStats.avg_sangramento || '-'}`);
+            safeUpdate('bodyHairComparison', `${compareUnit}: ${compareStats.body_hair_count || '0'}`);
         }
         
         function updateCharts(chartData) {
             // Gráfico de Taxa de Quebra
             if (breakageChart) breakageChart.destroy();
             
-            const ctx1 = document.getElementById('breakageChart').getContext('2d');
+            const canvas1 = document.getElementById('breakageChart');
+            if (!canvas1) {
+                console.warn('updateCharts: breakageChart element not found');
+                return;
+            }
+            const ctx1 = canvas1.getContext('2d');
             breakageChart = new Chart(ctx1, {
                 type: 'bar',
                 data: {
