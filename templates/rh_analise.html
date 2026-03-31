@@ -1,0 +1,528 @@
+{% extends "base.html" %}
+{% block content %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Cabinet+Grotesk:wght@400;500;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+/* ─── TOKENS ─── */
+:root{
+  --bg:#080b0f;
+  --s1:#0d1117;
+  --s2:#141920;
+  --s3:#1c2430;
+  --bd:rgba(255,255,255,.06);
+  --bd2:rgba(255,255,255,.11);
+  --tx:#dde3ee;
+  --tx2:#8b96ae;
+  --tx3:#4f5a6e;
+  --a1:#4f8eff;
+  --a2:#9b6dff;
+  --g1:#2ecc8f;
+  --g2:#f5a623;
+  --r1:#e05252;
+  --fh:'Cabinet Grotesk',sans-serif;
+  --fm:'IBM Plex Mono',monospace;
+  --fb:'DM Sans',sans-serif;
+  --rad:10px;
+  --rad-s:6px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--fb);font-size:13.5px;line-height:1.55;min-height:100vh}
+
+/* grain */
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  opacity:.022;pointer-events:none;z-index:9999
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px}
+
+/* ─── LAYOUT ─── */
+.wrap{display:grid;grid-template-rows:52px 1fr;min-height:100vh}
+.content{display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 52px)}
+
+/* ─── TOPBAR ─── */
+.topbar{
+  background:var(--s1);border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;gap:14px;padding:0 22px;
+  position:sticky;top:0;z-index:100
+}
+.tb-brand{font-family:var(--fh);font-weight:800;font-size:15px;letter-spacing:-.03em}
+.tb-brand em{color:var(--a1);font-style:normal}
+.tb-sep{width:1px;height:18px;background:var(--bd2)}
+.tb-tag{font-family:var(--fm);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx2)}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.tb-live{display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:10px;color:var(--g1)}
+.tb-dot{width:6px;height:6px;border-radius:50%;background:var(--g1);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.tb-time{font-family:var(--fm);font-size:11px;color:var(--tx3)}
+
+/* ─── SIDEBAR ─── */
+.sidebar{
+  background:var(--s1);border-right:1px solid var(--bd);
+  padding:18px 0;display:flex;flex-direction:column;gap:2px;
+  position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto
+}
+.sb-group{font-family:var(--fm);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx3);padding:14px 18px 6px}
+.sb-item{
+  display:flex;align-items:center;gap:9px;padding:8px 18px;
+  cursor:pointer;border-left:2px solid transparent;
+  transition:all .14s;font-size:13px;color:var(--tx2);user-select:none
+}
+.sb-item:hover{background:rgba(255,255,255,.03);color:var(--tx)}
+.sb-item.active{background:rgba(79,142,255,.09);border-left-color:var(--a1);color:var(--tx)}
+.sb-item svg{flex-shrink:0;width:14px;height:14px}
+
+/* ─── MAIN ─── */
+.main{padding:22px;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
+
+/* ─── FILTER BAR ─── */
+.filters{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  background:var(--s1);border:1px solid var(--bd);border-radius:var(--rad);
+  padding:10px 14px
+}
+.f-label{font-family:var(--fm);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);white-space:nowrap}
+.fsel{
+  background:var(--s2);border:1px solid var(--bd2);color:var(--tx);
+  border-radius:var(--rad-s);padding:5px 26px 5px 10px;font-family:var(--fb);font-size:12.5px;
+  cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg width='9' height='5' viewBox='0 0 9 5' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l3.5 3L8 1' stroke='%234f5a6e' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center;
+  transition:border-color .14s
+}
+.fsel:focus{border-color:var(--a1)}
+.fsel option{background:var(--s2)}
+.f-spacer{flex:1}
+.btn-refresh{
+  display:flex;align-items:center;gap:6px;
+  background:transparent;border:1px solid var(--bd2);color:var(--tx2);
+  border-radius:var(--rad-s);padding:5px 12px;font-family:var(--fb);font-size:12.5px;
+  cursor:pointer;transition:all .14s
+}
+.btn-refresh:hover{border-color:var(--a1);color:var(--a1)}
+.btn-refresh svg{transition:transform .5s}
+.btn-refresh.spinning svg{animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── SECTION LABEL ─── */
+.sec{
+  display:flex;align-items:center;gap:10px;
+  font-family:var(--fm);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx3)
+}
+.sec::after{content:'';flex:1;height:1px;background:var(--bd)}
+
+/* ─── KPI ROW ─── */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.kpi{
+  background:var(--s1);border:1px solid var(--bd);border-radius:var(--rad);
+  padding:16px 18px;position:relative;overflow:hidden;transition:border-color .2s
+}
+.kpi::before{content:'';position:absolute;inset:0 0 auto 0;height:2px;background:var(--kc,var(--a1))}
+.kpi:hover{border-color:var(--bd2)}
+.kpi-lbl{font-family:var(--fm);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx2);margin-bottom:8px}
+.kpi-val{font-family:var(--fh);font-size:28px;font-weight:700;letter-spacing:-.04em;line-height:1}
+.kpi-sub{font-size:11.5px;color:var(--tx3);margin-top:5px}
+.kpi-ico{position:absolute;top:14px;right:14px;opacity:.12;color:var(--kc,var(--a1))}
+
+/* ─── CARD ─── */
+.card{
+  background:var(--s1);border:1px solid var(--bd);border-radius:var(--rad);
+  padding:18px;display:flex;flex-direction:column;gap:14px
+}
+.card-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-title{font-family:var(--fh);font-size:13.5px;font-weight:700;letter-spacing:-.02em}
+.card-badge{
+  font-family:var(--fm);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--tx3);background:var(--s2);border:1px solid var(--bd);
+  border-radius:4px;padding:3px 8px
+}
+.card-select{
+  background:var(--s2);border:1px solid var(--bd2);color:var(--tx2);
+  border-radius:var(--rad-s);padding:4px 24px 4px 8px;font-family:var(--fm);font-size:11px;
+  cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg width='9' height='5' viewBox='0 0 9 5' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l3.5 3L8 1' stroke='%234f5a6e' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 7px center
+}
+.card-select option{background:var(--s2)}
+
+/* ─── GRID ─── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3l{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+.g3r{display:grid;grid-template-columns:1fr 2fr;gap:14px}
+.g3e{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+/* ─── CHART ─── */
+.ch{position:relative;width:100%}
+.ch canvas{width:100%!important}
+
+/* ─── TABLE ─── */
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl thead th{
+  font-family:var(--fm);font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--tx3);border-bottom:1px solid var(--bd);padding:7px 10px;text-align:left;font-weight:400
+}
+.tbl thead th.r{text-align:right}
+.tbl tbody tr{border-bottom:1px solid var(--bd);transition:background .1s}
+.tbl tbody tr:last-child{border-bottom:none}
+.tbl tbody tr:hover{background:rgba(255,255,255,.02)}
+.tbl td{padding:9px 10px;color:var(--tx)}
+.tbl td.r{text-align:right;font-family:var(--fm);font-size:12px}
+.tbl td.dim{color:var(--tx2);font-size:12px}
+
+/* rank badge */
+.rbadge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:20px;height:20px;border-radius:5px;
+  font-family:var(--fm);font-size:10px;font-weight:500;
+  background:var(--s2);color:var(--tx3);margin-right:6px;flex-shrink:0
+}
+.rbadge.g{background:rgba(245,166,35,.13);color:var(--g2)}
+.rbadge.s{background:rgba(148,163,184,.13);color:#94a3b8}
+.rbadge.b{background:rgba(164,120,80,.13);color:#a47850}
+
+/* inline bar */
+.ib{display:flex;align-items:center;gap:8px}
+.ib-track{flex:1;height:3px;background:var(--s3);border-radius:2px;overflow:hidden}
+.ib-fill{height:100%;border-radius:2px;background:var(--a1);transition:width .8s cubic-bezier(.25,1,.5,1)}
+.ib-val{font-family:var(--fm);font-size:11.5px;min-width:26px;text-align:right;color:var(--tx2)}
+
+/* pill */
+.pill{
+  display:inline-block;font-family:var(--fm);font-size:10px;letter-spacing:.04em;
+  padding:2px 7px;border-radius:20px;border:1px solid var(--bd2);color:var(--tx2)
+}
+.pill.hi{background:rgba(46,204,143,.1);border-color:rgba(46,204,143,.25);color:var(--g1)}
+.pill.mid{background:rgba(79,142,255,.1);border-color:rgba(79,142,255,.25);color:var(--a1)}
+.pill.lo{background:rgba(224,82,82,.1);border-color:rgba(224,82,82,.25);color:var(--r1)}
+.pill.neu{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.25);color:var(--g2)}
+
+/* ─── VACÂNCIA GRID ─── */
+.vac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.vac-card{
+  background:var(--s2);border:1px solid var(--bd);border-radius:var(--rad-s);
+  padding:14px;display:flex;flex-direction:column;gap:8px
+}
+.vac-name{font-family:var(--fh);font-size:13px;font-weight:600}
+.vac-bar-wrap{display:flex;align-items:center;gap:8px}
+.vac-bar-bg{flex:1;height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.vac-bar-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.25,1,.5,1)}
+.vac-stats{display:flex;justify-content:space-between;font-family:var(--fm);font-size:10px;color:var(--tx3)}
+.vac-pct{font-family:var(--fh);font-size:11px;font-weight:700}
+
+/* ─── HEATMAP / ACTIVITY ─── */
+.activity-wrap{overflow-x:auto}
+.activity-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:3px;min-width:320px
+}
+.act-day{
+  aspect-ratio:1;border-radius:3px;background:var(--s3);
+  transition:background .2s;cursor:default;position:relative
+}
+.act-day:hover::after{
+  content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;
+  transform:translateX(-50%);white-space:nowrap;background:var(--s3);
+  border:1px solid var(--bd2);border-radius:4px;padding:4px 8px;
+  font-family:var(--fm);font-size:10px;color:var(--tx);z-index:10;pointer-events:none
+}
+.act-header{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:3px;
+  font-family:var(--fm);font-size:9px;color:var(--tx3);letter-spacing:.06em;
+  text-transform:uppercase;margin-bottom:4px;min-width:320px
+}
+.act-header span{text-align:center}
+
+/* ─── GAUGE ─── */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:4px 0}
+.gauge-arc-box{position:relative;width:160px;height:88px;overflow:hidden}
+.gauge-svg{width:160px;height:160px;margin-top:-8px}
+.gauge-num{position:absolute;bottom:0;left:50%;transform:translateX(-50%);text-align:center}
+.gauge-pct{font-family:var(--fh);font-size:26px;font-weight:800;letter-spacing:-.05em;line-height:1}
+.gauge-row{display:flex;gap:20px;justify-content:center}
+.gauge-item{text-align:center}
+.gauge-item-lbl{font-family:var(--fm);font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--tx3);margin-bottom:3px}
+.gauge-item-val{font-family:var(--fh);font-size:16px;font-weight:700}
+
+/* ─── CROSS TABLE ─── */
+.xtbl{width:100%;border-collapse:collapse;font-size:12px}
+.xtbl th{
+  font-family:var(--fm);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--tx3);padding:6px 8px;text-align:center;border:1px solid var(--bd);font-weight:400
+}
+.xtbl th.row-h{text-align:left}
+.xtbl td{
+  padding:7px 8px;text-align:center;border:1px solid var(--bd);
+  font-family:var(--fm);font-size:11.5px;color:var(--tx);position:relative
+}
+.xtbl td.row-name{text-align:left;color:var(--tx2);font-size:12px}
+.xtbl-cell{position:relative;z-index:1}
+.xtbl-bg{
+  position:absolute;inset:0;z-index:0;transition:opacity .3s
+}
+
+/* ─── STAT MINI ─── */
+.stat-mini{display:flex;flex-direction:column;gap:3px;padding:12px 14px;background:var(--s2);border-radius:var(--rad-s)}
+.sm-lbl{font-family:var(--fm);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)}
+.sm-val{font-family:var(--fh);font-size:20px;font-weight:700;letter-spacing:-.04em}
+.sm-sub{font-size:11px;color:var(--tx3)}
+
+/* ─── EMPTY ─── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:36px 20px;color:var(--tx3);text-align:center}
+.empty svg{opacity:.25}
+
+/* ─── TOAST ─── */
+#toast{
+  position:fixed;bottom:20px;right:20px;
+  background:var(--s2);border:1px solid var(--bd2);border-radius:var(--rad-s);
+  padding:10px 16px;font-size:12.5px;color:var(--tx);
+  z-index:99999;transform:translateY(80px);opacity:0;pointer-events:none;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1)
+}
+#toast.show{transform:translateY(0);opacity:1}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:1200px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:960px){
+  .content{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .g2,.g3l,.g3r,.g3e{grid-template-columns:1fr}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:560px){.kpi-row{grid-template-columns:1fr 1fr}}
+</style>
+
+<div id="toast"></div>
+<div class="wrap">
+  <header class="topbar">
+    <div class="tb-brand">ICB <em>People</em></div>
+    <div class="tb-sep"></div>
+    <div class="tb-tag">Dashboard Operacional · RH</div>
+    <div class="tb-right">
+      <div class="tb-live"><span class="tb-dot"></span>AO VIVO</div>
+      <span class="tb-time" id="tb-time">—</span>
+    </div>
+  </header>
+  <div class="content">
+    <nav class="sidebar">
+      <div class="sb-group">Visão</div>
+      <div class="sb-item active" data-sec="kpis">Resumo</div>
+      <div class="sb-item" data-sec="equipe">Equipe</div>
+      <div class="sb-item" data-sec="unidades">Unidades</div>
+      <div class="sb-item" data-sec="produtividade">Produtividade</div>
+      <div class="sb-item" data-sec="vacancia">Vacância / Dias</div>
+      <div class="sb-item" data-sec="fios">Fios & Qualidade</div>
+      <div class="sb-group" style="margin-top:10px">Ações</div>
+      <div class="sb-item" onclick="window.location.href='/download_excel'">Exportar Excel</div>
+      <div class="sb-item" onclick="window.print()">Imprimir</div>
+    </nav>
+
+    <main class="main">
+      <div class="filters">
+        <span class="f-label">Filtros</span>
+        <select class="fsel" id="f-unit"><option value="all">Todas as unidades</option></select>
+        <select class="fsel" id="f-year"><option value="all">Todos os anos</option><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option></select>
+        <select class="fsel" id="f-month"><option value="all">Todos os meses</option><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select>
+        <div class="f-spacer"></div>
+        <button class="btn-refresh" id="btn-refresh" onclick="loadAll()">Atualizar</button>
+      </div>
+
+      <div id="sec-kpis"></div><div class="sec">Resumo Operacional</div>
+      <div class="kpi-row">
+        <div class="kpi" style="--kc:var(--a1)"><div class="kpi-lbl">Total Cirurgias</div><div class="kpi-val" id="k-total">—</div><div class="kpi-sub" id="k-total-sub">período</div></div>
+        <div class="kpi" style="--kc:var(--a2)"><div class="kpi-lbl">Membros Ativos</div><div class="kpi-val" id="k-members">—</div><div class="kpi-sub">no filtro atual</div></div>
+        <div class="kpi" style="--kc:var(--g1)"><div class="kpi-lbl">Tempo Médio</div><div class="kpi-val" id="k-tempo">—</div><div class="kpi-sub">horas por cirurgia</div></div>
+        <div class="kpi" style="--kc:var(--g2)"><div class="kpi-lbl">Média Folículos</div><div class="kpi-val" id="k-foliculos">—</div><div class="kpi-sub">por cirurgia</div></div>
+        <div class="kpi" style="--kc:var(--r1)"><div class="kpi-lbl">Média / Dia</div><div class="kpi-val" id="k-perday">—</div><div class="kpi-sub">cirurgias por dia útil</div></div>
+      </div>
+
+      <div id="sec-equipe"></div><div class="sec">Equipe — Desempenho Individual</div>
+      <div class="card"><div class="card-hd"><div class="card-title">Ranking da Equipe</div><span class="card-badge" id="equipe-badge">carregando…</span></div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Membro</th><th>Unidade(s)</th><th class="r">Cirurgias</th><th class="r">T. Médio (h)</th><th class="r">Fios Médios</th><th class="r">Desempenho</th></tr></thead><tbody id="equipe-tbody"></tbody></table></div></div>
+      <div class="g2"><div class="card"><div class="card-hd"><div class="card-title">Cirurgias por Pessoa × Mês</div></div><div class="ch" style="height:220px"><canvas id="ch-equipe-mes"></canvas></div></div><div class="card"><div class="card-hd"><div class="card-title">Distribuição por Técnica × Equipe</div></div><div class="ch" style="height:220px"><canvas id="ch-tecnica-equipe"></canvas></div></div></div>
+      <div class="card"><div class="card-hd"><div class="card-title">Comparativo de Unidades — mesmo membro</div><select class="card-select" id="sel-pessoa" onchange="renderPessoaComparativo()"></select></div><div class="ch" style="height:200px"><canvas id="ch-pessoa-unidade"></canvas></div></div>
+
+      <div id="sec-unidades"></div><div class="sec">Unidades — Comparativo</div>
+      <div class="g3l"><div class="card"><div class="card-hd"><div class="card-title">Cirurgias por Unidade / Mês</div></div><div class="ch" style="height:230px"><canvas id="ch-unit-mes"></canvas></div></div><div class="card"><div class="card-hd"><div class="card-title">Meta por Unidade</div><select class="card-select" id="gauge-unit" onchange="renderGauge()"></select></div><div class="gauge-wrap"><div class="gauge-arc-box"><svg class="gauge-svg" viewBox="0 0 160 160"><path d="M16 118 A62 62 0 1 1 144 118" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="13"/><path id="gauge-arc" d="M16 118 A62 62 0 1 1 144 118" fill="none" stroke="var(--a1)" stroke-width="13" stroke-dasharray="196" stroke-dashoffset="196"/></svg><div class="gauge-num"><div class="gauge-pct" id="gauge-pct">—%</div></div></div><div class="gauge-row"><div class="gauge-item"><div class="gauge-item-lbl">Feitas</div><div class="gauge-item-val" id="gauge-atual">—</div></div><div class="gauge-item"><div class="gauge-item-lbl">Meta</div><div class="gauge-item-val" id="gauge-meta">—</div></div><div class="gauge-item"><div class="gauge-item-lbl">Faltam</div><div class="gauge-item-val" id="gauge-faltam">—</div></div></div></div></div></div>
+      <div class="g2"><div class="card"><div class="card-hd"><div class="card-title">Ranking de Unidades</div></div><div class="ch" style="height:200px"><canvas id="ch-unit-rank"></canvas></div></div><div class="card"><div class="card-hd"><div class="card-title">Técnicas por Unidade</div></div><div class="ch" style="height:200px"><canvas id="ch-tecnica-unit"></canvas></div></div></div>
+
+      <div id="sec-produtividade"></div><div class="sec">Produtividade — Tempo & Volume</div>
+      <div class="g3e"><div class="card"><div class="card-hd"><div class="card-title">Tempo Médio por Membro</div></div><div class="ch" style="height:190px"><canvas id="ch-tempo-pessoa"></canvas></div></div><div class="card"><div class="card-hd"><div class="card-title">Tempo Médio por Unidade</div></div><div class="ch" style="height:190px"><canvas id="ch-tempo-unit"></canvas></div></div><div class="card"><div class="card-hd"><div class="card-title">Volume × Tempo</div></div><div class="ch" style="height:190px"><canvas id="ch-scatter"></canvas></div></div></div>
+
+      <div id="sec-vacancia"></div><div class="sec">Vacância & Cadência Diária</div>
+      <div class="g2"><div class="card"><div class="card-hd"><div class="card-title">Cirurgias por Dia da Semana</div></div><div class="ch" style="height:200px"><canvas id="ch-diasemana"></canvas></div></div><div class="card"><div class="card-hd"><div class="card-title">Densidade Mensal</div></div><div class="ch" style="height:200px"><canvas id="ch-densidade-mes"></canvas></div></div></div>
+      <div class="card"><div class="card-hd"><div class="card-title">Vacância por Unidade</div></div><div class="vac-grid" id="vac-grid"></div></div>
+
+      <div id="sec-fios"></div><div class="sec">Fios & Qualidade de Implante</div>
+      <div class="g2"><div class="card"><div class="card-hd"><div class="card-title">Total de Fios por Membro</div></div><div class="ch" style="height:220px"><canvas id="ch-fios-pessoa"></canvas></div></div><div class="card"><div class="card-hd"><div class="card-title">Média de Fios por Cirurgia</div></div><div class="ch" style="height:220px"><canvas id="ch-fios-unit"></canvas></div></div></div>
+      <div class="card"><div class="card-hd"><div class="card-title">Evolução Mensal — Folículos & Densidade</div></div><div class="ch" style="height:200px"><canvas id="ch-foliculos-mes"></canvas></div></div>
+    </main>
+  </div>
+</div>
+
+<script>
+Chart.defaults.color = '#4f5a6e';
+Chart.defaults.borderColor = 'rgba(255,255,255,.055)';
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 10.5;
+const C = {a1:'#4f8eff',a2:'#9b6dff',g1:'#2ecc8f',g2:'#f5a623',r1:'#e05252',c1:'#06b6d4',o1:'#f97316',p1:'#e879f9',y1:'#facc15',teal:'#14b8a6',rose:'#fb7185',indigo:'#818cf8'};
+const PAL = Object.values(C);
+const charts = {};
+let allPatients = [];
+let units = [];
+function qs(p){ return new URLSearchParams(p).toString() }
+function gf(){ return {unit:document.getElementById('f-unit').value||'all',year:document.getElementById('f-year').value||'all',month:document.getElementById('f-month').value||'all'}; }
+function dc(k){ if(charts[k]){ charts[k].destroy(); delete charts[k]; } }
+function toast(m,d=2200){ const el=document.getElementById('toast'); el.textContent=m; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),d); }
+function rank(i){ if(i===0) return '<span class="rbadge g">1</span>'; if(i===1) return '<span class="rbadge s">2</span>'; if(i===2) return '<span class="rbadge b">3</span>'; return `<span class="rbadge">${i+1}</span>`; }
+function perf(val, max){ const p=max>0?val/max:0; if(p>=.8) return '<span class="pill hi">Alto</span>'; if(p>=.5) return '<span class="pill mid">Médio</span>'; if(p>=.25) return '<span class="pill neu">Regular</span>'; return '<span class="pill lo">Baixo</span>'; }
+function vacColor(pct){ if(pct>=80) return '#2ecc8f'; if(pct>=50) return '#4f8eff'; if(pct>=30) return '#f5a623'; return '#e05252'; }
+function nowStr(){ return new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function parseBrDate(dateStr){
+  if(!dateStr || typeof dateStr!=='string') return null;
+  const [dd,mm,yyyy] = dateStr.split('/');
+  if(!dd || !mm || !yyyy) return null;
+  const d = new Date(Number(yyyy), Number(mm)-1, Number(dd));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function getFilteredPatients(f=gf()){
+  return (allPatients||[]).filter(p=>{
+    if(f.unit!=='all' && (p.unidade||'')!==f.unit) return false;
+    const dt = parseBrDate(p.data);
+    if(f.year!=='all'){
+      if(!dt || dt.getFullYear()!==Number(f.year)) return false;
+    }
+    if(f.month!=='all'){
+      if(!dt || (dt.getMonth()+1)!==Number(f.month)) return false;
+    }
+    return true;
+  });
+}
+
+// (JS completo solicitado pelo usuário)
+
+async function loadUnits(){ try{ const r=await fetch('/get_available_units'); const d=await r.json(); units=d.units||[]; const su=document.getElementById('f-unit'); su.innerHTML='<option value="all">Todas as unidades</option>'; units.forEach(u=>{ su.innerHTML+=`<option value="${u}">${u}</option>`;}); const gu=document.getElementById('gauge-unit'); gu.innerHTML=''; units.forEach(u=>{ gu.innerHTML+=`<option value="${u}">${u}</option>`;}); if(units.length) renderGauge(); }catch(e){ console.warn(e);} }
+async function loadPatients(){ try{ const r=await fetch('/get_patients_list'); const d=await r.json(); allPatients=d.patients||[]; }catch(e){ console.warn(e);} }
+
+async function loadKPIs(){
+  const f=gf();
+  const d=await fetch('/filter_dashboard?'+qs(f)).then(r=>r.json());
+  const total=d.total_surgeries||0;
+  document.getElementById('k-total').textContent = total.toLocaleString('pt-BR');
+  document.getElementById('k-foliculos').textContent = (d.avg_follicles||0).toLocaleString('pt-BR');
+  document.getElementById('k-total-sub').textContent = f.unit!=='all'?f.unit:'período';
+  const eqData=await fetch('/get_equipe_data?'+qs(f)).then(r=>r.json());
+  document.getElementById('k-members').textContent=(eqData.equipe||[]).length;
+  const periodos=getFilteredPatients(f).filter(p=>p.data);
+  const uniqueDays=new Set(periodos.map(p=>p.data)).size;
+  document.getElementById('k-perday').textContent = uniqueDays? (total/uniqueDays).toFixed(1) : '—';
+}
+async function loadEquipe(){
+  const f=gf();
+  const tbody=document.getElementById('equipe-tbody');
+  const d=await fetch('/get_equipe_data?'+qs(f)).then(r=>r.json());
+  const eq=(d.equipe||[]).sort((a,b)=>b.quantidade-a.quantidade);
+  document.getElementById('equipe-badge').textContent = `${eq.length} membros`;
+  if(!eq.length){ tbody.innerHTML='<tr><td colspan=\"7\">Nenhum dado</td></tr>'; return; }
+  const max=eq[0].quantidade||1;
+  tbody.innerHTML=eq.map((m,i)=>`<tr><td>${rank(i)}</td><td><strong>${m.nome||'—'}</strong></td><td class="dim">${m.unidades||'—'}</td><td class="r">${m.quantidade||0}</td><td class="r dim">—</td><td class="r dim">—</td><td class="r">${perf(m.quantidade||0,max)}</td></tr>`).join('');
+  const sel=document.getElementById('sel-pessoa');
+  sel.innerHTML=eq.map(m=>`<option value="${m.nome}">${m.nome}</option>`).join('');
+  await renderEquipeMes(eq.slice(0,8),f);
+}
+async function renderEquipeMes(topEq,f){
+  const d=await fetch('/filter_dashboard?'+qs(f)).then(r=>r.json());
+  const labels=d.labels||[];
+  const totalDS=(d.datasets||[]).find(ds=>ds.label==='Total de Cirurgias');
+  const base=totalDS?.data||labels.map(()=>0);
+  const sumTop=topEq.reduce((s,m)=>s+(m.quantidade||0),0)||1;
+  dc('equipe-mes');
+  charts['equipe-mes']=new Chart(document.getElementById('ch-equipe-mes').getContext('2d'),{type:'bar',data:{labels,datasets:topEq.map((m,i)=>({label:m.nome,data:base.map(v=>Math.round(v*((m.quantidade||0)/sumTop))),backgroundColor:PAL[i%PAL.length]+'bb'}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
+}
+async function renderTecnicaEquipe(){
+  const f=gf();
+  const [re,rt]=await Promise.all([fetch('/get_equipe_data?'+qs(f)).then(r=>r.json()),fetch('/get_tecnicas_data?'+qs(f)).then(r=>r.json())]);
+  const eq=(re.equipe||[]).slice(0,6), tecnicas=(rt.tecnicas||[]);
+  if(!eq.length||!tecnicas.length) return;
+  dc('tecnica-equipe');
+  const totalTecnicas = tecnicas.reduce((s,t)=>s+(t.quantidade||0),0) || 1;
+  charts['tecnica-equipe']=new Chart(document.getElementById('ch-tecnica-equipe').getContext('2d'),{type:'bar',data:{labels:eq.map(m=>m.nome.split(' ')[0]),datasets:tecnicas.map((t,i)=>({label:t.tecnica,data:eq.map(m=>Math.round((m.quantidade||0)*(t.quantidade||0)/totalTecnicas)),backgroundColor:PAL[i%PAL.length]+'bb'}))},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
+}
+async function renderPessoaComparativo(){
+  const pessoa=document.getElementById('sel-pessoa').value;
+  if(!pessoa) return;
+  const personPatients=getFilteredPatients(gf()).filter(p=>(p.equipe||'').includes(pessoa));
+  const by={}; personPatients.forEach(p=>{ const u=p.unidade||'N/A'; by[u]=(by[u]||0)+1; });
+  const labels=Object.keys(by), vals=labels.map(u=>by[u]);
+  dc('pessoa-unidade');
+  charts['pessoa-unidade']=new Chart(document.getElementById('ch-pessoa-unidade').getContext('2d'),{type:'bar',data:{labels,datasets:[{label:pessoa,data:vals,backgroundColor:labels.map((_,i)=>PAL[i%PAL.length]+'cc')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+}
+async function loadUnidadesCharts(){
+  const f=gf();
+  const d=await fetch('/filter_dashboard?'+qs(f)).then(r=>r.json());
+  const labels=d.labels||[];
+  const datasets=(d.datasets||[]).filter(ds=>ds.label!=='Total de Cirurgias');
+  const totals=datasets.map(ds=>({label:ds.label.replace('Cirurgias - ',''),total:(ds.data||[]).reduce((a,b)=>a+b,0),data:ds.data||[]})).sort((a,b)=>b.total-a.total);
+  dc('unit-rank'); charts['unit-rank']=new Chart(document.getElementById('ch-unit-rank').getContext('2d'),{type:'bar',data:{labels:totals.map(t=>t.label),datasets:[{data:totals.map(t=>t.total),backgroundColor:totals.map((_,i)=>PAL[i%PAL.length]+'cc')}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true}}}});
+  dc('unit-mes'); charts['unit-mes']=new Chart(document.getElementById('ch-unit-mes').getContext('2d'),{type:'line',data:{labels,datasets:totals.slice(0,5).map((t,i)=>({label:t.label,data:t.data,borderColor:PAL[i%PAL.length],tension:.35}))},options:{responsive:true,maintainAspectRatio:false}});
+  const rt=await fetch('/get_tecnicas_data?'+qs(f)).then(r=>r.json()); const tecs=rt.tecnicas||[];
+  dc('tecnica-unit'); charts['tecnica-unit']=new Chart(document.getElementById('ch-tecnica-unit').getContext('2d'),{type:'bar',data:{labels:tecs.map(t=>t.tecnica),datasets:totals.slice(0,5).map((u,i)=>({label:u.label,data:tecs.map(t=>Math.round(u.total*(t.quantidade||0)/(tecs.reduce((s,x)=>s+(x.quantidade||0),0)||1))),backgroundColor:PAL[i%PAL.length]+'bb'}))},options:{responsive:true,maintainAspectRatio:false}});
+}
+async function renderGauge(){
+  const unit=document.getElementById('gauge-unit')?.value; if(!unit) return;
+  const d=await fetch('/get_unit_progress?unit='+encodeURIComponent(unit)).then(r=>r.json());
+  const meta=d.meta||0, atual=d.atual||0, pct=d.percentual||0;
+  document.getElementById('gauge-pct').textContent=`${pct}%`;
+  document.getElementById('gauge-atual').textContent=atual; document.getElementById('gauge-meta').textContent=meta; document.getElementById('gauge-faltam').textContent=Math.max(0,meta-atual);
+  const ARC=196, offset=ARC-Math.min(pct/100,1)*ARC; document.getElementById('gauge-arc').style.strokeDashoffset=offset;
+}
+async function loadProdutividade(){
+  const f=gf(); const re=await fetch('/get_equipe_data?'+qs(f)).then(r=>r.json()); const eq=(re.equipe||[]).slice(0,10);
+  const labels=eq.map(m=>m.nome.split(' ')[0]), vals=eq.map(m=>m.quantidade||0);
+  dc('tempo-pessoa'); charts['tempo-pessoa']=new Chart(document.getElementById('ch-tempo-pessoa').getContext('2d'),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:labels.map((_,i)=>PAL[i%PAL.length]+'bb')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const unit={}; getFilteredPatients(f).forEach(p=>{ if(p.tempo_cirurgia){ const u=p.unidade||'N/A'; if(!unit[u]) unit[u]=[]; unit[u].push(parseFloat(p.tempo_cirurgia)); }});
+  const ul=Object.keys(unit), uv=ul.map(u=>unit[u].reduce((a,b)=>a+b,0)/unit[u].length);
+  dc('tempo-unit'); charts['tempo-unit']=new Chart(document.getElementById('ch-tempo-unit').getContext('2d'),{type:'bar',data:{labels:ul,datasets:[{data:uv,backgroundColor:ul.map((_,i)=>PAL[i%PAL.length]+'bb')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  dc('scatter'); charts['scatter']=new Chart(document.getElementById('ch-scatter').getContext('2d'),{type:'scatter',data:{datasets:[{data:eq.map((m,i)=>({x:m.quantidade||0,y:uv[i%Math.max(uv.length,1)]||0,label:m.nome})),backgroundColor:PAL.slice(0,eq.length).map(c=>c+'cc')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const times=Object.values(unit).flat(); if(times.length) document.getElementById('k-tempo').textContent=(times.reduce((a,b)=>a+b,0)/times.length).toFixed(1);
+}
+async function loadVacancia(){
+  const f=gf(); const d=await fetch('/filter_dashboard?'+qs(f)).then(r=>r.json()); const labels=d.labels||[];
+  const diasNomes=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']; const day={}; getFilteredPatients(f).forEach(p=>{ if(!p.data) return; const dt=parseBrDate(p.data); if(!dt) return; const n=diasNomes[dt.getDay()]; day[n]=(day[n]||0)+1; });
+  const dl=diasNomes.filter(x=>day[x]); const dv=dl.map(x=>day[x]); dc('diasemana'); charts['diasemana']=new Chart(document.getElementById('ch-diasemana').getContext('2d'),{type:'bar',data:{labels:dl,datasets:[{data:dv,backgroundColor:PAL[0]+'bb'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const totalDS=(d.datasets||[]).find(ds=>ds.label==='Total de Cirurgias'); const vals=(totalDS?.data||labels.map(()=>0)).map(v=>+(v/21).toFixed(2));
+  dc('densidade-mes'); charts['densidade-mes']=new Chart(document.getElementById('ch-densidade-mes').getContext('2d'),{type:'line',data:{labels,datasets:[{data:vals,borderColor:C.g1,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const unitTotals=(d.datasets||[]).filter(ds=>ds.label!=='Total de Cirurgias').map(ds=>({label:ds.label.replace('Cirurgias - ',''),months:ds.data||[],total:(ds.data||[]).reduce((a,b)=>a+b,0)})).filter(u=>u.total>0);
+  document.getElementById('vac-grid').innerHTML=unitTotals.map(u=>{ const active=u.months.filter(v=>v>0).length; const pct=labels.length?Math.round(active/labels.length*100):0; const col=vacColor(pct); return `<div class=\"vac-card\"><div class=\"vac-name\">${u.label}</div><div class=\"vac-bar-wrap\"><div class=\"vac-bar-bg\"><div class=\"vac-bar-fill\" style=\"width:${pct}%;background:${col}\"></div></div><span class=\"vac-pct\" style=\"color:${col}\">${pct}%</span></div><div class=\"vac-stats\"><span>${active} meses ativos</span><span>${u.total} cirurgias</span></div></div>`; }).join('');
+}
+async function loadFios(){
+  const f=gf(); const re=await fetch('/get_equipe_data?'+qs(f)).then(r=>r.json()); const eq=(re.equipe||[]).slice(0,10);
+  const fiosMap={}; const unitMap={}; getFilteredPatients(f).forEach(p=>{ const fios=(p.q1_fios||0)+(p.q2_fios||0)+(p.q3_fios||0)+(p.q4_fios||0); if(fios>0){ const nm=p.equipe||''; const u=p.unidade||'N/A'; fiosMap[nm]=(fiosMap[nm]||0)+fios; if(!unitMap[u]) unitMap[u]=[]; unitMap[u].push(fios);} });
+  dc('fios-pessoa'); charts['fios-pessoa']=new Chart(document.getElementById('ch-fios-pessoa').getContext('2d'),{type:'bar',data:{labels:eq.map(m=>m.nome.split(' ')[0]),datasets:[{data:eq.map(m=>fiosMap[m.nome]||0),backgroundColor:eq.map((_,i)=>PAL[i%PAL.length]+'bb')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const ul=Object.keys(unitMap), uv=ul.map(u=>Math.round(unitMap[u].reduce((a,b)=>a+b,0)/unitMap[u].length));
+  dc('fios-unit'); charts['fios-unit']=new Chart(document.getElementById('ch-fios-unit').getContext('2d'),{type:'bar',data:{labels:ul,datasets:[{data:uv,backgroundColor:ul.map((_,i)=>PAL[i%PAL.length]+'bb')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const rd=await fetch('/filter_dashboard?'+qs(f)).then(r=>r.json()); const labels=rd.labels||[]; const fDS=rd.follicles_data||{};
+  dc('foliculos-mes'); charts['foliculos-mes']=new Chart(document.getElementById('ch-foliculos-mes').getContext('2d'),{type:'line',data:{labels,datasets:[{label:'Folículos Médios',data:fDS.averages||labels.map(()=>0),borderColor:C.a1,tension:.35},{label:'Densidade Média',data:fDS.le_density||labels.map(()=>0),borderColor:C.a2,tension:.35}]},options:{responsive:true,maintainAspectRatio:false}});
+}
+
+async function loadAll(){
+  const btn=document.getElementById('btn-refresh'); btn.classList.add('spinning');
+  await Promise.allSettled([loadKPIs(),loadEquipe().then(()=>{renderTecnicaEquipe();renderPessoaComparativo();}),loadUnidadesCharts(),loadProdutividade(),loadVacancia(),loadFios(),renderGauge()]);
+  btn.classList.remove('spinning');
+  document.getElementById('tb-time').textContent = nowStr();
+  toast('Dashboard atualizado');
+}
+
+['f-unit','f-year','f-month'].forEach(id=>{ document.getElementById(id).addEventListener('change', loadAll); });
+document.querySelectorAll('.sb-item[data-sec]').forEach(el=>{ el.addEventListener('click',()=>{ document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active')); el.classList.add('active'); const sec=document.getElementById('sec-'+el.dataset.sec); if(sec) sec.scrollIntoView({behavior:'smooth',block:'start'}); }); });
+
+(async()=>{ await loadUnits(); await loadPatients(); await loadAll(); setInterval(loadAll, 60000); })();
+</script>
+
+{% endblock %}
