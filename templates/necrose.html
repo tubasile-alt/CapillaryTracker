@@ -851,6 +851,11 @@ function setupImagePreview(inputId, previewId) {
     const input = document.getElementById(inputId);
     const preview = document.getElementById(previewId);
     
+    if (!input || !preview) {
+        console.warn(`setupImagePreview: Element with ID ${inputId} or ${previewId} not found`);
+        return;
+    }
+    
     input.addEventListener('change', function() {
         while(preview.firstChild) {
             preview.removeChild(preview.firstChild);
@@ -867,10 +872,10 @@ function setupImagePreview(inputId, previewId) {
     });
 }
 
-// Configurar preview para cada campo de foto
-setupImagePreview('photo1', 'preview1');
-setupImagePreview('photo2', 'preview2');
-setupImagePreview('photo3', 'preview3');
+// Configurar preview para cada campo de foto (apenas se elementos existirem)
+if (document.getElementById('photo1') && document.getElementById('preview1')) setupImagePreview('photo1', 'preview1');
+if (document.getElementById('photo2') && document.getElementById('preview2')) setupImagePreview('photo2', 'preview2');
+if (document.getElementById('photo3') && document.getElementById('preview3')) setupImagePreview('photo3', 'preview3');
 
 // Event listeners para formulário
 document.getElementById('form-necrose').addEventListener('submit', function(e) {
