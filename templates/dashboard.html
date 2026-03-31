@@ -426,66 +426,53 @@
         populateEquipeTable();
 
         // Atualizar os valores grandes no carregamento da página
-        document.getElementById('big-total-surgeries').textContent = {{ data.total_surgeries or 0 }};
-        document.getElementById('big-avg-follicles').textContent = {{ data.avg_follicles or 0 }};
-        document.getElementById('big-avg-density').textContent = {{ data.avg_density or 0 }};
+        const bigTotal = document.getElementById('big-total-surgeries');
+        const bigFollicles = document.getElementById('big-avg-follicles');
+        const bigDensity = document.getElementById('big-avg-density');
+        if (bigTotal) bigTotal.textContent = {{ data.total_surgeries or 0 }};
+        if (bigFollicles) bigFollicles.textContent = {{ data.avg_follicles or 0 }};
+        if (bigDensity) bigDensity.textContent = {{ data.avg_density or 0 }};
+
+        // Iniciar velocímetro e atualização automática (único setInterval)
+        updateGaugeChart();
+        if (_gaugeInterval) clearInterval(_gaugeInterval);
+        _gaugeInterval = setInterval(updateGaugeChart, 30000);
+
+        // Bind modal close button com null check
+        const closeModalBtn = document.querySelector('.close-modal');
+        if (closeModalBtn) closeModalBtn.addEventListener('click', closePasswordModal);
     });
 
     // Função para carregar unidades disponíveis
     function loadAvailableUnits() {
         const unitFilter = document.getElementById('unitFilter');
+        if (!unitFilter) return;
 
         unitFilter.innerHTML = '<option value="">Carregando...</option>';
 
         fetch('/get_available_units')
             .then(response => response.json())
             .then(data => {
-                // Limpar e repopular o select
                 unitFilter.innerHTML = '';
-
-                if (data.units && data.units.length > 0) {
-                    data.units.forEach(unit => {
-                        // Para o filtro de velocímetro
-                        const option = document.createElement('option');
-                        option.value = unit;
-                        option.textContent = unit;
-                        unitFilter.appendChild(option);
-                    });
-
-                    // Inicializar o velocímetro após carregar as unidades
-                    updateGaugeChart();
-                } else {
-                    // Unidades padrão em caso de erro
-                    const defaultUnits = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'];
-                    defaultUnits.forEach(unit => {
-                        // Para o filtro de velocímetro
-                        const option = document.createElement('option');
-                        option.value = unit;
-                        option.textContent = unit;
-                        unitFilter.appendChild(option);
-                    });
-
-                    // Inicializar o velocímetro
-                    updateGaugeChart();
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao carregar unidades:', error);
-
-                // Unidades padrão em caso de erro
-                unitFilter.innerHTML = '';
-
-                const defaultUnits = ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'];
-                defaultUnits.forEach(unit => {
-                    // Para o filtro de velocímetro
+                const units = (data.units && data.units.length > 0)
+                    ? data.units
+                    : ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'];
+                units.forEach(unit => {
                     const option = document.createElement('option');
                     option.value = unit;
                     option.textContent = unit;
                     unitFilter.appendChild(option);
                 });
-
-                // Inicializar o velocímetro
-                updateGaugeChart();
+            })
+            .catch(error => {
+                console.error('Erro ao carregar unidades:', error);
+                unitFilter.innerHTML = '';
+                ['Ribeirão Preto', 'Campinas', 'Rio de Janeiro'].forEach(unit => {
+                    const option = document.createElement('option');
+                    option.value = unit;
+                    option.textContent = unit;
+                    unitFilter.appendChild(option);
+                });
             });
     }
 
@@ -580,8 +567,6 @@
                     fillElement.style.backgroundColor = '#F44336'; // Vermelho
                 }
 
-                // Auto atualizar a cada 30 segundos
-                setTimeout(updateGaugeChart, 30000);
             })
             .catch(error => {
                 console.error('Erro ao obter dados de progresso:', error);
@@ -592,23 +577,10 @@
                 percentElement.textContent = '0';
                 fillElement.style.width = '0%';
                 markerElement.style.left = '0%';
-
-                // Tentar novamente após 1 minuto
-                setTimeout(updateGaugeChart, 60000);
             });
     }
 
-    // Adicionar atualização automática
-    document.addEventListener('DOMContentLoaded', function() {
-        // Carregar unidades disponíveis
-        loadAvailableUnits();
-
-        // Iniciar atualização automática do velocímetro
-        updateGaugeChart();
-
-        // Atualizar automaticamente a cada 30 segundos
-        setInterval(updateGaugeChart, 30000);
-    });
+    let _gaugeInterval = null;
 
     // Função para preencher a tabela de equipe
     function populateEquipeTable() {
@@ -733,8 +705,7 @@
         }
     }
 
-    // Fecha o modal quando o usuário clica no X
-    document.querySelector('.close-modal').addEventListener('click', closePasswordModal);
+    // Fecha o modal quando o usuário clica no X (bind feito no DOMContentLoaded com null check)
 
     // Fecha o modal quando o usuário clica fora dele
     window.addEventListener('click', function(event) {
