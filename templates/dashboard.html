@@ -722,24 +722,6 @@
     });
 
     // Funções para exclusão do último registro
-    function confirmDeleteLastRecord() {
-        // Buscar informações do último registro
-        fetch('/get_last_record')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('lastPatientName').textContent = data.patient_name;
-                    document.getElementById('deleteLastModal').style.display = 'flex';
-                } else {
-                    alert('❌ ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('❌ Erro ao buscar o último registro.');
-            });
-    }
-
     function closeDeleteLastModal() {
         const modal = document.getElementById('deleteLastModal');
         if (modal) {
@@ -831,53 +813,6 @@
 
 <script>
 // Functions for viewing patient data
-async function viewPatientData() {
-    try {
-        const response = await fetch('/get_patients_list');
-        const data = await response.json();
-
-        if (data.patients && Array.isArray(data.patients)) {
-            allPatients = data.patients;
-            const unitFilter = document.getElementById('patientUnitFilter');
-            const units = [...new Set(allPatients.map(p => p.unidade))].filter(Boolean).sort();
-            unitFilter.innerHTML = '<option value="">Todas</option>';
-            units.forEach(unit => {
-                unitFilter.appendChild(new Option(unit, unit));
-            });
-            displayFilteredPatients();
-        }
-        document.getElementById('viewDataModal').style.display = 'flex';
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Erro ao carregar dados dos pacientes');
-    }
-}
-
-function displayFilteredPatients() {
-    const selectedUnit = document.getElementById('patientUnitFilter').value;
-    const tableBody = document.getElementById('patientsTableBody');
-    tableBody.innerHTML = '';
-
-    const filteredPatients = selectedUnit 
-        ? allPatients.filter(p => p.unidade === selectedUnit)
-        : allPatients;
-
-    filteredPatients.forEach((patient, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${patient.nome || ''}</td>
-            <td>${patient.data || ''}</td>
-            <td>${patient.unidade || ''}</td>
-            <td>
-                <button class="delete-btn" onclick="deletePatient('${patient.nome}')" title="Excluir paciente">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
-}
 </script>
 
 <style>

@@ -1,0 +1,74 @@
+Problemas prováveis já visíveis no código da dashboard
+A) Funções duplicadas (alto risco de comportamento inconsistente)
+viewPatientData e displayFilteredPatients aparecem duas vezes no mesmo template. A última definição sobrescreve a primeira silenciosamente. 
+
+B) confirmDeleteLastRecord também foi definida duas vezes
+Existe uma versão normal e depois uma versão async, o que pode mascarar bugs de fluxo. 
+
+C) Dois DOMContentLoaded diferentes rodando inicializações
+Você registra inicialização em dois blocos distintos, podendo disparar chamadas duplicadas, timers duplicados e efeitos colaterais. 
+
+D) Scripts externos de chart por CDN
+Se algum CDN falha/intermitência, pode gerar erro “vago” no browser sem derrubar Flask. 
+
+3) Como isolar o erro em 10 minutos
+Network tab
+
+Filtre por fetch/XHR.
+
+Verifique /filter_dashboard, /get_equipe_data, /get_unit_progress, /get_available_units.
+
+Mesmo com HTTP 200, abra o corpo JSON para ver se tem campo inesperado/null.
+
+Sources tab
+
+Adicione breakpoint em:
+
+applyFilters()
+
+populateEquipeTable()
+
+updateGaugeChart()
+
+Compare valores de elementos DOM (document.getElementById(...)) antes de usar.
+
+Console helpers
+
+Rode:
+
+typeof viewPatientData
+
+typeof confirmDeleteLastRecord
+
+Depois busque redefinições no arquivo: você já tem duplicações reais. 
+
+Verifique timers
+
+setTimeout(updateGaugeChart, 30000) + setInterval(updateGaugeChart, 30000) juntos podem causar chamadas concorrentes. 
+
+4) Instrumentação recomendada para achar rápido (sem mexer no backend)
+No DevTools Console, temporariamente:
+
+window.onerror = (msg, src, line, col, err) => console.log({msg, src, line, col, stack: err?.stack});
+window.onunhandledrejection = (e) => console.log('PROMISE_ERR', e.reason);
+Depois reproduza o bug e pegue stack completo.
+
+5) Diagnóstico provável do seu “erro vago”
+Pelo código atual, o mais provável é:
+
+colisão/sobrescrita de funções por duplicidade de blocos <script>,
+
+dupla inicialização via DOMContentLoaded,
+
+ou erro de dependência de CDN no cliente. 
+
+Se você quiser, eu te passo agora um roteiro de triagem com print esperado por etapa (Console, Network, Sources) para você executar e me mandar só 3 evidências — com isso eu te digo exatamente qual linha está quebrando.
+
+Comandos usados para essa análise
+✅ nl -ba templates/dashboard.html | sed -n '214,930p'
+
+✅ nl -ba templates/base.html | sed -n '1,220p'
+
+⚠️ rg -n "dashboard|filter_dashboard|get_tecnicas_data|get_equipe_data|chart|fetch|axios|script" templates/dashboard.html static/*.js app.py (warning: static/*.js não existe no repositório; JS está inline no template).
+
+
