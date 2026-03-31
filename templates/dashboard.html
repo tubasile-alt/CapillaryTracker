@@ -174,11 +174,13 @@
                         <span class="close-modal">&times;</span>
                         <h3>Proteção de Segurança</h3>
                         <p>Digite a senha para confirmar a exclusão de todos os dados:</p>
-                        <input type="password" id="securityPassword" class="password-input">
-                        <div class="modal-buttons">
-                            <button class="btn btn-secondary" onclick="closePasswordModal()">Cancelar</button>
-                            <button class="btn btn-danger" onclick="submitPassword()">Confirmar Exclusão</button>
-                        </div>
+                        <form onsubmit="submitPassword(); return false;">
+                            <input type="password" id="securityPassword" class="password-input" autocomplete="current-password">
+                            <div class="modal-buttons">
+                                <button type="button" class="btn btn-secondary" onclick="closePasswordModal()">Cancelar</button>
+                                <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
 
@@ -209,6 +211,15 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <script>
+    // CAPTURADOR GLOBAL DE ERROS - para diagnóstico
+    window.addEventListener('unhandledrejection', function(event) {
+        console.error('[DIAG] Unhandled rejection reason:', event.reason, 'type:', typeof event.reason, 'stack:', event.reason && event.reason.stack);
+        event.preventDefault();
+    });
+    window.addEventListener('error', function(event) {
+        console.error('[DIAG] Global error:', event.message, 'file:', event.filename, 'line:', event.lineno, 'col:', event.colno, 'error obj:', event.error);
+    });
+
     // Função para aplicar filtros
     async function applyFilters() {
         try {
