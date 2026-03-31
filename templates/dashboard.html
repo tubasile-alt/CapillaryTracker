@@ -175,6 +175,7 @@
                         <h3>Proteção de Segurança</h3>
                         <p>Digite a senha para confirmar a exclusão de todos os dados:</p>
                         <form onsubmit="submitPassword(); return false;">
+                            <input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
                             <input type="password" id="securityPassword" class="password-input" autocomplete="current-password">
                             <div class="modal-buttons">
                                 <button type="button" class="btn btn-secondary" onclick="closePasswordModal()">Cancelar</button>
@@ -342,18 +343,6 @@
         document.getElementById('viewDataModal').style.display = 'none';
     }
 
-    // Define color scheme for dark theme
-    const chartColors = {
-        blue: '#36A2EB',
-        pink: '#FF6384',
-        yellow: '#FFCE56',
-        green: '#4CAF50',
-        purple: '#9C27B0',
-        orange: '#FF9800',
-        teal: '#009688',
-        navy: '#3F51B5'
-    };
-
     // Dados simulados para a tabela de técnicas
     const dadosTecnicas = [
         { tecnica: 'FUE', quantidade: 45 },
@@ -361,68 +350,6 @@
         { tecnica: 'Body Hair', quantidade: 12 },
         { tecnica: 'Refinamento', quantidade: 8 }
     ];
-
-    // Global chart options for dark theme
-    const darkThemeOptions = {
-            responsive: true,
-            maintainAspectRatio: true, // Changed to true for better mobile display
-            devicePixelRatio: 2, // Sharper rendering on mobile
-            redraw: true, // Force redraw on update
-            plugins: {
-                legend: {
-                    display: window.innerWidth > 480 ? true : false, // Hide legend on very small screens
-                    position: 'bottom',
-                    labels: {
-                        color: '#ffffff',
-                        boxWidth: window.innerWidth < 768 ? 10 : 20, // Smaller legend boxes on mobile
-                        padding: window.innerWidth < 768 ? 5 : 10 // Less padding on mobile
-                    }
-                },
-                title: {
-                    color: '#ffffff',
-                    font: {
-                        size: window.innerWidth < 768 ? 14 : 16 // Smaller title on mobile
-                    }
-                },
-                datalabels: {
-                    color: '#ffffff',
-                    font: {
-                        weight: 'bold',
-                        size: window.innerWidth < 768 ? 9 : 12 // Smaller labels on mobile
-                    },
-                    formatter: Math.round,
-                    display: window.innerWidth < 480 ? false : true // Hide datalabels on very small screens
-                }
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        color: '#ffffff',
-                        font: {
-                            size: window.innerWidth < 768 ? 9 : 12 // Smaller ticks on mobile
-                        },
-                        maxRotation: 90, // Allow vertical labels on mobile
-                        autoSkip: true, // Skip labels that don't fit
-                        autoSkipPadding: 10 // Space between labels
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    }
-                },
-                y: {
-                    ticks: {
-                        color: '#ffffff',
-                        font: {
-                            size: window.innerWidth < 768 ? 9 : 12 // Smaller ticks on mobile
-                        }
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    },
-                    beginAtZero: true
-                }
-            }
-        };
 
     // Add event listeners when DOM is ready
     // Função para adicionar event listeners aos filtros
@@ -833,9 +760,6 @@
 }
 </style>
 
-<script>
-// Functions for viewing patient data
-</script>
 
 <style>
 /* Estilos para os filtros */
