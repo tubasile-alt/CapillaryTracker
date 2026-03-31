@@ -384,6 +384,26 @@ function rank(i){ if(i===0) return '<span class="rbadge g">1</span>'; if(i===1) 
 function perf(val, max){ const p=max>0?val/max:0; if(p>=.8) return '<span class="pill hi">Alto</span>'; if(p>=.5) return '<span class="pill mid">Médio</span>'; if(p>=.25) return '<span class="pill neu">Regular</span>'; return '<span class="pill lo">Baixo</span>'; }
 function vacColor(pct){ if(pct>=80) return '#2ecc8f'; if(pct>=50) return '#4f8eff'; if(pct>=30) return '#f5a623'; return '#e05252'; }
 function nowStr(){ return new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function parseBrDate(dateStr){
+  if(!dateStr || typeof dateStr!=='string') return null;
+  const [dd,mm,yyyy] = dateStr.split('/');
+  if(!dd || !mm || !yyyy) return null;
+  const d = new Date(Number(yyyy), Number(mm)-1, Number(dd));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function getFilteredPatients(f=gf()){
+  return (allPatients||[]).filter(p=>{
+    if(f.unit!=='all' && (p.unidade||'')!==f.unit) return false;
+    const dt = parseBrDate(p.data);
+    if(f.year!=='all'){
+      if(!dt || dt.getFullYear()!==Number(f.year)) return false;
+    }
+    if(f.month!=='all'){
+      if(!dt || (dt.getMonth()+1)!==Number(f.month)) return false;
+    }
+    return true;
+  });
+}
 
 // (JS completo solicitado pelo usuário)
 
@@ -399,7 +419,7 @@ async function loadKPIs(){
   document.getElementById('k-total-sub').textContent = f.unit!=='all'?f.unit:'período';
   const eqData=await fetch('/get_equipe_data?'+qs(f)).then(r=>r.json());
   document.getElementById('k-members').textContent=(eqData.equipe||[]).length;
-  const periodos=(allPatients||[]).filter(p=>p.data);
+  const periodos=getFilteredPatients(f).filter(p=>p.data);
   const uniqueDays=new Set(periodos.map(p=>p.data)).size;
   document.getElementById('k-perday').textContent = uniqueDays? (total/uniqueDays).toFixed(1) : '—';
 }
@@ -431,12 +451,13 @@ async function renderTecnicaEquipe(){
   const eq=(re.equipe||[]).slice(0,6), tecnicas=(rt.tecnicas||[]);
   if(!eq.length||!tecnicas.length) return;
   dc('tecnica-equipe');
-  charts['tecnica-equipe']=new Chart(document.getElementById('ch-tecnica-equipe').getContext('2d'),{type:'bar',data:{labels:eq.map(m=>m.nome.split(' ')[0]),datasets:tecnicas.map((t,i)=>({label:t.tecnica,data:eq.map(m=>Math.round((m.quantidade||0)*(t.quantidade||0)/(tecnicas[0].quantidade||1))),backgroundColor:PAL[i%PAL.length]+'bb'}))},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
+  const totalTecnicas = tecnicas.reduce((s,t)=>s+(t.quantidade||0),0) || 1;
+  charts['tecnica-equipe']=new Chart(document.getElementById('ch-tecnica-equipe').getContext('2d'),{type:'bar',data:{labels:eq.map(m=>m.nome.split(' ')[0]),datasets:tecnicas.map((t,i)=>({label:t.tecnica,data:eq.map(m=>Math.round((m.quantidade||0)*(t.quantidade||0)/totalTecnicas)),backgroundColor:PAL[i%PAL.length]+'bb'}))},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
 }
 async function renderPessoaComparativo(){
   const pessoa=document.getElementById('sel-pessoa').value;
   if(!pessoa) return;
-  const personPatients=(allPatients||[]).filter(p=>(p.equipe||'').includes(pessoa));
+  const personPatients=getFilteredPatients(gf()).filter(p=>(p.equipe||'').includes(pessoa));
   const by={}; personPatients.forEach(p=>{ const u=p.unidade||'N/A'; by[u]=(by[u]||0)+1; });
   const labels=Object.keys(by), vals=labels.map(u=>by[u]);
   dc('pessoa-unidade');
@@ -465,7 +486,7 @@ async function loadProdutividade(){
   const f=gf(); const re=await fetch('/get_equipe_data?'+qs(f)).then(r=>r.json()); const eq=(re.equipe||[]).slice(0,10);
   const labels=eq.map(m=>m.nome.split(' ')[0]), vals=eq.map(m=>m.quantidade||0);
   dc('tempo-pessoa'); charts['tempo-pessoa']=new Chart(document.getElementById('ch-tempo-pessoa').getContext('2d'),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:labels.map((_,i)=>PAL[i%PAL.length]+'bb')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-  const unit={}; allPatients.forEach(p=>{ if(p.tempo_cirurgia){ const u=p.unidade||'N/A'; if(!unit[u]) unit[u]=[]; unit[u].push(parseFloat(p.tempo_cirurgia)); }});
+  const unit={}; getFilteredPatients(f).forEach(p=>{ if(p.tempo_cirurgia){ const u=p.unidade||'N/A'; if(!unit[u]) unit[u]=[]; unit[u].push(parseFloat(p.tempo_cirurgia)); }});
   const ul=Object.keys(unit), uv=ul.map(u=>unit[u].reduce((a,b)=>a+b,0)/unit[u].length);
   dc('tempo-unit'); charts['tempo-unit']=new Chart(document.getElementById('ch-tempo-unit').getContext('2d'),{type:'bar',data:{labels:ul,datasets:[{data:uv,backgroundColor:ul.map((_,i)=>PAL[i%PAL.length]+'bb')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
   dc('scatter'); charts['scatter']=new Chart(document.getElementById('ch-scatter').getContext('2d'),{type:'scatter',data:{datasets:[{data:eq.map((m,i)=>({x:m.quantidade||0,y:uv[i%Math.max(uv.length,1)]||0,label:m.nome})),backgroundColor:PAL.slice(0,eq.length).map(c=>c+'cc')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
@@ -473,7 +494,7 @@ async function loadProdutividade(){
 }
 async function loadVacancia(){
   const f=gf(); const d=await fetch('/filter_dashboard?'+qs(f)).then(r=>r.json()); const labels=d.labels||[];
-  const diasNomes=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']; const day={}; allPatients.forEach(p=>{ if(!p.data) return; const dt=new Date(p.data); if(isNaN(dt)) return; const n=diasNomes[dt.getDay()]; day[n]=(day[n]||0)+1; });
+  const diasNomes=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']; const day={}; getFilteredPatients(f).forEach(p=>{ if(!p.data) return; const dt=parseBrDate(p.data); if(!dt) return; const n=diasNomes[dt.getDay()]; day[n]=(day[n]||0)+1; });
   const dl=diasNomes.filter(x=>day[x]); const dv=dl.map(x=>day[x]); dc('diasemana'); charts['diasemana']=new Chart(document.getElementById('ch-diasemana').getContext('2d'),{type:'bar',data:{labels:dl,datasets:[{data:dv,backgroundColor:PAL[0]+'bb'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
   const totalDS=(d.datasets||[]).find(ds=>ds.label==='Total de Cirurgias'); const vals=(totalDS?.data||labels.map(()=>0)).map(v=>+(v/21).toFixed(2));
   dc('densidade-mes'); charts['densidade-mes']=new Chart(document.getElementById('ch-densidade-mes').getContext('2d'),{type:'line',data:{labels,datasets:[{data:vals,borderColor:C.g1,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
@@ -482,7 +503,7 @@ async function loadVacancia(){
 }
 async function loadFios(){
   const f=gf(); const re=await fetch('/get_equipe_data?'+qs(f)).then(r=>r.json()); const eq=(re.equipe||[]).slice(0,10);
-  const fiosMap={}; const unitMap={}; allPatients.forEach(p=>{ const fios=(p.q1_fios||0)+(p.q2_fios||0)+(p.q3_fios||0)+(p.q4_fios||0); if(fios>0){ const nm=p.equipe||''; const u=p.unidade||'N/A'; fiosMap[nm]=(fiosMap[nm]||0)+fios; if(!unitMap[u]) unitMap[u]=[]; unitMap[u].push(fios);} });
+  const fiosMap={}; const unitMap={}; getFilteredPatients(f).forEach(p=>{ const fios=(p.q1_fios||0)+(p.q2_fios||0)+(p.q3_fios||0)+(p.q4_fios||0); if(fios>0){ const nm=p.equipe||''; const u=p.unidade||'N/A'; fiosMap[nm]=(fiosMap[nm]||0)+fios; if(!unitMap[u]) unitMap[u]=[]; unitMap[u].push(fios);} });
   dc('fios-pessoa'); charts['fios-pessoa']=new Chart(document.getElementById('ch-fios-pessoa').getContext('2d'),{type:'bar',data:{labels:eq.map(m=>m.nome.split(' ')[0]),datasets:[{data:eq.map(m=>fiosMap[m.nome]||0),backgroundColor:eq.map((_,i)=>PAL[i%PAL.length]+'bb')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
   const ul=Object.keys(unitMap), uv=ul.map(u=>Math.round(unitMap[u].reduce((a,b)=>a+b,0)/unitMap[u].length));
   dc('fios-unit'); charts['fios-unit']=new Chart(document.getElementById('ch-fios-unit').getContext('2d'),{type:'bar',data:{labels:ul,datasets:[{data:uv,backgroundColor:ul.map((_,i)=>PAL[i%PAL.length]+'bb')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
