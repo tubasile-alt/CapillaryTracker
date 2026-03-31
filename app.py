@@ -2,7 +2,8 @@ import os
 import logging
 import traceback
 import re
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_file
+import time
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_file, g, after_this_request
 import functools
 import pandas as pd
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -34,6 +35,29 @@ app.secret_key = os.urandom(24)
 app.config['ADMIN_PASSWORD'] = '12345'
 app.config['UPLOAD_FOLDER'] = 'static/uploads/necrose_photos'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+
+def log_operation_event(operation, status, start_time=None, **extra):
+    """Emit structured operation logs with request correlation data."""
+    duration_ms = None
+    if start_time is not None:
+        duration_ms = int((time.time() - start_time) * 1000)
+
+    payload = {
+        'request_id': getattr(g, 'request_id', 'n/a'),
+        'operation': operation,
+        'status': status,
+        'duration_ms': duration_ms
+    }
+    payload.update(extra)
+    logger.info(f"operation_log={payload}")
+
+
+@app.before_request
+def attach_request_context():
+    """Attach a unique request id for tracing logs across handlers."""
+    g.request_id = request.headers.get('X-Request-ID') or uuid.uuid4().hex
+    g.request_started_at = time.time()
 
 
 # Função para carregar configurações do arquivo JSON
@@ -504,6 +528,7 @@ def trigger_automatic_backup():
 
 def create_local_backup(surgery_data, necrose_data, timestamp):
     """Criar backup local em Excel"""
+    op_start = time.time()
     try:
         # Garantir que diretório existe
         backup_dir = 'data_backup'
@@ -511,11 +536,7 @@ def create_local_backup(surgery_data, necrose_data, timestamp):
 
         # Nome do arquivo local
         local_filename = f"{backup_dir}/backup_automatico_{timestamp}.xlsx"
-
-        # Criar arquivo Excel com múltiplas planilhas
-        import tempfile
-        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
-            temp_filename = temp_file.name
+        temp_filename = f"{local_filename}.tmp.{uuid.uuid4().hex}.xlsx"
 
         # Usar openpyxl para criar múltiplas planilhas
         from openpyxl import Workbook
@@ -536,18 +557,28 @@ def create_local_backup(surgery_data, necrose_data, timestamp):
             for row in dataframe_to_rows(necrose_df, index=False, header=True):
                 ws_necroses.append(row)
 
-        # Salvar arquivo
-        wb.save(local_filename)
+        # Salvar arquivo temporário e trocar de forma atômica
+        wb.save(temp_filename)
+        os.replace(temp_filename, local_filename)
 
         logger.info(f"💾 Backup local criado: {local_filename}")
+        log_operation_event("backup_local", "success", op_start, file=local_filename)
         return True
 
     except Exception as e:
         logger.error(f"Erro no backup local: {e}")
+        log_operation_event("backup_local", "error", op_start, error=str(e))
+        try:
+            if 'temp_filename' in locals() and temp_filename and os.path.exists(temp_filename):
+                os.unlink(temp_filename)
+        except Exception:
+            pass
         return False
 
 def create_dropbox_backup(surgery_data, necrose_data, timestamp):
     """Criar backup no Dropbox"""
+    op_start = time.time()
+    temp_filename = None
     try:
         # Verificar token
         dropbox_token = os.environ.get('DROPBOX_ACCESS_TOKEN')
@@ -597,15 +628,20 @@ def create_dropbox_backup(surgery_data, necrose_data, timestamp):
             mode=dropbox.files.WriteMode.overwrite
         )
 
-        # Limpar arquivo temporário
-        os.unlink(temp_filename)
-
         logger.info(f"☁️ Backup Dropbox criado: {dropbox_path}")
+        log_operation_event("backup_dropbox", "success", op_start, path=dropbox_path)
         return True
 
     except Exception as e:
         logger.error(f"Erro no backup Dropbox: {e}")
+        log_operation_event("backup_dropbox", "error", op_start, error=str(e))
         return False
+    finally:
+        try:
+            if temp_filename and os.path.exists(temp_filename):
+                os.unlink(temp_filename)
+        except Exception as cleanup_e:
+            logger.warning(f"Falha ao limpar arquivo temporário do Dropbox backup: {cleanup_e}")
 
 def export_and_backup(df=None):
     """
@@ -980,6 +1016,7 @@ def backup_excel_file(source_file):
 
 def save_to_excel(data):
     """Save data to Excel and database with improved error handling"""
+    op_start = time.time()
     try:
         logging.info("Starting data save process...")
         logger.info(f"Received data: {data}")
@@ -1114,6 +1151,7 @@ def save_to_excel(data):
             db.session.add(surgery)
             db.session.commit()
             logger.info("✅ Data saved to database successfully")
+            log_operation_event("save_surgery_db", "success", op_start, surgery_id=surgery.id)
 
             # Verify the save by querying the database
             saved_surgery = Surgery.query.get(surgery.id)
@@ -1144,16 +1182,17 @@ def save_to_excel(data):
             df_combined = pd.DataFrame([data])
 
         # Save with backup usando uma extensão válida para Excel
-        temp_file = f"{filename}.backup.xlsx"
+        temp_file = f"{filename}.tmp.{uuid.uuid4().hex}.xlsx"
         df_combined.to_excel(temp_file, index=False, engine='openpyxl')
+        with open(temp_file, 'rb') as temp_fp:
+            temp_fp.flush()
+            os.fsync(temp_fp.fileno())
 
-        # If save was successful, replace original file
-        if os.path.exists(temp_file):
-            if os.path.exists(filename):
-                os.remove(filename)
-            os.rename(temp_file, filename)
+        # Troca atômica para evitar janela sem arquivo em caso de falha
+        os.replace(temp_file, filename)
 
         logger.info("✅ Data saved to Excel successfully!")
+        log_operation_event("save_surgery_excel", "success", op_start, file=filename)
 
         # Executar backup automático para Dropbox após salvar os dados
         try:
@@ -1161,16 +1200,25 @@ def save_to_excel(data):
             backup_success, backup_message = export_and_backup()
             if backup_success:
                 logger.info(f"✅ Backup automático realizado: {backup_message}")
+                log_operation_event("save_surgery_backup", "success", op_start, message=backup_message)
             else:
                 logger.warning(f"⚠️ Backup automático falhou: {backup_message}")
+                log_operation_event("save_surgery_backup", "warning", op_start, message=backup_message)
         except Exception as backup_e:
             logger.error(f"Erro no backup automático: {str(backup_e)}")
+            log_operation_event("save_surgery_backup", "error", op_start, error=str(backup_e))
             # Não falhar o salvamento por causa de erro no backup
 
         return True, "Dados salvos com sucesso!"
     except Exception as e:
         logging.error(f"Error saving data: {str(e)}")
         logging.error(traceback.format_exc())
+        log_operation_event("save_surgery", "error", op_start, error=str(e))
+        try:
+            if 'temp_file' in locals() and temp_file and os.path.exists(temp_file):
+                os.unlink(temp_file)
+        except Exception:
+            pass
         return False, f"Erro ao salvar dados: {str(e)}"
 
 def check_duplicate_surgery(data):
@@ -1267,6 +1315,66 @@ def index():
 def ping():
     logger.info("Ping route accessed")
     return "Application is running!"
+
+@app.route('/health/live')
+def health_live():
+    """Liveness probe - checks if process is running."""
+    return jsonify({
+        'status': 'ok',
+        'service': 'capillary-tracker',
+        'check': 'live'
+    }), 200
+
+@app.route('/health/ready')
+def health_ready():
+    """Readiness probe - checks DB and local disk write access."""
+    checks = {}
+    http_status = 200
+
+    # Database readiness
+    try:
+        db.session.execute(text("SELECT 1"))
+        checks['database'] = 'ok'
+    except Exception as db_error:
+        checks['database'] = f'error: {db_error}'
+        http_status = 503
+
+    # Disk readiness
+    temp_probe = f".ready_probe_{uuid.uuid4().hex}.tmp"
+    try:
+        with open(temp_probe, 'w', encoding='utf-8') as probe_file:
+            probe_file.write('ok')
+            probe_file.flush()
+            os.fsync(probe_file.fileno())
+        os.remove(temp_probe)
+        checks['disk'] = 'ok'
+    except Exception as disk_error:
+        checks['disk'] = f'error: {disk_error}'
+        http_status = 503
+        try:
+            if os.path.exists(temp_probe):
+                os.remove(temp_probe)
+        except Exception:
+            pass
+
+    # Optional Dropbox readiness (does not fail readiness if token absent)
+    dropbox_token = os.environ.get('DROPBOX_ACCESS_TOKEN')
+    if not dropbox_token:
+        checks['dropbox'] = 'not_configured'
+    else:
+        try:
+            dbx = dropbox.Dropbox(dropbox_token)
+            dbx.users_get_current_account()
+            checks['dropbox'] = 'ok'
+        except Exception as dbx_error:
+            checks['dropbox'] = f'error: {dbx_error}'
+
+    return jsonify({
+        'status': 'ok' if http_status == 200 else 'degraded',
+        'service': 'capillary-tracker',
+        'check': 'ready',
+        'checks': checks
+    }), http_status
 
 @app.route('/success')
 def success():
@@ -2304,6 +2412,7 @@ def filter_dashboard():
 @app.route('/download_excel')
 def download_excel():
     """Endpoint to download the Excel data file"""
+    op_start = time.time()
     logger.info("Downloading Excel file")
     try:
         # Get data from database with explicit session
@@ -2371,26 +2480,29 @@ def download_excel():
             logger.info(f"DataFrame created with {len(df)} rows")
 
             # Save to temporary file
-            temp_file = "temp_download.xlsx"
+            temp_file = f"temp_download_{uuid.uuid4().hex}.xlsx"
             df.to_excel(temp_file, index=False)
 
-            # Return file and then delete it
-            from flask import send_file
+            @after_this_request
+            def remove_temp_file(response):
+                try:
+                    if os.path.exists(temp_file):
+                        os.remove(temp_file)
+                except Exception as cleanup_error:
+                    logger.warning(f"Erro ao limpar arquivo temporário de download: {cleanup_error}")
+                return response
+
             return_data = send_file(
                 temp_file,
                 mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 as_attachment=True,
                 download_name='relatorio_cirurgias.xlsx'
             )
-
-            # Delete temp file after sending
-            try:
-                os.remove(temp_file)
-            except:
-                pass
+            log_operation_event("download_excel", "success", op_start, rows=len(df))
             return return_data
     except Exception as e:
         logger.error(f"Error downloading Excel file: {str(e)}\n{traceback.format_exc()}")
+        log_operation_event("download_excel", "error", op_start, error=str(e))
         flash(f"Erro ao baixar arquivo: {str(e)}", "error")
         return redirect(url_for('dashboard'))
 
@@ -2741,6 +2853,7 @@ def necrose_summary():
 @app.route('/save_necrose', methods=['POST'])
 def save_necrose():
     """Endpoint para salvar dados de necrose com upload de fotos"""
+    op_start = time.time()
     logger.info("Saving necrose data to database")
     logger.info(f"Form data received: {dict(request.form)}")
     logger.info(f"Files received: {list(request.files.keys())}")
@@ -2902,6 +3015,7 @@ def save_necrose():
         db.session.commit()
 
         logger.info(f"Dados de necrose salvos para paciente: {surgery.nome} (ID: {patient_id})")
+        log_operation_event("save_necrose", "success", op_start, patient_id=patient_id, photos=len(uploaded_files))
         if uploaded_files:
             logger.info(f"Fotos carregadas: {uploaded_files}")
 
@@ -2916,10 +3030,13 @@ def save_necrose():
             backup_success, backup_message = trigger_automatic_backup()
             if backup_success:
                 logger.info(f"✅ Backup automático realizado: {backup_message}")
+                log_operation_event("save_necrose_backup", "success", op_start, message=backup_message)
             else:
                 logger.warning(f"⚠️ Backup automático falhou: {backup_message}")
+                log_operation_event("save_necrose_backup", "warning", op_start, message=backup_message)
         except Exception as backup_error:
             logger.error(f"Erro no backup automático: {backup_error}")
+            log_operation_event("save_necrose_backup", "error", op_start, error=str(backup_error))
 
         return jsonify({
             'success': True,
@@ -2931,6 +3048,7 @@ def save_necrose():
     except Exception as e:
         db.session.rollback()
         logger.error(f"Erro ao salvar dados de necrose: {str(e)}")
+        log_operation_event("save_necrose", "error", op_start, error=str(e))
         return jsonify({
             'success': False,
             'message': f'Erro ao salvar dados: {str(e)}'
