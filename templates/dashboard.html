@@ -215,9 +215,18 @@
     // Função para aplicar filtros
     async function applyFilters() {
         try {
-            const unit = document.getElementById('filterUnit').value;
-            const year = document.getElementById('filterYear').value;
-            const month = document.getElementById('filterMonth').value;
+            const filterUnit = document.getElementById('filterUnit');
+            const filterYear = document.getElementById('filterYear');
+            const filterMonth = document.getElementById('filterMonth');
+            
+            if (!filterUnit || !filterYear || !filterMonth) {
+                console.warn('applyFilters: Filter elements not found');
+                return;
+            }
+            
+            const unit = filterUnit.value;
+            const year = filterYear.value;
+            const month = filterMonth.value;
 
             const queryParams = new URLSearchParams({
                 unit: unit || 'all',
@@ -592,9 +601,13 @@
         tableBody.innerHTML = '<tr><td colspan="3">Carregando dados...</td></tr>';
 
         // Obter filtros atuais
-        const unit = document.getElementById('filterUnit').value;
-        const year = document.getElementById('filterYear').value;
-        const month = document.getElementById('filterMonth').value;
+        const filterUnit = document.getElementById('filterUnit');
+        const filterYear = document.getElementById('filterYear');
+        const filterMonth = document.getElementById('filterMonth');
+        
+        const unit = filterUnit ? filterUnit.value : 'all';
+        const year = filterYear ? filterYear.value : 'all';
+        const month = filterMonth ? filterMonth.value : 'all';
 
         // Criar query params para filtrar
         const queryParams = new URLSearchParams({
@@ -630,33 +643,7 @@
             })
             .catch(error => {
                 console.error('Erro ao obter dados de equipe:', error);
-                tableBody.innerHTML = '<tr><td colspan="3">Erro ao carregar dados</td></tr>';
-
-                // Dados de exemplo em caso de erro
-                const exemploData = [
-                    {nome: 'Aline', quantidade: 15, unidades: 'Ribeirão Preto, Rio de Janeiro'},
-                    {nome: 'Natália', quantidade: 12, unidades: 'Ribeirão Preto, Campinas'},
-                    {nome: 'Ana', quantidade: 18, unidades: 'Ribeirão Preto'},
-                    {nome: 'Juliana', quantidade: 10, unidades: 'Campinas'},
-                    {nome: 'Gabriela', quantidade: 9, unidades: 'Campinas, Rio de Janeiro'},
-                    {nome: 'Mariana Moro', quantidade: 14, unidades: 'Rio de Janeiro'},
-                    {nome: 'Mariana Silva', quantidade: 11, unidades: 'Rio de Janeiro, Campinas'},
-                    {nome: 'Dayane', quantidade: 7, unidades: 'Rio de Janeiro'}
-                ];
-
-                // Preencher a tabela com dados de exemplo após um breve atraso
-                setTimeout(() => {
-                    tableBody.innerHTML = '';
-                    exemploData.forEach(item => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${item.nome}</td>
-                            <td>${item.quantidade}</td>
-                            <td>${item.unidades}</td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
-                }, 1000);
+                if (tableBody) tableBody.innerHTML = '<tr><td colspan="3">Erro ao carregar dados</td></tr>';
             });
     }
 
