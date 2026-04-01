@@ -344,7 +344,7 @@ body::after{
       </div>
 
       <div id="sec-equipe"></div><div class="sec">Equipe — Desempenho Individual</div>
-      <div class="card"><div class="card-hd"><div class="card-title">Ranking da Equipe</div><span class="card-badge" id="equipe-badge">carregando…</span></div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Membro</th><th>Unidade(s)</th><th class="r">Cirurgias</th><th class="r">T. Médio (h)</th><th class="r">Fios Médios</th><th class="r">Desempenho</th></tr></thead><tbody id="equipe-tbody"></tbody></table></div></div>
+      <div class="card"><div class="card-hd"><div class="card-title">Ranking da Equipe</div><span class="card-badge" id="equipe-badge">carregando…</span></div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Membro</th><th>Unidade(s)</th><th class="r">Cirurgias</th><th class="r">Média/Mês</th><th class="r">Desempenho</th></tr></thead><tbody id="equipe-tbody"></tbody></table></div></div>
       <div class="g2"><div class="card"><div class="card-hd"><div class="card-title">Cirurgias por Pessoa × Mês</div></div><div class="ch" style="height:220px"><canvas id="ch-equipe-mes"></canvas></div></div><div class="card"><div class="card-hd"><div class="card-title">Distribuição por Técnica × Equipe</div></div><div class="ch" style="height:220px"><canvas id="ch-tecnica-equipe"></canvas></div></div></div>
       <div class="card"><div class="card-hd"><div class="card-title">Comparativo de Unidades — mesmo membro</div><select class="card-select" id="sel-pessoa" onchange="renderPessoaComparativo()"></select></div><div class="ch" style="height:200px"><canvas id="ch-pessoa-unidade"></canvas></div></div>
 
@@ -428,9 +428,17 @@ async function loadEquipe(){
   const d=await fetch('/get_equipe_data?'+qs(f)).then(r=>r.json());
   const eq=(d.equipe||[]).sort((a,b)=>b.quantidade-a.quantidade);
   document.getElementById('equipe-badge').textContent = `${eq.length} membros`;
-  if(!eq.length){ tbody.innerHTML='<tr><td colspan=\"7\">Nenhum dado</td></tr>'; return; }
-  const max=eq[0].quantidade||1;
-  tbody.innerHTML=eq.map((m,i)=>`<tr><td>${rank(i)}</td><td><strong>${m.nome||'—'}</strong></td><td class="dim">${m.unidades||'—'}</td><td class="r">${m.quantidade||0}</td><td class="r dim">—</td><td class="r dim">—</td><td class="r">${perf(m.quantidade||0,max)}</td></tr>`).join('');
+  if(!eq.length){ tbody.innerHTML='<tr><td colspan=\"6\">Nenhum dado</td></tr>'; return; }
+  
+  const maxCirurgias=eq[0].quantidade||1;
+  const dashboardData=await fetch('/filter_dashboard?'+qs(f)).then(r=>r.json());
+  const monthCount=f.month && f.month!=='all' ? 1 : (f.year && f.year!=='all' ? 12 : (dashboardData.labels||[]).length || 12);
+  
+  tbody.innerHTML=eq.map((m,i)=>{
+    const cirurgias=m.quantidade||0;
+    const mediaPortMes=monthCount>0 ? (cirurgias/monthCount).toFixed(1) : 0;
+    return `<tr><td>${rank(i)}</td><td><strong>${m.nome||'—'}</strong></td><td class="dim">${m.unidades||'—'}</td><td class="r">${cirurgias}</td><td class="r">${mediaPortMes}</td><td class="r">${perf(cirurgias,maxCirurgias)}</td></tr>`;
+  }).join('');
   const sel=document.getElementById('sel-pessoa');
   sel.innerHTML=eq.map(m=>`<option value="${m.nome}">${m.nome}</option>`).join('');
   await renderEquipeMes(eq.slice(0,8),f);
