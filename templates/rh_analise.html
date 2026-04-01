@@ -350,7 +350,7 @@ body::after{
 
       <div id="sec-unidades"></div><div class="sec">Unidades — Comparativo</div>
       <div class="g3l"><div class="card"><div class="card-hd"><div class="card-title">Cirurgias por Unidade / Mês</div></div><div class="ch" style="height:230px"><canvas id="ch-unit-mes"></canvas></div></div><div class="card"><div class="card-hd"><div class="card-title">Meta por Unidade</div><select class="card-select" id="gauge-unit" onchange="renderGauge()"></select></div><div class="gauge-wrap"><div class="gauge-arc-box"><svg class="gauge-svg" viewBox="0 0 160 160"><path d="M16 118 A62 62 0 1 1 144 118" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="13"/><path id="gauge-arc" d="M16 118 A62 62 0 1 1 144 118" fill="none" stroke="var(--a1)" stroke-width="13" stroke-dasharray="196" stroke-dashoffset="196"/></svg><div class="gauge-num"><div class="gauge-pct" id="gauge-pct">—%</div></div></div><div class="gauge-row"><div class="gauge-item"><div class="gauge-item-lbl">Feitas</div><div class="gauge-item-val" id="gauge-atual">—</div></div><div class="gauge-item"><div class="gauge-item-lbl">Meta</div><div class="gauge-item-val" id="gauge-meta">—</div></div><div class="gauge-item"><div class="gauge-item-lbl">Faltam</div><div class="gauge-item-val" id="gauge-faltam">—</div></div></div></div></div></div>
-      <div class="g2"><div class="card"><div class="card-hd"><div class="card-title">Ranking de Unidades</div></div><div class="ch" style="height:200px"><canvas id="ch-unit-rank"></canvas></div></div><div class="card"><div class="card-hd"><div class="card-title">Técnicas por Unidade</div></div><div class="ch" style="height:200px"><canvas id="ch-tecnica-unit"></canvas></div></div></div>
+      <div class="card"><div class="card-hd"><div class="card-title">Ranking de Unidades</div></div><div class="ch" style="height:200px"><canvas id="ch-unit-rank"></canvas></div></div>
 
       <div id="sec-produtividade"></div><div class="sec">Produtividade — Tempo & Volume</div>
       <div class="g3e"><div class="card"><div class="card-hd"><div class="card-title">Tempo Médio por Membro</div></div><div class="ch" style="height:190px"><canvas id="ch-tempo-pessoa"></canvas></div></div><div class="card"><div class="card-hd"><div class="card-title">Tempo Médio por Unidade</div></div><div class="ch" style="height:190px"><canvas id="ch-tempo-unit"></canvas></div></div><div class="card"><div class="card-hd"><div class="card-title">Volume × Tempo</div></div><div class="ch" style="height:190px"><canvas id="ch-scatter"></canvas></div></div></div>
@@ -360,8 +360,7 @@ body::after{
       <div class="card"><div class="card-hd"><div class="card-title">Vacância por Unidade</div></div><div class="vac-grid" id="vac-grid"></div></div>
 
       <div id="sec-fios"></div><div class="sec">Fios & Qualidade de Implante</div>
-      <div class="g2"><div class="card"><div class="card-hd"><div class="card-title">Total de Fios por Membro</div></div><div class="ch" style="height:220px"><canvas id="ch-fios-pessoa"></canvas></div></div><div class="card"><div class="card-hd"><div class="card-title">Média de Fios por Cirurgia</div></div><div class="ch" style="height:220px"><canvas id="ch-fios-unit"></canvas></div></div></div>
-      <div class="card"><div class="card-hd"><div class="card-title">Evolução Mensal — Folículos & Densidade</div></div><div class="ch" style="height:200px"><canvas id="ch-foliculos-mes"></canvas></div></div>
+      <div class="card"><div class="card-hd"><div class="card-title">Média de Fios por Cirurgia</div></div><div class="ch" style="height:220px"><canvas id="ch-fios-unit"></canvas></div></div>
     </main>
   </div>
 </div>
