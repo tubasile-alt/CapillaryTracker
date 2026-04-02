@@ -49,6 +49,7 @@
                             <input type="date" name="{{ field.name }}" id="{{ field.name }}"
                                 value="{{ data.get(field.name, '') }}"
                                 {% if field.required %}required{% endif %}>
+                            <small style="color: #999; display: block; margin-top: 4px;">⚠️ A data não pode ser no futuro</small>
                             <input type="hidden" name="data_formatted" id="data_formatted">
                         {% elif field.type == 'time' %}
                             <input type="time" id="{{ field.name }}" name="{{ field.name }}" 
@@ -1057,6 +1058,19 @@
         
         // Carregar membros para os campos de Técnica Extra
         carregarMembrosEquipeParaTecnicaExtra();
+        
+        // ✅ Validação: Impedir datas futuras no input
+        const dataInput = document.getElementById('data');
+        if (dataInput) {
+            const hoje = new Date().toISOString().split('T')[0];
+            dataInput.setAttribute('max', hoje);
+            dataInput.addEventListener('change', function() {
+                if (this.value > hoje) {
+                    alert('❌ Data inválida! A data da cirurgia não pode ser no futuro.');
+                    this.value = '';
+                }
+            });
+        }
     });
 </script>
 {% endblock %}

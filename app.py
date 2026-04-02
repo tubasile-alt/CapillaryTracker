@@ -1228,7 +1228,7 @@ def save_to_excel(data):
         return False, f"Erro ao salvar dados: {str(e)}"
 
 def check_duplicate_surgery(data):
-    """Check if a surgery record already exists to prevent duplicates"""
+    """Check if a surgery record already exists to prevent duplicates and validate date"""
     try:
         nome = data.get('Paciente', data.get('nome', '')).strip()
         data_cirurgia = None
@@ -1243,6 +1243,11 @@ def check_duplicate_surgery(data):
 
         if not nome or not data_cirurgia:
             return False, "Dados insuficientes para verificação de duplicata"
+
+        # ✅ Validação: Data não pode ser no futuro
+        data_hoje = datetime.now().date()
+        if data_cirurgia > data_hoje:
+            return False, f"❌ Data inválida! A data da cirurgia ({data_cirurgia.strftime('%d/%m/%Y')}) não pode ser no futuro. Data de hoje: {data_hoje.strftime('%d/%m/%Y')}"
 
         nome_normalizado = nome.strip().upper()
         existing = Surgery.query.filter(
