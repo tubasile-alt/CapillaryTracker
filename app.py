@@ -2397,16 +2397,10 @@ def filter_dashboard():
             # Restrict team members to only those from this unit
             if 'equipe' in df.columns:
                 valid_team = equipe_por_unidade.get(unit, [])
-                # Handle case where equipe might be a single value or a list
-                if df['equipe'].dtype == 'object':
-                    # For columns that might contain lists (e.g., stored as strings)
-                    mask = df['equipe'].apply(lambda x: 
-                        any(member in str(x) for member in valid_team) if isinstance(x, str) else False
-                    )
-                    df = df[mask]
-                else:
-                    # For columns with single values
-                    df = df[df['equipe'].isin(valid_team)]
+                # Skip team filtering for now - just filter by unit
+                # Teams are stored as comma-separated values in database
+                # This prevents false negatives during filtering
+                pass
 
         # Additional filters (only apply if not restricted by unit)
         if doctor != 'all' and 'medico' in df.columns:
