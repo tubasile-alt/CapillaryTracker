@@ -19,7 +19,7 @@
   ],
   "medicos_por_unidade": {
     "Ribeirão Preto": ["Dr. Arthur", "Dr. Daniel"],
-    "Campinas": ["Dra. Adriana", "Dra. Isadora"],
+    "Campinas": ["Dra. Adriana", "Dra. Isadora", "Dr. Leonidas"],
     "Rio de Janeiro": ["Dra. Ana Clara", "Dra. Paula"],
     "São Paulo": ["Dr. Daniel", "Dr. Renan", "Dra. Ariane", "Dra. Isabella", "Dra. Talita", "Dra. Thaiza"],
     "Brasília": ["Dra. Leticia", "Dra. Natalia"],
@@ -32,7 +32,7 @@
     "Salvador": ["Dra. Alexia"],
     "Santos": ["Dra. Juliana", "Dra. Thaiza"],
     "Porto Alegre": ["Dra. Alice", "Dra. Vitoria"],
-    "Florianópolis": ["Dr. Tiago"],
+    "Florianópolis": ["Dra. Marina Palhano"],
     "Fortaleza": ["Dra. Roberta"]
   },
   "equipe_por_unidade": {
