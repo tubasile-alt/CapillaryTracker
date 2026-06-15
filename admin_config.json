@@ -19,7 +19,7 @@
   ],
   "medicos_por_unidade": {
     "Ribeirão Preto": ["Dr. Arthur", "Dr. Daniel"],
-    "Campinas": ["Dra. Adriana", "Dra. Isadora", "Dr. Leonidas"],
+    "Campinas": ["Dra. Adriana", "Dra. Isadora", "Dr. Leonidas", "Dr. Hermann"],
     "Rio de Janeiro": ["Dra. Ana Clara", "Dra. Paula"],
     "São Paulo": ["Dr. Daniel", "Dr. Renan", "Dra. Ariane", "Dra. Isabella", "Dra. Talita", "Dra. Thaiza", "Dr. Milton"],
     "Brasília": ["Dra. Leticia", "Dra. Natalia"],
