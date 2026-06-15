@@ -21,7 +21,7 @@
     "Ribeirão Preto": ["Dr. Arthur", "Dr. Daniel"],
     "Campinas": ["Dra. Adriana", "Dra. Isadora", "Dr. Leonidas"],
     "Rio de Janeiro": ["Dra. Ana Clara", "Dra. Paula"],
-    "São Paulo": ["Dr. Daniel", "Dr. Renan", "Dra. Ariane", "Dra. Isabella", "Dra. Talita", "Dra. Thaiza"],
+    "São Paulo": ["Dr. Daniel", "Dr. Renan", "Dra. Ariane", "Dra. Isabella", "Dra. Talita", "Dra. Thaiza", "Dr. Milton"],
     "Brasília": ["Dra. Leticia", "Dra. Natalia"],
     "Goiania": ["Dra. Debora", "Dra. Francyelle"],
     "Recife": ["Dra. Maria Thaiene", "Dra. Ana Carolina"],
@@ -43,8 +43,6 @@
       "Eduarda de Sousa",
       "Isabelle de Campos",
       "Juliana Nunes",
-      "Kesley Sabrina",
-      "Larissa Hellen",
       "Maria Laura Rodrigues",
       "Thalita Corrêa",
       "Vitória Delino"
@@ -158,7 +156,10 @@
       "Bruna Braga",
       "Camila Aparecida",
       "Vanessa Santos",
-      "Claudia Sathler"
+      "Claudia Sathler",
+      "Giovanna de Souza",
+      "Beatriz Figueroa",
+      "Kesley Sabrina Rodrigues"
     ]
   }
 }
